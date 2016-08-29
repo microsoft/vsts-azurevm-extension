@@ -47,7 +47,7 @@ function WriteDownloadLog
 
     [string]$restCallUrl = $tfsUrl + ("/_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}" -f $platform,$downloadAPIVersion)
     
-    WriteDownloadLog "`t`t Reset call Url -  $restCallUrl"
+    WriteDownloadLog "`t`t REST call Url -  $restCallUrl"
     
     return $restCallUrl
  }

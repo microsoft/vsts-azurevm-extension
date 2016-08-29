@@ -134,14 +134,14 @@ try
 {
     WriteConfigurationLog "Starting the Deployment agent configuration script"
     
-    if( ! $( ConfigCmdExists ) )
+    if( ! $(ConfigCmdExists) )
     {
         throw "Unable to find the configuration cmd: $configCmdPath, ensure to download the agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
     }
 
     WriteConfigurationLog "Check if any existing agent running form $workingFolder"
     
-    if( $( AgentRemovalRequired ) )
+    if( $(AgentRemovalRequired) )
     {
         WriteConfigurationLog "Already a agent is running from $workingFolder, need to removing it"
         RemoveExistingAgent

@@ -1,3 +1,8 @@
+#To pass the log method to this script - 
+#
+# DeploymentAgent.ps1 -tfsUrl "https://myvstsaccout.visualstusio.com" -patToken ........ -logFunction ${function:My-Logmethod}
+
+
 param(
     [Parameter(Mandatory=$true)]
     [string]$tfsUrl,
@@ -7,52 +12,29 @@ param(
     [string]$platform,
     [Parameter(Mandatory=$true)]
     [string]$workingFolder,
-    [string]$userName
-    )
+    [string]$userName,
+    [scriptblock]$logFunction
+)
 
 $ErrorActionPreference = 'Stop'
- 
-$downloadAPIVersion = "3.0-preview.2"
-$deploymentAgentFolderName = "DeploymentAgent"
-$loggingDiagFolderName = "_diag"   
-$agentZipName = "agent.zip"
-$minPSVersionSupported = 3
+. "$PSScriptRoot\Constants.ps1"
 
-$debug = $true
-
- function InitLogging
- {  
-    $diagFolder = Join-Path $workingFolder $loggingDiagFolderName
-    
-    if( !(Test-Path $diagFolder -pathType container) )
-    {
-        New-Item $diagFolder -Type directory | Out-Null
-    }
-    
-    $logFileName = $deploymentAgentFolderName + '-' + ((get-date).ToUniversalTime()).ToString("yyyyMMdd-HHmmss") + '-utc.txt' 
-    
-    $logFile = Join-Path $diagFolder $logFileName
-    
-    New-Item $logFile -Type file -force | Out-Null  
-
-    return $logFile
- }
-
- function WriteLog
- {
+function WriteDownloadLog
+{
     param(
     [string]$logMessage
     )
     
-    if($debug)
+    $log = "[Download]: " + $logMessage
+    if($logFunction -ne $null)
     {
-        write-verbose $logMessage -verbose
+        $logFunction.Invoke($log)
     }
-    if( Test-Path $logFile )
+    else
     {
-        Write-Output $logMessage | Out-File $logFile -Append
+        write-verbose $log
     }
- }
+}
  
  function ContructPackageDataRESTCallUrl
  {
@@ -65,7 +47,7 @@ $debug = $true
 
     [string]$restCallUrl = $tfsUrl + ("/_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}" -f $platform,$downloadAPIVersion)
     
-    WriteLog "`t`t Reset call Url -  $restCallUrl"
+    WriteDownloadLog "`t`t Reset call Url -  $restCallUrl"
     
     return $restCallUrl
  }
@@ -80,16 +62,16 @@ $debug = $true
     [string]$patToken
     )
     
-    WriteLog "`t`t Form the header for invoking the rest call"
+    WriteDownloadLog "`t`t Form the header for invoking the rest call"
     
     $basicAuth = ("{0}:{1}" -f $username, $patToken)
     $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
     $basicAuth = [System.Convert]::ToBase64String($basicAuth)
     $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
     
-    WriteLog "`t`t Invoke-rest call for packageData"
+    WriteDownloadLog "`t`t Invoke-rest call for packageData"
     $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
-    WriteLog "`t`t Agent PackageData : $response"
+    WriteDownloadLog "`t`t Agent PackageData : $response"
 
     return $response.Value[0]
  }
@@ -108,10 +90,10 @@ $debug = $true
 
     [string]$restCallUrl = ContructPackageDataRESTCallUrl -tfsUrl $tfsUrl -platform $platform
     
-    WriteLog "`t`t Get Agent PackageData using $restCallUrl"  
+    WriteDownloadLog "`t`t Get Agent PackageData using $restCallUrl"  
     $packageData = GetAgentPackageData -restCallUrl $restCallUrl -userName $userName -patToken $patToken
 
-    WriteLog "Deployment Agent download url - $($packageData.downloadUrl)"
+    WriteDownloadLog "Deployment Agent download url - $($packageData.downloadUrl)"
     
     return $packageData.downloadUrl
    
@@ -128,13 +110,13 @@ $debug = $true
 
     if( Test-Path $target )
     {
-        WriteLog "`t`t $target already exists, deleting it."
+        WriteDownloadLog "`t`t $target already exists, deleting it."
         Remove-Item $target -Force
     }
     
-    WriteLog "`t`t Start DeploymentAgent download"
+    WriteDownloadLog "`t`t Start DeploymentAgent download"
     (New-Object Net.WebClient).DownloadFile($agentDownloadUrl,$target)
-    WriteLog "`t`t DeploymentAgent download done"
+    WriteDownloadLog "`t`t DeploymentAgent download done"
  }
  
  function ExtractZip
@@ -153,7 +135,7 @@ $debug = $true
 
     $dstFolder.Copyhere($zipName.Items(), 1044)
 
-    WriteLog "`t`t $sourceZipFile is extracted to $target"    
+    WriteDownloadLog "`t`t $sourceZipFile is extracted to $target"    
  }
 
  function GetTargetZipPath
@@ -169,46 +151,66 @@ $debug = $true
 
  }
  
- try
+ 
+function DownloadAgentZipRequired
+{
+    $retVal = $true
+    WriteDownloadLog "Read the variable: $agentDownloadRequiredVarName"
+    try
+    {
+        $retVal = Get-Variable -Scope "Global" -Name $agentDownloadRequiredVarName -ValueOnly
+    }
+    catch
+    {
+        Write-Verbose -Verbose $_.Exception
+        
+        WriteDownloadLog "Unable to get variable: $agentDownloadRequiredVarName"
+    } 
+    
+    return $retVal
+}
+
+try
  {
-     $logFile = InitLogging 
+
+    WriteDownloadLog "Starting the DowloadDeploymentAgent script"
      
-     WriteLog "Starting the DowloadDeploymentAgent script"
+    if( ! $( DownloadAgentZipRequired ) )
+    {
+        WriteDownloadLog "Agent zip download is not required.."
+        return $returnSuccess 
+    }
      
-     $psVersion = $PSVersionTable.PSVersion.Major
-     if( !( $psVersion -ge $minPSVersionSupported ) )
-     {
-        throw "Installed PowerShell version is $psVersion. Minimum required version is $minPSVersionSupported."
-     }
-     
-     if([string]::IsNullOrEmpty($userName))
-     {
+    if([string]::IsNullOrEmpty($userName))
+    {
         $userName = ' '
-        WriteLog " No user name provided setting as empty string"
-     }
+        WriteDownloadLog "No user name provided setting as empty string"
+    }
      
-     WriteLog "Get the url for downloading the agent"
+     WriteDownloadLog "Get the url for downloading the agent"
      
      $agentDownloadUrl = GetAgentDownloadUrl -tfsUrl $tfsUrl -platform $platform -userName $userName -patToken $patToken
 
-     WriteLog "Get the target zip file path"
+     WriteDownloadLog "Get the target zip file path"
      
      $agentZipFilePath = GetTargetZipPath -workingFolder $workingFolder -agentZipName $agentZipName
      
-     WriteLog "`t`t Deployment agent will be downloaded at - $agentZipFilePath"
+     WriteDownloadLog "`t`t Deployment agent will be downloaded at - $agentZipFilePath"
      
-     WriteLog "Download deploymentAgent"
+     WriteDownloadLog "Download deploymentAgent"
      
      DowloadDeploymentAgent -agentDownloadUrl $agentDownloadUrl -target $agentZipFilePath
      
-     WriteLog "Extract zip $agentZipFilePath to $workingFolder"
+     WriteDownloadLog "Extract zip $agentZipFilePath to $workingFolder"
      
      ExtractZip -sourceZipFile $agentZipFilePath -target $workingFolder
      
-     WriteLog "Done with DowloadDeploymentAgent script"
+     WriteDownloadLog "Done with DowloadDeploymentAgent script"
+     
+     return $returnSuccess 
  }
  catch
  {  
-    WriteLog $_.Exception
+    WriteDownloadLog $_.Exception
     throw $_.Exception
  }

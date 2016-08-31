@@ -63,7 +63,7 @@ function Initialize-AgentConfiguration {
         Add-HandlerSubStatusMessage "Pre-check Deployment agent configuration: start"
         Write-Log "Invoking script to pre-check agent configuration..."
 
-        . $PSScriptRoot\InitializeAgentConfiguration.ps1 -tfsUrl -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+        Invoke-PrecheckScript $config
 
         Add-HandlerSubStatusMessage "Pre-check Deployment agent: complete"
         Write-Log "Done pre-checking agent configuration..."
@@ -78,10 +78,10 @@ function Initialize-AgentConfiguration {
 
 <#
 .Synopsis
-   Downloads VSTS agent.
-   Invokes a script to download VSTS agent package and unzip it. Provides a working directory for download script to use.
+   Downloads Deployment agent.
+   Invokes a script to download Deployment agent package and unzip it. Provides a working directory for download script to use.
 #>
-function DownloadVSTSAgent {
+function Get-Agent {
     [CmdletBinding()]
     param(
     [Parameter(Mandatory=$true, Position=0)]
@@ -90,15 +90,15 @@ function DownloadVSTSAgent {
 
     try 
     {
-        Add-HandlerSubStatusMessage "Download VSTS agent: start"
-        Write-Log "Invoking script to download VSTS agent package..."
+        Add-HandlerSubStatusMessage "Download Deployment agent: start"
+        Write-Log "Invoking script to download Deployment agent package..."
 
-        . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -platform $config.Platform -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction ${ function: Write-Log }
+        Invoke-GetAgentScript $config
 
-        Add-HandlerSubStatusMessage "Download VSTS agent: complete"
-        Write-Log "Done downloading VSTS agent package..."
+        Add-HandlerSubStatusMessage "Download Deployment agent: complete"
+        Write-Log "Done downloading Deployment agent package..."
 
-        Set-HandlerStatus $RM_Extension_Status.DownloadedVSTSAgent.Code $RM_Extension_Status.DownloadedVSTSAgent.Message -CompletedOperationName $RM_Extension_Status.DownloadedVSTSAgent.CompletedOperationName
+        Set-HandlerStatus $RM_Extension_Status.DownloadedDeploymentAgent.Code $RM_Extension_Status.DownloadedDeploymentAgent.Message -CompletedOperationName $RM_Extension_Status.DownloadedDeploymentAgent.CompletedOperationName
     }
     catch 
     {
@@ -108,10 +108,10 @@ function DownloadVSTSAgent {
 
 <#
 .Synopsis
-   Configures and starts VSTS agent. 
+   Configures and starts Deployment agent. 
    Invokes a cmd script to configure and start agent. Provides a working directory for this script to use.
 #>
-function Run-VSTSAgent {
+function Register-Agent {
     [CmdletBinding()]
     param(
     [Parameter(Mandatory=$true, Position=0)]
@@ -120,15 +120,15 @@ function Run-VSTSAgent {
 
     try 
     {
-        Add-HandlerSubStatusMessage "Configure VSTS agent: start"
-        Write-Log "Configuring VSTS agent..."
+        Add-HandlerSubStatusMessage "Configure Deployment agent: start"
+        Write-Log "Configuring Deployment agent..."
 
-        . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -platform $config.Platform -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -workingFolder $config.AgentWorkingFolder -logFunction ${ function: Write-Log }
+        Invoke-ConfigureAgentScript $config
 
-        Add-HandlerSubStatusMessage "Configure VSTS agent: complete"
-        Write-Log "Done configuring VSTS agent"
+        Add-HandlerSubStatusMessage "Configure Deployment agent: complete"
+        Write-Log "Done configuring Deployment agent"
 
-        Set-HandlerStatus $RM_Extension_Status.ConfiguredVSTSAgent.Code $RM_Extension_Status.ConfiguredVSTSAgent.Message -CompletedOperationName $RM_Extension_Status.ConfiguredVSTSAgent.CompletedOperationName -Status success
+        Set-HandlerStatus $RM_Extension_Status.ConfiguredDeploymentAgent.Code $RM_Extension_Status.ConfiguredDeploymentAgent.Message -CompletedOperationName $RM_Extension_Status.ConfiguredDeploymentAgent.CompletedOperationName -Status success
     }
     catch 
     {
@@ -234,6 +234,36 @@ function Get-ConfigurationFromSettings {
     }
 }
 
+function Invoke-GetAgentScript {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
+    . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -platform $config.Platform -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+}
+
+function Invoke-PrecheckScript {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
+    . $PSScriptRoot\InitializeAgentConfiguration.ps1 -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+}
+
+function Invoke-ConfigureAgentScript {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
+    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+}
+
 #
 # Exports
 #
@@ -241,6 +271,6 @@ Export-ModuleMember `
     -Function `
         Start-RMExtensionHandler, `
         Initialize-AgentConfiguration, `
-        DownloadVSTSAgent, `
+        Get-Agent, `
         Get-ConfigurationFromSettings, `
-        Run-VSTSAgent
+        Register-Agent

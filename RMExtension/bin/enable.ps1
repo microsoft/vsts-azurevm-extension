@@ -2,7 +2,7 @@
 .Synopsis
     This script is the entry point to enable RM extension. 
     
-    This extension will download VSTS agent using the input config settings provided in <sequence-no>.settings file.
+    This extension will download Deployment agent using the input config settings provided in <sequence-no>.settings file.
     After download, the agent binaries will be unzipped and the unzipped configuration script is used to configure the agent
     with VSTS service
 #>
@@ -19,5 +19,5 @@ Import-Module $PSScriptRoot\RMExtensionHandler.psm1
 Start-RMExtensionHandler
 $config = Get-ConfigurationFromSettings
 Initialize-AgentConfiguration $config
-DownloadVSTSAgent $config
-Run-VSTSAgent $config
+Get-Agent $config
+Register-Agent $config

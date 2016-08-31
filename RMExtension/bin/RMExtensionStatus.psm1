@@ -43,14 +43,14 @@ $global:RM_Extension_Status = @{
         Message = 'Pre-checked Deployment agent on VM.'
         CompletedOperationName = 'Pre-check Agent'
     }
-    DownloadedVSTSAgent = @{
+    DownloadedDeploymentAgent = @{
         Code = 6
-        Message = 'Downloaded VSTS agent package.'
+        Message = 'Downloaded Deployment agent package.'
         CompletedOperationName = 'Agent download'
     }
-    ConfiguredVSTSAgent = @{
+    ConfiguredDeploymentAgent = @{
         Code = 7
-        Message = 'Configured VSTS agent successfully.'
+        Message = 'Configured Deployment agent successfully.'
         CompletedOperationName = 'Agent configuration'
     }
 

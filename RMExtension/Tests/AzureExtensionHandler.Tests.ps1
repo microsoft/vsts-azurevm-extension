@@ -173,4 +173,64 @@ Describe "Handler status tests" {
             $status.status.substatus[2].formattedMessage.message | Should BeLike '*sub-status message 4'
         }
     }
+
+    Context "Status file should be cleaned properly" {
+
+        Mock -ModuleName AzureExtensionHandler Read-HandlerEnvironmentFile { 
+            $mockHandlerEnvironmentData = @(
+                @{  
+                    handlerEnvironment = @{ 
+                        logFolder = "TestDrive:\"
+                        statusFolder = "TestDrive:\"
+                    }
+                    version = 1
+                }
+            )
+
+            return ,$mockHandlerEnvironmentData
+        }
+
+        $statusFilePath = "TestDrive:\\1.status"
+        Set-Content $statusFilePath -value "some garbage value" 
+
+        Get-HandlerEnvironment -Refresh
+        Clear-StatusFile
+
+        It "should have correct status and sub-status properties" {
+            (Get-Content $statusFilePath) -eq $null | Should Be $true
+        }
+    }
+}
+
+Describe "Extension log file tests" {
+    Context "Extension log should created properly" {
+
+        Mock -ModuleName AzureExtensionHandler Read-HandlerEnvironmentFile { 
+            $mockHandlerEnvironmentData = @(
+                @{  
+                    handlerEnvironment = @{ 
+                        logFolder = "TestDrive:\logs"
+                        statusFolder = "TestDrive:\"
+                    }
+                    version = 1
+                }
+            )
+
+            return ,$mockHandlerEnvironmentData
+        }
+
+        Mock -ModuleName AzureExtensionHandler Get-Date { return "date" }
+
+        New-item -Name logs -Path TestDrive:\ -ItemType Directory
+
+        $testPath1 = "TestDrive:\\1.settings"
+        Set-Content $testPath1 -value "my test text." 
+
+        Get-HandlerEnvironment -Refresh
+        Initialize-ExtensionLogFile
+
+        It "should create log file in correct location with correct name format" {
+            Test-Path TestDrive:\logs\RMExtensionHandler.1.date.log
+        }
+    }
 }

@@ -15,6 +15,15 @@ Import-Module $PSScriptRoot\Log.psm1
 Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 
+#
+# Circular buffer for the substatus channels
+#
+$script:logger = {
+    param([string] $Message)
+
+    Write-Log $Message
+}
+
 <#
 .Synopsis
    Initializes RM extension handler. 
@@ -35,7 +44,36 @@ function Start-RMExtensionHandler {
     Initialize-ExtensionLogFile
 
     Add-HandlerSubStatusMessage "RM Extension initialization complete"
-    Set-HandlerStatus $RM_Extension_Status.Initialized.Code $RM_Extension_Status.Initialized.Message
+    Set-HandlerStatus $RM_Extension_Status.Initialized.Code $RM_Extension_Status.Initialized.Message -CompletedOperationName $RM_Extension_Status.Initialized.CompletedOperationName
+}
+
+<#
+.Synopsis
+   Initialize Deployment agent download and configuration process.
+#>
+function Initialize-AgentConfiguration {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
+    try 
+    {
+        Add-HandlerSubStatusMessage "Pre-check Deployment agent configuration: start"
+        Write-Log "Invoking script to pre-check agent configuration..."
+
+        . $PSScriptRoot\InitializeAgentConfiguration.ps1 -tfsUrl -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+
+        Add-HandlerSubStatusMessage "Pre-check Deployment agent: complete"
+        Write-Log "Done pre-checking agent configuration..."
+
+        Set-HandlerStatus $RM_Extension_Status.PreCheckedDeploymentAgent.Code $RM_Extension_Status.PreCheckedDeploymentAgent.Message -CompletedOperationName $RM_Extension_Status.PreCheckedDeploymentAgent.CompletedOperationName
+    }
+    catch 
+    {
+        Set-HandlerErrorStatus $_
+    } 
 }
 
 <#
@@ -55,12 +93,12 @@ function DownloadVSTSAgent {
         Add-HandlerSubStatusMessage "Download VSTS agent: start"
         Write-Log "Invoking script to download VSTS agent package..."
 
-        . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -platform $config.Platform -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder
+        . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -platform $config.Platform -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction ${ function: Write-Log }
 
         Add-HandlerSubStatusMessage "Download VSTS agent: complete"
         Write-Log "Done downloading VSTS agent package..."
 
-        Set-HandlerStatus $RM_Extension_Status.DownloadedVSTSAgent.Code $RM_Extension_Status.DownloadedVSTSAgent.Message
+        Set-HandlerStatus $RM_Extension_Status.DownloadedVSTSAgent.Code $RM_Extension_Status.DownloadedVSTSAgent.Message -CompletedOperationName $RM_Extension_Status.DownloadedVSTSAgent.CompletedOperationName
     }
     catch 
     {
@@ -85,27 +123,12 @@ function Run-VSTSAgent {
         Add-HandlerSubStatusMessage "Configure VSTS agent: start"
         Write-Log "Configuring VSTS agent..."
 
-        #cmd.exe /c "$config.AgentWorkingFolder\config.cmd --unattended --url $config.VSTSUrl --pool $config.Pool --auth PAT --token $config.PATToken --work $config.AgentWorkingFolder --runasservice" > out.txt
-
-        $scriptPath = $config.AgentWorkingFolder
-        $url = $config.VSTSUrl
-        $token = $config.PATToken
-        $pool = $config.Pool
-
-        $startInfo = New-Object System.Diagnostics.ProcessStartInfo('cmd.exe', "/c  mode con cols=256 && $scriptPath\config.cmd --unattended --url $url --pool $pool --auth PAT --token $token --work $scriptPath --runasservice 2>&1")
-        $startInfo.WindowStyle = 'Hidden'
-        $startInfo.RedirectStandardOutput = $True
-        $startInfo.UseShellExecute = $false
-
-        $proc = [System.Diagnostics.Process]::Start($startInfo)
-        $proc.WaitForExit()
-        $configLog = $proc.StandardOutput.ReadToEnd();
+        . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -platform $config.Platform -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -workingFolder $config.AgentWorkingFolder -logFunction ${ function: Write-Log }
 
         Add-HandlerSubStatusMessage "Configure VSTS agent: complete"
         Write-Log "Done configuring VSTS agent"
-        Write-Log "Configuration log: $configLog"
 
-        Set-HandlerStatus $RM_Extension_Status.ConfiguredVSTSAgent.Code $RM_Extension_Status.ConfiguredVSTSAgent.Message -Status success
+        Set-HandlerStatus $RM_Extension_Status.ConfiguredVSTSAgent.Code $RM_Extension_Status.ConfiguredVSTSAgent.Message -CompletedOperationName $RM_Extension_Status.ConfiguredVSTSAgent.CompletedOperationName -Status success
     }
     catch 
     {
@@ -175,14 +198,23 @@ function Get-ConfigurationFromSettings {
         }
     }
 
-    $poolName = $publicSettings['Pool']
-    if(-not $poolName)
+    $teamProjectName = $publicSettings['TeamProject']
+    if(-not $teamProjectName)
     {
-        $message = "Agent pool should be specified. Please specify a valid agent pool for agent."
+        $message = "Team Project should be specified. Please specify a valid team project for agent."
         throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
     }
 
-    Write-Log "Pool: $poolName"
+    Write-Log "Team Project: $teamProjectName"
+
+    $machineGroupName = $publicSettings['MachineGroup']
+    if(-not $machineGroupName)
+    {
+        $message = "Machine Group should be specified. Please specify a valid machine group for agent."
+        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
+    }
+
+    Write-Log "Machine Group: $machineGroupName"
 
     $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
     Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
@@ -196,7 +228,8 @@ function Get-ConfigurationFromSettings {
         VSTSUrl  = $vstsUrl
         PATToken = $patToken
         Platform = $platform
-        Pool     = $poolName
+        TeamProject        = $teamProjectName
+        MachineGroup       = $machineGroupName
         AgentWorkingFolder = $agentWorkingFolder
     }
 }
@@ -207,6 +240,7 @@ function Get-ConfigurationFromSettings {
 Export-ModuleMember `
     -Function `
         Start-RMExtensionHandler, `
+        Initialize-AgentConfiguration, `
         DownloadVSTSAgent, `
         Get-ConfigurationFromSettings, `
         Run-VSTSAgent

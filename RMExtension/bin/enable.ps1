@@ -18,5 +18,6 @@ Import-Module $PSScriptRoot\RMExtensionHandler.psm1
 
 Start-RMExtensionHandler
 $config = Get-ConfigurationFromSettings
+Initialize-AgentConfiguration $config
 DownloadVSTSAgent $config
 Run-VSTSAgent $config

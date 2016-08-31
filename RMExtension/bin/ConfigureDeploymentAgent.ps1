@@ -4,8 +4,6 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$platform,
-    [Parameter(Mandatory=$true)]
     [string]$projectName,
     [Parameter(Mandatory=$true)]
     [string]$machineGroupName,    

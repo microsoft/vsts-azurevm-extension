@@ -32,18 +32,26 @@ $global:RM_Extension_Status = @{
     Initialized = @{
         Code = 3
         Message = 'Done Initializing RM extension.'
+        CompletedOperationName = 'Initialization'
     }
     Enabled = @{
-        Code = 3
+        Code = 4
         Message = 'RM extension has been enabled.' 
     }
+    PreCheckedDeploymentAgent = @{
+        Code = 5
+        Message = 'Pre-checked Deployment agent on VM.'
+        CompletedOperationName = 'Pre-check Agent'
+    }
     DownloadedVSTSAgent = @{
-        Code = 4
+        Code = 6
         Message = 'Downloaded VSTS agent package.'
+        CompletedOperationName = 'Agent download'
     }
     ConfiguredVSTSAgent = @{
-        Code = 5
+        Code = 7
         Message = 'Configured VSTS agent successfully.'
+        CompletedOperationName = 'Agent configuration'
     }
 
     #

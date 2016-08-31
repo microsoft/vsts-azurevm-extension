@@ -134,7 +134,7 @@ function Get-HandlerEnvironment
         for ($sleepPeriod = 1; $sleepPeriod -le 64; $sleepPeriod = 2 * $sleepPeriod) {
             try
             {
-                $handlerEnvironmentFileContent = Get-JsonContent $handlerEnvironmentFile
+                $handlerEnvironmentFileContent = Read-HandlerEnvironmentFile $handlerEnvironmentFile
 
                 if (!$handlerEnvironmentFileContent) {
                     throw "$handlerEnvironmentFile is empty"
@@ -355,6 +355,9 @@ function Set-HandlerStatus
         [string] $Status = 'transitioning',
 
         [Parameter()]
+        [string] $CompletedOperationName,
+
+        [Parameter()]
         [ValidateSet('transitioning', 'error', 'success', 'warning')]
         [string] $SubStatus = 'success'
     )
@@ -384,7 +387,7 @@ function Set-HandlerStatus
     # Get current list of sub-status
     [System.Collections.ArrayList]$subStatusList = ((Get-HandlerStatus).status).substatus
     $newSubStatus = @{
-            name = 'RMExtensionLog'
+            name = $CompletedOperationName
             status = $SubStatus
             code = $Code
             formattedMessage = @{
@@ -565,6 +568,15 @@ function Clear-StatusFile()
     Write-Log "Clearing status file $statusFile"
     
     Clear-Content $statusFile -Force
+}
+
+function Read-HandlerEnvironmentFile
+{
+    param(
+        [Parameter(Mandatory=$true)]
+        [string] $handlerEnvironmentFile
+        )
+    Get-JsonContent $handlerEnvironmentFile
 }
 
 <#

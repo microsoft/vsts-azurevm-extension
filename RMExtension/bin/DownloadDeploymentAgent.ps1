@@ -175,12 +175,6 @@ try
 
     WriteDownloadLog "Starting the DowloadDeploymentAgent script"
      
-    if( ! $( DownloadAgentZipRequired ) )
-    {
-        WriteDownloadLog "Agent zip download is not required.."
-        return $returnSuccess 
-    }
-     
     if([string]::IsNullOrEmpty($userName))
     {
         $userName = ' '

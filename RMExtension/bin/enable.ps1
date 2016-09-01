@@ -14,10 +14,29 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
     $PSScriptRoot = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
 }
 
+Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionHandler.psm1
+Import-Module $PSScriptRoot\Log.psm1
 
 Start-RMExtensionHandler
 $config = Get-ConfigurationFromSettings
-Initialize-AgentConfiguration $config
-Get-Agent $config
-Register-Agent $config
+$configuredAgentExists = Test-AgentAlreadyExists $config
+
+if(!$configuredAgentExists)
+{
+    Get-Agent $config
+}
+else
+{
+    Write-Log "Skipping agent download as a configured agent already exists."
+    Add-HandlerSubStatus $RM_Extension_Status.SkippingDownloadDeploymentAgent.Code $RM_Extension_Status.SkippingDownloadDeploymentAgent.Message -operationName $RM_Extension_Status.SkippingDownloadDeploymentAgent.operationName
+}
+
+if($configuredAgentExists)
+{
+    Register-Agent $config $true
+} 
+else 
+{
+    Register-Agent $config $false
+}

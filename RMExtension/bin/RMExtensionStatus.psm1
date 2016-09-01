@@ -21,37 +21,73 @@ Import-Module $PSScriptRoot\Log.psm1
 $global:RM_TerminatingErrorId = 'RMHandlerTerminatingError'
 
 $global:RM_Extension_Status = @{
-    Success = @{
+    Installing = @{
         Code = 1
-        Message = 'Rm extension was applied successfully.' 
+        Message = 'Installing and configuring Deployment agent.' 
+    }
+    Installed = @{
+        Code = 2
+        Message = 'Configured Deployment agent successfully.' 
     }
     Initializing = @{
-        Code = 2
+        Code = 3
         Message = 'Initializing RM extension.'
+        operationName = 'Initialization'
     }
     Initialized = @{
-        Code = 3
-        Message = 'Done Initializing RM extension.'
-        CompletedOperationName = 'Initialization'
-    }
-    Enabled = @{
         Code = 4
-        Message = 'RM extension has been enabled.' 
+        Message = 'Done Initializing RM extension.'
+        operationName = 'Initialization'
+    }
+    PreCheckingDeploymentAgent = @{
+        Code = 5
+        Message = 'Checking whether an agent is already exising.'
+        operationName = 'Check existing Agent'
     }
     PreCheckedDeploymentAgent = @{
-        Code = 5
-        Message = 'Pre-checked Deployment agent on VM.'
-        CompletedOperationName = 'Pre-check Agent'
+        Code = 6
+        Message = 'Checked for exising deployment agent.'
+        operationName = 'Check existing Agent'
+    }
+    SkippingDownloadDeploymentAgent = @{
+        Code = 7
+        Message = 'Skipping download of deployment agent.'
+        operationName = 'Agent download'
+    }
+    DownloadingDeploymentAgent = @{
+        Code = 8
+        Message = 'Downloading Deployment agent package.'
+        operationName = 'Agent download'
     }
     DownloadedDeploymentAgent = @{
-        Code = 6
+        Code = 9
         Message = 'Downloaded Deployment agent package.'
-        CompletedOperationName = 'Agent download'
+        operationName = 'Agent download'
+    }
+    RemovingAndConfiguringDeploymentAgent = @{
+        Code = 10
+        Message = 'Removing existing deployment agent and configuring afresh.'
+        operationName = 'Agent configuration'
+    }
+    ConfiguringDeploymentAgent = @{
+        Code = 11
+        Message = 'Configuring deployment agent.'
+        operationName = 'Agent configuration'
     }
     ConfiguredDeploymentAgent = @{
-        Code = 7
+        Code = 12
         Message = 'Configured Deployment agent successfully.'
-        CompletedOperationName = 'Agent configuration'
+        operationName = 'Agent configuration'
+    }
+    ReadingSettings = @{
+        Code = 3
+        Message = 'Reading config settings from file.'
+        operationName = 'Read Config settings'
+    }
+    SuccessfullyReadSettings = @{
+        Code = 4
+        Message = 'Successfully read config settings from file.'
+        operationName = 'Read Config settings'
     }
 
     #
@@ -129,7 +165,10 @@ function Set-HandlerErrorStatus
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, position=1)]
-        [System.Management.Automation.ErrorRecord] $ErrorRecord
+        [System.Management.Automation.ErrorRecord] $ErrorRecord,
+
+        [Parameter()]
+        [string] $operationName
     )
     
     #
@@ -193,7 +232,8 @@ More information about the failure can be found in the logs located under '{1}' 
         }
     }
     
-    Set-HandlerStatus $errorCode $errorMessage -Status error -SubStatus error
+    Add-HandlerSubStatus $errorCode $errorMessage -operationName $operationName -SubStatus error
+    Set-HandlerStatus $errorCode $errorMessage -Status error
 }
 
 #

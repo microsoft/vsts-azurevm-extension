@@ -45,18 +45,22 @@ function Start-RMExtensionHandler {
 
     try 
     {
-        Add-HandlerSubStatusMessage "RM Extension initialization start"
+        $sequenceNumber = Get-HandlerExecutionSequenceNumber    
+
         Clear-StatusFile
         Clear-HandlerCache 
         Clear-HandlerSubStatusMessage
         Initialize-ExtensionLogFile
 
-        Add-HandlerSubStatusMessage "RM Extension initialization complete"
-        Set-HandlerStatus $RM_Extension_Status.Initialized.Code $RM_Extension_Status.Initialized.Message -CompletedOperationName $RM_Extension_Status.Initialized.CompletedOperationName
+        Write-Log "Sequence Number: $sequenceNumber"
+
+        Set-HandlerStatus $RM_Extension_Status.Installing.Code $RM_Extension_Status.Installing.Message
+        Add-HandlerSubStatus $RM_Extension_Status.Initialized.Code $RM_Extension_Status.Initialized.Message -operationName $RM_Extension_Status.Initialized.operationName
     }
     catch 
     {
-        Set-HandlerErrorStatus $_
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.Initializing.operationName
+        throw $_
     }
 }
 
@@ -64,7 +68,7 @@ function Start-RMExtensionHandler {
 .Synopsis
    Initialize Deployment agent download and configuration process.
 #>
-function Initialize-AgentConfiguration {
+function Test-AgentAlreadyExists {
     [CmdletBinding()]
     param(
     [Parameter(Mandatory=$true, Position=0)]
@@ -73,19 +77,19 @@ function Initialize-AgentConfiguration {
 
     try 
     {
-        Add-HandlerSubStatusMessage "Pre-check Deployment agent configuration: start"
+        Add-HandlerSubStatus $RM_Extension_Status.PreCheckingDeploymentAgent.Code $RM_Extension_Status.PreCheckingDeploymentAgent.Message -operationName $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
         Write-Log "Invoking script to pre-check agent configuration..."
 
-        Invoke-PrecheckScript $config
+        $agentAlreadyExists = Test-AgentAlreadyExistsInternal $config
 
-        Add-HandlerSubStatusMessage "Pre-check Deployment agent: complete"
         Write-Log "Done pre-checking agent configuration..."
-
-        Set-HandlerStatus $RM_Extension_Status.PreCheckedDeploymentAgent.Code $RM_Extension_Status.PreCheckedDeploymentAgent.Message -CompletedOperationName $RM_Extension_Status.PreCheckedDeploymentAgent.CompletedOperationName
+        Add-HandlerSubStatus $RM_Extension_Status.PreCheckedDeploymentAgent.Code $RM_Extension_Status.PreCheckedDeploymentAgent.Message -operationName $RM_Extension_Status.PreCheckedDeploymentAgent.operationName
+        $agentAlreadyExists
     }
     catch 
     {
-        Set-HandlerErrorStatus $_
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
+        throw $_
     } 
 }
 
@@ -103,19 +107,18 @@ function Get-Agent {
 
     try 
     {
-        Add-HandlerSubStatusMessage "Download Deployment agent: start"
+        Add-HandlerSubStatus $RM_Extension_Status.DownloadingDeploymentAgent.Code $RM_Extension_Status.DownloadingDeploymentAgent.Message -operationName $RM_Extension_Status.DownloadingDeploymentAgent.operationName
         Write-Log "Invoking script to download Deployment agent package..."
 
         Invoke-GetAgentScript $config
 
-        Add-HandlerSubStatusMessage "Download Deployment agent: complete"
         Write-Log "Done downloading Deployment agent package..."
-
-        Set-HandlerStatus $RM_Extension_Status.DownloadedDeploymentAgent.Code $RM_Extension_Status.DownloadedDeploymentAgent.Message -CompletedOperationName $RM_Extension_Status.DownloadedDeploymentAgent.CompletedOperationName
+        Add-HandlerSubStatus $RM_Extension_Status.DownloadedDeploymentAgent.Code $RM_Extension_Status.DownloadedDeploymentAgent.Message -operationName $RM_Extension_Status.DownloadedDeploymentAgent.operationName
     }
     catch 
     {
-        Set-HandlerErrorStatus $_
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.DownloadingDeploymentAgent.operationName
+        throw $_
     } 
 }
 
@@ -128,24 +131,36 @@ function Register-Agent {
     [CmdletBinding()]
     param(
     [Parameter(Mandatory=$true, Position=0)]
-    [hashtable] $config
+    [hashtable] $config,
+
+    [Parameter(Mandatory=$true, Position=1)]
+    [boolean] $agentRemovalRequired
     )
 
     try 
     {
-        Add-HandlerSubStatusMessage "Configure Deployment agent: start"
-        Write-Log "Configuring Deployment agent..."
+        If($agentRemovalRequired)
+        {
+            Add-HandlerSubStatus $RM_Extension_Status.RemovingAndConfiguringDeploymentAgent.Code $RM_Extension_Status.RemovingAndConfiguringDeploymentAgent.Message -operationName $RM_Extension_Status.RemovingAndConfiguringDeploymentAgent.operationName
+            Write-Log "Removing existing agent and configuring again..."
+        }
+        else 
+        {
+            Add-HandlerSubStatus $RM_Extension_Status.ConfiguringDeploymentAgent.Code $RM_Extension_Status.ConfiguringDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
+            Write-Log "Configuring Deployment agent..."
+        }
 
-        Invoke-ConfigureAgentScript $config
+        Invoke-ConfigureAgentScript $config $agentRemovalRequired
 
-        Add-HandlerSubStatusMessage "Configure Deployment agent: complete"
         Write-Log "Done configuring Deployment agent"
 
-        Set-HandlerStatus $RM_Extension_Status.ConfiguredDeploymentAgent.Code $RM_Extension_Status.ConfiguredDeploymentAgent.Message -CompletedOperationName $RM_Extension_Status.ConfiguredDeploymentAgent.CompletedOperationName -Status success
+        Add-HandlerSubStatus $RM_Extension_Status.ConfiguredDeploymentAgent.Code $RM_Extension_Status.ConfiguredDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguredDeploymentAgent.operationName
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
     }
     catch 
     {
-        Set-HandlerErrorStatus $_
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
+        throw $_
     } 
 }
 
@@ -157,94 +172,80 @@ function Get-ConfigurationFromSettings {
     [CmdletBinding()]
     param()
 
-    $sequenceNumber = Get-HandlerExecutionSequenceNumber    
-    Write-Log "Sequence Number     : $sequenceNumber"
+    try
+    {
+        Add-HandlerSubStatus $RM_Extension_Status.ReadingSettings.Code $RM_Extension_Status.ReadingSettings.Message -operationName $RM_Extension_Status.ReadingSettings.operationName
+        Write-Log "Reading config settings from file..."
 
-    Write-Log "Reading config settings from file..."
-
-    #Retrieve settings from file
-    $settings = Get-HandlerSettings
+        #Retrieve settings from file
+        $settings = Get-HandlerSettings
     
-    $publicSettings = $settings['publicSettings']
-    $protectedSettings = $settings['protectedSettings']
-    if (-not $publicSettings) 
-    {
-        $publicSettings = @{}
-    }
+        $publicSettings = $settings['publicSettings']
+        $protectedSettings = $settings['protectedSettings']
+        if (-not $publicSettings) 
+        {
+            $publicSettings = @{}
+        }
 
-    Write-Log "Done reading config settings from file..."
-    Add-HandlerSubStatusMessage "Done Reading config settings from file"
+        $osVersion = Get-OSVersion
 
-    $osVersion = Get-OSVersion
+        if (!$osVersion.IsX64)
+        {
+            throw New-HandlerTerminatingError $RM_Extension_Status.ArchitectureNotSupported.Code -Message $RM_Extension_Status.ArchitectureNotSupported.Message
+        }
 
-    if (!$osVersion.IsX64)
-    {
-        throw New-HandlerTerminatingError $RM_Extension_Status.ArchitectureNotSupported.Code -Message $RM_Extension_Status.ArchitectureNotSupported.Message
-    }
+        $platform = "win7-x64"
+        Write-Log "Platform: $platform"
 
-    $platform = "win7-x64"
-    Write-Log "Platform: $platform"
+        $vstsUrl = $publicSettings['VSTSAccountUrl']
+        VeriftInputNotNull "VSTSAccountUrl" $vstsUrl
+        Write-Log "VSTS service URL: $vstsUrl"
 
-    $vstsAccountName = $publicSettings['VSTSAccountName']
-    if(-not $vstsAccountName)
-    {
-        $message = "VSTS account name should be specified. Please specify a valid VSTS account to which RM agent will be configured."
-        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
-    }
+        $patToken = $null
+        if($protectedSettings.Contains('PATToken'))
+        {
+            $patToken = $protectedSettings['PATToken']
+        }
 
-    $vstsUrl = "https://{0}.visualstudio.com" -f $vstsAccountName
-    Write-Log "VSTS service URL: $vstsUrl"
-
-    $patToken = $null
-    if($protectedSettings.Contains('PATToken'))
-    {
-        $patToken = $protectedSettings['PATToken']
-    }
-
-    if(-not $patToken)
-    {
-        $patToken = $publicSettings['PATToken']
         if(-not $patToken)
         {
-            $message = "PAT token should be specified. Please specify a valid PAT token which will be used to authorize calls to VSTS."
-            throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
+            $patToken = $publicSettings['PATToken']
+            VeriftInputNotNull "PATToken" $patToken
+        }
+
+        $teamProjectName = $publicSettings['TeamProject']
+        VeriftInputNotNull "TeamProject" $teamProjectName
+        Write-Log "Team Project: $teamProjectName"
+
+        $machineGroupName = $publicSettings['MachineGroup']
+        VeriftInputNotNull "MachineGroup" $machineGroupName
+        Write-Log "Machine Group: $machineGroupName"
+
+        $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
+        Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
+        if(!(Test-Path $agentWorkingFolder))
+        {
+            Write-Log "Working folder does not exist. Creating it..."
+            New-Item -ItemType Directory $agentWorkingFolder > $null
+        }
+
+        Write-Log "Done reading config settings from file..."
+        Add-HandlerSubStatus $RM_Extension_Status.SuccessfullyReadSettings.Code $RM_Extension_Status.SuccessfullyReadSettings.Message -operationName $RM_Extension_Status.SuccessfullyReadSettings.operationName
+
+        return @{
+            VSTSUrl  = $vstsUrl
+            PATToken = $patToken
+            Platform = $platform
+            TeamProject        = $teamProjectName
+            MachineGroup       = $machineGroupName
+            AgentWorkingFolder = $agentWorkingFolder
         }
     }
-
-    $teamProjectName = $publicSettings['TeamProject']
-    if(-not $teamProjectName)
+    catch 
     {
-        $message = "Team Project should be specified. Please specify a valid team project for agent."
-        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
-    }
-
-    Write-Log "Team Project: $teamProjectName"
-
-    $machineGroupName = $publicSettings['MachineGroup']
-    if(-not $machineGroupName)
-    {
-        $message = "Machine Group should be specified. Please specify a valid machine group for agent."
-        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
-    }
-
-    Write-Log "Machine Group: $machineGroupName"
-
-    $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
-    Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
-    if(!(Test-Path $agentWorkingFolder))
-    {
-        Write-Log "Working folder does not exist. Creating it..."
-        New-Item -ItemType Directory $agentWorkingFolder > $null
-    }
-
-    @{
-        VSTSUrl  = $vstsUrl
-        PATToken = $patToken
-        Platform = $platform
-        TeamProject        = $teamProjectName
-        MachineGroup       = $machineGroupName
-        AgentWorkingFolder = $agentWorkingFolder
-    }
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ReadingSettings.operationName
+        throw $_
+    } 
 }
 
 function Invoke-GetAgentScript {
@@ -257,24 +258,40 @@ function Invoke-GetAgentScript {
     . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -platform $config.Platform -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
 }
 
-function Invoke-PrecheckScript {
+function Test-AgentAlreadyExistsInternal {
     [CmdletBinding()]
     param(
     [Parameter(Mandatory=$true, Position=0)]
     [hashtable] $config
     )
 
-    . $PSScriptRoot\InitializeAgentConfiguration.ps1 -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    . $PSScriptRoot\AgentExistenceChecker.ps1
+    $agentAlreadyExists = Test-ConfiguredAgentExists -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    return $agentAlreadyExists
 }
 
 function Invoke-ConfigureAgentScript {
     [CmdletBinding()]
     param(
-    [Parameter(Mandatory=$true, Position=0)]
-    [hashtable] $config
+    [hashtable] $config,
+    [boolean] $agentRemovalRequired
     )
 
-    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -workingFolder $config.AgentWorkingFolder -agentRemovalRequired $agentRemovalRequired -logFunction $script:logger
+}
+
+function VeriftInputNotNull {
+    [CmdletBinding()]
+    param(
+    [string] $inputKey,
+    [string] $inputValue
+    )
+
+    if(-not $inputValue)
+        {
+            $message = "$inputKey should be specified. Please specify a valid $inputKey and try again."
+            throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
+        }
 }
 
 #
@@ -283,7 +300,7 @@ function Invoke-ConfigureAgentScript {
 Export-ModuleMember `
     -Function `
         Start-RMExtensionHandler, `
-        Initialize-AgentConfiguration, `
+        Test-AgentAlreadyExists, `
         Get-Agent, `
         Get-ConfigurationFromSettings, `
         Register-Agent

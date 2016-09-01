@@ -352,14 +352,7 @@ function Set-HandlerStatus
 
         [Parameter()]
         [ValidateSet('transitioning', 'error', 'success', 'warning')]
-        [string] $Status = 'transitioning',
-
-        [Parameter()]
-        [string] $CompletedOperationName,
-
-        [Parameter()]
-        [ValidateSet('transitioning', 'error', 'success', 'warning')]
-        [string] $SubStatus = 'success'
+        [string] $Status = 'transitioning'
     )
 
     $statusFile = '{0}\{1}.status' -f (Get-HandlerEnvironment).statusFolder, (Get-HandlerExecutionSequenceNumber)
@@ -367,6 +360,8 @@ function Set-HandlerStatus
     Write-Log ("Settings handler status to '{0}' ({1})" -f $Status, $statusFile)
 
     $timestampUTC = [DateTimeOffset]::Now.ToString('u')
+
+    [System.Collections.ArrayList]$subStatusList = ((Get-HandlerStatus).status).substatus
 
     $statusObject = @(
         @{  
@@ -378,30 +373,88 @@ function Set-HandlerStatus
                 status = $Status
                 code = $Code
                 configurationAppliedTime = $timestampUTC
+                substatus = $subStatusList
             }
             version = '1.0'
             timestampUTC = $timestampUTC
         }
     )
 
+    #This will error out when azure agent is reading it while we try to access the file 
+    #Add retries if the process cannot access the status file
+    $result = $false
+    for ($sleepPeriod = 1; $sleepPeriod -le 64; $sleepPeriod = 2 * $sleepPeriod) 
+    {
+        try
+        {
+            Set-JsonContent -Path $statusFile -Value $statusObject -Force
+            $result = $true
+            break
+        }
+        catch
+        {
+            Write-Log "Error accessing the status file: $statusFile... $_"
+            Write-Log "Retry after $sleepPeriod Secs..."
+            Start-Sleep -Seconds $sleepPeriod
+        }
+    }
+
+    if (!$result) {
+        throw "Error accessing the status file: $statusFile..."
+    }
+
+    Flush-BufferToFile -buffer $script:extensionLogBuffer -logFile $script:logFilePath -Force
+}
+
+<#
+.Synopsis
+    Adds a sub-status to list of sub-status under status
+.Description
+    The existing sub-status list is maintained when setting new handler status. The new sub-statuses are appended to the exisiting list.
+    This is to ensure that final sub-status list contains all intermediate sub-status
+#>
+function Add-HandlerSubStatus
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true, position=1)]
+        [int] $Code,
+
+        [Parameter(Mandatory=$true,Position=2)]
+        [string] $Message,
+
+        [Parameter()]
+        [string] $operationName,
+
+        [Parameter()]
+        [ValidateSet('transitioning', 'error', 'success', 'warning')]
+        [string] $SubStatus = 'success'
+    )
+
+    $statusFile = '{0}\{1}.status' -f (Get-HandlerEnvironment).statusFolder, (Get-HandlerExecutionSequenceNumber)
+
+    #$timestampUTC = [DateTimeOffset]::Now.ToString('u')
+
+    $statusObject = ,(Get-HandlerStatus)
+
     # Get current list of sub-status
-    [System.Collections.ArrayList]$subStatusList = ((Get-HandlerStatus).status).substatus
+    [System.Collections.ArrayList]$subStatusList = $statusObject[0].status.substatus
     $newSubStatus = @{
-            name = $CompletedOperationName
+            name = $operationName
             status = $SubStatus
             code = $Code
             formattedMessage = @{
                 lang = 'en-US'
-                message = (BufferToString $script:extensionSubStatusBuffer)
+                message = $Message
             }
         }
 
     #$subStatusList = @($subStatusList, $newSubStatus)
-    $subStatusList.Add($newSubStatus)
+    $subStatusList.Add($newSubStatus) > $null
 
-    $statusObject[0].status['substatus'] = $subStatusList
+    $statusObject[0].status.substatus = $subStatusList
 
-    $script:extensionSubStatusBuffer.Clear()
+    #$script:extensionSubStatusBuffer.Clear()
 
     #This will error out when azure agent is reading it while we try to access the file 
     #Add retries if the process cannot access the status file
@@ -693,5 +746,6 @@ Export-ModuleMember `
         Get-JsonContent, `
         New-CircularBuffer, `
         Set-HandlerStatus, `
+        Add-HandlerSubStatus, `
         Clear-StatusFile, `
         Set-JsonContent

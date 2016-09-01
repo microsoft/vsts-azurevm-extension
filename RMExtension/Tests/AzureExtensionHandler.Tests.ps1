@@ -125,8 +125,9 @@ Describe "Handler status tests" {
 
         Get-HandlerEnvironment -Refresh
         Initialize-ExtensionLogFile
-        Add-HandlerSubStatusMessage "sub-status message 1"
-        Set-HandlerStatus -Code 1432 -Message "some status msg 1" -Status transitioning -CompletedOperationName "some operation 1"
+
+        Set-HandlerStatus -Code 1432 -Message "some status msg 1" -Status transitioning
+        Add-HandlerSubStatus -Code 1433 -Message "sub-status message 1" -operationName "some operation 1"
 
         $status = Get-HandlerStatus -SequenceNumber 1
 
@@ -138,25 +139,23 @@ Describe "Handler status tests" {
             $status.status.substatus[0].formattedMessage.message | Should Be "sub-status message 1"
         }
 
-        Add-HandlerSubStatusMessage "sub-status message 2"
-        Set-HandlerStatus -Code 2000 -Message "some status msg 2" -Status success -CompletedOperationName "some operation 2"
+        Add-HandlerSubStatus -Code 1500 -Message "sub-status message 2" -operationName "some operation 2"
 
         $status = Get-HandlerStatus -SequenceNumber 1
 
         It "should retain previous sub-status while updating status" {
-            $status.status.code | Should Be "2000"
-            $status.status.formattedMessage.message | Should Be "some status msg 2"
-            $status.status.Status | Should Be success
+            $status.status.code | Should Be "1432"
+            $status.status.formattedMessage.message | Should Be "some status msg 1"
+            $status.status.Status | Should Be transitioning
             $status.status.substatus[0].name | Should Be "some operation 1"
             $status.status.substatus[0].formattedMessage.message | Should Be "sub-status message 1"
             $status.status.substatus[1].name | Should Be "some operation 2"
             $status.status.substatus[1].formattedMessage.message | Should Be "sub-status message 2"
         }
 
-        Add-HandlerSubStatusMessage "sub-status message 3"
-        Add-HandlerSubStatusMessage "sub-status message 4"
-        Set-HandlerStatus -Code 3000 -Message "some status msg 3" -Status error -CompletedOperationName "some operation 3" -SubStatus error
-
+        Add-HandlerSubStatus -Code 1500 -Message "sub-status message 3" -operationName "some operation 3" -SubStatus transitioning
+        Add-HandlerSubStatus -Code 1500 -Message "sub-status message 4" -operationName "some operation 4" -SubStatus error
+        Set-HandlerStatus -Code 3000 -Message "some status msg 3" -Status error
         $status = Get-HandlerStatus -SequenceNumber 1
 
         It "should push sub-status message to buffer and then flush to file" {
@@ -168,9 +167,11 @@ Describe "Handler status tests" {
             $status.status.substatus[1].name | Should Be "some operation 2"
             $status.status.substatus[1].formattedMessage.message | Should Be "sub-status message 2"
             $status.status.substatus[2].name | Should Be "some operation 3"
-            $status.status.substatus[2].status | Should Be error
-            $status.status.substatus[2].formattedMessage.message | Should BeLike 'sub-status message 3*'
-            $status.status.substatus[2].formattedMessage.message | Should BeLike '*sub-status message 4'
+            $status.status.substatus[2].status | Should Be transitioning
+            $status.status.substatus[2].formattedMessage.message | Should Be 'sub-status message 3'
+            $status.status.substatus[3].name | Should Be "some operation 4"
+            $status.status.substatus[3].status | Should Be error
+            $status.status.substatus[3].formattedMessage.message | Should Be 'sub-status message 4'
         }
     }
 

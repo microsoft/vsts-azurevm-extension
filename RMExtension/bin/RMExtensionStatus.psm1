@@ -67,7 +67,7 @@ $global:RM_Extension_Status = @{
     InstallError = 1001 # The message for this error is provided by the specific exception
 
     ArchitectureNotSupported = @{
-        Code = 1003
+        Code = 1002
         Message = 'The current CPU architecture is not supported. RM agent requires x64 architecture.'
     }
     

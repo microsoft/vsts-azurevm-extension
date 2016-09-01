@@ -16,7 +16,7 @@ Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 
 #
-# Circular buffer for the substatus channels
+# Logger function for download/configuration scripts
 #
 $script:logger = {
     param([string] $Message)
@@ -37,14 +37,27 @@ function Start-RMExtensionHandler {
     [CmdletBinding()]
     param()
 
-    Add-HandlerSubStatusMessage "RM Extension initialization start"
-    Clear-StatusFile
-    Clear-HandlerCache 
-    Clear-HandlerSubStatusMessage
-    Initialize-ExtensionLogFile
+    $psVersion = $PSVersionTable.PSVersion.Major
+    if(!($psVersion -ge 3))
+    {
+        throw "Installed PowerShell version is $psVersion. Minimum required version is 3."
+    }
 
-    Add-HandlerSubStatusMessage "RM Extension initialization complete"
-    Set-HandlerStatus $RM_Extension_Status.Initialized.Code $RM_Extension_Status.Initialized.Message -CompletedOperationName $RM_Extension_Status.Initialized.CompletedOperationName
+    try 
+    {
+        Add-HandlerSubStatusMessage "RM Extension initialization start"
+        Clear-StatusFile
+        Clear-HandlerCache 
+        Clear-HandlerSubStatusMessage
+        Initialize-ExtensionLogFile
+
+        Add-HandlerSubStatusMessage "RM Extension initialization complete"
+        Set-HandlerStatus $RM_Extension_Status.Initialized.Code $RM_Extension_Status.Initialized.Message -CompletedOperationName $RM_Extension_Status.Initialized.CompletedOperationName
+    }
+    catch 
+    {
+        Set-HandlerErrorStatus $_
+    }
 }
 
 <#

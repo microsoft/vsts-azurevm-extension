@@ -595,167 +595,82 @@ function Initialize-ExtensionLogFile()
     New-Item $logFilePath -ItemType File > $null
 }
 
-if ($PSVersionTable.PSVersion.Major -eq 2) 
-{
-    Import-Module $PSScriptRoot\JSON.psm1
-
-    <#
-    .Synopsis
-        Reads a file containing a JSON object and coverts it to a PowerShell object
-    #>
-    function Get-JsonContent { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)]
-            [string]
-            $Path
-        )
+<#
+.Synopsis
+    Reads a file containing a JSON object and coverts it to a PowerShell object
+#>
+function Get-JsonContent { 
+    param(
+        [Parameter(Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)]
+        [string]
+        $Path
+    )
             
-        $object = $JSON.parse((Get-Content $Path -Encoding UTF8 | Out-String))
+    $object = Get-Content $Path -Encoding UTF8 | Out-String | ConvertFrom-Json | ConvertTo-Hashtable
 
-        if ($null -eq $object)
-        {
-            $object
-        }
-        elseif ($object.GetType().IsArray)
-        {
-            ,$object
-        }
-        else
-        {
-            $object
-        }
+    if ($null -eq $object)
+    {
+        $object
     }
-    
-    <#
-    .Synopsis
-        Takes a hashtable, array, date, number, or string, serializes it to JSON and writes it to the given file
-    #>
-    function Set-JsonContent { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)]
-            [string]
-            $Path,
-
-            [Parameter(Mandatory=$true, Position=1, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
-            [AllowNull()]
-            [AllowEmptyCollection()]
-            [System.Object]
-            $Value,
-
-           [switch]
-            $Force
-        )
-            
-        Set-Content -Encoding UTF8 -Path $Path -Value ($JSON.stringify($Value)) -Force:$Force.IsPresent 
+    elseif ($object.GetType().IsArray)
+    {
+        ,$object
     }
-
-    <#
-    .Synopsis
-        Serializes a hashtable to JSON
-    #>
-    function ConvertTo-JsonFromHashtable { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
-            [System.Collections.Hashtable]
-            $Hashtable
-        )
-            
-        $JSON.stringify($Hashtable)
-    }
-
-    <#
-    .Synopsis
-        Deserializes a JSON object into a hashtable
-    #>
-    function ConvertTo-HashtableFromJson { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
-            [string]
-            $jsonObject
-        )
-            
-        $JSON.parse($jsonObject)
+    else
+    {
+        $object
     }
 }
-else
-{
-    <#
-    .Synopsis
-        Reads a file containing a JSON object and coverts it to a PowerShell object
-    #>
-    function Get-JsonContent { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)]
-            [string]
-            $Path
-        )
-            
-        $object = Get-Content $Path -Encoding UTF8 | Out-String | ConvertFrom-Json | ConvertTo-Hashtable
-
-        if ($null -eq $object)
-        {
-            $object
-        }
-        elseif ($object.GetType().IsArray)
-        {
-            ,$object
-        }
-        else
-        {
-            $object
-        }
-    }
     
-    <#
-    .Synopsis
-        Takes a hashtable, array, date, number, or string, serializes it to JSON and writes it to the given file
-    #>
-    function Set-JsonContent { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)]
-            [string]
-            $Path,
+<#
+.Synopsis
+    Takes a hashtable, array, date, number, or string, serializes it to JSON and writes it to the given file
+#>
+function Set-JsonContent { 
+    param(
+        [Parameter(Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)]
+        [string]
+        $Path,
 
-            [Parameter(Mandatory=$true, Position=1, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
-            [AllowNull()]
-            [AllowEmptyCollection()]
-            [System.Object]
-            $Value,
+        [Parameter(Mandatory=$true, Position=1, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [System.Object]
+        $Value,
 
-            [switch]
-            $Force
-        )
+        [switch]
+        $Force
+    )
             
-        ConvertTo-Json -Depth 16 $Value | Set-Content -Encoding UTF8 -Path $Path -Force:$Force.IsPresent
-    }
+    ConvertTo-Json -Depth 16 $Value | Set-Content -Encoding UTF8 -Path $Path -Force:$Force.IsPresent
+}
 
-    <#
-    .Synopsis
-        Serializes a hashtable to JSON
-    #>
-    function ConvertTo-JsonFromHashtable { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
-            [System.Collections.Hashtable]
-            $Hashtable
-        )
+<#
+.Synopsis
+    Serializes a hashtable to JSON
+#>
+function ConvertTo-JsonFromHashtable { 
+    param(
+        [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
+        [System.Collections.Hashtable]
+        $Hashtable
+    )
             
-        ConvertTo-Json -Depth 16 $Hashtable
-    }
+    ConvertTo-Json -Depth 16 $Hashtable
+}
 
-    <#
-    .Synopsis
-        Deserializes a JSON object into a hashtable
-    #>
-    function ConvertTo-HashtableFromJson { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
-            [string]
-            $jsonObject
-        )
+<#
+.Synopsis
+    Deserializes a JSON object into a hashtable
+#>
+function ConvertTo-HashtableFromJson { 
+    param(
+        [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
+        [string]
+        $jsonObject
+    )
             
-        ConvertFrom-Json $jsonObject | ConvertTo-Hashtable
-    }
+    ConvertFrom-Json $jsonObject | ConvertTo-Hashtable
 }
 
 #

@@ -134,7 +134,7 @@ function Get-HandlerEnvironment
         for ($sleepPeriod = 1; $sleepPeriod -le 64; $sleepPeriod = 2 * $sleepPeriod) {
             try
             {
-                $handlerEnvironmentFileContent = Get-JsonContent $handlerEnvironmentFile
+                $handlerEnvironmentFileContent = Read-HandlerEnvironmentFile $handlerEnvironmentFile
 
                 if (!$handlerEnvironmentFileContent) {
                     throw "$handlerEnvironmentFile is empty"
@@ -352,11 +352,7 @@ function Set-HandlerStatus
 
         [Parameter()]
         [ValidateSet('transitioning', 'error', 'success', 'warning')]
-        [string] $Status = 'transitioning',
-
-        [Parameter()]
-        [ValidateSet('transitioning', 'error', 'success', 'warning')]
-        [string] $SubStatus = 'success'
+        [string] $Status = 'transitioning'
     )
 
     $statusFile = '{0}\{1}.status' -f (Get-HandlerEnvironment).statusFolder, (Get-HandlerExecutionSequenceNumber)
@@ -364,6 +360,8 @@ function Set-HandlerStatus
     Write-Log ("Settings handler status to '{0}' ({1})" -f $Status, $statusFile)
 
     $timestampUTC = [DateTimeOffset]::Now.ToString('u')
+
+    [System.Collections.ArrayList]$subStatusList = ((Get-HandlerStatus).status).substatus
 
     $statusObject = @(
         @{  
@@ -375,30 +373,88 @@ function Set-HandlerStatus
                 status = $Status
                 code = $Code
                 configurationAppliedTime = $timestampUTC
+                substatus = $subStatusList
             }
             version = '1.0'
             timestampUTC = $timestampUTC
         }
     )
 
+    #This will error out when azure agent is reading it while we try to access the file 
+    #Add retries if the process cannot access the status file
+    $result = $false
+    for ($sleepPeriod = 1; $sleepPeriod -le 64; $sleepPeriod = 2 * $sleepPeriod) 
+    {
+        try
+        {
+            Set-JsonContent -Path $statusFile -Value $statusObject -Force
+            $result = $true
+            break
+        }
+        catch
+        {
+            Write-Log "Error accessing the status file: $statusFile... $_"
+            Write-Log "Retry after $sleepPeriod Secs..."
+            Start-Sleep -Seconds $sleepPeriod
+        }
+    }
+
+    if (!$result) {
+        throw "Error accessing the status file: $statusFile..."
+    }
+
+    Flush-BufferToFile -buffer $script:extensionLogBuffer -logFile $script:logFilePath -Force
+}
+
+<#
+.Synopsis
+    Adds a sub-status to list of sub-status under status
+.Description
+    The existing sub-status list is maintained when setting new handler status. The new sub-statuses are appended to the exisiting list.
+    This is to ensure that final sub-status list contains all intermediate sub-status
+#>
+function Add-HandlerSubStatus
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true, position=1)]
+        [int] $Code,
+
+        [Parameter(Mandatory=$true,Position=2)]
+        [string] $Message,
+
+        [Parameter()]
+        [string] $operationName,
+
+        [Parameter()]
+        [ValidateSet('transitioning', 'error', 'success', 'warning')]
+        [string] $SubStatus = 'success'
+    )
+
+    $statusFile = '{0}\{1}.status' -f (Get-HandlerEnvironment).statusFolder, (Get-HandlerExecutionSequenceNumber)
+
+    #$timestampUTC = [DateTimeOffset]::Now.ToString('u')
+
+    $statusObject = ,(Get-HandlerStatus)
+
     # Get current list of sub-status
-    [System.Collections.ArrayList]$subStatusList = ((Get-HandlerStatus).status).substatus
+    [System.Collections.ArrayList]$subStatusList = $statusObject[0].status.substatus
     $newSubStatus = @{
-            name = 'RMExtensionLog'
+            name = $operationName
             status = $SubStatus
             code = $Code
             formattedMessage = @{
                 lang = 'en-US'
-                message = (BufferToString $script:extensionSubStatusBuffer)
+                message = $Message
             }
         }
 
     #$subStatusList = @($subStatusList, $newSubStatus)
-    $subStatusList.Add($newSubStatus)
+    $subStatusList.Add($newSubStatus) > $null
 
-    $statusObject[0].status['substatus'] = $subStatusList
+    $statusObject[0].status.substatus = $subStatusList
 
-    $script:extensionSubStatusBuffer.Clear()
+    #$script:extensionSubStatusBuffer.Clear()
 
     #This will error out when azure agent is reading it while we try to access the file 
     #Add retries if the process cannot access the status file
@@ -567,6 +623,15 @@ function Clear-StatusFile()
     Clear-Content $statusFile -Force
 }
 
+function Read-HandlerEnvironmentFile
+{
+    param(
+        [Parameter(Mandatory=$true)]
+        [string] $handlerEnvironmentFile
+        )
+    Get-JsonContent $handlerEnvironmentFile
+}
+
 <#
 .Synopsis
     Create log file for extension. All subsequent logs will be flushed to this file.
@@ -583,167 +648,82 @@ function Initialize-ExtensionLogFile()
     New-Item $logFilePath -ItemType File > $null
 }
 
-if ($PSVersionTable.PSVersion.Major -eq 2) 
-{
-    Import-Module $PSScriptRoot\JSON.psm1
-
-    <#
-    .Synopsis
-        Reads a file containing a JSON object and coverts it to a PowerShell object
-    #>
-    function Get-JsonContent { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)]
-            [string]
-            $Path
-        )
+<#
+.Synopsis
+    Reads a file containing a JSON object and coverts it to a PowerShell object
+#>
+function Get-JsonContent { 
+    param(
+        [Parameter(Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)]
+        [string]
+        $Path
+    )
             
-        $object = $JSON.parse((Get-Content $Path -Encoding UTF8 | Out-String))
+    $object = Get-Content $Path -Encoding UTF8 | Out-String | ConvertFrom-Json | ConvertTo-Hashtable
 
-        if ($null -eq $object)
-        {
-            $object
-        }
-        elseif ($object.GetType().IsArray)
-        {
-            ,$object
-        }
-        else
-        {
-            $object
-        }
+    if ($null -eq $object)
+    {
+        $object
     }
-    
-    <#
-    .Synopsis
-        Takes a hashtable, array, date, number, or string, serializes it to JSON and writes it to the given file
-    #>
-    function Set-JsonContent { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)]
-            [string]
-            $Path,
-
-            [Parameter(Mandatory=$true, Position=1, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
-            [AllowNull()]
-            [AllowEmptyCollection()]
-            [System.Object]
-            $Value,
-
-           [switch]
-            $Force
-        )
-            
-        Set-Content -Encoding UTF8 -Path $Path -Value ($JSON.stringify($Value)) -Force:$Force.IsPresent 
+    elseif ($object.GetType().IsArray)
+    {
+        ,$object
     }
-
-    <#
-    .Synopsis
-        Serializes a hashtable to JSON
-    #>
-    function ConvertTo-JsonFromHashtable { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
-            [System.Collections.Hashtable]
-            $Hashtable
-        )
-            
-        $JSON.stringify($Hashtable)
-    }
-
-    <#
-    .Synopsis
-        Deserializes a JSON object into a hashtable
-    #>
-    function ConvertTo-HashtableFromJson { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
-            [string]
-            $jsonObject
-        )
-            
-        $JSON.parse($jsonObject)
+    else
+    {
+        $object
     }
 }
-else
-{
-    <#
-    .Synopsis
-        Reads a file containing a JSON object and coverts it to a PowerShell object
-    #>
-    function Get-JsonContent { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)]
-            [string]
-            $Path
-        )
-            
-        $object = Get-Content $Path -Encoding UTF8 | Out-String | ConvertFrom-Json | ConvertTo-Hashtable
-
-        if ($null -eq $object)
-        {
-            $object
-        }
-        elseif ($object.GetType().IsArray)
-        {
-            ,$object
-        }
-        else
-        {
-            $object
-        }
-    }
     
-    <#
-    .Synopsis
-        Takes a hashtable, array, date, number, or string, serializes it to JSON and writes it to the given file
-    #>
-    function Set-JsonContent { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)]
-            [string]
-            $Path,
+<#
+.Synopsis
+    Takes a hashtable, array, date, number, or string, serializes it to JSON and writes it to the given file
+#>
+function Set-JsonContent { 
+    param(
+        [Parameter(Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)]
+        [string]
+        $Path,
 
-            [Parameter(Mandatory=$true, Position=1, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
-            [AllowNull()]
-            [AllowEmptyCollection()]
-            [System.Object]
-            $Value,
+        [Parameter(Mandatory=$true, Position=1, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [System.Object]
+        $Value,
 
-            [switch]
-            $Force
-        )
+        [switch]
+        $Force
+    )
             
-        ConvertTo-Json -Depth 16 $Value | Set-Content -Encoding UTF8 -Path $Path -Force:$Force.IsPresent
-    }
+    ConvertTo-Json -Depth 16 $Value | Set-Content -Encoding UTF8 -Path $Path -Force:$Force.IsPresent
+}
 
-    <#
-    .Synopsis
-        Serializes a hashtable to JSON
-    #>
-    function ConvertTo-JsonFromHashtable { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
-            [System.Collections.Hashtable]
-            $Hashtable
-        )
+<#
+.Synopsis
+    Serializes a hashtable to JSON
+#>
+function ConvertTo-JsonFromHashtable { 
+    param(
+        [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
+        [System.Collections.Hashtable]
+        $Hashtable
+    )
             
-        ConvertTo-Json -Depth 16 $Hashtable
-    }
+    ConvertTo-Json -Depth 16 $Hashtable
+}
 
-    <#
-    .Synopsis
-        Deserializes a JSON object into a hashtable
-    #>
-    function ConvertTo-HashtableFromJson { 
-        param(
-            [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
-            [string]
-            $jsonObject
-        )
+<#
+.Synopsis
+    Deserializes a JSON object into a hashtable
+#>
+function ConvertTo-HashtableFromJson { 
+    param(
+        [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
+        [string]
+        $jsonObject
+    )
             
-        ConvertFrom-Json $jsonObject | ConvertTo-Hashtable
-    }
+    ConvertFrom-Json $jsonObject | ConvertTo-Hashtable
 }
 
 #
@@ -766,5 +746,6 @@ Export-ModuleMember `
         Get-JsonContent, `
         New-CircularBuffer, `
         Set-HandlerStatus, `
+        Add-HandlerSubStatus, `
         Clear-StatusFile, `
         Set-JsonContent

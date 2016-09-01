@@ -15,6 +15,15 @@ Import-Module $PSScriptRoot\Log.psm1
 Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 
+#
+# Logger function for download/configuration scripts
+#
+$script:logger = {
+    param([string] $Message)
+
+    Write-Log $Message
+}
+
 <#
 .Synopsis
    Initializes RM extension handler. 
@@ -28,22 +37,38 @@ function Start-RMExtensionHandler {
     [CmdletBinding()]
     param()
 
-    Add-HandlerSubStatusMessage "RM Extension initialization start"
-    Clear-StatusFile
-    Clear-HandlerCache 
-    Clear-HandlerSubStatusMessage
-    Initialize-ExtensionLogFile
+    $psVersion = $PSVersionTable.PSVersion.Major
+    if(!($psVersion -ge 3))
+    {
+        throw "Installed PowerShell version is $psVersion. Minimum required version is 3."
+    }
 
-    Add-HandlerSubStatusMessage "RM Extension initialization complete"
-    Set-HandlerStatus $RM_Extension_Status.Initialized.Code $RM_Extension_Status.Initialized.Message
+    try 
+    {
+        $sequenceNumber = Get-HandlerExecutionSequenceNumber    
+
+        Clear-StatusFile
+        Clear-HandlerCache 
+        Clear-HandlerSubStatusMessage
+        Initialize-ExtensionLogFile
+
+        Write-Log "Sequence Number: $sequenceNumber"
+
+        Set-HandlerStatus $RM_Extension_Status.Installing.Code $RM_Extension_Status.Installing.Message
+        Add-HandlerSubStatus $RM_Extension_Status.Initialized.Code $RM_Extension_Status.Initialized.Message -operationName $RM_Extension_Status.Initialized.operationName
+    }
+    catch 
+    {
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.Initializing.operationName
+        throw $_
+    }
 }
 
 <#
 .Synopsis
-   Downloads VSTS agent.
-   Invokes a script to download VSTS agent package and unzip it. Provides a working directory for download script to use.
+   Initialize Deployment agent download and configuration process.
 #>
-function DownloadVSTSAgent {
+function Test-AgentAlreadyExists {
     [CmdletBinding()]
     param(
     [Parameter(Mandatory=$true, Position=0)]
@@ -52,28 +77,28 @@ function DownloadVSTSAgent {
 
     try 
     {
-        Add-HandlerSubStatusMessage "Download VSTS agent: start"
-        Write-Log "Invoking script to download VSTS agent package..."
+        Add-HandlerSubStatus $RM_Extension_Status.PreCheckingDeploymentAgent.Code $RM_Extension_Status.PreCheckingDeploymentAgent.Message -operationName $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
+        Write-Log "Invoking script to pre-check agent configuration..."
 
-        . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -platform $config.Platform -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder
+        $agentAlreadyExists = Test-AgentAlreadyExistsInternal $config
 
-        Add-HandlerSubStatusMessage "Download VSTS agent: complete"
-        Write-Log "Done downloading VSTS agent package..."
-
-        Set-HandlerStatus $RM_Extension_Status.DownloadedVSTSAgent.Code $RM_Extension_Status.DownloadedVSTSAgent.Message
+        Write-Log "Done pre-checking agent configuration..."
+        Add-HandlerSubStatus $RM_Extension_Status.PreCheckedDeploymentAgent.Code $RM_Extension_Status.PreCheckedDeploymentAgent.Message -operationName $RM_Extension_Status.PreCheckedDeploymentAgent.operationName
+        $agentAlreadyExists
     }
     catch 
     {
-        Set-HandlerErrorStatus $_
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
+        throw $_
     } 
 }
 
 <#
 .Synopsis
-   Configures and starts VSTS agent. 
-   Invokes a cmd script to configure and start agent. Provides a working directory for this script to use.
+   Downloads Deployment agent.
+   Invokes a script to download Deployment agent package and unzip it. Provides a working directory for download script to use.
 #>
-function Run-VSTSAgent {
+function Get-Agent {
     [CmdletBinding()]
     param(
     [Parameter(Mandatory=$true, Position=0)]
@@ -82,34 +107,60 @@ function Run-VSTSAgent {
 
     try 
     {
-        Add-HandlerSubStatusMessage "Configure VSTS agent: start"
-        Write-Log "Configuring VSTS agent..."
+        Add-HandlerSubStatus $RM_Extension_Status.DownloadingDeploymentAgent.Code $RM_Extension_Status.DownloadingDeploymentAgent.Message -operationName $RM_Extension_Status.DownloadingDeploymentAgent.operationName
+        Write-Log "Invoking script to download Deployment agent package..."
 
-        #cmd.exe /c "$config.AgentWorkingFolder\config.cmd --unattended --url $config.VSTSUrl --pool $config.Pool --auth PAT --token $config.PATToken --work $config.AgentWorkingFolder --runasservice" > out.txt
+        Invoke-GetAgentScript $config
 
-        $scriptPath = $config.AgentWorkingFolder
-        $url = $config.VSTSUrl
-        $token = $config.PATToken
-        $pool = $config.Pool
-
-        $startInfo = New-Object System.Diagnostics.ProcessStartInfo('cmd.exe', "/c  mode con cols=256 && $scriptPath\config.cmd --unattended --url $url --pool $pool --auth PAT --token $token --work $scriptPath --runasservice 2>&1")
-        $startInfo.WindowStyle = 'Hidden'
-        $startInfo.RedirectStandardOutput = $True
-        $startInfo.UseShellExecute = $false
-
-        $proc = [System.Diagnostics.Process]::Start($startInfo)
-        $proc.WaitForExit()
-        $configLog = $proc.StandardOutput.ReadToEnd();
-
-        Add-HandlerSubStatusMessage "Configure VSTS agent: complete"
-        Write-Log "Done configuring VSTS agent"
-        Write-Log "Configuration log: $configLog"
-
-        Set-HandlerStatus $RM_Extension_Status.ConfiguredVSTSAgent.Code $RM_Extension_Status.ConfiguredVSTSAgent.Message -Status success
+        Write-Log "Done downloading Deployment agent package..."
+        Add-HandlerSubStatus $RM_Extension_Status.DownloadedDeploymentAgent.Code $RM_Extension_Status.DownloadedDeploymentAgent.Message -operationName $RM_Extension_Status.DownloadedDeploymentAgent.operationName
     }
     catch 
     {
-        Set-HandlerErrorStatus $_
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.DownloadingDeploymentAgent.operationName
+        throw $_
+    } 
+}
+
+<#
+.Synopsis
+   Configures and starts Deployment agent. 
+   Invokes a cmd script to configure and start agent. Provides a working directory for this script to use.
+#>
+function Register-Agent {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config,
+
+    [Parameter(Mandatory=$true, Position=1)]
+    [boolean] $agentRemovalRequired
+    )
+
+    try 
+    {
+        If($agentRemovalRequired)
+        {
+            Add-HandlerSubStatus $RM_Extension_Status.RemovingAndConfiguringDeploymentAgent.Code $RM_Extension_Status.RemovingAndConfiguringDeploymentAgent.Message -operationName $RM_Extension_Status.RemovingAndConfiguringDeploymentAgent.operationName
+            Write-Log "Removing existing agent and configuring again..."
+        }
+        else 
+        {
+            Add-HandlerSubStatus $RM_Extension_Status.ConfiguringDeploymentAgent.Code $RM_Extension_Status.ConfiguringDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
+            Write-Log "Configuring Deployment agent..."
+        }
+
+        Invoke-ConfigureAgentScript $config $agentRemovalRequired
+
+        Write-Log "Done configuring Deployment agent"
+
+        Add-HandlerSubStatus $RM_Extension_Status.ConfiguredDeploymentAgent.Code $RM_Extension_Status.ConfiguredDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguredDeploymentAgent.operationName
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
+    }
+    catch 
+    {
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
+        throw $_
     } 
 }
 
@@ -121,84 +172,126 @@ function Get-ConfigurationFromSettings {
     [CmdletBinding()]
     param()
 
-    $sequenceNumber = Get-HandlerExecutionSequenceNumber    
-    Write-Log "Sequence Number     : $sequenceNumber"
+    try
+    {
+        Add-HandlerSubStatus $RM_Extension_Status.ReadingSettings.Code $RM_Extension_Status.ReadingSettings.Message -operationName $RM_Extension_Status.ReadingSettings.operationName
+        Write-Log "Reading config settings from file..."
 
-    Write-Log "Reading config settings from file..."
-
-    #Retrieve settings from file
-    $settings = Get-HandlerSettings
+        #Retrieve settings from file
+        $settings = Get-HandlerSettings
     
-    $publicSettings = $settings['publicSettings']
-    $protectedSettings = $settings['protectedSettings']
-    if (-not $publicSettings) 
-    {
-        $publicSettings = @{}
-    }
+        $publicSettings = $settings['publicSettings']
+        $protectedSettings = $settings['protectedSettings']
+        if (-not $publicSettings) 
+        {
+            $publicSettings = @{}
+        }
 
-    Write-Log "Done reading config settings from file..."
-    Add-HandlerSubStatusMessage "Done Reading config settings from file"
+        $osVersion = Get-OSVersion
 
-    $osVersion = Get-OSVersion
+        if (!$osVersion.IsX64)
+        {
+            throw New-HandlerTerminatingError $RM_Extension_Status.ArchitectureNotSupported.Code -Message $RM_Extension_Status.ArchitectureNotSupported.Message
+        }
 
-    if (!$osVersion.IsX64)
-    {
-        throw New-HandlerTerminatingError $RM_Extension_Status.ArchitectureNotSupported.Code -Message $RM_Extension_Status.ArchitectureNotSupported.Message
-    }
+        $platform = "win7-x64"
+        Write-Log "Platform: $platform"
 
-    $platform = "win7-x64"
-    Write-Log "Platform: $platform"
+        $vstsUrl = $publicSettings['VSTSAccountUrl']
+        VeriftInputNotNull "VSTSAccountUrl" $vstsUrl
+        Write-Log "VSTS service URL: $vstsUrl"
 
-    $vstsAccountName = $publicSettings['VSTSAccountName']
-    if(-not $vstsAccountName)
-    {
-        $message = "VSTS account name should be specified. Please specify a valid VSTS account to which RM agent will be configured."
-        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
-    }
+        $patToken = $null
+        if($protectedSettings.Contains('PATToken'))
+        {
+            $patToken = $protectedSettings['PATToken']
+        }
 
-    $vstsUrl = "https://{0}.visualstudio.com" -f $vstsAccountName
-    Write-Log "VSTS service URL: $vstsUrl"
-
-    $patToken = $null
-    if($protectedSettings.Contains('PATToken'))
-    {
-        $patToken = $protectedSettings['PATToken']
-    }
-
-    if(-not $patToken)
-    {
-        $patToken = $publicSettings['PATToken']
         if(-not $patToken)
         {
-            $message = "PAT token should be specified. Please specify a valid PAT token which will be used to authorize calls to VSTS."
-            throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
+            $patToken = $publicSettings['PATToken']
+            VeriftInputNotNull "PATToken" $patToken
+        }
+
+        $teamProjectName = $publicSettings['TeamProject']
+        VeriftInputNotNull "TeamProject" $teamProjectName
+        Write-Log "Team Project: $teamProjectName"
+
+        $machineGroupName = $publicSettings['MachineGroup']
+        VeriftInputNotNull "MachineGroup" $machineGroupName
+        Write-Log "Machine Group: $machineGroupName"
+
+        $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
+        Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
+        if(!(Test-Path $agentWorkingFolder))
+        {
+            Write-Log "Working folder does not exist. Creating it..."
+            New-Item -ItemType Directory $agentWorkingFolder > $null
+        }
+
+        Write-Log "Done reading config settings from file..."
+        Add-HandlerSubStatus $RM_Extension_Status.SuccessfullyReadSettings.Code $RM_Extension_Status.SuccessfullyReadSettings.Message -operationName $RM_Extension_Status.SuccessfullyReadSettings.operationName
+
+        return @{
+            VSTSUrl  = $vstsUrl
+            PATToken = $patToken
+            Platform = $platform
+            TeamProject        = $teamProjectName
+            MachineGroup       = $machineGroupName
+            AgentWorkingFolder = $agentWorkingFolder
         }
     }
-
-    $poolName = $publicSettings['Pool']
-    if(-not $poolName)
+    catch 
     {
-        $message = "Agent pool should be specified. Please specify a valid agent pool for agent."
-        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
-    }
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ReadingSettings.operationName
+        throw $_
+    } 
+}
 
-    Write-Log "Pool: $poolName"
+function Invoke-GetAgentScript {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
 
-    $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
-    Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
-    if(!(Test-Path $agentWorkingFolder))
-    {
-        Write-Log "Working folder does not exist. Creating it..."
-        New-Item -ItemType Directory $agentWorkingFolder > $null
-    }
+    . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -platform $config.Platform -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+}
 
-    @{
-        VSTSUrl  = $vstsUrl
-        PATToken = $patToken
-        Platform = $platform
-        Pool     = $poolName
-        AgentWorkingFolder = $agentWorkingFolder
-    }
+function Test-AgentAlreadyExistsInternal {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
+    . $PSScriptRoot\AgentExistenceChecker.ps1
+    $agentAlreadyExists = Test-ConfiguredAgentExists -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    return $agentAlreadyExists
+}
+
+function Invoke-ConfigureAgentScript {
+    [CmdletBinding()]
+    param(
+    [hashtable] $config,
+    [boolean] $agentRemovalRequired
+    )
+
+    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -workingFolder $config.AgentWorkingFolder -agentRemovalRequired $agentRemovalRequired -logFunction $script:logger
+}
+
+function VeriftInputNotNull {
+    [CmdletBinding()]
+    param(
+    [string] $inputKey,
+    [string] $inputValue
+    )
+
+    if(-not $inputValue)
+        {
+            $message = "$inputKey should be specified. Please specify a valid $inputKey and try again."
+            throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
+        }
 }
 
 #
@@ -207,6 +300,7 @@ function Get-ConfigurationFromSettings {
 Export-ModuleMember `
     -Function `
         Start-RMExtensionHandler, `
-        DownloadVSTSAgent, `
+        Test-AgentAlreadyExists, `
+        Get-Agent, `
         Get-ConfigurationFromSettings, `
-        Run-VSTSAgent
+        Register-Agent

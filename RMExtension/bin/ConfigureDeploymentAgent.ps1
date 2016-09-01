@@ -4,8 +4,6 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$platform,
-    [Parameter(Mandatory=$true)]
     [string]$projectName,
     [Parameter(Mandatory=$true)]
     [string]$machineGroupName,    
@@ -13,6 +11,7 @@ param(
     [string]$workingFolder,
     [string]$agentName,
     [string]$userName,
+    [boolean]$agentRemovalRequired = $false,
     [scriptblock]$logFunction    
 )
 
@@ -114,22 +113,6 @@ function RemoveExistingAgent
     }
 }
 
-function AgentRemovalRequired
-{
-    $retVal = $false
-    WriteConfigurationLog "Read the variable: $agentRemovalRequiredVarName"
-    try
-    {
-        $retVal = Get-Variable -Scope "Global" -Name $agentRemovalRequiredVarName -ValueOnly
-    }
-    catch
-    {
-        WriteConfigurationLog "Unable to get variable: $agentRemovalRequiredVarName"
-    } 
-    
-    return $retVal
-}
-
 try
 {
     WriteConfigurationLog "Starting the Deployment agent configuration script"
@@ -141,14 +124,14 @@ try
 
     WriteConfigurationLog "Check if any existing agent running form $workingFolder"
     
-    if( $(AgentRemovalRequired) )
+    if( $agentRemovalRequired )
     {
         WriteConfigurationLog "Already a agent is running from $workingFolder, need to removing it"
         RemoveExistingAgent
     }
     else
     {
-        WriteConfigurationLog "No existing agent found download and configure"        
+        WriteConfigurationLog "No existing agent found. Configure."        
     }
     
     if([string]::IsNullOrEmpty($agentName))

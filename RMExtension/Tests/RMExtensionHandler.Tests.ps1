@@ -42,9 +42,11 @@ Describe "Download agent tests" {
         Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Invoke-GetAgentScript { throw New-Object System.Exception("some error")}
+        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {}
+
+        Get-Agent @{}
 
         It "should call clean up functions" {
-            { Get-Agent @{} } | Should Throw
             Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1 -ParameterFilter { $ErrorRecord.Exception.Message -eq "some error"}
         }
     }
@@ -73,9 +75,11 @@ Describe "Pre-check agent tests" {
         Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Test-AgentAlreadyExistsInternal { throw New-Object System.Exception("some error")}
+        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {}
+
+        Test-AgentAlreadyExists @{}
 
         It "should call clean up functions" {
-            { Test-AgentAlreadyExists @{} } | Should Throw
             Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1 -ParameterFilter { $ErrorRecord.Exception.Message -eq "some error"}
         }
     }
@@ -104,9 +108,11 @@ Describe "configure agent tests" {
         Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Invoke-ConfigureAgentScript { throw New-Object System.Exception("some error")}
+        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {}
+
+        Register-Agent @{} $true
 
         It "should call clean up functions" {
-            { Register-Agent @{} $true } | Should Throw
             Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1 -ParameterFilter { $ErrorRecord.Exception.Message -eq "some error"}
         }
     }

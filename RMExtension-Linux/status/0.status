@@ -1,1 +1,0 @@
-[{"status": {"status": "transitioning", "formattedMessage": {"lang": "en-US", "message": ""}, "code": "", "subStatus": [{"status": "success", "formattedMessage": {"lang": "en-US", "message": "RM Extension initialization completeDone Initializing RM extension"}, "code": "", "name": "RMExtensionLog"}]}, "version": "1.0"}]

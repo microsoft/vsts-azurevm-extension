@@ -23,50 +23,50 @@ $global:RM_TerminatingErrorId = 'RMHandlerTerminatingError'
 $global:RM_Extension_Status = @{
     Installing = @{
         Code = 1
-        Message = 'Installing and configuring Deployment agent.' 
+        Message = 'Installing and configuring deployment agent' 
     }
     Installed = @{
         Code = 2
-        Message = 'Configured Deployment agent successfully.' 
+        Message = 'Configured deployment agent successfully' 
     }
     Initializing = @{
         Code = 3
-        Message = 'Initializing RM extension.'
+        Message = 'Initializing extension'
         operationName = 'Initialization'
     }
     Initialized = @{
         Code = 4
-        Message = 'Done Initializing RM extension.'
+        Message = 'Done Initializing extension'
         operationName = 'Initialization'
     }
     PreCheckingDeploymentAgent = @{
         Code = 5
-        Message = 'Checking whether an agent is already exising.'
+        Message = 'Checking whether a deployment agent is already exising'
         operationName = 'Check existing Agent'
     }
     PreCheckedDeploymentAgent = @{
         Code = 6
-        Message = 'Checked for exising deployment agent.'
+        Message = 'Checked for exising deployment agent'
         operationName = 'Check existing Agent'
     }
     SkippingDownloadDeploymentAgent = @{
         Code = 7
-        Message = 'Skipping download of deployment agent.'
+        Message = 'Skipping download of deployment agent'
         operationName = 'Agent download'
     }
     DownloadingDeploymentAgent = @{
         Code = 8
-        Message = 'Downloading Deployment agent package.'
+        Message = 'Downloading deployment agent package'
         operationName = 'Agent download'
     }
     DownloadedDeploymentAgent = @{
         Code = 9
-        Message = 'Downloaded Deployment agent package.'
+        Message = 'Downloaded deployment agent package'
         operationName = 'Agent download'
     }
     RemovingAndConfiguringDeploymentAgent = @{
         Code = 10
-        Message = 'Removing existing deployment agent and configuring afresh.'
+        Message = 'Removing existing deployment agent and configuring afresh'
         operationName = 'Agent configuration'
     }
     ConfiguringDeploymentAgent = @{
@@ -76,17 +76,17 @@ $global:RM_Extension_Status = @{
     }
     ConfiguredDeploymentAgent = @{
         Code = 12
-        Message = 'Configured Deployment agent successfully.'
+        Message = 'Configured deployment agent successfully'
         operationName = 'Agent configuration'
     }
     ReadingSettings = @{
         Code = 3
-        Message = 'Reading config settings from file.'
-        operationName = 'Read Config settings'
+        Message = 'Reading config settings from file'
+        operationName = 'Read config settings'
     }
     SuccessfullyReadSettings = @{
         Code = 4
-        Message = 'Successfully read config settings from file.'
+        Message = 'Successfully read and validated config settings from file'
         operationName = 'Read Config settings'
     }
 
@@ -104,7 +104,12 @@ $global:RM_Extension_Status = @{
 
     ArchitectureNotSupported = @{
         Code = 1002
-        Message = 'The current CPU architecture is not supported. RM agent requires x64 architecture.'
+        Message = 'The current CPU architecture is not supported. Deployment agent requires x64 architecture'
+    }
+
+    PowershellVersionNotSupported = @{
+        Code = 1003
+        Message = 'Installed PowerShell version is {0}. Minimum required version is 3.0'
     }
     
     #
@@ -208,7 +213,7 @@ function Set-HandlerErrorStatus
 
         $RM_Extension_Status.InstallError  {
             $errorMessage = @'
-The RM Extension failed to install: {0}.
+The Extension failed to install: {0}.
 More information about the failure can be found in the logs located under '{1}' on the VM.
 To retry install, please remove the extension from the VM first. 
 '@ -f $ErrorRecord.Exception.Message, (Get-HandlerEnvironment).logFolder
@@ -217,7 +222,7 @@ To retry install, please remove the extension from the VM first.
 
         $RM_Extension_Status.ArgumentError {
             $errorMessage = @'
-The RM Extension received an incorrect input: {0}.
+The Extension received an incorrect input: {0}.
 Please correct the input and retry executing the extension.
 '@ -f $ErrorRecord.Exception.Message
             break
@@ -225,7 +230,7 @@ Please correct the input and retry executing the extension.
 
         default {
             $errorMessage = @'
-The RM Extension failed to execute: {0}.
+The Extension failed to execute: {0}.
 More information about the failure can be found in the logs located under '{1}' on the VM.
 '@ -f $ErrorRecord.Exception.Message, (Get-HandlerEnvironment).logFolder
             break

@@ -47,7 +47,7 @@ Describe "Handler error status tests" {
         }
 
         It "should have info about logs location" {
-            $status.status.formattedMessage.message | Should BeLike 'The RM Extension failed to execute: The current CPU architecture is not supported. RM agent requires x64 architecture.*'
+            $status.status.formattedMessage.message | Should BeLike 'The Extension failed to execute: The current CPU architecture is not supported. Deployment agent requires x64 architecture.*'
             $status.status.formattedMessage.message | Should BeLike "*More information about the failure can be found in the logs located under 'TestDrive:\' on the VM."
         }
     }

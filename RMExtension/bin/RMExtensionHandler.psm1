@@ -44,7 +44,8 @@ function Start-RMExtensionHandler {
         $psVersion = $PSVersionTable.PSVersion.Major
         if(!($psVersion -ge 3))
         {
-            throw "Installed PowerShell version is $psVersion. Minimum required version is 3."
+            $message = $RM_Extension_Status.PowershellVersionNotSupported.Message -f $psVersion
+            throw New-HandlerTerminatingError $RM_Extension_Status.PowershellVersionNotSupported.Code -Message $message
         }
 
         $sequenceNumber = Get-HandlerExecutionSequenceNumber    
@@ -175,7 +176,6 @@ function Get-ConfigurationFromSettings {
 
     try
     {
-        Add-HandlerSubStatus $RM_Extension_Status.ReadingSettings.Code $RM_Extension_Status.ReadingSettings.Message -operationName $RM_Extension_Status.ReadingSettings.operationName
         Write-Log "Reading config settings from file..."
 
         #Retrieve settings from file
@@ -294,7 +294,7 @@ function VeriftInputNotNull {
 
     if(-not $inputValue)
         {
-            $message = "$inputKey should be specified."
+            $message = "$inputKey should be specified"
             throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
         }
 }

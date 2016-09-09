@@ -37,20 +37,22 @@ function Start-RMExtensionHandler {
     [CmdletBinding()]
     param()
 
-    $psVersion = $PSVersionTable.PSVersion.Major
-    if(!($psVersion -ge 3))
-    {
-        throw "Installed PowerShell version is $psVersion. Minimum required version is 3."
-    }
-
     try 
     {
+        Initialize-ExtensionLogFile
+        
+        $psVersion = $PSVersionTable.PSVersion.Major
+        if(!($psVersion -ge 3))
+        {
+            $message = $RM_Extension_Status.PowershellVersionNotSupported.Message -f $psVersion
+            throw New-HandlerTerminatingError $RM_Extension_Status.PowershellVersionNotSupported.Code -Message $message
+        }
+
         $sequenceNumber = Get-HandlerExecutionSequenceNumber    
 
         Clear-StatusFile
         Clear-HandlerCache 
         Clear-HandlerSubStatusMessage
-        Initialize-ExtensionLogFile
 
         Write-Log "Sequence Number: $sequenceNumber"
 
@@ -60,7 +62,7 @@ function Start-RMExtensionHandler {
     catch 
     {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.Initializing.operationName
-        throw $_
+        Exit-WithCode0
     }
 }
 
@@ -89,7 +91,7 @@ function Test-AgentAlreadyExists {
     catch 
     {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
-        throw $_
+        Exit-WithCode0
     } 
 }
 
@@ -118,7 +120,7 @@ function Get-Agent {
     catch 
     {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.DownloadingDeploymentAgent.operationName
-        throw $_
+        Exit-WithCode0
     } 
 }
 
@@ -160,7 +162,7 @@ function Register-Agent {
     catch 
     {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
-        throw $_
+        Exit-WithCode0
     } 
 }
 
@@ -174,7 +176,6 @@ function Get-ConfigurationFromSettings {
 
     try
     {
-        Add-HandlerSubStatus $RM_Extension_Status.ReadingSettings.Code $RM_Extension_Status.ReadingSettings.Message -operationName $RM_Extension_Status.ReadingSettings.operationName
         Write-Log "Reading config settings from file..."
 
         #Retrieve settings from file
@@ -244,8 +245,12 @@ function Get-ConfigurationFromSettings {
     catch 
     {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ReadingSettings.operationName
-        throw $_
+        Exit-WithCode0
     } 
+}
+
+function Exit-WithCode0 {
+    exit 0
 }
 
 function Invoke-GetAgentScript {
@@ -289,7 +294,7 @@ function VeriftInputNotNull {
 
     if(-not $inputValue)
         {
-            $message = "$inputKey should be specified. Please specify a valid $inputKey and try again."
+            $message = "$inputKey should be specified"
             throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
         }
 }

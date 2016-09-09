@@ -1,0 +1,59 @@
+{
+  "handler": "Microsoft.Compute.VmExtension",
+  "version": "0.0.1-preview",
+  "parameters": {
+    "elements": [
+      {
+        "name": "VSTSAccountUrl",
+        "type": "Microsoft.Common.TextBox",
+        "label": "VSTS Account URL",
+        "toolTip": "The VSTS account to use.",
+        "constraints": {
+          "required": true,
+          "regex": "^(https:\\/\\/).+\\.(visualstudio\\.com|vsallin\\.net)$",
+          "validationMessage": "Account url must start with https:// and end with visualstudio.com."
+        }
+      },
+      {
+        "name": "TeamProject",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Team Project",
+        "toolTip": "Team project in VSTS account to use.",
+        "constraints": {
+          "required": true
+        }
+      },
+      {
+        "name": "MachineGroup",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Machine Group",
+        "toolTip": "Machine group against which Deployment agent will be configured.",
+        "constraints": {
+          "required": true
+        }
+      },
+      {
+        "name": "PATToken",
+        "type": "Microsoft.Common.PasswordBox",
+        "label": {
+          "password": "PAT Token"
+        },
+        "toolTip": "PAT token will be used by extension to download and configure agent against VSTS account.",
+        "constraints": {
+          "required": true
+        },
+        "options": {
+            "hideConfirmation": true
+        }
+      }
+    ],
+    "outputs": {
+      "vmName": "[vmName()]",
+      "location": "[location()]",
+      "VSTSAccountUrl": "[elements('VSTSAccountUrl')]",
+      "TeamProject": "[elements('TeamProject')]",
+      "MachineGroup": "[elements('MachineGroup')]",
+      "PATToken": "[elements('PATToken')]"
+    }
+  }
+}

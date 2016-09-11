@@ -32,3 +32,9 @@ Write-Host "Updating extension to version: $($xml.ExtensionImage.Version)"
 
 # invoke PUT rest api to update the extension
 Invoke-RestMethod -Method PUT -Uri $uri -Certificate $subscription.Certificate -Headers @{'x-ms-version'='2014-08-01'} -Body $bodyxml -ContentType application/xml
+
+# set this version as value for release variable 
+[xml]$xml = $bodyxml
+$newVersion = $xml.ExtensionImage.Version
+$newVersionVariable = "NewVersion"
+Write-Host "##vso[task.setvariable variable=$oldVersionVariable;]$newVersion"

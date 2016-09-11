@@ -23,14 +23,14 @@
   },
   "resources": [
     {
-      "name": "[concat(parameters('vmName'),'/ReleaseManagement1')]",
+      "name": "[concat(parameters('vmName'),'/VSTSAgent')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "properties": {
         "publisher": "Test.Microsoft.VisualStudio.Services",
-        "type": "ReleaseManagement1",
-        "typeHandlerVersion": "1.10",
+        "type": "VSTSAgent",
+        "typeHandlerVersion": "1.16",
         "autoUpgradeMinorVersion": false,
         "settings": {
           "VSTSAccountUrl": "[parameters('VSTSAccountUrl')]",

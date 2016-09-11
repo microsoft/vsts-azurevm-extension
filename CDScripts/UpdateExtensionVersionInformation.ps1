@@ -43,7 +43,7 @@ $ctx = New-AzureStorageContext $storageResourceGroup -StorageAccountKey $key[0].
 $oldVersionLocalFile = "$artifactsDir\oldVersion.txt"
 Write-Host "Using local file $oldVersionLocalFile for downloading old version information"
 
-Write-Host"Downloading version information from azure storage account $storageAccountName container $storageContainerName blob $storageBlobName"
+Write-Host "Downloading version information from azure storage account $storageAccountName container $storageContainerName blob $storageBlobName"
 # get old version detail from blob
 Get-AzureStorageBlobContent -Container $storageContainerName -Blob $storageBlobName -Context $ctx -Destination $oldVersionLocalFile -ErrorAction Ignore -Force
 

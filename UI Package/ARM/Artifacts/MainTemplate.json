@@ -30,7 +30,7 @@
       "properties": {
         "publisher": "Test.Microsoft.VisualStudio.Services",
         "type": "VSTSAgent",
-        "typeHandlerVersion": "1.16",
+        "typeHandlerVersion": "1.21",
         "autoUpgradeMinorVersion": false,
         "settings": {
           "VSTSAccountUrl": "[parameters('VSTSAccountUrl')]",

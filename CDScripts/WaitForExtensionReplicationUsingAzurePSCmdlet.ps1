@@ -3,7 +3,7 @@
     Waits for Azure PIR to complete replication of VM extension
 
 .Usage
-    WaitForExtensionReplication.ps1 -extensionName ReleaseManagement1 -publisher Test.Microsoft.VisualStudio.Services
+    WaitForExtensionReplicationUsingAzurePSCmdlet.ps1 -extensionName ReleaseManagement1 -publisher Test.Microsoft.VisualStudio.Services
 #>
 
 [CmdletBinding()]

@@ -23,16 +23,15 @@ function isReplicationComplete
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [string]$replicationStatusList
+        [Object[]]$statusList
     )
 
     $isReplicationCompleted = $true
-    $replicationStatusList.ReplicationStatusList.ReplicationStatus | % {
-        Write-Host "$_.Location : $_.Status"
+    $statusList | % {
+        Write-Host $_.Location " :" $_.Status
         if($_.Status -ne "Completed")
         {
-            $isReplicationCompleted = $false
-            break
+           $isReplicationCompleted = $false
         }
     }
 
@@ -59,14 +58,15 @@ $subscription.Certificate.Thumbprint
 
 $uri = "https://management.core.windows.net/$($subscription.SubscriptionId)/services/extensions/$publisher/$extensionName/$extensionVersion/replicationstatus"
 Write-Host "uri: $uri"
+Start-Sleep -s $retryInterval
 
 do
 {
   Start-Sleep -s $retryInterval
   
   # invoke GET rest api to get status of extension replication
-  $relicationStatusList = Invoke-RestMethod -Method GET -Uri $uri -Certificate $subscription.Certificate -Headers @{'x-ms-version'='2014-08-01'}
-  $isReplicated = isReplicationComplete $replicationStatusList
+  $replicationStatusList = Invoke-RestMethod -Method GET -Uri $uri -Certificate $subscription.Certificate -Headers @{'x-ms-version'='2014-08-01'}
+  $isReplicated = isReplicationComplete $($replicationStatusList.ReplicationStatusList.ReplicationStatus)
   
   if($isReplicated -ne $true)
   {

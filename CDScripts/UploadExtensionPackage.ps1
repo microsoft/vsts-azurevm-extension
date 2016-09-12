@@ -26,7 +26,7 @@ param(
 )
 
 $artifactsDir = Join-Path $env:SYSTEM_ARTIFACTSDIRECTORY $env:BUILD_DEFINITIONNAME
-$packagePath = Join-Path $artifactsDir "VM extension\RMExtension.zip"
+$packagePath = Join-Path $artifactsDir $relativePackagePath
 
 $key = Get-AzureRmStorageAccountKey -ResourceGroupName $storageResourceGroup -Name $storageAccountName
 $ctx = New-AzureStorageContext $storageAccountName -StorageAccountKey $key[0].Value

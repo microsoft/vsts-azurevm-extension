@@ -37,4 +37,4 @@ Invoke-RestMethod -Method PUT -Uri $uri -Certificate $subscription.Certificate -
 [xml]$xml = $bodyxml
 $newVersion = $xml.ExtensionImage.Version
 $newVersionVariable = "NewVersion"
-Write-Host "##vso[task.setvariable variable=$oldVersionVariable;]$newVersion"
+Write-Host "##vso[task.setvariable variable=$newVersionVariable;]$newVersion"

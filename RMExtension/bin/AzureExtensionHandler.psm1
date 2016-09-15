@@ -302,7 +302,7 @@ function Set-LastSequenceNumber
     ()
 
     $currentSequenceNumber = Get-HandlerExecutionSequenceNumber
-    $lastSeqFile = $script:lastSequenceNumberFile
+    $lastSeqFile = Get-LastSequenceNumberFilePath
 
     Write-Log "Writing current sequence number $currentSequenceNumber to LASTSEQNUM file $lastSeqFile"
 
@@ -324,7 +324,7 @@ function Get-LastSequenceNumber
     param
     ()
 
-    $lastSeqFile = $script:lastSequenceNumberFile
+    $lastSeqFile = Get-LastSequenceNumberFilePath
     Write-Log "reading last sequence number LASTSEQNUM file $lastSeqFile"
 
     try
@@ -774,6 +774,11 @@ function Initialize-ExtensionLogFile()
     $script:logFilePath = $logFilePath
 
     New-Item $logFilePath -ItemType File > $null
+}
+
+function Get-LastSequenceNumberFilePath
+{
+    return $script:lastSequenceNumberFile
 }
 
 if ($PSVersionTable.PSVersion.Major -eq 2) 

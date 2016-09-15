@@ -32,6 +32,57 @@ Describe "Start RM extension tests" {
             Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.Initialized.Code}
         }
     }
+
+    Context "Should skip enable if current seq number is same as last seq number" {
+        
+        Mock -ModuleName RMExtensionHandler Get-HandlerExecutionSequenceNumber { return 2 }
+        Mock -ModuleName RMExtensionHandler Get-LastSequenceNumber { return 2 }
+        Mock -ModuleName RMExtensionHandler Test-ExtensionDisabledMarkup { return $false }
+        Mock -ModuleName RMExtensionHandler Clear-StatusFile {}
+        Mock -ModuleName RMExtensionHandler Clear-HandlerCache {}
+        Mock -ModuleName RMExtensionHandler Clear-HandlerSubStatusMessage {}
+        Mock -ModuleName RMExtensionHandler Initialize-ExtensionLogFile {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Write-Log {}
+        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {} 
+        
+        Start-RMExtensionHandler
+
+        It "should call clean up functions" {
+            Assert-MockCalled -ModuleName RMExtensionHandler Exit-WithCode0 -Times 1
+        }
+
+        It "should set handler status as Initilized" {
+            Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.SkippedInstallation.Code}
+        }
+    }
+
+    Context "Should not skip enable if current seq number is same as last seq number and extension was disabled" {
+        
+        Mock -ModuleName RMExtensionHandler Get-HandlerExecutionSequenceNumber { return 2 }
+        Mock -ModuleName RMExtensionHandler Get-LastSequenceNumber { return 2 }
+        Mock -ModuleName RMExtensionHandler Test-ExtensionDisabledMarkup { return $true }
+        Mock -ModuleName RMExtensionHandler Clear-StatusFile {}
+        Mock -ModuleName RMExtensionHandler Clear-HandlerCache {}
+        Mock -ModuleName RMExtensionHandler Clear-HandlerSubStatusMessage {}
+        Mock -ModuleName RMExtensionHandler Initialize-ExtensionLogFile {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Write-Log {}
+        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {} 
+        
+        Start-RMExtensionHandler
+
+        It "should call clean up functions" {
+            Assert-MockCalled -ModuleName RMExtensionHandler Exit-WithCode0 -Times 0
+        }
+
+        It "should set handler status as Initilized" {
+            Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 0 -ParameterFilter { $Code -eq $RM_Extension_Status.SkippedInstallation.Code}
+            Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.Initialized.Code}
+        }
+    }
 }
 
 Describe "Download agent tests" {

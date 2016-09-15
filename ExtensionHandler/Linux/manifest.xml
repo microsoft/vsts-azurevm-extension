@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <ExtensionImage xmlns="http://schemas.microsoft.com/windowsazure" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">   
+  <ProviderNameSpace>Microsoft.OSTCExtensions</ProviderNameSpace>
+  <Type>VSTSAgent</Type>
+  <Version>1.0.0.0</Version>
+  <Label>Release Management Agent</Label>
+  <HostingResources>VmRole</HostingResources>
+  <MediaLink></MediaLink>
+  <Description>Downloads and configures Release Management Agent</Description>
+  <IsInternalExtension>true</IsInternalExtension>
+  <Eula>://github.com/Azure/azure-linux-extensions/blob/master/LICENSE-2_0.txt</Eula> 
+  <PrivacyUri>http://www.microsoft.com/privacystatement/en-us/OnlineServices/Default.aspx</PrivacyUri> 
+  <HomepageUri>https://github.com/Azure/azure-linux-extensions</HomepageUri>
+  <IsJsonExtension>true</IsJsonExtension>  
+  <CompanyName>Microsoft</CompanyName>
+  <SupportedOS>Linux</SupportedOS>
+  </ExtensionImage>

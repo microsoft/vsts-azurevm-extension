@@ -1,10 +1,5 @@
 #!/usr/bin/python
 
-
-global rm_extension_status
-global rm_terminating_error_id 
-rm_terminating_error_id= 'RMHandlerTerminatingError'
-
 rm_extension_status = {
   'Installing' : {
     'Code' : 1,

@@ -27,22 +27,23 @@
   "resources": [
     {
       "name": "[concat(parameters('vmName'),'/VSTSAgent')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "type": "Microsoft.ClassicCompute/virtualMachines/extensions",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2015-06-01",
       "properties": {
         "publisher": "Test.Microsoft.VisualStudio.Services",
-        "type": "VSTSAgent",
-        "typeHandlerVersion": "1.23",
-        "autoUpgradeMinorVersion": false,
-        "settings": {
-          "VSTSAccountUrl": "[parameters('VSTSAccountUrl')]",
-          "TeamProject": "[parameters('TeamProject')]",
-          "MachineGroup": "[parameters('MachineGroup')]",
-          "AgentName": "[parameters('AgentName')]"
-        },
-        "protectedSettings": {
-          "PATToken": "[parameters('PATToken')]"
+        "extension": "VSTSAgent",
+        "version": "1.23",
+        "parameters": {
+            "public": {
+              "VSTSAccountUrl": "[parameters('VSTSAccountUrl')]",
+              "TeamProject": "[parameters('TeamProject')]",
+              "MachineGroup": "[parameters('MachineGroup')]",
+              "AgentName": "[parameters('AgentName')]"
+            },
+            "private": {
+              "PATToken": "[parameters('PATToken')]"
+            }
         }
       }
     }

@@ -80,14 +80,24 @@ $global:RM_Extension_Status = @{
         operationName = 'Agent configuration'
     }
     ReadingSettings = @{
-        Code = 3
+        Code = 13
         Message = 'Reading config settings from file'
         operationName = 'Read config settings'
     }
     SuccessfullyReadSettings = @{
-        Code = 4
+        Code = 44
         Message = 'Successfully read and validated config settings from file'
         operationName = 'Read Config settings'
+    }
+    SkippedInstallation = @{
+        Code = 15
+        Message = 'Same config settings have already been processed. This can happen if extension has been set again without changing any config settings or if VM has been rebooted. Skipping this time.'
+        operationName = 'Initialization'
+    }
+    Disabled = @{
+        Code = 16
+        Message = 'Disabled extension. This will have no affect on team services agent. It will keep running and will still be registered with VSTS.'
+        operationName = 'Disable'
     }
 
     #

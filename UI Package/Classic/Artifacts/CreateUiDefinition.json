@@ -1,5 +1,5 @@
 {
-  "handler": "Microsoft.Compute.VmExtension",
+  "handler": "Microsoft.ClassicCompute.VmExtension",
   "version": "0.0.1-preview",
   "parameters": {
     "elements": [

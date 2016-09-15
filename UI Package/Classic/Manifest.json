@@ -1,0 +1,50 @@
+{
+  "$schema": "https://gallery.azure.com/schemas/2015-04-01/manifest.json#",
+  "name": "vsts-agent-test-windows",
+  "publisher": "microsoft",
+  "version": "0.0.1",
+  "displayName": "ms-resource:displayName",
+  "publisherDisplayName": "ms-resource:publisherDisplayName",
+  "publisherLegalName": "ms-resource:publisherDisplayName",
+  "summary": "ms-resource:summary",
+  "longSummary": "ms-resource:summary",
+  "description": "ms-resource:description",
+  "uiDefinition": {
+    "path": "UiDefinition.json"
+  },
+  "artifacts": [
+    {
+      "name": "MainTemplate",
+      "type": "Template",
+      "path": "Artifacts\\MainTemplate.json",
+      "isDefault": true
+    },
+    {
+      "name": "CreateUiDefinition",
+      "type": "Custom",
+      "path": "Artifacts\\CreateUiDefinition.json",
+      "isDefault": false
+    },
+  ],
+  "icons": {
+    "small": "Icons\\small.png",
+    "medium": "Icons\\medium.png"
+  },
+  "screenshots": [
+  ],
+  "links": [
+    {
+      "displayName": "ms-resource:link1",
+      "uri": "https://www.visualstudio.com/products/visual-studio-team-services-vs"
+    }
+  ],
+  "categories": [
+    "classicCompute-vmextension-windows"
+  ],
+  "filters": [
+    {
+      "type": "HideKey",
+      "value": "microsoft_vsts-agent-test-windows"
+    }
+  ]
+}

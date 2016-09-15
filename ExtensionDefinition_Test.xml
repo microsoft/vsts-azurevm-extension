@@ -2,7 +2,7 @@
   <ExtensionImage xmlns="http://schemas.microsoft.com/windowsazure" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">   
   <ProviderNameSpace>Test.Microsoft.VisualStudio.Services</ProviderNameSpace>
   <Type>VSTSAgent</Type>
-  <Version>1.22.0.0</Version>
+  <Version>1.23.0.0</Version>
   <Label>VSTS Agent</Label>
   <HostingResources>VmRole</HostingResources>
   <MediaLink>https://rmvmextensiontest.blob.core.windows.net/agentextension/VSTSAgentExtension.zip</MediaLink>

@@ -79,6 +79,12 @@ $script:extensionLogBuffer = New-CircularBuffer -Size 1000
 # log file
 $script:logFilePath = ""
 
+# Last seq no file
+$script:lastSequenceNumberFile = "$PSScriptRoot\..\LASTSEQNUM"
+
+# markup file to detect whether extension has been previously disabled
+$script:disabledMarkupFile = "$PSScriptRoot\..\EXTENSIONDISABLED"
+
 <#
 .Synopsis
    Clears the values cached by the Get-* functions
@@ -283,6 +289,120 @@ function Get-HandlerSettings
     }
 
     $script:handlerCache.getHandlerSettings
+}
+
+<#
+.Synopsis
+   Save current sequence number as last used sequence number. This information is saved in a file
+#>
+function Set-LastSequenceNumber
+{
+    [CmdletBinding()]
+    param
+    ()
+
+    $currentSequenceNumber = Get-HandlerExecutionSequenceNumber
+    $lastSeqFile = $script:lastSequenceNumberFile
+
+    Write-Log "Writing current sequence number $currentSequenceNumber to LASTSEQNUM file $lastSeqFile"
+
+    try
+    {
+        New-Item -ItemType File -Path $lastSeqFile -Value $currentSequenceNumber -Force
+    }
+    catch
+    {}
+}
+
+<#
+.Synopsis
+   Gets last used sequence number
+#>
+function Get-LastSequenceNumber
+{
+    [CmdletBinding()]
+    param
+    ()
+
+    $lastSeqFile = $script:lastSequenceNumberFile
+    Write-Log "reading last sequence number LASTSEQNUM file $lastSeqFile"
+
+    try
+    {
+        return Get-Content $lastSeqFile
+    }
+    catch
+    {}
+
+    return 0
+}
+
+<#
+.Synopsis
+   Save a dummy markup file which indicates that extension has been disabled
+#>
+function Set-ExtensionDisabledMarkup
+{
+    [CmdletBinding()]
+    param
+    ()
+
+    $markupFile =$script:disabledMarkupFile
+
+    Write-Log "Create disabled markup file $markupFile"
+
+    try
+    {
+        New-Item -ItemType File -Path $markupFile -Force
+    }
+    catch
+    {}
+}
+
+<#
+.Synopsis
+   Removes any disabled markup file. This indicates that extension has been enabled
+#>
+function Remove-ExtensionDisabledMarkup
+{
+    [CmdletBinding()]
+    param
+    ()
+
+    $markupFile =$script:disabledMarkupFile
+
+    Write-Log "Deleting disabled markup file $markupFile"
+
+    try
+    {
+        Remove-Item -Path $markupFile -Force
+    }
+    catch
+    {}
+}
+
+<#
+.Synopsis
+   Tests whether markup file for extension disable exists or not. Used to find whether extension has been previously disabled
+#>
+function Test-ExtensionDisabledMarkup
+{
+    [CmdletBinding()]
+    param
+    ()
+
+    $markupFile =$script:disabledMarkupFile
+
+    Write-Log "Testing whether deleted markup file exists: $markupFile"
+
+    try
+    {
+        return Test-Path $markupFile
+    }
+    catch
+    {}
+
+    return $false
 }
 
 <#
@@ -840,4 +960,9 @@ Export-ModuleMember `
         Set-HandlerStatus, `
         Add-HandlerSubStatus, `
         Clear-StatusFile, `
+        Set-LastSequenceNumber, `
+        Get-LastSequenceNumber, `
+        Set-ExtensionDisabledMarkup, `
+        Remove-ExtensionDisabledMarkup, `
+        Test-ExtensionDisabledMarkup, `
         Set-JsonContent

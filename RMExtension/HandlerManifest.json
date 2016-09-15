@@ -5,7 +5,7 @@
         "uninstallCommand":   "",
         "updateCommand":      "",
         "enableCommand":      "enable.cmd",
-        "disableCommand":     "",
+        "disableCommand":     "disable.cmd",
         "rebootAfterInstall": false,
         "reportHeartbeat":    false,
         "updateMode":         "UpdateWithoutInstall"

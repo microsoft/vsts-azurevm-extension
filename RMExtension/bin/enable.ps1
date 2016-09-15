@@ -40,3 +40,9 @@ else
 {
     Register-Agent $config $false
 }
+
+Set-LastSequenceNumber
+
+Write-Log "Extension is enabled. Removing any disable markup file.."
+Remove-ExtensionDisabledMarkup
+

@@ -48,7 +48,20 @@ function Start-RMExtensionHandler {
             throw New-HandlerTerminatingError $RM_Extension_Status.PowershellVersionNotSupported.Code -Message $message
         }
 
-        $sequenceNumber = Get-HandlerExecutionSequenceNumber    
+        #
+        # If same sequence number has already been processed, do not process again. This can happen if extension has been set again without changing any config settings or if VM has been rebooted.
+        # Not updating handler status, so that the previous status(success or failure) still holds and is useful to user. Just setting substatus for more detailed information
+        #
+        $sequenceNumber = Get-HandlerExecutionSequenceNumber
+        $lastSequenceNumber = Get-LastSequenceNumber
+        if(($sequenceNumber -eq $lastSequenceNumber) -and (!(Test-ExtensionDisabledMarkup)))
+        {
+            Write-Log $RM_Extension_Status.SkippedInstallation.Message
+            Write-Log "Current seq number: $sequenceNumber, last seq number: $lastSequenceNumber"
+            Add-HandlerSubStatus $RM_Extension_Status.SkippedInstallation.Code $RM_Extension_Status.SkippedInstallation.Message -operationName $RM_Extension_Status.SkippedInstallation.operationName
+            
+            Exit-WithCode0
+        }  
 
         Clear-StatusFile
         Clear-HandlerCache 
@@ -222,6 +235,13 @@ function Get-ConfigurationFromSettings {
         VeriftInputNotNull "MachineGroup" $machineGroupName
         Write-Log "Machine Group: $machineGroupName"
 
+        $agentName = $publicSettings['AgentName']
+        if(-not $agentName)
+        {
+            $agentName = ""
+        }
+        Write-Log "Agent name: $agentName"
+
         $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
         Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
         if(!(Test-Path $agentWorkingFolder))
@@ -239,6 +259,7 @@ function Get-ConfigurationFromSettings {
             Platform = $platform
             TeamProject        = $teamProjectName
             MachineGroup       = $machineGroupName
+            AgentName          = $agentName
             AgentWorkingFolder = $agentWorkingFolder
         }
     }
@@ -282,7 +303,7 @@ function Invoke-ConfigureAgentScript {
     [boolean] $agentRemovalRequired
     )
 
-    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -workingFolder $config.AgentWorkingFolder -agentRemovalRequired $agentRemovalRequired -logFunction $script:logger
+    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -agentRemovalRequired $agentRemovalRequired -logFunction $script:logger
 }
 
 function VeriftInputNotNull {

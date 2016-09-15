@@ -235,3 +235,34 @@ Describe "Extension log file tests" {
         }
     }
 }
+
+Describe "Last sequence number tests" {
+    Context "Last sequence number should be saved correctly" {
+
+        Mock -ModuleName AzureExtensionHandler Get-HandlerExecutionSequenceNumber { return 2 }
+        Mock -ModuleName AzureExtensionHandler Get-LastSequenceNumberFilePath { return "TestDrive:\LASTSEQNUM" }
+
+        Remove-Item TestDrive:\LASTSEQNUM -Force -ErrorAction SilentlyContinue
+
+        Set-LastSequenceNumber
+
+        It "should correctly create file with proper sequence number" {
+            Test-Path TestDrive:\LASTSEQNUM
+            Get-Content TestDrive:\LASTSEQNUM | Should Be 2
+        }
+    }
+
+    Context "Last sequence number should be read correctly" {
+
+        Mock -ModuleName AzureExtensionHandler Get-LastSequenceNumberFilePath { return "TestDrive:\LASTSEQNUM" }
+
+        New-Item -ItemType File -Path TestDrive:\LASTSEQNUM -Value 3 -Force -ErrorAction SilentlyContinue
+
+        Get-LastSequenceNumber
+
+        It "should correctly create file with proper sequence number" {
+            Test-Path TestDrive:\LASTSEQNUM
+            Get-Content TestDrive:\LASTSEQNUM | Should Be 3
+        }
+    }
+}

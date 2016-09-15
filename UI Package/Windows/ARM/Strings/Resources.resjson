@@ -1,7 +1,7 @@
 {
-  "displayName": "Release Management",
+  "displayName": "VSTS Agent",
   "publisherDisplayName": "Microsoft Corp.",
-  "summary": "Deploy apps using Release Management Agent",
-  "description": "Deploy apps using Release Management Agent",
-  "link1": "http://www.contoso.com/42588280809/homepage"
+  "summary": "VSTS agent for machine groups",
+  "description": "Deploy apps to machine group using VSTS agent",
+  "link1": "https://www.visualstudio.com/products/visual-studio-team-services-vs"
 }

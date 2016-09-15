@@ -334,7 +334,7 @@ function Get-LastSequenceNumber
     catch
     {}
 
-    return 0
+    return -1
 }
 
 <#

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
   <ExtensionImage xmlns="http://schemas.microsoft.com/windowsazure" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">   
   <ProviderNameSpace>Test.Microsoft.VisualStudio.Services</ProviderNameSpace>
-  <Type>VSTSAgent</Type>
-  <Version>1.23.0.0</Version>
-  <Label>VSTS Agent</Label>
+  <Type>TeamServicesAgent</Type>
+  <Version>1.24.0.0</Version>
+  <Label>Team Services Agent</Label>
   <HostingResources>VmRole</HostingResources>
   <MediaLink>https://rmvmextensiontest.blob.core.windows.net/agentextension/VSTSAgentExtension.zip</MediaLink>
   <Certificate>
@@ -15,7 +15,7 @@
   <Endpoints />
   <PublicConfigurationSchema />
   <PrivateConfigurationSchema />
-  <Description>VSTS agent for machine groups</Description>
+  <Description>Team Services agent for machine groups</Description>
   <IsInternalExtension>true</IsInternalExtension>
   <Eula>https://www.visualstudio.com/products/visual-studio-team-services-vs</Eula> 
   <PrivacyUri>https://www.visualstudio.com/products/visual-studio-team-services-vs</PrivacyUri> 

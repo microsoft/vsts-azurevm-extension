@@ -26,14 +26,14 @@
   },
   "resources": [
     {
-      "name": "[concat(parameters('vmName'),'/VSTSAgent')]",
+      "name": "[concat(parameters('vmName'),'/TeamServicesAgent')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "properties": {
         "publisher": "Test.Microsoft.VisualStudio.Services",
-        "type": "VSTSAgent",
-        "typeHandlerVersion": "1.23",
+        "type": "TeamServicesAgent",
+        "typeHandlerVersion": "1.24",
         "autoUpgradeMinorVersion": false,
         "settings": {
           "VSTSAccountUrl": "[parameters('VSTSAccountUrl')]",

@@ -28,7 +28,9 @@
   ],
   "icons": {
     "small": "Icons\\small.png",
-    "medium": "Icons\\medium.png"
+    "medium": "Icons\\medium.png",
+    "large": "Icons\\large.png",
+    "wide": "Icons\\wide.png"
   },
   "screenshots": [
   ],

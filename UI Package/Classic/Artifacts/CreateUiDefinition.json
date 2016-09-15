@@ -6,8 +6,8 @@
       {
         "name": "VSTSAccountUrl",
         "type": "Microsoft.Common.TextBox",
-        "label": "VSTS Account URL",
-        "toolTip": "The VSTS account to use.",
+        "label": "Team Services Account URL",
+        "toolTip": "The Team Services account to use.",
         "constraints": {
           "required": true,
           "regex": "^(https:\\/\\/).+\\.(visualstudio\\.com|vsallin\\.net)$",
@@ -18,7 +18,7 @@
         "name": "TeamProject",
         "type": "Microsoft.Common.TextBox",
         "label": "Team Project",
-        "toolTip": "Team project in VSTS account to use.",
+        "toolTip": "Project in Team Services account to use.",
         "constraints": {
           "required": true
         }
@@ -27,7 +27,7 @@
         "name": "MachineGroup",
         "type": "Microsoft.Common.TextBox",
         "label": "Machine Group",
-        "toolTip": "Machine group against which Deployment agent will be configured.",
+        "toolTip": "Machine group against which the agent will be configured.",
         "constraints": {
           "required": true
         }
@@ -47,7 +47,7 @@
         "label": {
           "password": "PAT Token"
         },
-        "toolTip": "PAT token will be used by extension to download and configure agent against VSTS account.",
+        "toolTip": "PAT token will be used by extension to download and configure agent against Team Services account.",
         "constraints": {
           "required": true
         },

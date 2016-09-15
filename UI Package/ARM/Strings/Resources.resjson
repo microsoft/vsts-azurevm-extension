@@ -1,7 +1,7 @@
 {
-  "displayName": "VSTS Agent",
+  "displayName": "Team Services Agent",
   "publisherDisplayName": "Microsoft Corp.",
-  "summary": "VSTS agent for machine groups",
-  "description": "Deploy apps to machine group using VSTS agent",
+  "summary": "Team Services agent for machine groups",
+  "description": "Deploy apps to machine group using Team Services agent",
   "link1": "https://www.visualstudio.com/products/visual-studio-team-services-vs"
 }

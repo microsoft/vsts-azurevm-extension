@@ -2,13 +2,6 @@
   "name" : "AzureRM"
   "version": "1.0",
   "handlerManifest": {
-    "installCommand":     "azurerm.py -install",
-    "uninstallCommand":   "azurerm.py -uninstall",
-    "updateCommand":      "azurerm.py -update",
     "enableCommand":      "azurerm.py -enable",
-    "disableCommand":     "azurerm.py -disable",
-    "rebootAfterInstall": false,
-    "reportHeartbeat":    false,
-    "updateMode":         "UpdateWithoutInstall"
   }
 }]

@@ -1,6 +1,6 @@
 {
   "$schema": "https://gallery.azure.com/schemas/2015-04-01/manifest.json#",
-  "name": "vsts-agent-test-windows-arm",
+  "name": "vsts-agent-test-windows",
   "publisher": "microsoft",
   "version": "0.0.1",
   "displayName": "ms-resource:displayName",
@@ -22,7 +22,7 @@
     {
       "name": "CreateUiDefinition",
       "type": "Custom",
-      "path": "Artifacts\\CreateUIDefinition.json",
+      "path": "Artifacts\\CreateUiDefinition.json",
       "isDefault": false
     },
   ],
@@ -41,7 +41,7 @@
     }
   ],
   "categories": [
-    "compute-vmextension-windows"
+    "classicCompute-vmextension-windows"
   ],
   "filters": [
     {

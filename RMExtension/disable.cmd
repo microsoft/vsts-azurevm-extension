@@ -1,0 +1,1 @@
+Powershell.exe -executionpolicy bypass bin\disable.ps1

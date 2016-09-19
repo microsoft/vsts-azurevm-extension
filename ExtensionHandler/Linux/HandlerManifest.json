@@ -1,0 +1,7 @@
+[{
+  "name" : "AzureRM"
+  "version": "1.0",
+  "handlerManifest": {
+    "enableCommand":      "azurerm.py -enable",
+  }
+}]

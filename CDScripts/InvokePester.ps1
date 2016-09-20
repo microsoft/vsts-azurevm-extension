@@ -3,8 +3,8 @@
 Function Run-Tests()
 {
     $scriptCwd = Split-Path -Parent $PSCommandPath
-    $testsPath = Join-Path $scriptCwd "..\RMExtension\Tests"
-    $resultsPath = Join-Path $scriptCwd "..\RMExtension\TestResults"
+    $testsPath = Join-Path $scriptCwd "..\ExtensionHandler\Windows\src\Tests"
+    $resultsPath = Join-Path $env:TEMP "VSTSExtensionPesterTests\TestResults"
 
     Write-verbose "Setting working directory as $testsPath" -verbose
     pushd $testsPath

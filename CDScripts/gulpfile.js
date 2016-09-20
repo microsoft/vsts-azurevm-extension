@@ -6,10 +6,6 @@ var path = require('path');
 var zip = require('gulp-zip');
 var minimist = require('minimist');
 
-/*var mopts = {
-    string: 'outputPath',
-};*/
-
 var options = minimist(process.argv.slice(2));
 
 gulp.task("test", function(done){
@@ -39,7 +35,7 @@ gulp.task("copyPackageFiles", function(){
     var tempLocation = os.tmpdir();
     gutil.log(tempLocation);
 
-    return gulp.src(['../RMExtension/bin/**.**', '../RMExtension/enable.cmd', '../RMExtension/disable.cmd', '../RMExtension/HandlerManifest.json'],  {base: '../RMExtension/'})
+    return gulp.src(['../ExtensionHandler/Windows/src/bin/**.**', '../ExtensionHandler/Windows/src/enable.cmd', '../ExtensionHandler/Windows/src/disable.cmd', '../ExtensionHandler/Windows/src/HandlerManifest.json'],  {base: '../ExtensionHandler/Windows/src/'})
         .pipe(gulp.dest(path.join(tempLocation, 'VSTSExtension')));
 });
 
@@ -47,7 +43,6 @@ gulp.task('zipPackageFiles', function () {
 
 	var tempLocation = os.tmpdir();
 	var packageLocation = path.join(tempLocation, 'VSTSExtension/**');
-	var packageLocation1 = path.join(tempLocation, 'VSTSExtension1');
 
 	gutil.log(packageLocation);
     return gulp.src([packageLocation])

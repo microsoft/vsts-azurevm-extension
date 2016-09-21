@@ -6,7 +6,14 @@ var path = require('path');
 var zip = require('gulp-zip');
 var minimist = require('minimist');
 
+var tempLocation = os.tmpdir();
+var tempPackageLocation = path.join(tempLocation, 'VSTSExtensionTemp');
+var outputPath = path.join(tempLocation, 'VSTSExtensionPackage');
 var options = minimist(process.argv.slice(2));
+if(!!options.outputPath) {
+	outputPath = options.outputPath;
+}
+
 
 gulp.task("test", function(done){
 
@@ -30,22 +37,30 @@ gulp.task("test", function(done){
     }); 
 });
 
-gulp.task("copyPackageFiles", function(){
+gulp.task("copyPackageFiles", ['test'], function(){
 
-    var tempLocation = os.tmpdir();
-    gutil.log(tempLocation);
+    gutil.log("Copying files selectively to temp location: " + tempPackageLocation);
 
     return gulp.src(['../ExtensionHandler/Windows/src/bin/**.**', '../ExtensionHandler/Windows/src/enable.cmd', '../ExtensionHandler/Windows/src/disable.cmd', '../ExtensionHandler/Windows/src/HandlerManifest.json'],  {base: '../ExtensionHandler/Windows/src/'})
-        .pipe(gulp.dest(path.join(tempLocation, 'VSTSExtension')));
+        .pipe(gulp.dest(tempPackageLocation));
 });
 
-gulp.task('zipPackageFiles', function () {
+gulp.task('build', ['copyPackageFiles'], function () {
+	
+	var sourceLocation = path.join(tempLocation, 'VSTSExtensionTemp/**');
+	gutil.log("Archieving the package from location: " + sourceLocation);
+	gutil.log("Archieve output location: " + outputPath);
 
-	var tempLocation = os.tmpdir();
-	var packageLocation = path.join(tempLocation, 'VSTSExtension/**');
-
-	gutil.log(packageLocation);
-    return gulp.src([packageLocation])
+	// archieving handler files to output location
+    gulp.src([sourceLocation])
         .pipe(zip('RMExtension.zip'))
-        .pipe(gulp.dest(options.outputPath));
+        .pipe(gulp.dest(outputPath));
+
+    // copying definition xml file to output location
+    gulp.src(['../ExtensionHandler/Windows/ExtensionDefinition_Test.xml'])
+    	.pipe(gulp.dest(outputPath));
+
+    gutil.log("VM extension packaged created at " + outputPath);
 });
+
+gulp.task('default', ['build']);

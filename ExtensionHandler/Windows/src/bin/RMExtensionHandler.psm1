@@ -181,6 +181,30 @@ function Register-Agent {
 
 <#
 .Synopsis
+   Unconfigures and removes Deployment agent. 
+   Currently, uninstall is no-op for agent. It will still keep running and will still be registered to machine group. The purpose here is to just inform user about this
+#>
+function Remove-Agent {
+    [CmdletBinding()]
+    param()
+
+    try 
+    {
+        Write-Log "Uninstall command is no-op for agent"
+        # TODO: Call script to remove agent from VSTS machine group
+
+        Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
+        Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
+    }
+    catch 
+    {
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.Uninstalling.operationName
+        Exit-WithCode0
+    } 
+}
+
+<#
+.Synopsis
    Reads .settings file and generates configuration settings required for downloading and configuring agent
 #>
 function Get-ConfigurationFromSettings {
@@ -328,5 +352,6 @@ Export-ModuleMember `
         Start-RMExtensionHandler, `
         Test-AgentAlreadyExists, `
         Get-Agent, `
+        Remove-Agent, `
         Get-ConfigurationFromSettings, `
         Register-Agent

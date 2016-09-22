@@ -2,7 +2,7 @@
     "version": 1.0,
     "handlerManifest": {
         "installCommand":     "",
-        "uninstallCommand":   "",
+        "uninstallCommand":   "uninstall.cmd",
         "updateCommand":      "",
         "enableCommand":      "enable.cmd",
         "disableCommand":     "disable.cmd",

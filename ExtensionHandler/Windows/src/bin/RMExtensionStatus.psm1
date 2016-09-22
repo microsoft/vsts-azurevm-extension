@@ -85,7 +85,7 @@ $global:RM_Extension_Status = @{
         operationName = 'Read config settings'
     }
     SuccessfullyReadSettings = @{
-        Code = 44
+        Code = 14
         Message = 'Successfully read and validated config settings from file'
         operationName = 'Read Config settings'
     }
@@ -98,6 +98,11 @@ $global:RM_Extension_Status = @{
         Code = 16
         Message = 'Disabled extension. This will have no affect on team services agent. It will keep running and will still be registered with VSTS.'
         operationName = 'Disable'
+    }
+    RemovedAgent = @{
+        Code = 17
+        Message = 'Uninstalling extension. This will have no affect on team services agent. It will keep running and will still be registered with VSTS.'
+        operationName = 'Uninstall'
     }
 
     #

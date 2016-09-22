@@ -1,0 +1,1 @@
+Powershell.exe -executionpolicy bypass bin\uninstall.ps1

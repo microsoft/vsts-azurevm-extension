@@ -183,3 +183,21 @@ Describe "configure agent tests" {
         }
     }
 }
+
+Describe "remove agent tests" {
+
+    Context "Should set proper status when agent is removed" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        
+        Remove-Agent
+
+        It "should set proper status" {
+            Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.RemovedAgent.Code}
+            Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.Uninstalling.Code}
+        }
+    }
+}

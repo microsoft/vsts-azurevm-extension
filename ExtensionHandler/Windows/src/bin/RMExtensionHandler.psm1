@@ -194,11 +194,11 @@ function Remove-Agent {
         # TODO: Call script to remove agent from VSTS machine group
 
         Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
-        Set-HandlerStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -Status success
+        Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
     }
     catch 
     {
-        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.RemovedAgent.operationName
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.Uninstalling.operationName
         Exit-WithCode0
     } 
 }

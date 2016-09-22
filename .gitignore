@@ -1,2 +1,5 @@
 RMExtension/HandlerEnvironment.json
 CDScripts/node_modules/
+node_modules/
+_build/
+_testResults/

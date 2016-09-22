@@ -18,7 +18,8 @@
       "type": "string"
     },
     "AgentName": {
-      "type": "string"
+      "type": "string",
+      "defaultValue": ""
     },
     "PATToken": {
       "type": "securestring"
@@ -33,7 +34,7 @@
       "properties": {
         "publisher": "Test.Microsoft.VisualStudio.Services",
         "extension": "TeamServicesAgent",
-        "version": "1.24",
+        "version": "1.28",
         "parameters": {
             "public": {
               "VSTSAccountUrl": "[parameters('VSTSAccountUrl')]",

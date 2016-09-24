@@ -266,6 +266,14 @@ function Get-ConfigurationFromSettings {
         }
         Write-Log "Agent name: $agentName"
 
+        $tags = $null
+        if($publicSettings.Contains('Tags'))
+        {
+            $tags = $publicSettings['Tags']
+        }
+        $tagsString = $tags | Out-String
+        Write-Log "Tags: $tagsString"
+
         $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
         Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
         if(!(Test-Path $agentWorkingFolder))
@@ -284,6 +292,7 @@ function Get-ConfigurationFromSettings {
             TeamProject        = $teamProjectName
             MachineGroup       = $machineGroupName
             AgentName          = $agentName
+            Tags               = $tags
             AgentWorkingFolder = $agentWorkingFolder
         }
     }

@@ -87,11 +87,6 @@ gulp.task('createWindowsUIPackage', function () {
 
 });
 
-gulp.task('copyCDScripts', function () {
-    gulp.src(['CDScripts/**'], {base: '.'})
-        .pipe(gulp.dest(outputPath));
-});
-
 gulp.task('default', ['build']);
 
 gulp.task('build', ['createWindowsHandlerPackage', 'createWindowsUIPackage', 'copyCDScripts'], function() {

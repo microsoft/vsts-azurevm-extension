@@ -5,3 +5,5 @@ _build/
 _testResults/
 ExtensionHandler/Windows/src/LASTSEQNUM
 ExtensionHandler/Windows/src/HandlerEnvironment.json
+ExtensionHandler/Windows/latestVersion.json
+ExtensionHandler/Windows/oldVersion.json

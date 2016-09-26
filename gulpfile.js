@@ -7,7 +7,7 @@ var zip = require('gulp-zip');
 var minimist = require('minimist');
 
 var tempLocation = os.tmpdir();
-var tempPackageLocation = path.join(tempLocation, 'VSTSExtensionTemp');
+var tempPackagePath = path.join(tempLocation, 'VSTSExtensionTemp');
 var outputPath = '_build';
 var options = minimist(process.argv.slice(2));
 if(!!options.outputPath) {
@@ -37,32 +37,58 @@ gulp.task("test", function(done){
     }); 
 });
 
-gulp.task("copyPackageFiles", ['test'], function(){
-
-	var tempWindowsHandlerPackageLocation = path.join(tempPackageLocation, 'ExtensionHandler/Windows');
-    gutil.log("Copying windows extensionm handler files selectively to temp location: " + tempWindowsHandlerPackageLocation);
-
-    return gulp.src(['ExtensionHandler/Windows/src/bin/**.**', 'ExtensionHandler/Windows/src/enable.cmd', 'ExtensionHandler/Windows/src/disable.cmd', 'ExtensionHandler/Windows/src/HandlerManifest.json'],  {base: 'ExtensionHandler/Windows/src/'})
-        .pipe(gulp.dest(tempWindowsHandlerPackageLocation));
-});
-
-gulp.task('build', ['copyPackageFiles'], function () {
+gulp.task('createWindowsHandlerPackage', ['test'], function () {
 	
-	var tempWindowsHandlerPackageLocation = path.join(tempLocation, 'VSTSExtensionTemp/ExtensionHandler/Windows/**');
+	var tempWindowsHandlerFilesPath = path.join(tempPackagePath, 'ExtensionHandler/Windows');
+    gutil.log("Copying windows extensionm handler files selectively to temp location: " + tempWindowsHandlerFilesPath);
+
+    gulp.src(['ExtensionHandler/Windows/src/bin/**.**', 'ExtensionHandler/Windows/src/enable.cmd', 'ExtensionHandler/Windows/src/disable.cmd', 'ExtensionHandler/Windows/src/HandlerManifest.json'],  {base: 'ExtensionHandler/Windows/src/'})
+        .pipe(gulp.dest(tempWindowsHandlerFilesPath));
+
+
 	var windowsHandlerArchievePackageLocation = path.join(outputPath, 'ExtensionHandler/Windows');
-	gutil.log("Archieving the windows extension handler package from location: " + tempWindowsHandlerPackageLocation);
+	gutil.log("Archieving the windows extension handler package from location: " + tempWindowsHandlerFilesPath);
 	gutil.log("Archieve output location: " + windowsHandlerArchievePackageLocation);
 
+    var tempWindowsHandlerFilesSource = path.join(tempWindowsHandlerFilesPath, '**');
 	// archieving handler files to output location
-    gulp.src([tempWindowsHandlerPackageLocation])
+    gulp.src([tempWindowsHandlerFilesSource])
         .pipe(zip('RMExtension.zip'))
         .pipe(gulp.dest(windowsHandlerArchievePackageLocation));
 
     // copying definition xml file to output location
     gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test.xml'])
     	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
+});
 
-    gutil.log("VM extension packages created at " + outputPath);
+gulp.task('createWindowsUIPackage', ['test'], function () {
+    
+    // Create ARM UI package
+    var armUIFilesPath = 'UI Package/Windows/ARM';
+    var armUIPackageLocation = path.join(outputPath, armUIFilesPath);
+    gutil.log("Archieving the windows extension ARM UI package from location: " + armUIFilesPath);
+    gutil.log("Archieve output location: " + armUIPackageLocation);
+
+    // archieving handler files to output location
+    gulp.src(['UI Package/Windows/ARM/**'])
+        .pipe(zip('UIPackage.zip'))
+        .pipe(gulp.dest(armUIPackageLocation));
+    
+    // Create Classic UI package
+    var classicUIFilesPath = 'UI Package/Windows/Classic';
+    var classicUIPackageLocation = path.join(outputPath, classicUIFilesPath);
+    gutil.log("Archieving the windows extension Classic UI package from location: " + classicUIFilesPath);
+    gutil.log("Archieve output location: " + classicUIPackageLocation);
+
+    // archieving handler files to output location
+    gulp.src(['UI Package/Windows/Classic/**'])
+        .pipe(zip('UIPackage.zip'))
+        .pipe(gulp.dest(classicUIPackageLocation));
+
 });
 
 gulp.task('default', ['build']);
+
+gulp.task('build', ['createWindowsHandlerPackage', 'createWindowsUIPackage'], function() {
+    gutil.log("VM extension packages created at " + outputPath);
+});

@@ -28,8 +28,8 @@ param(
 $artifactsDir = Join-Path $env:SYSTEM_ARTIFACTSDIRECTORY $env:BUILD_DEFINITIONNAME
 $packagePath = Join-Path $artifactsDir $relativePackagePath
 
-$key = Get-AzureRmStorageAccountKey -ResourceGroupName $storageResourceGroup -Name $storageAccountName
-$ctx = New-AzureStorageContext $storageAccountName -StorageAccountKey $key[0].Value
+$key = Get-AzureStorageKey -StorageAccountName $storageAccountName
+$ctx = New-AzureStorageContext $storageAccountName -StorageAccountKey $key.Primary
 
 Write-Host "Uploading extension package $packagePath to azure storage account $storageAccountName container $storageContainerName blob $storageBlobName"
 Set-AzureStorageBlobContent -Container $storageContainerName -File $packagePath -Blob $storageBlobName -Context $ctx -Force

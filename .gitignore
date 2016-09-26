@@ -3,3 +3,5 @@ CDScripts/node_modules/
 node_modules/
 _build/
 _testResults/
+ExtensionHandler/Windows/src/LASTSEQNUM
+ExtensionHandler/Windows/src/HandlerEnvironment.json

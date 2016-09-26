@@ -61,7 +61,7 @@ gulp.task('createWindowsHandlerPackage', ['test'], function () {
     	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
 });
 
-gulp.task('createWindowsUIPackage', ['test'], function () {
+gulp.task('createWindowsUIPackage', function () {
     
     // Create ARM UI package
     var armUIFilesPath = 'UI Package/Windows/ARM';
@@ -87,8 +87,13 @@ gulp.task('createWindowsUIPackage', ['test'], function () {
 
 });
 
+gulp.task('copyCDScripts', function () {
+    gulp.src(['CDScripts/**'], {base: '.'})
+        .pipe(gulp.dest(outputPath));
+});
+
 gulp.task('default', ['build']);
 
-gulp.task('build', ['createWindowsHandlerPackage', 'createWindowsUIPackage'], function() {
+gulp.task('build', ['createWindowsHandlerPackage', 'createWindowsUIPackage', 'copyCDScripts'], function() {
     gutil.log("VM extension packages created at " + outputPath);
 });

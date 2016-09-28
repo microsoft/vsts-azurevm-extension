@@ -1,0 +1,10 @@
+{
+  "resourceGroupName": "vm-ext-rg",
+  "vmName": "vm-ext-e2e",
+  "location": "southeastasia",
+  "storageAccountName": "vmextrg114",
+  "templateFile": "template.json",
+  "templateParameterFile": "parameters.json",
+  "extensionPublicSettingsFile": "publicConfig.json",
+  "extensionProtectedSettingsFile": "protectedConfig.json"
+}

@@ -1,4 +1,4 @@
-﻿# Usage: .\Test.ps1 -testEnvironmentFile E:\work\RM\VMExtension\e2eTests\new\TestEnvironment.json -publisher Test.Microsoft.VisualStudio.Services -extension TeamServicesAgent -extensionVersion 1.30
+﻿# Usage: .\Test.ps1 -testEnvironmentFile E:\work\RM\VMExtension\e2eTests\new\TestEnvironment.json -publisher Test.Microsoft.VisualStudio.Services -extension TeamServicesAgent -extensionVersion 1.30 [-personalAccessToken ***]
 
 param(
     [Parameter(Mandatory=$true)]
@@ -8,7 +8,8 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$extension,
     [Parameter(Mandatory=$true)]
-    [string]$extensionVersion
+    [string]$extensionVersion,
+    [string]$personalAccessToken
 )
 
 function Remove-ExistingVM
@@ -53,11 +54,20 @@ function Get-Config
     $publicSettings = Get-Content $extensionPublicSettingsFile | Out-String | ConvertFrom-Json
     $protectedSettings = Get-Content $extensionProtectedSettingsFile | Out-String | ConvertFrom-Json
 
+    if(($personalAccessToken -ne $null) -and ($personalAccessToken -ne ""))
+    {
+        $token = $personalAccessToken
+    }
+    else
+    {
+        $token = $protectedSettings.PATToken
+    }
+
     return @{
                 VSTSUrl            = $publicSettings.VSTSAccountUrl
                 TeamProject        = $publicSettings.TeamProject
                 MachineGroup       = $publicSettings.MachineGroup
-                AgentName          = $publicSettings.AgentName
+                AgentName          = $token
                 PATToken           = $protectedSettings.PATToken
             }
 }

@@ -34,7 +34,7 @@
       "properties": {
         "publisher": "Test.Microsoft.VisualStudio.Services",
         "type": "TeamServicesAgent",
-        "typeHandlerVersion": "1.31",
+        "typeHandlerVersion": "1.32",
         "autoUpgradeMinorVersion": true,
         "settings": {
           "VSTSAccountName": "[parameters('VSTSAccountName')]",

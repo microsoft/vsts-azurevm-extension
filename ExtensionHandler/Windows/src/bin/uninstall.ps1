@@ -17,4 +17,9 @@ Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionHandler.psm1
 
 Initialize-ExtensionLogFile
-Remove-Agent
+$config = Get-ConfigurationFromSettings
+$configuredAgentExists = Test-AgentAlreadyExists $config
+if($configuredAgentExists)
+{
+    Remove-Agent $config
+}

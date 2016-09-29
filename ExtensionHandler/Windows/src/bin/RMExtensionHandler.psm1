@@ -186,12 +186,15 @@ function Register-Agent {
 #>
 function Remove-Agent {
     [CmdletBinding()]
-    param()
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
 
     try 
     {
-        Write-Log "Uninstall command is no-op for agent"
-        # TODO: Call script to remove agent from VSTS machine group
+        Write-Log "Remove-Agent command started"
+        Invoke-RemoveAgentScript $config
 
         Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
         Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
@@ -336,7 +339,16 @@ function Invoke-ConfigureAgentScript {
     [boolean] $agentRemovalRequired
     )
 
-    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -agentRemovalRequired $agentRemovalRequired -logFunction $script:logger
+    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -agentRemovalRequired $agentRemovalRequired -logFunction $script:logger
+}
+
+function Invoke-RemoveAgentScript {
+    [CmdletBinding()]
+    param(
+    [hashtable] $config
+    )
+
+    . $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
 }
 
 function VeriftInputNotNull {

@@ -192,8 +192,8 @@ Describe "remove agent tests" {
         Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
-        
-        Remove-Agent
+        Mock -ModuleName RMExtensionHandler Invoke-RemoveAgentScript {}
+        Remove-Agent @{}
 
         It "should set proper status" {
             Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.RemovedAgent.Code}

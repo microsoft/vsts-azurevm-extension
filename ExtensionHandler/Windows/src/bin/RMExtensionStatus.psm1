@@ -101,12 +101,12 @@ $global:RM_Extension_Status = @{
     }
     Uninstalling = @{
         Code = 17
-        Message = 'Uninstalling extension.' 
+        Message = 'Uninstalling extension and removing the deployment agent form machine group' 
         operationName = 'Uninstall'
     }
     RemovedAgent = @{
         Code = 18
-        Message = 'Uninstalling extension has no affect on team services agent. It will keep running and will still be registered with VSTS.'
+        Message = 'Removed deployment agent successfully from machine group'
         operationName = 'Uninstall'
     }
 

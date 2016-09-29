@@ -57,6 +57,7 @@ function ConfigureAgent
 function RemoveExistingAgent
 {
     param(
+    [Parameter(Mandatory=$true)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
     [string]$configCmdPath    

@@ -193,7 +193,7 @@ function Remove-Agent {
 
     try 
     {
-        Write-Log "Uninstall command is no-op for agent"
+        Write-Log "Remove-Agent command started"
         Invoke-RemoveAgentScript $config
 
         Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName

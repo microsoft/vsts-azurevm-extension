@@ -4,21 +4,21 @@
   "parameters": {
     "elements": [
       {
-        "name": "VSTSAccountUrl",
+        "name": "VSTSAccountName",
         "type": "Microsoft.Common.TextBox",
-        "label": "Team Services Account URL",
-        "toolTip": "The Team Services account to use.",
+        "label": "Team Services Account Name",
+        "toolTip": "Specify the Team Services account to use. Example: If yout account URL is https://contoso.visualstudio.com, just specify \"contoso\"",
         "constraints": {
           "required": true,
-          "regex": "^(https:\\/\\/).+\\.(visualstudio\\.com|vsallin\\.net)$",
-          "validationMessage": "Account url must start with https:// and end with visualstudio.com."
+          "regex": "^(?!.*(https:\\/\\/|visualstudio\\.com)).*$",
+          "validationMessage": "Account url must not start with https:// and must not end with visualstudio.com"
         }
       },
       {
         "name": "TeamProject",
         "type": "Microsoft.Common.TextBox",
         "label": "Team Project",
-        "toolTip": "Project in Team Services account to use.",
+        "toolTip": "Specify the Team Project which has the machine group defined in it",
         "constraints": {
           "required": true
         }
@@ -27,7 +27,7 @@
         "name": "MachineGroup",
         "type": "Microsoft.Common.TextBox",
         "label": "Machine Group",
-        "toolTip": "Machine group against which the agent will be configured.",
+        "toolTip": "Specify the Machine Group against which deployment agent will be registered",
         "constraints": {
           "required": true
         }
@@ -35,8 +35,8 @@
       {
         "name": "AgentName",
         "type": "Microsoft.Common.TextBox",
-        "label": "Agent name",
-        "toolTip": "Agent will run with this name.",
+        "label": "Agent Name",
+        "toolTip": "(Optional) Specify a name for the agent. If not specified, VM name appended with \"-MG\" will be used",
         "constraints": {
           "required": false
         }
@@ -47,7 +47,7 @@
         "label": {
           "password": "PAT Token"
         },
-        "toolTip": "PAT token will be used by extension to download and configure agent against Team Services account.",
+        "toolTip": "Enter the Personal Access Token which would be used to authenticate against Team Services account to download and configure agent",
         "constraints": {
           "required": true
         },
@@ -59,7 +59,7 @@
     "outputs": {
       "vmName": "[vmName()]",
       "location": "[location()]",
-      "VSTSAccountUrl": "[elements('VSTSAccountUrl')]",
+      "VSTSAccountName": "[elements('VSTSAccountName')]",
       "TeamProject": "[elements('TeamProject')]",
       "MachineGroup": "[elements('MachineGroup')]",
       "AgentName": "[elements('AgentName')]",

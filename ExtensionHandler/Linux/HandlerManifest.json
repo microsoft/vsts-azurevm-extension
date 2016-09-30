@@ -3,6 +3,6 @@
   "version": "1.0",
   "handlerManifest": {
     "installCommand": "",
-    "enableCommand":      "azurerm.py -enable"
+    "enableCommand":      "AzureRM.py -enable"
   }
 }]

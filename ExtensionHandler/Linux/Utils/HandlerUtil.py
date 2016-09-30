@@ -347,7 +347,7 @@ class HandlerUtility:
         self.log("Clearing status file " + status_file)
         open(status_file, 'w').close()
 
-    def set_handler_status(self, code=None, message=None, status = 'transitioning', operation = None, sub_status = 'success', ss_code = None, sub_status_message = None):
+    def set_handler_status(self, code=None, message=None, status = 'transitioning', operation_name = None, sub_status = 'success', ss_code = None, sub_status_message = None):
         status_file = '{0}/{1}.status'.format(self._context._status_dir, self._context._seq_no)
         #handlerUtility.log("Setting handler status to '{0}' ({1})".format(status, message))
         #to do correctr time, correct time format
@@ -369,7 +369,7 @@ class HandlerUtility:
             elif(ss_code != None):
                 self.log("Appending sub status")
                 new_msg = {'lang' : 'eng-US', 'message' : sub_status_message}
-                new_item = {'name' : operation, 'code' : ss_code, 'status' : sub_status, 'formattedMessage' : new_msg}
+                new_item = {'name' : operation_name, 'code' : ss_code, 'status' : sub_status, 'formattedMessage' : new_msg}
                 sub_status_list.append(new_item)
         else:
             status_list = [{
@@ -388,7 +388,7 @@ class HandlerUtility:
             }]
             if(ss_code != None):
                 self.log("Appending sub status")
-                status_list['status']['subStatus'].append({'name' : operation, 'code' : ss_code, 'status' : sub_status, 'formattedMessage' : {'lang' : 'eng-US', 'message' : sub_status_message}})
+                status_list['status']['subStatus'].append({'name' : operation_name, 'code' : ss_code, 'status' : sub_status, 'formattedMessage' : {'lang' : 'eng-US', 'message' : sub_status_message}})
         new_contents = json.dumps(status_list)
         waagent.SetFileContents(status_file, new_contents)
 

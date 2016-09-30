@@ -1,6 +1,6 @@
 ﻿<#
 .Synopsis
-    This script is the entry point to enable RM extension. 
+    This script is the entry point to enable RM extension
     
     This extension will download Deployment agent using the input config settings provided in <sequence-no>.settings file.
     After download, the agent binaries will be unzipped and the unzipped configuration script is used to configure the agent

@@ -52,13 +52,13 @@ gulp.task('createWindowsHandlerPackage', ['test'], function () {
 
     var tempWindowsHandlerFilesSource = path.join(tempWindowsHandlerFilesPath, '**');
 	// archieving handler files to output location
-    gulp.src([tempWindowsHandlerFilesSource])
+    return gulp.src([tempWindowsHandlerFilesSource])
         .pipe(zip('RMExtension.zip'))
         .pipe(gulp.dest(windowsHandlerArchievePackageLocation));
 
     // copying definition xml file to output location
-    gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test.xml'])
-    	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
+    //gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test.xml'])
+    //	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
 });
 
 gulp.task('createWindowsUIPackage', function () {

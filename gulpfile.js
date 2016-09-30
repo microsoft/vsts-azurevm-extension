@@ -6,14 +6,16 @@ var path = require('path');
 var zip = require('gulp-zip');
 var minimist = require('minimist');
 
-var tempLocation = os.tmpdir();
-var tempPackagePath = path.join(tempLocation, 'VSTSExtensionTemp');
 var outputPath = '_build';
 var options = minimist(process.argv.slice(2));
 if(!!options.outputPath) {
 	outputPath = options.outputPath;
 }
 
+var tempLocation = os.tmpdir();
+var tempPackagePath = path.join(tempLocation, 'VSTSExtensionTemp');
+var tempWindowsHandlerFilesPath = path.join(tempPackagePath, 'ExtensionHandler/Windows');
+var windowsHandlerArchievePackageLocation = path.join(outputPath, 'ExtensionHandler/Windows');
 
 gulp.task("test", function(done){
 
@@ -37,16 +39,23 @@ gulp.task("test", function(done){
     }); 
 });
 
-gulp.task('createWindowsHandlerPackage', ['test'], function () {
-	
-	var tempWindowsHandlerFilesPath = path.join(tempPackagePath, 'ExtensionHandler/Windows');
+gulp.task('createTempWindowsHandlerPackage', ['test'], function () {
+        
     gutil.log("Copying windows extensionm handler files selectively to temp location: " + tempWindowsHandlerFilesPath);
 
-    gulp.src(['ExtensionHandler/Windows/src/bin/**.**', 'ExtensionHandler/Windows/src/enable.cmd', 'ExtensionHandler/Windows/src/disable.cmd', 'ExtensionHandler/Windows/src/HandlerManifest.json'],  {base: 'ExtensionHandler/Windows/src/'})
+    return gulp.src(['ExtensionHandler/Windows/src/bin/**.**', 'ExtensionHandler/Windows/src/enable.cmd', 'ExtensionHandler/Windows/src/disable.cmd', 'ExtensionHandler/Windows/src/HandlerManifest.json'],  {base: 'ExtensionHandler/Windows/src/'})
         .pipe(gulp.dest(tempWindowsHandlerFilesPath));
+});
 
+gulp.task('copyWindowsHandlerDefinitionFile', ['test'], function () {
+        
+    // copying definition xml file to output location
+    return gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test.xml'])
+    	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
+});
 
-	var windowsHandlerArchievePackageLocation = path.join(outputPath, 'ExtensionHandler/Windows');
+gulp.task('createWindowsHandlerPackage', ['test', 'createTempWindowsHandlerPackage', 'copyWindowsHandlerDefinitionFile'], function () {
+
 	gutil.log("Archieving the windows extension handler package from location: " + tempWindowsHandlerFilesPath);
 	gutil.log("Archieve output location: " + windowsHandlerArchievePackageLocation);
 
@@ -55,10 +64,6 @@ gulp.task('createWindowsHandlerPackage', ['test'], function () {
     return gulp.src([tempWindowsHandlerFilesSource])
         .pipe(zip('RMExtension.zip'))
         .pipe(gulp.dest(windowsHandlerArchievePackageLocation));
-
-    // copying definition xml file to output location
-    //gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test.xml'])
-    //	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
 });
 
 gulp.task('createWindowsUIPackage', function () {

@@ -7,3 +7,4 @@ ExtensionHandler/Windows/src/LASTSEQNUM
 ExtensionHandler/Windows/src/HandlerEnvironment.json
 ExtensionHandler/Windows/latestVersion.json
 ExtensionHandler/Windows/oldVersion.json
+ExtensionHandler/Windows/src/.vscode/launch.json

@@ -279,13 +279,15 @@ function Get-ConfigurationFromSettings {
         }
         Write-Log "Agent name: $agentName"
 
-        $tags = $null
+        $tagsInput = $null
         if($publicSettings.Contains('Tags'))
         {
-            $tags = $publicSettings['Tags']
+            $tagsInput = $publicSettings['Tags']
         }
-        $tagsString = $tags | Out-String
+        $tagsString = $tagsInput | Out-String
         Write-Log "Tags: $tagsString"
+
+        $tags = Format-TagsInput $tagsInput
 
         $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
         Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
@@ -318,6 +320,28 @@ function Get-ConfigurationFromSettings {
 
 function Exit-WithCode0 {
     exit 0
+}
+
+function Format-TagsInput {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [psobject] $tagsInput
+    )
+
+    $tags = @()
+    if($tagsInput.GetType().IsArray)
+    {
+        $tags = $tagsInput
+    }
+    else
+    {
+        [System.Collections.ArrayList]$tagsList = @()
+        $tagsInput.Values | % { $tagsList.Add($_) > $null }
+        $tags = $tagsList.ToArray()
+    }
+
+    return $tags | Sort-Object | Get-Unique –AsString
 }
 
 function Invoke-GetAgentScript {

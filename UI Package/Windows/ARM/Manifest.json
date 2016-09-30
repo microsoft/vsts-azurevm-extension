@@ -38,6 +38,10 @@
     {
       "displayName": "ms-resource:link1",
       "uri": "https://www.visualstudio.com/products/visual-studio-team-services-vs"
+    },
+    {
+      "displayName": "ms-resource:link2",
+      "uri": "http://go.microsoft.com/fwlink/?LinkId=828974"
     }
   ],
   "categories": [

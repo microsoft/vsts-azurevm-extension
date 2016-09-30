@@ -334,11 +334,16 @@ function Format-TagsInput {
     {
         $tags = $tagsInput
     }
-    else
+    elseif($tagsInput.GetType().Name -eq "hashtable")
     {
         [System.Collections.ArrayList]$tagsList = @()
         $tagsInput.Values | % { $tagsList.Add($_) > $null }
         $tags = $tagsList.ToArray()
+    }
+    else 
+    {
+        $message = "Tags input should either be an array of string or an object containing key-value pairs"
+        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message    
     }
 
     return $tags | Sort-Object | Get-Unique –AsString

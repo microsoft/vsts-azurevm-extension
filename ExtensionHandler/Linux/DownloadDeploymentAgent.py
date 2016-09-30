@@ -11,6 +11,14 @@ def write_download_log(log_message):
   if(log_function is not None):
     log_function(log)
 
+def empty_dir(dir_name):
+  for dirpath, dirnames, filenames in os.walk(dir_name, topdown = False):
+    for filename in filenames:
+      os.remove(os.path.join(dirpath, filename))
+    for dirname in dirnames:
+      os.rmdir(os.path.join(dirpath, dirname))
+
+
 def construct_package_data_address(tfs_url, platform):
   package_data_address = "/_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}".format(platform, Constants.download_api_version)
   write_download_log('\t\t Package data adderss' + package_data_address)
@@ -45,9 +53,7 @@ def get_agent_download_url(tfs_url, platform, user_name, pat_token):
   return package_data['downloadUrl']
 
 def get_agent_target_path(working_folder, agent_target_name):
-  #Assumption. program launched by root user
-  #if(not os.path.isdir(working_folder)):
-  #  os.mkdir(working_folder)
+  empty_dir(working_folder)
   return os.path.join(working_folder, agent_target_name)
 
 def download_deployment_agent_internal(agent_download_url, target):

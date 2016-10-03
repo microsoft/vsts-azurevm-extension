@@ -161,7 +161,7 @@ Describe "configure agent tests" {
         Mock -ModuleName RMExtensionHandler Invoke-ConfigureAgentScript { throw New-Object System.Exception("some error")}
         Mock -ModuleName RMExtensionHandler Exit-WithCode0 {}
 
-        Register-Agent @{} $true
+        Register-Agent @{}
 
         It "should call clean up functions" {
             Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1 -ParameterFilter { $ErrorRecord.Exception.Message -eq "some error"}
@@ -176,7 +176,7 @@ Describe "configure agent tests" {
         Mock -ModuleName RMExtensionHandler Invoke-ConfigureAgentScript {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus
         
-        Register-Agent @{} $true
+        Register-Agent @{}
 
         It "should call clean up functions" {
             Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.ConfiguredDeploymentAgent.Code}
@@ -198,6 +198,39 @@ Describe "remove agent tests" {
         It "should set proper status" {
             Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.RemovedAgent.Code}
             Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.Uninstalling.Code}
+        }
+    }
+}
+
+Describe "AgentReconfigurationRequired tests" {
+
+    Context "Should set error status if exception happens" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Test-AgentReConfigurationRequiredInternal { throw New-Object System.Exception("some error")}
+        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {}
+
+        Test-AgentReconfigurationRequired @{}
+
+        It "should call clean up functions" {
+            Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1 -ParameterFilter { $ErrorRecord.Exception.Message -eq "some error"}
+        }
+    }
+
+    Context "Should set success status if no exception happens" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Test-AgentReConfigurationRequiredInternal { return $true}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus
+        
+        Test-AgentReconfigurationRequired @{}
+
+        It "should call clean up functions" {
+            Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.PreCheckingAgentReConfigurationRequired.Code}
         }
     }
 }

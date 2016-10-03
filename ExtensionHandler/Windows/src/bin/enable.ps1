@@ -28,18 +28,23 @@ if(!$configuredAgentExists)
 }
 else
 {
+    if(!(Test-AgentReconfigurationRequired $config))
+    {
+        Write-Log "Skipping agent configuration. Agent is already configured with given set of parameters"
+        Add-HandlerSubStatus $RM_Extension_Status.SkippingAgentConfiguration.Code $RM_Extension_Status.SkippingAgentConfiguration.Message -operationName $RM_Extension_Status.SkippingAgentConfiguration.operationName
+        return 
+    }
+
     Write-Log "Skipping agent download as a configured agent already exists."
     Add-HandlerSubStatus $RM_Extension_Status.SkippingDownloadDeploymentAgent.Code $RM_Extension_Status.SkippingDownloadDeploymentAgent.Message -operationName $RM_Extension_Status.SkippingDownloadDeploymentAgent.operationName
 }
 
 if($configuredAgentExists)
 {
-    Register-Agent $config $true
+    Remove-Agent $config
 } 
-else 
-{
-    Register-Agent $config $false
-}
+
+Register-Agent $config
 
 Set-LastSequenceNumber
 

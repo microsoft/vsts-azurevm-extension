@@ -10,7 +10,6 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$workingFolder,
     [string]$agentName,
-    [boolean]$agentRemovalRequired = $false,
     [scriptblock]$logFunction    
 )
 
@@ -64,21 +63,12 @@ try
     {
         throw "Unable to find the configuration cmd: $configCmdPath, ensure to download the agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
     }
-
-    WriteConfigurationLog "Check if any existing agent running form $workingFolder"
-    
-    if( $agentRemovalRequired )
-    {
-        WriteConfigurationLog "Already a agent is running from $workingFolder, need to removing it"
-        RemoveExistingAgent -patToken $patToken -configCmdPath $(GetConfigCmdPath)   
-    }    
     
     if([string]::IsNullOrEmpty($agentName))
     {
         $agentName = $env:COMPUTERNAME + "-MG"
         WriteConfigurationLog "Agent name not provided, agent name will be set as $agentName"
     }
-    
     
     WriteConfigurationLog "Configure agent"
     

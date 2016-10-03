@@ -28,7 +28,7 @@ Describe "Enable RM extension tests" {
         }
     }
 
-    Context "If exceptiopn happens suring agent configuration, Should not save last sequence number file or should not remove disable mockup file" {
+    Context "If exceptiopn happens during agent configuration, Should not save last sequence number file or should not remove disable mockup file" {
         
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return @{} }
@@ -50,6 +50,54 @@ Describe "Enable RM extension tests" {
         It "should call clean up functions" {
             Assert-MockCalled Set-LastSequenceNumber -Times 0
             Assert-MockCalled Remove-ExtensionDisabledMarkup -Times 0
+        }
+    }
+    
+    Context "If existing agent is already running with same configuration, Should Re-Configuration again" {
+        
+        Mock Start-RMExtensionHandler {}
+        Mock Get-ConfigurationFromSettings { return @{} }
+        Mock Test-AgentAlreadyExists { return $true}
+        Mock Test-AgentReconfigurationRequired { return $false}
+        Mock Get-Agent {}
+        Mock Register-Agent {}
+        Mock Remove-Agent {}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
+        Mock Write-Log {}
+        Mock Set-LastSequenceNumber {}
+        Mock Remove-ExtensionDisabledMarkup {}
+        
+        . ..\bin\enable.ps1
+
+        It "should not call register agent or remove-agent" {
+            Assert-MockCalled Register-Agent -Times 0
+            Assert-MockCalled Remove-Agent -Times 0
+            Assert-MockCalled Set-LastSequenceNumber -Times 0
+        }
+    }
+    
+    Context "If existing agent is running with different configuration, Should Call Re-Configuration again" {
+        
+        Mock Start-RMExtensionHandler {}
+        Mock Get-ConfigurationFromSettings { return @{} }
+        Mock Test-AgentAlreadyExists { return $true}
+        Mock Test-AgentReconfigurationRequired { return $true}
+        Mock Get-Agent {}
+        Mock Register-Agent {}
+        Mock Remove-Agent {}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
+        Mock Write-Log {}
+        Mock Set-LastSequenceNumber {}
+        Mock Remove-ExtensionDisabledMarkup {}
+        
+        . ..\bin\enable.ps1
+
+        It "should call remove-agent followed by register-agent" {
+            Assert-MockCalled Register-Agent -Times 1
+            Assert-MockCalled Remove-Agent -Times 1
+            Assert-MockCalled Set-LastSequenceNumber -Times 1
         }
     }
 }

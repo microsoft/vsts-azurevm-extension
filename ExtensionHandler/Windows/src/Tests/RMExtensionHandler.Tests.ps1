@@ -338,7 +338,6 @@ Describe "parse tags settings tests" {
         }
     }
 }
-}
 
 Describe "AgentReconfigurationRequired tests" {
 

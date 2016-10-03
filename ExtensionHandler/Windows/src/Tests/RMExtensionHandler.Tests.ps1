@@ -185,7 +185,6 @@ Describe "configure agent tests" {
 }
 
 Describe "remove agent tests" {
-
     Context "Should set proper status when agent is removed" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
@@ -198,6 +197,144 @@ Describe "remove agent tests" {
         It "should set proper status" {
             Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.RemovedAgent.Code}
             Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.Uninstalling.Code}
+        }
+    }
+}
+
+Describe "parse vsts account name settings tests" {
+    Context "Should add necessary fragments to VSTS url if it just accout name" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "abc"
+                        TeamProject = "project"
+                        MachineGroup = "group"
+                        Tags = @()
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                }
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VeriftInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Format-TagsInput {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+
+        $settings = Get-ConfigurationFromSettings
+
+        It "should set proper status" {
+            $settings.VSTSUrl | Should Be "https://abc.visualstudio.com"
+        }
+    }
+}
+
+Describe "parse tags settings tests" {
+    Context "Should copy array if input is array" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "abc"
+                        TeamProject = "project"
+                        MachineGroup = "group"
+                        Tags = @("arrayValue1", "arrayValue2")
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                }
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VeriftInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+
+        $settings = Get-ConfigurationFromSettings
+
+        It "tags should be an array with proper entries" {
+            $settings.Tags.GetType().IsArray | Should Be True
+            $settings.Tags[0] | Should Be "arrayValue1"
+            $settings.Tags[1] | Should Be "arrayValue2"
+        }
+    }
+
+    Context "Should sort and select unique tags" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "abc"
+                        TeamProject = "project"
+                        MachineGroup = "group"
+                        Tags = @("bb", "dd", "bb", "aa")
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                }
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VeriftInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+
+        $settings = Get-ConfigurationFromSettings
+
+        It "tags should be an array with unique sorted entries" {
+            $settings.Tags[0] | Should Be "aa"
+            $settings.Tags[1] | Should Be "bb"
+            $settings.Tags[2] | Should Be "dd"
+        }
+    }
+
+    Context "Should create array of values if input is hashtable" {
+        
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "abc"
+                        TeamProject = "project"
+                        MachineGroup = "group"
+                        Tags = @{ 
+                            tag1 = "hashValue1"
+                            tag2 = "hashValue2" 
+                        }
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                }
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VeriftInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+
+        $settings = Get-ConfigurationFromSettings
+
+        It "tags should be an array with proper entries" {
+            $settings.Tags.GetType().IsArray | Should Be True
+            $settings.Tags[0] | Should Be "hashValue1"
+            $settings.Tags[1] | Should Be "hashValue2"
         }
     }
 }

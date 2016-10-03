@@ -68,7 +68,7 @@ def extract_target(target_file, target):
   tf = tarfile.open(target_file, 'r:gz')
   tf.extractall(target)
 
-def download_deployment_agent(vsts_url, user_name, platform, pat_token, working_folder, log_func):
+def download_deployment_agent(vsts_url, user_name, pat_token, platform, working_folder, log_func):
   global log_function
   log_function = log_func
   if(user_name is None or user_name == ''):
@@ -76,6 +76,7 @@ def download_deployment_agent(vsts_url, user_name, platform, pat_token, working_
     write_download_log('No user name provided.')
   write_download_log('Getting the url for downloading the agent')
   agent_download_url = get_agent_download_url(vsts_url, platform, user_name, pat_token)
+  write_download_log('url for downloading the agent is {0}'.format(agent_download_url))
   write_download_log('Getting the target tar gz file path')
   agent_target_file_path = get_agent_target_path(working_folder, Constants.agent_target_name)
   write_download_log('\t\t Deployment agent will be downloaded at {0}'.format(agent_target_file_path))
@@ -83,6 +84,6 @@ def download_deployment_agent(vsts_url, user_name, platform, pat_token, working_
   write_download_log('Downloaded deployment agent')
   write_download_log('Extracting tar gz file {0} to {1}'.format(agent_target_file_path, working_folder))
   extract_target(agent_target_file_path, working_folder)
-  write_download_log('Done with DowloadDeploymentAgent script')
+  write_download_log('Done dowloading deployment agent')
   return Constants.return_success
 

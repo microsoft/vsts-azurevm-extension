@@ -53,7 +53,7 @@ Describe "Enable RM extension tests" {
         }
     }
     
-    Context "If existing agent is already running with same configuration, Should Re-Configuration again" {
+    Context "If existing agent is already running with same configuration, Should not call Re-Configuration again" {
         
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return @{} }

@@ -6,5 +6,5 @@
   "templateFile": "template.json",
   "templateParameterFile": "parameters.json",
   "extensionPublicSettingsFile": "publicConfig.json",
-  "extensionProtectedSettingsFile": "protectedConfig.json"
+  "extensionProtectedSettingsFile": "_protectedConfig.json"
 }

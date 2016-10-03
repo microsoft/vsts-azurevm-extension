@@ -8,3 +8,5 @@ ExtensionHandler/Windows/src/HandlerEnvironment.json
 ExtensionHandler/Windows/latestVersion.json
 ExtensionHandler/Windows/oldVersion.json
 ExtensionHandler/Windows/src/.vscode/launch.json
+e2eTests/_protectedConfig.json
+e2eTests/.vscode/launch.json

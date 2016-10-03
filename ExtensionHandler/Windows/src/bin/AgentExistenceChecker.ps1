@@ -67,7 +67,7 @@ function Test-AgentSettingsAreSame
         $tfsUrl = $tfsUrl.TrimEnd('/')
         $agentTfsUrl = $agentSetting.serverUrl.TrimEnd('/')
         
-        WriteLog "`t`t`t Agent Configured With `t`t`t`t`t Agent Need To Configured With" $logFunction
+        WriteLog "`t`t`t Agent Configured With `t`t`t`t`t Agent Need To Be Configured With" $logFunction
         WriteLog "`t`t`t $agentTfsUrl `t`t`t`t`t $tfsUrl" $logFunction
         WriteLog "`t`t`t $($agentSetting.projectName) `t`t`t`t`t $projectName" $logFunction
         WriteLog "`t`t`t $($agentSetting.machineGroupName) `t`t`t`t`t $machineGroupName" $logFunction

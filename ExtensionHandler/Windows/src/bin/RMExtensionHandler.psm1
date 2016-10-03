@@ -258,14 +258,13 @@ function Get-ConfigurationFromSettings {
 
         $vstsAccountName = $publicSettings['VSTSAccountName']
         VeriftInputNotNull "VSTSAccountName" $vstsAccountName
-        if(!(($vstsAccountName.ToLower().StartsWith("https://")) -and ($vstsAccountName.ToLower().EndsWith("vsallin.net"))))
+        if((($vstsAccountName.ToLower().StartsWith("https://")) -or ($vstsAccountName.ToLower().StartsWith("http://"))))
         {
-            $vstsUrl = "https://{0}.visualstudio.com" -f $vstsAccountName
-
+            $vstsUrl = $vstsAccountName
         }
         else
         {
-            $vstsUrl = $vstsAccountName
+            $vstsUrl = "https://{0}.visualstudio.com" -f $vstsAccountName
         }
 
         Write-Log "VSTS service URL: $vstsUrl"

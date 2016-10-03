@@ -8,7 +8,7 @@
     "location": {
       "type": "string"
     },
-    "VSTSAccountUrl": {
+    "VSTSAccountName": {
       "type": "string"
     },
     "TeamProject": {
@@ -34,10 +34,10 @@
       "properties": {
         "publisher": "Test.Microsoft.VisualStudio.Services",
         "type": "TeamServicesAgent",
-        "typeHandlerVersion": "1.28",
-        "autoUpgradeMinorVersion": false,
+        "typeHandlerVersion": "1.33",
+        "autoUpgradeMinorVersion": true,
         "settings": {
-          "VSTSAccountUrl": "[parameters('VSTSAccountUrl')]",
+          "VSTSAccountName": "[parameters('VSTSAccountName')]",
           "TeamProject": "[parameters('TeamProject')]",
           "MachineGroup": "[parameters('MachineGroup')]",
           "AgentName": "[parameters('AgentName')]"

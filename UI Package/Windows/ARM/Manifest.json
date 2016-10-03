@@ -2,7 +2,7 @@
   "$schema": "https://gallery.azure.com/schemas/2015-04-01/manifest.json#",
   "name": "vsts-agent-test-windows-arm",
   "publisher": "microsoft",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "displayName": "ms-resource:displayName",
   "publisherDisplayName": "ms-resource:publisherDisplayName",
   "publisherLegalName": "ms-resource:publisherDisplayName",

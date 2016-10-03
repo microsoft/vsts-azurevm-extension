@@ -256,8 +256,18 @@ function Get-ConfigurationFromSettings {
         $platform = "win7-x64"
         Write-Log "Platform: $platform"
 
-        $vstsUrl = $publicSettings['VSTSAccountUrl']
-        VeriftInputNotNull "VSTSAccountUrl" $vstsUrl
+        $vstsAccountName = $publicSettings['VSTSAccountName']
+        VeriftInputNotNull "VSTSAccountName" $vstsAccountName
+        if(!(($vstsAccountName.ToLower().StartsWith("https://")) -and ($vstsAccountName.ToLower().EndsWith("vsallin.net"))))
+        {
+            $vstsUrl = "https://{0}.visualstudio.com" -f $vstsAccountName
+
+        }
+        else
+        {
+            $vstsUrl = $vstsAccountName
+        }
+
         Write-Log "VSTS service URL: $vstsUrl"
 
         $patToken = $null

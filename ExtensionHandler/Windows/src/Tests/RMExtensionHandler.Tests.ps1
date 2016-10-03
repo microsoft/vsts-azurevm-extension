@@ -230,7 +230,7 @@ Describe "AgentReconfigurationRequired tests" {
         Test-AgentReconfigurationRequired @{}
 
         It "should call clean up functions" {
-            Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.PreCheckingAgentReConfigurationRequired.Code}
+            Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.CheckingAgentReConfigurationRequired.Code}
         }
     }
 }

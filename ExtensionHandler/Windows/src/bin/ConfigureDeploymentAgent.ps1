@@ -72,7 +72,7 @@ try
     
     WriteConfigurationLog "Configure agent"
     
-    ConfigureAgent -tfsUrl $tfsUrl -patToken $patToken -workingFolder $workingFolder -projectName $projectName -machineGroupName $machineGroupName -agentName $agentName -configCmdPath $(GetConfigCmdPath)
+    ConfigureAgent -tfsUrl $tfsUrl -patToken $patToken -workingFolder $defaultAgentWorkingFolder -projectName $projectName -machineGroupName $machineGroupName -agentName $agentName -configCmdPath $(GetConfigCmdPath)
     
     return $returnSuccess 
 }

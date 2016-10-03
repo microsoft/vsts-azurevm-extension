@@ -109,20 +109,20 @@ $global:RM_Extension_Status = @{
         Message = 'Removed deployment agent successfully from machine group'
         operationName = 'Uninstall'
     }
-    PreCheckingAgentReConfigurationRequired = @{
+    CheckingAgentReConfigurationRequired = @{
         Code = 19
         Message = 'Checking if re-configuration is required for existing agent by comparing existing agent settings'
-        operationName = 'Agent re-configuration check'
+        operationName = 'Agent Configuration'
     }
     AgentReConfigurationRequiredChecked = @{
         Code = 20
         Message = 'Checked if re-configuration is required for existing agent'
-        operationName = 'Agent re-configuration check'
+        operationName = 'Agent Configuration'
     }
     SkippingAgentConfiguration = @{
         Code = 21
-        Message = 'Skipping agent configuration, found a agent already running with same set of setting'
-        operationName = 'Skip Agent Configuration'
+        Message = 'An agent is already running with same settings, skipping agent configuration'
+        operationName = 'Agent Configuration'
     }
 
     #

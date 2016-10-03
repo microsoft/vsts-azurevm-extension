@@ -121,7 +121,7 @@ function Test-AgentReconfigurationRequired {
 
     try 
     {
-        Add-HandlerSubStatus $RM_Extension_Status.PreCheckingAgentReConfigurationRequired.Code $RM_Extension_Status.PreCheckingAgentReConfigurationRequired.Message -operationName $RM_Extension_Status.PreCheckingAgentReConfigurationRequired.operationName
+        Add-HandlerSubStatus $RM_Extension_Status.CheckingAgentReConfigurationRequired.Code $RM_Extension_Status.CheckingAgentReConfigurationRequired.Message -operationName $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
         Write-Log "Invoking script to check existing agent settings with given configuration settings..."
 
         $agentReConfigurationRequired = Test-AgentReConfigurationRequiredInternal $config
@@ -132,7 +132,7 @@ function Test-AgentReconfigurationRequired {
     }
     catch 
     {
-        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.PreCheckingAgentReConfigurationRequired.operationName
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
         Exit-WithCode0
     } 
 }

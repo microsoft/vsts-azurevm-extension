@@ -79,8 +79,23 @@ def start_rm_extension_handler(operation):
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'])
     exit_with_code_0()
 
+def get_platform_value():
+  info = platform.linux_distribution()
+  op_sys = info[0]
+  if(op_sys == 'Red Hat Enterprise Linux Server'):
+    op_sys = rhel
+  elif(op_sys == 'Ubuntu'):
+    op_sys = 'ubuntu'
+  version_no = info[1].split('.')[0]
+  sub_version = info[1].split('.')[1]
+  platform_value = Constants.platform_format.format(op_sys, version_no, sub_version, 'x64')
+  return platform_value
+
 def get_configutation_from_settings():
   try:
+    prefix = 'htps://'
+    suffix = 'vsallin.net'
+    format_string = 'https://{0}.visualstudio.com'
     public_settings = handler_utility.get_public_settings()
     protected_settings = handler_utility.get_protected_settings()
     if(public_settings == None):
@@ -92,16 +107,14 @@ def get_configutation_from_settings():
       code = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Code']
       RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Message']
       raise new_handler_terminating_error(code, message)
-    process = subprocess.Popen(['lsb_release', '-d'], stdout = subprocess.PIPE)
-    version_info, unused_err = process.communicate()
-    info = version_info.split()
-    op_sys = info[1].lower()
-    version_no = info[2].split('.')[0]
-    sub_version = info[2].split('.')[1]
-    platform_value = Constants.platform_format.format(op_sys, version_no, sub_version, 'x64')
+    platform_value = get_platform_value()
     handler_utility.log("Platform: {0}".format(platform_value))
-    vsts_url = public_settings['VSTSAccountUrl']
-    handler_utility.verify_input_not_null('VSTSAccountUrl', vsts_url)
+    vsts_account_name = public_settings['VSTSAccountName']
+    handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
+    if(not (vsts_account_name.lower().startswith(prefix) and vsts_account_name.lower().endswith(suffix))):
+      vsts_url = format_string.format(vsts_account_name)
+    else:
+      vsts_url = vsts_account_name
     handler_utility.log('VSTS service URL : {0}'.format(vsts_url))
     pat_token = ''
     if(protected_settings.has_key('PATToken')):
@@ -160,10 +173,6 @@ def test_configured_agent_exists(working_folder, log_function):
     write_log(e.message, log_function)
     raise e
 
-def test_agent_already_exists_internal(config):
-  agent_already_exists = test_configured_agent_exists(config['AgentWorkingFolder'], handler_utility.log)
-  return agent_already_exists
-
 def test_agent_already_exists(config):
   try:
     ss_code = RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['Code']
@@ -171,7 +180,7 @@ def test_agent_already_exists(config):
     operation_name = RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log("Invoking function to pre-check agent configuration...")
-    agent_already_exists = test_agent_already_exists_internal(config)
+    agent_already_exists = test_configured_agent_exists(config['AgentWorkingFolder'], handler_utility.log)
     handler_utility.log("Done pre-checking agent configuration")
     ss_code = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['Message']
@@ -190,7 +199,6 @@ def get_agent(config):
     operation_name = RMExtensionStatus.rm_extension_status['DownloadingDeploymentAgent']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log('Invoking function to download Deployment agent package...')
-    print config
     DownloadDeploymentAgent.download_deployment_agent(config['VSTSUrl'], '', config['Platform'], config['PATToken'], config['AgentWorkingFolder'], handler_utility.log)
     handler_utility.log('Done downloading Deployment agent package...')
     ss_code = RMExtensionStatus.rm_extension_status['DownloadedDeploymentAgent']['Code']
@@ -201,7 +209,7 @@ def get_agent(config):
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['DownloadingDeploymentAgent']['operationName'])
     exit_with_code_0()
 
-
+"""
 def write_configuration_log(log_message, log_function):
   log = '[Configuration]: ' + log_message
   if(log_function is not None):
@@ -222,11 +230,11 @@ def remove_existing_agent(pat_token, config_command_path):
 def configure_agent()
   a=5
 
-def configure_deployment_agent(tfs_url, pat_token, project_name, machine_group_name, agent_name, working_folder, agent_removal_required, log_function):
+def configure_deployment_agent(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder, agent_removal_required, log_function):
   try:
     write_configuration_log('Starting the Deployment agent configuration script')
     if(not config_file_exists):
-      throw "Unable to find the configuration cmd, ensure to download the agent exists before starting the agent configuration"
+      raise Exception("Unable to find the configuration cmd, ensure to download the agent exists before starting the agent configuration")
     write_configuration_log('Checking if any existing agent running form ' + working_folder)
     if(agent_removal_required):
       write_configuration_log('Already a agent is running from ' + working_folder + ',  need to remove it')
@@ -240,9 +248,9 @@ def configure_deployment_agent(tfs_url, pat_token, project_name, machine_group_n
     write_configuration_log('Configuring agent')
     configure_agent()
     rerurn Constants.return_success
-  except:
-    WriteConfigurationLog $_.Exception
-    throw $_.Exception
+  except Exception as e:
+    write_configuration_log(e.message)
+    raise e
 
 def register_agent(config, agent_removal_required):
   try:
@@ -267,10 +275,10 @@ def register_agent(config, agent_removal_required):
     code = RMExtensionStatus.rm_extension_status['Installed']['Code']
     message = RMExtensionStatus.rm_extension_status['Installed']['Message']
     handler_utility.set_handler_status(code = code, status = 'success', message = message)
-  except :
-    Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
-    Exit-WithCode0
-
+  except Exception as e:
+    set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName']
+    exit_with_code_0
+"""
 def enable():
   input_operation = 'enable'
   start_rm_extension_handler(input_operation)
@@ -284,10 +292,10 @@ def enable():
     sub_status_message = RMExtensionStatus.rm_extension_status['SkippingDownloadDeploymentAgent']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['SkippingDownloadDeploymentAgent']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-  register_agent(config, configured_agent_exists)
-  set_last_sequence_number()
-  handler_utility.log('Extension is enabled. Removing any disable markup file..')
-  remove_extension_disabled_markup()
+  #register_agent(config, configured_agent_exists)
+  #set_last_sequence_number()
+  #handler_utility.log('Extension is enabled. Removing any disable markup file..')
+  #remove_extension_disabled_markup()
 
 def check_version():
   version_info = sys.version_info

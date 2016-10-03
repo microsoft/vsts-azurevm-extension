@@ -1,8 +1,10 @@
-﻿# Usage: .\Test.ps1 -testEnvironmentFile E:\work\RM\VMExtension\e2eTests\new\TestEnvironment.json -publisher Test.Microsoft.VisualStudio.Services -extension TeamServicesAgent -extensionVersion 1.30 [-personalAccessToken ***]
+﻿# Usage: .\Test.ps1 -testEnvironmentFile E:\work\RM\VMExtension\e2eTests\new\TestEnvironment.json -publisher Test.Microsoft.VisualStudio.Services -extension TeamServicesAgent -extensionVersion 1.30 [-personalAccessToken ***] -vmPassword ***
 
 param(
     [Parameter(Mandatory=$true)]
     [string]$testEnvironmentFile,
+    [Parameter(Mandatory=$true)]
+    [string]$vmPassword,
     [Parameter(Mandatory=$true)]
     [string]$publisher,
     [Parameter(Mandatory=$true)]
@@ -39,16 +41,17 @@ function Create-VM
     )
     
     # Create VM using template
-    $vmPassword = $vmPasswordString | ConvertTo-SecureString -AsPlainText -Force
+    $vmPasswordSecureString = $vmPasswordString | ConvertTo-SecureString -AsPlainText -Force
     $deploymentName = Get-Date -Format yyyyMMddhhmmss
-    New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templateFile -TemplateParameterFile $templateParameterFile -adminPassword $vmPassword -DeploymentName $deploymentName
+    New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templateFile -TemplateParameterFile $templateParameterFile -adminPassword $vmPasswordSecureString -DeploymentName $deploymentName
 }
 
 function Get-Config
 {
     param(
     [string]$extensionPublicSettingsFile,
-    [string]$extensionProtectedSettingsFile
+    [string]$extensionProtectedSettingsFile,
+    [string]$personalAccessToken
     )
     
     $publicSettings = Get-Content $extensionPublicSettingsFile | Out-String | ConvertFrom-Json
@@ -64,11 +67,11 @@ function Get-Config
     }
 
     return @{
-                VSTSUrl            = $publicSettings.VSTSAccountUrl
+                VSTSUrl            = "https://{0}.visualstudio.com" -f $publicSettings.VSTSAccountName
                 TeamProject        = $publicSettings.TeamProject
                 MachineGroup       = $publicSettings.MachineGroup
-                AgentName          = $token
-                PATToken           = $protectedSettings.PATToken
+                AgentName          = $publicSettings.AgentName
+                PATToken           = $token
             }
 }
 
@@ -108,7 +111,7 @@ function Get-VSTSAgentInformation
     $poolsResponse = Invoke-RestMethod -Method GET -Uri $uri -Headers $authHeader
     $pools = $poolsResponse.value
     $pools | % {
-        if($_.name -eq "machineGroup")
+        if($_.name -eq $machineGroup)
         {
             $poolId = $_.id
             return
@@ -157,7 +160,6 @@ function Remove-VSTSAgent
     Invoke-RestMethod -Method DELETE -Uri $uri -Headers $authHeader
 }
 
-$vmPasswordString = "GameNight!12"
 $currentScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 #####
@@ -173,8 +175,11 @@ $templateParameterFile = Join-Path $currentScriptPath $inputs.templateParameterF
 $extensionPublicSettingsFile = Join-Path $currentScriptPath $inputs.extensionPublicSettingsFile
 $extensionProtectedSettingsFile = Join-Path $currentScriptPath $inputs.extensionProtectedSettingsFile
 
+#create protected settings file with pat token
+@{ PATToken = $personalAccessToken } | ConvertTo-Json | Set-Content -Path $extensionProtectedSettingsFile -Force
+
 # get config settings
-$config = Get-Config -extensionPublicSettingsFile $extensionPublicSettingsFile -extensionProtectedSettingsFile $extensionProtectedSettingsFile
+$config = Get-Config -extensionPublicSettingsFile $extensionPublicSettingsFile -extensionProtectedSettingsFile $extensionProtectedSettingsFile -personalAccessToken $personalAccessToken
 
 #####
 # Pre-cleanup
@@ -193,7 +198,7 @@ if($oldAgentInfo -eq $true)
 # Run scenario
 #####
 Write-Host "Creating VM $vmName"
-Create-VM -resourceGroupName $resourceGroupName -templateFile $templateFile -templateParameterFile $templateParameterFile -vmPasswordString $vmPasswordString
+Create-VM -resourceGroupName $resourceGroupName -templateFile $templateFile -templateParameterFile $templateParameterFile -vmPasswordString $vmPassword
 
 Write-Host "Installing extension $extension version $extensionVersion on VM $vmName"
 Install-ExtensionOnVM -resourceGroupName $resourceGroupName -vmName $vmName -location $location -publisher $publisher -extension $extension -extensionVersion $extensionVersion -extensionPublicSettingsFile $extensionPublicSettingsFile -extensionProtectedSettingsFile $extensionProtectedSettingsFile
@@ -231,4 +236,10 @@ Remove-ExistingVM -resourceGroupName $resourceGroupName -vmName $vmName -storage
 if($agentInfo.isAgentExists -eq $true)
 {
     Remove-VSTSAgent -vstsUrl $config.VSTSUrl -patToken $config.PATToken -poolId $agentInfo.poolId -agentId $agentInfo.agentId
+}
+
+# Delete protected settings file
+if(Test-Path $extensionProtectedSettingsFile)
+{
+    Remove-Item -Path $extensionProtectedSettingsFile -Force
 }

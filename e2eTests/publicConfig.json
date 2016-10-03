@@ -1,5 +1,5 @@
 {
-    "VSTSAccountUrl": "https://mseng.visualstudio.com",
+    "VSTSAccountName": "mseng",
     "TeamProject": "VSOnline",
     "MachineGroup": "biprasad",
     "AgentName": "vm-ext-e2e-agent"

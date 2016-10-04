@@ -71,9 +71,10 @@ Describe "Enable RM extension tests" {
         . ..\bin\enable.ps1
 
         It "should not call register agent or remove-agent" {
+            Assert-MockCalled Get-Agent -Times 0
             Assert-MockCalled Register-Agent -Times 0
             Assert-MockCalled Remove-Agent -Times 0
-            Assert-MockCalled Set-LastSequenceNumber -Times 0
+            Assert-MockCalled Set-LastSequenceNumber -Times 1
         }
     }
     
@@ -96,7 +97,33 @@ Describe "Enable RM extension tests" {
 
         It "should call remove-agent followed by register-agent" {
             Assert-MockCalled Register-Agent -Times 1
+            Assert-MockCalled Get-Agent -Times 0
             Assert-MockCalled Remove-Agent -Times 1
+            Assert-MockCalled Set-LastSequenceNumber -Times 1
+        }
+    }
+    
+    Context "If no existing agent is present should download the agent and call configuration" {
+        
+        Mock Start-RMExtensionHandler {}
+        Mock Get-ConfigurationFromSettings { return @{} }
+        Mock Test-AgentAlreadyExists { return $false}
+        Mock Test-AgentReconfigurationRequired { return $false}
+        Mock Get-Agent {}
+        Mock Register-Agent {}
+        Mock Remove-Agent {}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
+        Mock Write-Log {}
+        Mock Set-LastSequenceNumber {}
+        Mock Remove-ExtensionDisabledMarkup {}
+        
+        . ..\bin\enable.ps1
+
+        It "should call remove-agent followed by register-agent" {
+            Assert-MockCalled Register-Agent -Times 1
+            Assert-MockCalled Get-Agent -Times 1
+            Assert-MockCalled Remove-Agent -Times 0
             Assert-MockCalled Set-LastSequenceNumber -Times 1
         }
     }

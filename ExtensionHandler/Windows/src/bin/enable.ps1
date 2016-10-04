@@ -18,36 +18,67 @@ Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionHandler.psm1
 Import-Module $PSScriptRoot\Log.psm1
 
-Start-RMExtensionHandler
-$config = Get-ConfigurationFromSettings
-$configuredAgentExists = Test-AgentAlreadyExists $config
+$Enable_ConfiguredAgentExists = $false
+$Enable_AgentConfigurationRequired = $true
 
-if(!$configuredAgentExists)
+function ExecuteAgentPreCheck([ref]$configuredAgentExists, [ref]$agentConfigurationRequired)
 {
-    Get-Agent $config
+
+    $configuredAgentExists.value  = Test-AgentAlreadyExists $config
+
+    if($configuredAgentExists.value)
+    {   
+        $agentConfigurationRequired.value = Test-AgentReconfigurationRequired $config
+    }    
 }
-else
-{
-    Write-Log "Skipping agent download as a configured agent already exists."
-    Add-HandlerSubStatus $RM_Extension_Status.SkippingDownloadDeploymentAgent.Code $RM_Extension_Status.SkippingDownloadDeploymentAgent.Message -operationName $RM_Extension_Status.SkippingDownloadDeploymentAgent.operationName
 
-    if(Test-AgentReconfigurationRequired $config)
+function DownloadAgentIfRequired
+{
+    if(!$Enable_ConfiguredAgentExists)
     {
-        Write-Log "Remove existing configured agent"
-        Remove-Agent $config       
+        Get-Agent $config
     }
     else
-    { 
-        Write-Log "Skipping agent configuration. Agent is already configured with given set of parameters"
-        Add-HandlerSubStatus $RM_Extension_Status.SkippingAgentConfiguration.Code $RM_Extension_Status.SkippingAgentConfiguration.Message -operationName $RM_Extension_Status.SkippingAgentConfiguration.operationName
-        return
+    {
+        Write-Log "Skipping agent download as a configured agent already exists."
+        Add-HandlerSubStatus $RM_Extension_Status.SkippingDownloadDeploymentAgent.Code $RM_Extension_Status.SkippingDownloadDeploymentAgent.Message -operationName $RM_Extension_Status.SkippingDownloadDeploymentAgent.operationName
     }
- }
+}
 
-Register-Agent $config
+function RemoveExistingAgentIfRequired
+{
+    if( $Enable_ConfiguredAgentExists -and $Enable_AgentConfigurationRequired)
+    {   
+        Write-Log "Remove existing configured agent"
+        Remove-Agent $config  
+    }
+}
+
+function ConfigureAgentIfRequired
+{
+    if($Enable_AgentConfigurationRequired )
+    {   
+        Register-Agent $config
+    }
+    else
+    {
+        Write-Log "Skipping agent configuration. Agent is already configured with given set of parameters"
+        Add-HandlerSubStatus $RM_Extension_Status.SkippingAgentConfiguration.Code $RM_Extension_Status.SkippingAgentConfiguration.Message -operationName $RM_Extension_Status.SkippingAgentConfiguration.operationName     
+    }
+}
+
+Start-RMExtensionHandler
+$config = Get-ConfigurationFromSettings
+
+ExecuteAgentPreCheck ([ref]$Enable_ConfiguredAgentExists) ([ref]$Enable_AgentConfigurationRequired)
+
+DownloadAgentIfRequired
+
+RemoveExistingAgentIfRequired
+
+ConfigureAgentIfRequired
 
 Set-LastSequenceNumber
 
 Write-Log "Extension is enabled. Removing any disable markup file.."
 Remove-ExtensionDisabledMarkup
-

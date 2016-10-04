@@ -32,8 +32,18 @@ Describe "Agent ExistenceChecker Tests" {
             $ret | Should be "$true"                 
         }
 
-        It "should return false if given agent settings are not same as existing agent running with" {
+        It "should return false if given agent settings are not same as existing agent running with ( project name different )" {
             $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs" -projectName "testProjDifferentOne" -machineGroupName "my-mggrp1"
+            $ret | Should be "$false"                 
+        }
+        
+        It "should return false if given agent settings are not same as existing agent running with ( machine group name different )" {
+            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs" -projectName "testProj" -machineGroupName "my-mggrp1-different"
+            $ret | Should be "$false"                 
+        }
+        
+         It "should return false if given agent settings are not same as existing agent running with ( tfs url different )" {
+            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfsdifferentone:8080/tfs" -projectName "testProj" -machineGroupName "my-mggrp1"
             $ret | Should be "$false"                 
         }
     }        

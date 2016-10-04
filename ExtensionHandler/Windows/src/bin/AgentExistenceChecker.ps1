@@ -58,7 +58,7 @@ function Test-AgentSettingsAreSame
         if( !(Test-Path $agentSettingFile) )
         {
             WriteLog "`t`t Agent setting file $agentSettingFile does not exist" $logFunction
-            return true
+            return $true
         }
         WriteLog "`t`tReading agent setting file - $agentSettingFile" $logFunction
         

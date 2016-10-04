@@ -8,6 +8,7 @@ import platform
 import Constants
 import json
 import DownloadDeploymentAgent
+#import ConfigureDeploymentAgent
 
 def get_last_sequence_number_file_path():
   return root_dir + '/LASTSEQNUM'
@@ -94,11 +95,17 @@ def get_platform_value():
 def check_account_name_prefix(account_name):
   prefix_1 = 'http://'
   prefix_2 = 'https://'
+  account_name_lower = account_name.lower()
+  ans = (account_name_lower.startswith(prefix_1) or account_name_lower.startswith(prefix_2))
+  return ans 
 
 def check_account_name_suffix(account_name):
   suffix_1 = 'vsallin.net'
   suffix_2 = 'tfsallin.net'
   suffix_3 = 'visualstudio.com'
+  account_name_lower = account_name.lower()
+  ans = (account_name_lower.endswith(suffix_1) or account_name_lower.endswith(suffix_2) or account_name_lower.endswith(suffix_3)) 
+  return ans
 
 def get_configutation_from_settings():
   try:
@@ -118,7 +125,7 @@ def get_configutation_from_settings():
     handler_utility.log("Platform: {0}".format(platform_value))
     vsts_account_name = public_settings['VSTSAccountName']
     handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
-    if(not (check_account_prefix(vsts_account_name) and check_account_name_suffix(vsts_account_name))):
+    if(not (check_account_name_prefix(vsts_account_name) and check_account_name_suffix(vsts_account_name))):
       vsts_url = format_string.format(vsts_account_name)
     else:
       vsts_url = vsts_account_name
@@ -159,6 +166,8 @@ def get_configutation_from_settings():
           }
     return ret_val
   except Exception as e:
+    print e.message
+    print e.args
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'])
     exit_with_code_0()
 
@@ -167,15 +176,15 @@ def write_log(log_message, log_function):
   if(log_function is not None):
     log_function(log)
 
-def test_configured_agent_exists_internal(working_folder, log_function):
+def test_configured_agent_exists_internal(working_folder, agent_setting , log_function):
   try:
     write_log("Initialization for deployment agent started.", log_function)
     # Is Python version check required here?
     write_log("Checking if existing agent is running from {0}".format(working_folder), log_function)
-    agent_path = os.path.join(working_folder, Constants.agent_setting)
-    agent_settings_file_exists = os.path.isfile(agent_path)
-    write_log('\t\t Agent setting file exists : {0}'.format(agent_settings_file_exists), log_function)
-    return agent_settings_file_exists
+    agent_path = os.path.join(working_folder, agent_setting)
+    agent_setting_file_exists = os.path.isfile(agent_path)
+    write_log('\t\t Agent setting file exists : {0}'.format(agent_setting_file_exists), log_function)
+    return agent_setting_file_exists
   except Exception as e:
     write_log(e.message, log_function)
     raise e
@@ -187,7 +196,7 @@ def test_configured_agent_exists(config):
     operation_name = RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log("Invoking function to pre-check agent configuration...")
-    agent_already_exists = test_configured_agent_exists_internal(config['AgentWorkingFolder'], handler_utility.log)
+    agent_already_exists = test_configured_agent_exists_internal(config['AgentWorkingFolder'], Constants.agent_setting, handler_utility.log)
     handler_utility.log("Done pre-checking agent configuration")
     ss_code = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['Message']
@@ -215,52 +224,10 @@ def get_agent(config):
   except Exception as e:
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['DownloadingDeploymentAgent']['operationName'])
     exit_with_code_0()
-
 """
-def write_configuration_log(log_message, log_function):
-  log = '[Configuration]: ' + log_message
-  if(log_function is not None):
-    log_function(log)
-  else:
-
-
-def config_file_exists(working_folder):
-  config_file_path = os.path.join(working_folder, Constants.config_file)
-  write_configuration_log('\t\t Configuration file : ' + config_file_path)
-  config_file_does_exist = os.path.isfile(config_file_path)
-  write_configuration_log('\t\t Configuration file exists : ' + config_file_does_exist)
-  return config_file_does_exist
-
-def remove_existing_agent(pat_token, config_command_path):
-  
-
-def configure_agent()
-  a=5
-
-def configure_deployment_agent(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder, agent_removal_required, log_function):
+def register_agent(config, agent_exists):
   try:
-    if(not config_file_exists):
-      raise Exception("Unable to find the configuration cmd, ensure to download the agent exists before starting the agent configuration")
-    write_configuration_log('Checking if any existing agent running form ' + working_folder)
-    if(agent_removal_required):
-      write_configuration_log('Already a agent is running from ' + working_folder + ',  need to remove it')
-      remove_existing_agent()
-    else:
-      write_configuration_log('No existing agent found. Configuring.')
-    if(agent_name is None or agent_name == ''):
-      #todo
-      agent_name = platform.node() + "-MG"
-      write_configuration_log('Agent name not provided, agent name will be set as ' + agent_name)
-    write_configuration_log('Configuring agent')
-    configure_agent()
-    rerurn Constants.return_success
-  except Exception as e:
-    write_configuration_log(e.message)
-    raise e
-
-def register_agent(config, agent_removal_required):
-  try:
-    if(agent_removal_required == True):
+    if(agent_exists == True):
       ss_code = RMExtensionStatus.rm_extension_status['RemovingAndConfiguringDeploymentAgent']['Code']
       sub_status_message = RMExtensionStatus.rm_extension_status['RemovingAndConfiguringDeploymentAgent']['Message']
       operation_name = RMExtensionStatus.rm_extension_status['RemovingAndConfiguringDeploymentAgent']['operationName']
@@ -272,7 +239,7 @@ def register_agent(config, agent_removal_required):
       operation_name = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName']
       handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
       handler_utility.log('Configuring Deployment agent...')
-    configure_deployment_agent(config['VSTSUrl'], '', config['PATToken'], config['TeamProject'], config['MachineGroup'], config['AgentName'], config['AgentWorkingFolder'], agent_removal_required, handler_utility.log)
+    ConfigureDeploymentAgent.configure_deployment_agent(config['VSTSUrl'], '', config['PATToken'], config['TeamProject'], config['MachineGroup'], config['AgentName'], config['AgentWorkingFolder'], agent_exists, handler_utility.log)
     handler_utility.log('Done configuring Deployment agent')
     ss_code = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Message']

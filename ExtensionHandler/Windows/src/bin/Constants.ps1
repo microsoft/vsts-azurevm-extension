@@ -5,6 +5,7 @@ $agentZipName = "agent.zip"
 $configCmd = "config.cmd"
 $configCommonArgs = "--machinegroup --runasservice --unattended --auth PAT "
 $removeAgentArgs = " remove --unattended --auth PAT "
+$defaultAgentWorkingFolder = "_work"
 
 ## PS Version
 $minPSVersionSupported = 3

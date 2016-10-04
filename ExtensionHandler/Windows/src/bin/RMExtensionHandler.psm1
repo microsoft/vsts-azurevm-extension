@@ -110,6 +110,35 @@ function Test-AgentAlreadyExists {
 
 <#
 .Synopsis
+   Initialize Deployment agent download and configuration process.
+#>
+function Test-AgentReconfigurationRequired {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
+    try 
+    {
+        Add-HandlerSubStatus $RM_Extension_Status.CheckingAgentReConfigurationRequired.Code $RM_Extension_Status.CheckingAgentReConfigurationRequired.Message -operationName $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
+        Write-Log "Invoking script to check existing agent settings with given configuration settings..."
+
+        $agentReConfigurationRequired = Test-AgentReConfigurationRequiredInternal $config
+
+        Write-Log "Done pre-checking for agent re-configuration, AgentReconfigurationRequired : $agentReConfigurationRequired..."
+        Add-HandlerSubStatus $RM_Extension_Status.AgentReConfigurationRequiredChecked.Code $RM_Extension_Status.AgentReConfigurationRequiredChecked.Message -operationName $RM_Extension_Status.AgentReConfigurationRequiredChecked.operationName
+        $agentReConfigurationRequired
+    }
+    catch 
+    {
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
+        Exit-WithCode0
+    } 
+}
+
+<#
+.Synopsis
    Downloads Deployment agent.
    Invokes a script to download Deployment agent package and unzip it. Provides a working directory for download script to use.
 #>
@@ -146,26 +175,15 @@ function Register-Agent {
     [CmdletBinding()]
     param(
     [Parameter(Mandatory=$true, Position=0)]
-    [hashtable] $config,
-
-    [Parameter(Mandatory=$true, Position=1)]
-    [boolean] $agentRemovalRequired
+    [hashtable] $config
     )
 
     try 
     {
-        If($agentRemovalRequired)
-        {
-            Add-HandlerSubStatus $RM_Extension_Status.RemovingAndConfiguringDeploymentAgent.Code $RM_Extension_Status.RemovingAndConfiguringDeploymentAgent.Message -operationName $RM_Extension_Status.RemovingAndConfiguringDeploymentAgent.operationName
-            Write-Log "Removing existing agent and configuring again..."
-        }
-        else 
-        {
-            Add-HandlerSubStatus $RM_Extension_Status.ConfiguringDeploymentAgent.Code $RM_Extension_Status.ConfiguringDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
-            Write-Log "Configuring Deployment agent..."
-        }
+        Add-HandlerSubStatus $RM_Extension_Status.ConfiguringDeploymentAgent.Code $RM_Extension_Status.ConfiguringDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
+        Write-Log "Configuring Deployment agent..."
 
-        Invoke-ConfigureAgentScript $config $agentRemovalRequired
+        Invoke-ConfigureAgentScript $config
 
         Write-Log "Done configuring Deployment agent"
 
@@ -240,14 +258,13 @@ function Get-ConfigurationFromSettings {
 
         $vstsAccountName = $publicSettings['VSTSAccountName']
         VeriftInputNotNull "VSTSAccountName" $vstsAccountName
-        if(!(($vstsAccountName.ToLower().StartsWith("https://")) -and ($vstsAccountName.ToLower().EndsWith("vsallin.net"))))
+        if((($vstsAccountName.ToLower().StartsWith("https://")) -or ($vstsAccountName.ToLower().StartsWith("http://"))))
         {
-            $vstsUrl = "https://{0}.visualstudio.com" -f $vstsAccountName
-
+            $vstsUrl = $vstsAccountName
         }
         else
         {
-            $vstsUrl = $vstsAccountName
+            $vstsUrl = "https://{0}.visualstudio.com" -f $vstsAccountName
         }
 
         Write-Log "VSTS service URL: $vstsUrl"
@@ -371,14 +388,25 @@ function Test-AgentAlreadyExistsInternal {
     return $agentAlreadyExists
 }
 
+function Test-AgentReConfigurationRequiredInternal {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
+    . $PSScriptRoot\AgentExistenceChecker.ps1
+    $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -machineGroupName $config.MachineGroup -logFunction $script:logger)
+    return $agentReConfigurationRequired
+}
+
 function Invoke-ConfigureAgentScript {
     [CmdletBinding()]
     param(
-    [hashtable] $config,
-    [boolean] $agentRemovalRequired
+    [hashtable] $config
     )
 
-    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -agentRemovalRequired $agentRemovalRequired -logFunction $script:logger
+    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
 }
 
 function Invoke-RemoveAgentScript {
@@ -411,6 +439,7 @@ Export-ModuleMember `
     -Function `
         Start-RMExtensionHandler, `
         Test-AgentAlreadyExists, `
+        Test-AgentReconfigurationRequired, `
         Get-Agent, `
         Remove-Agent, `
         Get-ConfigurationFromSettings, `

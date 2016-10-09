@@ -393,7 +393,7 @@ class HandlerUtility:
         waagent.SetFileContents(status_file, new_contents)
 
     def set_handler_error_status(self, e, operation_name):
-        self.log(getattr(e,'Message'))
+        self.log(getattr(e,'message'))
         if(getattr(e,'ErrorId') == RMExtensionStatus.rm_terminating_error_id):
             error_code = getattr(e,'Code')
         else:

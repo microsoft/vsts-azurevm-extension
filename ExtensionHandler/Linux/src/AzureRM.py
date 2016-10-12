@@ -13,8 +13,11 @@ import ConfigureDeploymentAgent
 configured_agent_exists = False
 agent_configuration_required = True
 config = {}
+root_dir = ''
+markup_file_format = '{0}/EXTENSIONDISABLED'
 
 def get_last_sequence_number_file_path():
+  global root_dir
   return root_dir + '/LASTSEQNUM'
 
 def get_last_sequence_number():
@@ -24,7 +27,7 @@ def get_last_sequence_number():
     #Will raise IOError if file does not exist
     with open(last_seq_file) as f:
       contents = f.read()
-      return int(contents)
+      return contents
       f.close()
   except IOError as e:
     pass
@@ -41,23 +44,37 @@ def set_last_sequence_number():
     f.write(current_sequence_number)
     f.close()
 
+def set_extension_disabled_markup():
+  global markup_file_format, root_dir
+  markup_file = markup_file_format.format(root_dir)
+  handler_utility.log('Creating disabled markup file {0}'.format(markup_file))
+  try:
+    with open(markup_file, 'w') as f:
+      f.write('')
+      f.close()
+  except Exception as e:
+    pass
 
 def test_extension_disabled_markup():
-  markup_file = root_dir + '/EXTENSIONDISABLED'
+  global markup_file_format, root_dir
+  markup_file = markup_file_format.format(root_dir)
   handler_utility.log('Testing whether disabled markup file exists: ' + markup_file)
-  if(os.dir.isfile(markup_file)):
+  if(os.path.isfile(markup_file)):
     return True
   else:
     return False
 
 def remove_extension_disabled_markup():
-  markup_file = root_dir + '/EXTENSIONDISABLED'
-  handler_utility.log('Deleting disabled markup file ' + markup_file)
+  global markup_file_format, root_dir
+  markup_file = markup_file_format.format(root_dir)
+  handler_utility.log('Deleting disabled markup file if it exists' + markup_file)
   if(os.path.isfile(markup_file)):
     os.remove(markup_file)
 
-def exit_with_code_0():
-  sys.exit(0)
+def exit_with_code_zero():
+  sys.exit()
+
+
 
 def start_rm_extension_handler(operation):
   try:
@@ -65,13 +82,13 @@ def start_rm_extension_handler(operation):
     sequence_number = handler_utility._context._seq_no
     last_sequence_number = get_last_sequence_number()
     if((sequence_number == last_sequence_number) and not(test_extension_disabled_markup())):
-      handler_utility.log(RMExtensionStatus['SkippedInstallation']['Message'])
+      handler_utility.log(RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'])
       handler_utility.log('Current sequence number : ' + sequence_number + ', last sequence number : ' + last_sequence_number)
       ss_code = RMExtensionStatus.rm_extension_status['SkippedInstallation']['Code']
       sub_status_message = RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message']
       operation_name = RMExtensionStatus.rm_extension_status['SkippedInstallation']['operationName']
       handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-      exit_with_code_0
+      exit_with_code_zero()
     handler_utility.clear_status_file()
     code = RMExtensionStatus.rm_extension_status['Installing']['Code']
     message = RMExtensionStatus.rm_extension_status['Installing']['Message']
@@ -81,8 +98,11 @@ def start_rm_extension_handler(operation):
     operation_name = RMExtensionStatus.rm_extension_status['Initialized']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
+    print 'Hello'
+    print e.message
+    print e.args
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'])
-    exit_with_code_0()
+    exit_with_code_zero()
 
 def get_platform_value():
   info = platform.linux_distribution()
@@ -192,7 +212,7 @@ def get_configutation_from_settings():
     return ret_val
   except Exception as e:
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'])
-    exit_with_code_0()
+    exit_with_code_zero()
 
 def test_configured_agent_exists():
   global configured_agent_exists, config
@@ -202,7 +222,7 @@ def test_configured_agent_exists():
     operation_name = RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log("Invoking function to pre-check agent configuration...")
-    agent_exists = ConfigureDeploymentAgent.test_configured_agent_exists_internal(config['AgentWorkingFolder'], Constants.agent_setting, handler_utility.log)
+    agent_exists = ConfigureDeploymentAgent.test_configured_agent_exists_internal(config['AgentWorkingFolder'], handler_utility.log)
     handler_utility.log("Done pre-checking agent configuration")
     ss_code = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['Message']
@@ -210,8 +230,11 @@ def test_configured_agent_exists():
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     return agent_exists
   except Exception as e:
+    print config
+    print e.message
+    print e.args
     handler_utility.set_handler_error_status(e,RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName'])
-    exit_with_code_0()
+    exit_with_code_zero()
 
 
 def execute_agent_pre_check():
@@ -237,7 +260,7 @@ def get_agent():
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['DownloadingDeploymentAgent']['operationName'])
-    exit_with_code_0()
+    exit_with_code_zero()
 
 def download_agent_if_required():
   global configured_agent_exists
@@ -279,7 +302,7 @@ def register_agent():
     print e.message
     print e.args
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName'])
-    exit_with_code_0
+    exit_with_code_zero()
 
 def remove_existing_agent_if_required():
   global configured_agent_exists, agent_configuration_required, config
@@ -292,10 +315,9 @@ def configure_agent_if_required():
   if(agent_configuration_required):
     register_agent()
   else:
-    handler_utility.log('Skipping agent configuration. Agent is already configured with given set of parameters')
-    ss_code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['operationName']
+    ss_code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
+    sub_status_message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
+    operation_name = RMExtensionStatus.rm_extension_status['Disabled']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
 
 def enable():
@@ -310,6 +332,29 @@ def enable():
   set_last_sequence_number()
   handler_utility.log('Extension is enabled. Removing any disable markup file..')
   remove_extension_disabled_markup()
+
+def disable():
+  handler_utility.log('Disable command is no-op for agent')
+  handler_utility.log('Creating a markup file...')
+  operation = 'disable'
+  handler_utility.do_parse_context(operation) 
+  set_extension_disabled_markup()
+  ss_code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
+  sub_status_message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
+  operation_name = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['operationName']
+  handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+  code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
+  message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
+  handler_utility.set_handler_status(code = code, status = 'success', message = message)
+
+def uninstall():
+  global configured_agent_exists, config
+  operation = 'uninstall'
+  handler_utility.do_parse_context(operation)
+  config = get_configutation_from_settings ()
+  configured_agent_exists = test_configured_agent_exists()
+  if(configured_agent_exists == True):
+    ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config_path, handler_utility.log)
 
 def check_version():
   version_info = sys.version_info
@@ -332,6 +377,10 @@ def main():
   if(len(sys.argv) == 2):
     if(sys.argv[1] == '-enable'):
       enable()
+    elif(sys.argv[1] == '-disable'):
+      disable()
+    elif(sys.argv[1] == '-uninstall'):
+      uninstall()
 
 if(__name__ == '__main__'):
   main()

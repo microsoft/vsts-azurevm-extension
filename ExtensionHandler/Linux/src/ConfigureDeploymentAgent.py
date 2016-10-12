@@ -18,8 +18,9 @@ def write_log(log_message, log_function):
     log_function(log)
 
 
-def test_configured_agent_exists_internal(working_folder, agent_setting , log_function):
+def test_configured_agent_exists_internal(working_folder, log_function):
   try:
+    agent_setting = Constants.agent_setting
     write_log("Initialization for deployment agent started.", log_function)
     # Is Python version check required here?
     write_log("Checking if existing agent is running from {0}".format(working_folder), log_function)
@@ -31,10 +32,13 @@ def test_configured_agent_exists_internal(working_folder, agent_setting , log_fu
     write_log(e.message, log_function)
     raise e
 
-def test_agent_reconfiguration_required(vsts_url, machine_group_name, project_name, working_folder, agent_setting):
+def test_agent_configuration_required(vsts_url, machine_group_name, project_name, working_folder):
+  agent_setting = Constants.agent_setting
   agent_setting_file =  os.path.join(working_folder, agent_setting)
+  print agent_setting_file
   with open(agent_setting_file) as f:
     setting_file_contents = f.read()
+    print setting_file_contents
     setting_params = json.loads(setting_file_contents)
     existing_vsts_url = setting_params['serverUrl']
     existing_machine_group = setting_params['machineGroup']
@@ -88,8 +92,8 @@ def install_dependencies():
 
 def configure_agent_internal(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder):
   agent_listener_path = get_agent_listener_path(working_folder)
-  #configure_command = Constants.configure_agent_command.format(agent_listener_path, vsts_url, pat_token, agent_name, '_work', project_name, machine_group_name)
-  configure_command = Constants.configure_agent_command.format(agent_listener_path, vsts_url, pat_token, agent_name, '_work')
+  configure_command = Constants.configure_agent_command.format(agent_listener_path, vsts_url, pat_token, agent_name, Constants.default_agent_work_dir, project_name, machine_group_name, machine_group_name)
+  #configure_command = Constants.configure_agent_command.format(agent_listener_path, vsts_url, pat_token, agent_name, Constants.default_agent_work_dir, project_name, machine_group_name)
   print configure_command
   config_agent_proc = subprocess.Popen(configure_command, shell = True)
   std_out, std_err = config_agent_proc.communicate()

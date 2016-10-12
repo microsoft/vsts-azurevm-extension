@@ -5,7 +5,7 @@ import platform
 import Constants
 
 agent_listener_path = ''
-
+agent_service_path = ''
 
 def write_configuration_log(log_message):
   log = '[Configuration]: ' + log_message
@@ -56,6 +56,12 @@ def get_agent_listener_path(working_folder):
     agent_listener_path = os.path.join(working_folder, Constants.agent_listener)
   return agent_listener_path
 
+def get_agent_service_path(working_folder):
+  global agent_service_path
+  if(agent_service_path == ''):
+    agent_service_path = os.path.join(working_folder, Constants.agent_service)
+  return agent_service_path
+
 def agent_listener_exists(working_folder):
   agent_listener = get_agent_listener_path(working_folder)
   write_configuration_log('\t\t Agent listener file : ' + agent_listener)
@@ -92,9 +98,15 @@ def install_dependencies():
 
 def configure_agent_internal(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder):
   agent_listener_path = get_agent_listener_path(working_folder)
+  agent_servic_path = get_agent_service_path(working_folder)
   configure_command = Constants.configure_agent_command.format(agent_listener_path, vsts_url, pat_token, agent_name, Constants.default_agent_work_dir, project_name, machine_group_name, machine_group_name)
   #configure_command = Constants.configure_agent_command.format(agent_listener_path, vsts_url, pat_token, agent_name, Constants.default_agent_work_dir, project_name, machine_group_name)
-  print configure_command
+  config_agent_proc = subprocess.Popen(configure_command, shell = True)
+  std_out, std_err = config_agent_proc.communicate()
+  install_command = Constants.service_install_command.format(agent_service_path)
+  config_agent_proc = subprocess.Popen(configure_command, shell = True)
+  std_out, std_err = config_agent_proc.communicate()
+  start_command = Constants.service_start_command.format(agent_service_path)
   config_agent_proc = subprocess.Popen(configure_command, shell = True)
   std_out, std_err = config_agent_proc.communicate()
   return_code = config_agent_proc.returncode

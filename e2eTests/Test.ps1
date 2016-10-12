@@ -1,4 +1,4 @@
-﻿# Usage: .\Test.ps1 -testEnvironmentFile E:\work\RM\VMExtension\e2eTests\new\TestEnvironment.json -publisher Test.Microsoft.VisualStudio.Services -extension TeamServicesAgent -extensionVersion 1.30 [-personalAccessToken ***] -vmPassword ***
+﻿# Usage: .\Test.ps1 -testEnvironmentFile TestEnvironment.json -publisher Test.Microsoft.VisualStudio.Services -extension TeamServicesAgent -extensionVersion 1.30 [-personalAccessToken ***] -vmPassword ***
 
 param(
     [Parameter(Mandatory=$true)]
@@ -160,12 +160,12 @@ function Remove-VSTSAgent
     Invoke-RestMethod -Method DELETE -Uri $uri -Headers $authHeader
 }
 
-$currentScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+$currentScriptPath = $PSScriptRoot
 
 #####
 # Read inputs
 #####
-$inputs = Get-Content $testEnvironmentFile | Out-String | ConvertFrom-Json
+$inputs = Get-Content (Join-Path $currentScriptPath $testEnvironmentFile) | Out-String | ConvertFrom-Json
 $resourceGroupName = $inputs.resourceGroupName
 $vmName = $inputs.vmName
 $location = $inputs.location

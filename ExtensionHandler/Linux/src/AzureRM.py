@@ -208,6 +208,8 @@ def get_configutation_from_settings():
           }
     return ret_val
   except Exception as e:
+    print e.message
+    print e.args
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'])
     exit_with_code_zero()
 
@@ -347,7 +349,7 @@ def uninstall():
   configured_agent_exists = test_configured_agent_exists()
   config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
   if(configured_agent_exists == True):
-    ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config_path, handler_utility.log)
+    ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config['AgentWorkingFolder'], handler_utility.log)
 
 def check_version():
   version_info = sys.version_info

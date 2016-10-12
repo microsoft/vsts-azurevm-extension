@@ -23,6 +23,8 @@ configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} 
 
 service_install_command = '{0} install root'
 service_start_command = '{0} start'
+service_stop_command = '{0} stop'
+service_uninstall_command = '{0} uninstall'
 #configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} --auth PAT --token {2} --agent {3} --work {4} --pool default'
 package_data_address_format = "/_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}"
 

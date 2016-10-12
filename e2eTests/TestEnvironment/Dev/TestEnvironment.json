@@ -1,0 +1,10 @@
+{
+  "resourceGroupName": "vm-ext-rg-clsc",
+  "vmName": "vm-ext-e2e-clsc",
+  "location": "southcentralus",
+  "storageAccountName": "vmextrgclscdisks643",
+  "templateFile": "template.json",
+  "templateParameterFile": "parameters.json",
+  "extensionPublicSettingsFile": "publicConfig.json",
+  "extensionProtectedSettingsFile": "_protectedConfig.json"
+}

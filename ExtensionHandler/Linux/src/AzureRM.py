@@ -98,9 +98,6 @@ def start_rm_extension_handler(operation):
     operation_name = RMExtensionStatus.rm_extension_status['Initialized']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
-    print 'Hello'
-    print e.message
-    print e.args
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'])
     exit_with_code_zero()
 
@@ -230,9 +227,6 @@ def test_configured_agent_exists():
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     return agent_exists
   except Exception as e:
-    print config
-    print e.message
-    print e.args
     handler_utility.set_handler_error_status(e,RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName'])
     exit_with_code_zero()
 
@@ -299,8 +293,6 @@ def register_agent():
     message = RMExtensionStatus.rm_extension_status['Installed']['Message']
     handler_utility.set_handler_status(code = code, status = 'success', message = message)
   except Exception as e:
-    print e.message
-    print e.args
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName'])
     exit_with_code_zero()
 
@@ -308,7 +300,7 @@ def remove_existing_agent_if_required():
   global configured_agent_exists, agent_configuration_required, config
   if((configured_agent_exists == True) and (agent_configuration_required == True)):
     handler_utility.log('Remove existing configured agent')
-    config_path = ConfigureDeploymentAgent.get_config_command_path(config['AgentWorkingFolder'])
+    config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
     ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config_path, handler_utility.log)
 
 def configure_agent_if_required():
@@ -351,8 +343,9 @@ def uninstall():
   global configured_agent_exists, config
   operation = 'uninstall'
   handler_utility.do_parse_context(operation)
-  config = get_configutation_from_settings ()
+  config = get_configutation_from_settings()
   configured_agent_exists = test_configured_agent_exists()
+  config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
   if(configured_agent_exists == True):
     ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config_path, handler_utility.log)
 

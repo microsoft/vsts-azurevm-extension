@@ -17,7 +17,10 @@ platform_format = '{0}.{1}.{2}-{3}'
 
 remove_agent_command = '{0} remove --unattended --auth PAT --token {1}'
 #configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} --auth PAT --token {2} --agent {3} --work {4} --projectname {5} --machinegroup {6} --pool {7}'
-configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} --auth PAT --token {2} --agent {3} --work {4} --projectname {5} --machinegroup {6} --pool {7}'
+#configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} --auth PAT --token {2} --agent {3} --work {4} --projectname {5} --machinegroup --machinegroupname {6}'
+configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} --auth PAT --token {2} --agent {3} --work {4} --projectname {5} --machinegroupname {6} --pool {7}'
+#configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} --auth PAT --token {2} --agent {3} --work {4} --projectname {5} --machinegroup {6}'
+
 service_install_command = '{0} install root'
 service_start_command = '{0} start'
 #configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} --auth PAT --token {2} --agent {3} --work {4} --pool default'

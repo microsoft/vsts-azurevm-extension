@@ -46,11 +46,11 @@ if($extensionVersion -eq "WILL_BET_SET_AT_RUNTIME")
 $retryCount = 0
 $isReplicated = $false
 
-# retry after every 60 seconds
+# retry after every 120 seconds
 $retryInterval = 120
 
 # maximum number of retries to attempt
-$maxRetries = 30
+$maxRetries = 300
 
 # fetch subscription details - subscription id and management certificate
 $subscription = Get-AzureSubscription -Current –ExtendedDetails

@@ -50,7 +50,7 @@ $isReplicated = $false
 $retryInterval = 120
 
 # maximum number of retries to attempt
-$maxRetries = 300
+$maxRetries = 720
 
 # fetch subscription details - subscription id and management certificate
 $subscription = Get-AzureSubscription -Current –ExtendedDetails

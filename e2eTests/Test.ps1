@@ -185,6 +185,10 @@ $templateParameterFile = Join-Path $currentScriptPath $inputs.templateParameterF
 $extensionPublicSettingsFile = Join-Path $currentScriptPath $inputs.extensionPublicSettingsFile
 $extensionProtectedSettingsFile = Join-Path $currentScriptPath $inputs.extensionProtectedSettingsFile
 
+# Only keep major and minor version for extension
+$parts = $extensionVersion.split(".")
+$extensionVersion = "{0}.{1}" -f $parts[0], $parts[1]
+
 #create protected settings file with pat token
 @{ PATToken = $personalAccessToken } | ConvertTo-Json | Set-Content -Path $extensionProtectedSettingsFile -Force
 

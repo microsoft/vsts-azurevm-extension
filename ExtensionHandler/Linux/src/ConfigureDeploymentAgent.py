@@ -3,6 +3,7 @@ import subprocess
 import json
 import platform
 import Constants
+import codecs
 
 agent_listener_path = ''
 agent_service_path = ''
@@ -35,12 +36,10 @@ def test_configured_agent_exists_internal(working_folder, log_function):
 def test_agent_configuration_required(vsts_url, machine_group_name, project_name, working_folder):
   agent_setting = Constants.agent_setting
   agent_setting_file =  os.path.join(working_folder, agent_setting)
-  with open(agent_setting_file) as f:
-    setting_file_contents = f.read()
-    setting_params = json.loads(setting_file_contents)
-    existing_vsts_url = setting_params['serverUrl']
-    existing_machine_group = setting_params['machineGroup']
-    existing_project_name = setting_params['projectName']
+  setting_params = json.load(codecs.open(agent_setting_file, 'r', 'utf-8-sig'))
+  existing_vsts_url = setting_params['serverUrl']
+  existing_machine_group = setting_params['machineGroup']
+  existing_project_name = setting_params['projectName']
   f.close()
   if(existing_vsts_url == vsts_url and existing_machine_group == machine_group_name and existing_project_name == project_name):
     return False

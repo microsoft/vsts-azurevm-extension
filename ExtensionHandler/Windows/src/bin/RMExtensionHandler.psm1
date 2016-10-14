@@ -301,10 +301,18 @@ function Get-ConfigurationFromSettings {
         {
             $tagsInput = $publicSettings['Tags']
         }
-        $tagsString = $tagsInput | Out-String
-        Write-Log "Tags: $tagsString"
 
-        $tags = Format-TagsInput $tagsInput
+        if(-not $tagsInput)
+        {
+            $tags = @()
+        }
+        else
+        {
+            $tagsString = $tagsInput | Out-String
+            Write-Log "Tags: $tagsString"
+
+            $tags = Format-TagsInput $tagsInput
+        }
 
         $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
         Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
@@ -363,7 +371,7 @@ function Format-TagsInput {
         throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message    
     }
 
-    return $tags | Sort-Object | Get-Unique –AsString
+    return $tags | Sort-Object | Get-Unique -AsString
 }
 
 function Invoke-GetAgentScript {

@@ -55,4 +55,6 @@ do
     $retryCount++
   }
 
+  Write-Host "is Replicated: $isReplicated, retry count: $retryCount, max retries: $maxRetries"
+
 } While (($isReplicated -ne $true) -and ($retryCount -lt $maxRetries))

@@ -41,7 +41,7 @@ do
 
   try 
   {
-      $extensionDetails = Get-AzureRmVMExtensionImage -Location $location -PublisherName $publisher -Type $extensionName -Version $extensionVersion
+      $extensionDetails = Get-AzureRmVMExtensionImage -Location $location -PublisherName $publisher -Type $extensionName -Version $extensionVersion -ErrorAction SilentlyContinue
       $isReplicated = $extensionDetails.Version -eq $extensionVersion
   }
   catch 
@@ -58,3 +58,8 @@ do
   Write-Host "is Replicated: $isReplicated, retry count: $retryCount, max retries: $maxRetries"
 
 } While (($isReplicated -ne $true) -and ($retryCount -lt $maxRetries))
+
+if($isReplicated -ne $true)
+{
+    Write-Error "Extension is not yet replicated. Failing with timeout."
+}

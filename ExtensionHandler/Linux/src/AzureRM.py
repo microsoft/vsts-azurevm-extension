@@ -327,18 +327,21 @@ def enable():
   remove_extension_disabled_markup()
 
 def disable():
-  handler_utility.log('Disable command is no-op for agent')
-  handler_utility.log('Creating a markup file...')
-  operation = 'disable'
-  handler_utility.do_parse_context(operation) 
-  set_extension_disabled_markup()
-  ss_code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
-  sub_status_message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
-  operation_name = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['operationName']
-  handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-  code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
-  message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
-  handler_utility.set_handler_status(code = code, status = 'success', message = message)
+  working_folder = '{0}/VSTSAgent'.format('')
+  agent_exists = ConfigureDeploymentAgent.test_configured_agent_exists_internal(working_folder, handler_utility.log)
+  if(agent_exists):
+    handler_utility.log('Disable command is no-op for agent')
+    handler_utility.log('Creating a markup file...')
+    operation = 'disable'
+    handler_utility.do_parse_context(operation) 
+    set_extension_disabled_markup()
+    ss_code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
+    sub_status_message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
+    operation_name = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['operationName']
+    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
+    message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
+    handler_utility.set_handler_status(code = code, status = 'success', message = message)
 
 def uninstall():
   global configured_agent_exists, config

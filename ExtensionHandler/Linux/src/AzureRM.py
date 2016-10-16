@@ -6,7 +6,6 @@ import os
 import subprocess
 import platform
 import Constants
-import json
 import DownloadDeploymentAgent
 import ConfigureDeploymentAgent
 

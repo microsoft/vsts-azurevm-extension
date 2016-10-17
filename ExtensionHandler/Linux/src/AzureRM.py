@@ -158,8 +158,8 @@ def get_configutation_from_settings():
       raise new_handler_terminating_error(code, message)
     platform_value = get_platform_value()
     handler_utility.log("Platform: {0}".format(platform_value))
-    vsts_account_name = public_settings['VSTSAccountName']
-    handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
+    vsts_account_name = public_settings['VSTSAccountUrl']
+    handler_utility.verify_input_not_null('VSTSAccountUrl', vsts_account_name)
     if(not (check_account_name_prefix(vsts_account_name) and check_account_name_suffix(vsts_account_name))):
       vsts_url = format_string.format(vsts_account_name)
     else:

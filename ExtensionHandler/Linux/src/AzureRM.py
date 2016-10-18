@@ -238,7 +238,7 @@ def execute_agent_pre_check():
   global config, configured_agent_exists, agent_configuration_required
   configured_agent_exists = test_configured_agent_exists()
   if(configured_agent_exists == True):
-    agent_configuration_required = ConfigureDeploymentAgent.test_agent_configuration_required(config['VSTSUrl'], config['MachineGroup'], config['TeamProject'], config['AgentWorkingFolder'])
+    agent_configuration_required = ConfigureDeploymentAgent.test_agent_configuration_required(config['VSTSUrl'], config['MachineGroup'], config['TeamProject'], config['AgentWorkingFolder'], handler_utility.log)
     
 
 def get_agent():

@@ -1,3 +1,5 @@
+#! /usr/bin/python
+
 import sys
 from Utils.WAAgentUtil import waagent
 import Utils.HandlerUtil as Util

@@ -54,7 +54,7 @@ Describe "Agent ExistenceChecker Tests" {
         $agentSettings =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Mg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/",  "workFolder": "_work",  "projectName": "testProj",  "machineGroupName": "my-mggrp1" }' | ConvertFrom-Json
         
         Mock ContructRESTCallUrl { return "test-Url" }
-        Mock GetMachineGroupName { return "machine-GroupName"}
+        Mock InvokeRestURlToGetMachineGroupName { return "machine-GroupName"}
         
         
         It "should return correct machine group name in case machine group name is saved with agent setting file" {
@@ -62,7 +62,7 @@ Describe "Agent ExistenceChecker Tests" {
             $ret | Should be $($agentSettings.machineGroupName)       
             
             Assert-MockCalled ContructRESTCallUrl -Times 0
-            Assert-MockCalled GetMachineGroupName -Times 0
+            Assert-MockCalled InvokeRestURlToGetMachineGroupName -Times 0
         }
         
         $agentSettings =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Mg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/",  "workFolder": "_work",  "projectName": "testProj",  "machineGroupID": 7 }' | ConvertFrom-Json
@@ -72,7 +72,7 @@ Describe "Agent ExistenceChecker Tests" {
             $ret | Should be "machine-GroupName"     
             
             Assert-MockCalled ContructRESTCallUrl -Times 1
-            Assert-MockCalled GetMachineGroupName -Times 1
+            Assert-MockCalled InvokeRestURlToGetMachineGroupName -Times 1
         }
     }
     

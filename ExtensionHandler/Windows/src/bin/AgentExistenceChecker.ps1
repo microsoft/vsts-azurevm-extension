@@ -125,7 +125,7 @@ function GetMachineGroupNameFromAgentSetting
     {
         $restCallUrl = ContructRESTCallUrl -tfsUrl $tfsUrl -projectName $projectName -machineGroupId $($agentSetting.MachineGroupId) -logFunction $logFunction
         
-        return (GetMachineGroupName -restCallUrl $restCallUrl -patToken $patToken -logFunction $logFunction)
+        return (InvokeRestURlToGetMachineGroupName -restCallUrl $restCallUrl -patToken $patToken -logFunction $logFunction)
     }
     
     return $($agentSetting.machineGroupName)
@@ -150,7 +150,7 @@ function ContructRESTCallUrl
     return $restCallUrl
  }
  
- function GetMachineGroupName
+ function InvokeRestURlToGetMachineGroupName
  {
     Param(
     [Parameter(Mandatory=$true)]

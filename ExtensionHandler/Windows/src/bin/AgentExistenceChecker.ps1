@@ -69,7 +69,17 @@ function Test-AgentSettingsAreSame
         $tfsUrl = $tfsUrl.TrimEnd('/')
         $agentTfsUrl = $agentSetting.serverUrl.TrimEnd('/')
         
-        $machineGroupNameAsPerSetting = GetMachineGroupNameFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentTfsUrl -projectName $($agentSetting.projectName) -patToken $patToken -logFunction $logFunction
+        $machineGroupNameAsPerSetting = ""
+        
+        try
+        {
+            $machineGroupNameAsPerSetting = GetMachineGroupNameFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentTfsUrl -projectName $($agentSetting.projectName) -patToken $patToken -logFunction $logFunction
+        }
+        catch
+        {
+            $errorMsg = $_.Exception.Message.ToString()
+            WriteLog "`t`t`t Unable to get the machine group name - $errorMsg" $logFunction
+        }
         
         WriteLog "`t`t`t Agent Configured With `t`t`t`t`t Agent Need To Be Configured With" $logFunction
         WriteLog "`t`t`t $agentTfsUrl `t`t`t`t`t $tfsUrl" $logFunction
@@ -115,6 +125,7 @@ function GetMachineGroupNameFromAgentSetting
     )
     
     $machineGroupId = ""
+    ## try catch is required only for to support the back-compat scenario where machineGroupId may not be saved with agent settings
     try
     {
         $machineGroupId = $agentSetting.MachineGroupId
@@ -123,7 +134,7 @@ function GetMachineGroupNameFromAgentSetting
     
     if(![string]::IsNullOrEmpty($machineGroupId))
     {
-        $restCallUrl = ContructRESTCallUrl -tfsUrl $tfsUrl -projectName $projectName -machineGroupId $($agentSetting.MachineGroupId) -logFunction $logFunction
+        $restCallUrl = ContructRESTCallUrl -tfsUrl $tfsUrl -projectName $projectName -machineGroupId $machineGroupId -logFunction $logFunction
         
         return (InvokeRestURlToGetMachineGroupName -restCallUrl $restCallUrl -patToken $patToken -logFunction $logFunction)
     }

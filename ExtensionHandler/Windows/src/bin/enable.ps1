@@ -23,7 +23,6 @@ $Enable_AgentConfigurationRequired = $true
 
 function ExecuteAgentPreCheck([ref]$configuredAgentExists, [ref]$agentConfigurationRequired)
 {
-
     $configuredAgentExists.value  = Test-AgentAlreadyExists $config
 
     if($configuredAgentExists.value)

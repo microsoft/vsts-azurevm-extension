@@ -396,7 +396,7 @@ function Test-AgentReConfigurationRequiredInternal {
     )
 
     . $PSScriptRoot\AgentExistenceChecker.ps1
-    $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -machineGroupName $config.MachineGroup -logFunction $script:logger)
+    $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -machineGroupName $config.MachineGroup -patToken $config.PATToken -logFunction $script:logger)
     return $agentReConfigurationRequired
 }
 

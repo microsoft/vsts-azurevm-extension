@@ -46,6 +46,8 @@ function Test-AgentSettingsAreSame
         [string]$projectName,
         [Parameter(Mandatory=$true)]
         [string]$machineGroupName,
+        [Parameter(Mandatory=$true)]
+        [string]$patToken,
         [scriptblock]$logFunction
     )
 
@@ -67,11 +69,23 @@ function Test-AgentSettingsAreSame
         $tfsUrl = $tfsUrl.TrimEnd('/')
         $agentTfsUrl = $agentSetting.serverUrl.TrimEnd('/')
         
+        $machineGroupNameAsPerSetting = ""
+        
+        try
+        {
+            $machineGroupNameAsPerSetting = GetMachineGroupNameFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentTfsUrl -projectName $($agentSetting.projectName) -patToken $patToken -logFunction $logFunction
+        }
+        catch
+        {
+            $errorMsg = $_.Exception.Message.ToString()
+            WriteLog "`t`t`t Unable to get the machine group name - $errorMsg" $logFunction
+        }
+        
         WriteLog "`t`t`t Agent Configured With `t`t`t`t`t Agent Need To Be Configured With" $logFunction
         WriteLog "`t`t`t $agentTfsUrl `t`t`t`t`t $tfsUrl" $logFunction
         WriteLog "`t`t`t $($agentSetting.projectName) `t`t`t`t`t $projectName" $logFunction
-        WriteLog "`t`t`t $($agentSetting.machineGroupName) `t`t`t`t`t $machineGroupName" $logFunction
-        if( ([string]::Compare($tfsUrl, $agentTfsUrl, $True) -eq 0) -and ([string]::Compare($projectName, $($agentSetting.projectName), $True) -eq 0) -and ([string]::Compare($machineGroupName, $($agentSetting.machineGroupName), $True) -eq 0) )
+        WriteLog "`t`t`t $machineGroupNameAsPerSetting `t`t`t`t`t $machineGroupName" $logFunction
+        if( ([string]::Compare($tfsUrl, $agentTfsUrl, $True) -eq 0) -and ([string]::Compare($projectName, $($agentSetting.projectName), $True) -eq 0) -and ([string]::Compare($machineGroupName, $machineGroupNameAsPerSetting, $True) -eq 0) )
         {         
             WriteLog "`t`t`t Test-AgentSettingsAreSame Return : true" $logFunction        
             return $true
@@ -95,6 +109,82 @@ function Get-AgentSettings
     
     return ( Get-Content -Path $agentSettingFile | Out-String | ConvertFrom-Json)
 }
+
+function GetMachineGroupNameFromAgentSetting
+{
+    param(
+    [Parameter(Mandatory=$true)]
+    [object]$agentSetting,
+    [Parameter(Mandatory=$true)]
+    [string]$tfsUrl,
+    [Parameter(Mandatory=$true)]
+    [string]$projectName,
+    [Parameter(Mandatory=$true)]
+    [string]$patToken,
+    [scriptblock]$logFunction
+    )
+    
+    $machineGroupId = ""
+    ## try catch is required only for to support the back-compat scenario where machineGroupId may not be saved with agent settings
+    try
+    {
+        $machineGroupId = $agentSetting.MachineGroupId
+        WriteLog "`t`t` Machine group id -  $machineGroupId" -logFunction $logFunction
+    }catch{}    
+    
+    if(![string]::IsNullOrEmpty($machineGroupId))
+    {
+        $restCallUrl = ContructRESTCallUrl -tfsUrl $tfsUrl -projectName $projectName -machineGroupId $machineGroupId -logFunction $logFunction
+        
+        return (InvokeRestURlToGetMachineGroupName -restCallUrl $restCallUrl -patToken $patToken -logFunction $logFunction)
+    }
+    
+    return $($agentSetting.machineGroupName)
+}
+
+function ContructRESTCallUrl
+ {
+    Param(
+    [Parameter(Mandatory=$true)]
+    [string]$tfsUrl,
+    [Parameter(Mandatory=$true)]
+    [string]$projectName,
+    [Parameter(Mandatory=$true)]
+    [string]$machineGroupId,
+    [scriptblock]$logFunction
+    )
+
+    $restCallUrl = $tfsUrl + ("/{0}/_apis/distributedtask/machinegroups/{1}" -f $projectName, $machineGroupId)
+    
+    WriteLog "`t`t REST call Url -  $restCallUrl" $logFunction
+    
+    return $restCallUrl
+ }
+ 
+ function InvokeRestURlToGetMachineGroupName
+ {
+    Param(
+    [Parameter(Mandatory=$true)]
+    [string]$restCallUrl,
+    [Parameter(Mandatory=$true)]
+    [string]$patToken,
+    [scriptblock]$logFunction
+    )
+    
+    WriteLog "`t`t Form the header for invoking the rest call" $logFunction
+ 
+    $basicAuth = ("{0}:{1}" -f '', $patToken)
+    $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
+    $basicAuth = [System.Convert]::ToBase64String($basicAuth)
+    $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
+    
+    WriteLog "`t`t Invoke-rest call for machine group name" $logFunction
+    $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
+    WriteLog "`t`t Machine Group Details : $response" $logFunction
+
+    return $response.Name
+ }
+ 
 
 function WriteLog
 {

@@ -97,7 +97,7 @@ function Get-AgentSettings
     [string]$agentSettingFile
     )
     
-    return ( Get-Content -Path $agentSettingFile | ConvertFrom-Json )
+    return ( Get-Content -Path $agentSettingFile | Out-String | ConvertFrom-Json)
 }
 
 function GetMachineGroupNameFromAgentSetting

@@ -1,4 +1,4 @@
-﻿# Usage: .\Test.ps1 -testEnvironmentFile E:\work\RM\VMExtension\e2eTests\new\TestEnvironment.json -publisher Test.Microsoft.VisualStudio.Services -extension TeamServicesAgent -extensionVersion 1.30 [-personalAccessToken ***] -vmPassword ***
+﻿# Usage: .\Test.ps1 -testEnvironmentFile TestEnvironment.json -publisher Test.Microsoft.VisualStudio.Services -extension TeamServicesAgent -extensionVersion 1.30 [-personalAccessToken ***] -vmPassword ***
 
 param(
     [Parameter(Mandatory=$true)]
@@ -98,6 +98,7 @@ function Get-VSTSAgentInformation
 {
     param(
     [string]$vstsUrl,
+    [string]$teamProject,
     [string]$patToken,
     [string]$machineGroup,
     [string]$agentName
@@ -107,38 +108,47 @@ function Get-VSTSAgentInformation
     $base64AuthToken = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "", $patToken)))
     $authHeader = @{ Authorization = "Basic {0}" -f $base64AuthToken }
 
-    $uri = "{0}/_apis/distributedtask/pools" -f $vstsUrl
-    $poolsResponse = Invoke-RestMethod -Method GET -Uri $uri -Headers $authHeader
-    $pools = $poolsResponse.value
-    $pools | % {
+    $uri = "{0}/{1}/_apis/distributedtask/machinegroups" -f $vstsUrl, $teamProject
+    $machineGroupsResponse = Invoke-RestMethod -Method GET -Uri $uri -Headers $authHeader
+    $machineGroups = $machineGroupsResponse.value
+    $machineGroups | % {
         if($_.name -eq $machineGroup)
-        {
-            $poolId = $_.id
+        {   
+            $machineGroupId = $_.id
             return
         }
     }
 
-    Write-Host "Machine group Id: $poolId"
+    Write-Host "Machine group Id: $machineGroupId"
 
-    $uri = "{0}/_apis/distributedtask/pools/{1}/agents?includeCapabilities=false&includeAssignedRequest=false" -f $vstsUrl, $poolId
+    $uri = "{0}/{1}/_apis/distributedtask/machinegroups/{2}" -f $vstsUrl, $teamProject, $machineGroupId
     $agentsResponse = Invoke-RestMethod -Method GET -Uri $uri -Headers $authHeader
-    $agents = $agentsResponse.value
+    $agents = $agentsResponse.machines
+    $poolId = $agentsResponse.pool.id
 
     $agentExists = $false
+    $agentOnline = $false
     $agents | % {
-        if(($_.name -eq $agentName) -and ($_.status -eq "online"))
+        if($_.agent.name -eq $agentName)
         {
             $agentExists = $true
-            $agentId = $_.id
+            $agentId = $_.agent.id
+            if($_.agent.status -eq "online")
+            {
+                $agentOnline = $true
+            }
             return
         }
     }
 
     Write-Host "Agent $agentName exists: $agentExists"
+    Write-Host "Agent $agentName online: $agentOnline"
     Write-Host "Agent Id: $agentId"
 
     return @{
         isAgentExists = $agentExists
+        isAgentOnline = $agentOnline
+        machineGroupId = $machineGroupId
         poolId = $poolId
         agentId = $agentId
     }
@@ -156,16 +166,16 @@ function Remove-VSTSAgent
     Write-Host "Removing agent with id $agentId from vsts account $vstsUrl"
     $base64AuthToken = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "", $patToken)))
     $authHeader = @{ Authorization = "Basic {0}" -f $base64AuthToken }
-    $uri = "{0}/_apis/distributedtask/pools/{1}/agents/{2}?api-version=3.0-preview.1" -f $vstsUrl, $poolId, $agentId
+    $uri = "{0}/_apis/distributedtask/pools/{1}/agents/{2}?api-version=3.0" -f $vstsUrl, $poolId, $agentId
     Invoke-RestMethod -Method DELETE -Uri $uri -Headers $authHeader
 }
 
-$currentScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+$currentScriptPath = $PSScriptRoot
 
 #####
 # Read inputs
 #####
-$inputs = Get-Content $testEnvironmentFile | Out-String | ConvertFrom-Json
+$inputs = Get-Content (Join-Path $currentScriptPath $testEnvironmentFile) | Out-String | ConvertFrom-Json
 $resourceGroupName = $inputs.resourceGroupName
 $vmName = $inputs.vmName
 $location = $inputs.location
@@ -174,6 +184,10 @@ $templateFile = Join-Path $currentScriptPath $inputs.templateFile
 $templateParameterFile = Join-Path $currentScriptPath $inputs.templateParameterFile
 $extensionPublicSettingsFile = Join-Path $currentScriptPath $inputs.extensionPublicSettingsFile
 $extensionProtectedSettingsFile = Join-Path $currentScriptPath $inputs.extensionProtectedSettingsFile
+
+# Only keep major and minor version for extension
+$parts = $extensionVersion.split(".")
+$extensionVersion = "{0}.{1}" -f $parts[0], $parts[1]
 
 #create protected settings file with pat token
 @{ PATToken = $personalAccessToken } | ConvertTo-Json | Set-Content -Path $extensionProtectedSettingsFile -Force
@@ -188,8 +202,8 @@ Write-Host "Removing VM $vmName to ensure clean state for test"
 Remove-ExistingVM -resourceGroupName $resourceGroupName -vmName $vmName -storageAccountName $storageAccountName
 
 # Remove any old agent which is till registered
-$oldAgentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -patToken $config.PATToken -machineGroup $config.MachineGroup -agentName $config.AgentName
-if($oldAgentInfo -eq $true)
+$oldAgentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -machineGroup $config.MachineGroup -agentName $config.AgentName
+if($oldAgentInfo.isAgentExists -eq $true)
 {
     Remove-VSTSAgent -vstsUrl $config.VSTSUrl -patToken $config.PATToken -poolId $oldAgentInfo.poolId -agentId $oldAgentInfo.agentId
 }
@@ -210,9 +224,9 @@ Install-ExtensionOnVM -resourceGroupName $resourceGroupName -vmName $vmName -loc
 # Verify that agent is correctly configured against VSTS
 Write-Host "Validating that agent has been registered..."
 Write-Host "Getting agent information from VSTS"
-$agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -patToken $config.PATToken -machineGroup $config.MachineGroup -agentName $config.AgentName
+$agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -machineGroup $config.MachineGroup -agentName $config.AgentName
 
-if($agentInfo.isAgentExists -eq $false)
+if(($agentInfo.isAgentExists -eq $false) -or ($agentInfo.isAgentOnline -eq $false))
 {
     Write-Error "Agent has not been registered with VSTS!!"
 }

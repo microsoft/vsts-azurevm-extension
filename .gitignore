@@ -10,3 +10,11 @@ ExtensionHandler/Windows/oldVersion.json
 ExtensionHandler/Windows/src/.vscode/launch.json
 e2eTests/_protectedConfig.json
 e2eTests/.vscode/launch.json
+e2eTests/parameters.json
+e2eTests/publicConfig.json
+e2eTests/template.json
+e2eTests/TestEnvironment.json
+e2eTests/parameters.json
+e2eTests/publicConfig.json
+e2eTests/template.json
+e2eTests/TestEnvironment.json

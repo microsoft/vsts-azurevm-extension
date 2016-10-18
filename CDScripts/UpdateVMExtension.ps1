@@ -21,7 +21,7 @@ $bodyxml = Get-Content $definitionFile
 Write-Host "Body xml: $bodyxml"
 
 # fetch subscription details - subscription id and management certificate
-$subscription = Get-AzureSubscription -Current –ExtendedDetails
+$subscription = Get-AzureSubscription -Current -ExtendedDetails
 $subscription.Certificate.Thumbprint
 
 $uri = "https://management.core.windows.net/$($subscription.SubscriptionId)/services/extensions?action=update"

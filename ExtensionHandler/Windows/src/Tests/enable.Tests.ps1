@@ -7,10 +7,14 @@ Import-Module "$currentScriptPath\..\bin\Log.psm1"
 
 Describe "Enable RM extension tests" {
 
+        $config = @{
+            Tags = @()
+        }
+
     Context "Should save last sequence number file and remove disable mockup file" {
-        
+
         Mock Start-RMExtensionHandler {}
-        Mock Get-ConfigurationFromSettings { return @{} }
+        Mock Get-ConfigurationFromSettings { return $config }
         Mock Test-AgentAlreadyExists {}
         Mock Get-Agent {}
         Mock Register-Agent {}
@@ -31,7 +35,7 @@ Describe "Enable RM extension tests" {
     Context "If exceptiopn happens during agent configuration, Should not save last sequence number file or should not remove disable mockup file" {
         
         Mock Start-RMExtensionHandler {}
-        Mock Get-ConfigurationFromSettings { return @{} }
+        Mock Get-ConfigurationFromSettings { return $config }
         Mock Test-AgentAlreadyExists {}
         Mock Get-Agent {}
         Mock Register-Agent { throw }
@@ -56,7 +60,7 @@ Describe "Enable RM extension tests" {
     Context "If existing agent is already running with same configuration, Should not call Re-Configuration again" {
         
         Mock Start-RMExtensionHandler {}
-        Mock Get-ConfigurationFromSettings { return @{} }
+        Mock Get-ConfigurationFromSettings { return $config }
         Mock Test-AgentAlreadyExists { return $true}
         Mock Test-AgentReconfigurationRequired { return $false}
         Mock Get-Agent {}
@@ -81,7 +85,7 @@ Describe "Enable RM extension tests" {
     Context "If existing agent is running with different configuration, Should Call Re-Configuration again" {
         
         Mock Start-RMExtensionHandler {}
-        Mock Get-ConfigurationFromSettings { return @{} }
+        Mock Get-ConfigurationFromSettings { return $config }
         Mock Test-AgentAlreadyExists { return $true}
         Mock Test-AgentReconfigurationRequired { return $true}
         Mock Get-Agent {}
@@ -106,7 +110,7 @@ Describe "Enable RM extension tests" {
     Context "If no existing agent is present should download the agent and call configuration" {
         
         Mock Start-RMExtensionHandler {}
-        Mock Get-ConfigurationFromSettings { return @{} }
+        Mock Get-ConfigurationFromSettings { return $config }
         Mock Test-AgentAlreadyExists { return $false}
         Mock Test-AgentReconfigurationRequired { return $false}
         Mock Get-Agent {}
@@ -124,6 +128,34 @@ Describe "Enable RM extension tests" {
             Assert-MockCalled Register-Agent -Times 1
             Assert-MockCalled Get-Agent -Times 1
             Assert-MockCalled Remove-Agent -Times 0
+            Assert-MockCalled Set-LastSequenceNumber -Times 1
+        }
+    }
+    
+    Context "If tag are provided should trigger logic of adding tags" {
+        
+        $configWithTags = @{
+            Tags = @("Tag1")
+        }
+        
+        Mock Start-RMExtensionHandler {}
+        Mock Get-ConfigurationFromSettings { return $configWithTags }
+        Mock Test-AgentAlreadyExists { return $false}
+        Mock Test-AgentReconfigurationRequired { return $false}
+        Mock Get-Agent {}
+        Mock Register-Agent {}
+        Mock Remove-Agent {}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
+        Mock Write-Log {}
+        Mock Set-LastSequenceNumber {}
+        Mock Remove-ExtensionDisabledMarkup {}
+        Mock Add-AgentTags {}
+        
+        . ..\bin\enable.ps1
+
+        It "should call remove-agent followed by register-agent" {
+            Assert-MockCalled Add-AgentTags -Times 1
             Assert-MockCalled Set-LastSequenceNumber -Times 1
         }
     }

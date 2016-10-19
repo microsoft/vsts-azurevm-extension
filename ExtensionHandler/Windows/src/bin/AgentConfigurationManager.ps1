@@ -82,3 +82,37 @@ function RemoveExistingAgent
         throw "Agent removal failed with error - $stderr"
     }
 }
+
+function AddTagsToAgent
+{
+    param(
+    [Parameter(Mandatory=$true)]
+    [string]$tfsUrl,
+    [Parameter(Mandatory=$true)]
+    [string]$projectName,
+    [Parameter(Mandatory=$true)]
+    [string]$patToken,
+    [Parameter(Mandatory=$true)]
+    [string]$machineGroupId,    
+    [Parameter(Mandatory=$true)]
+    [string]$agentId,
+    [Parameter(Mandatory=$true)]
+    [string]$tagsAsJsonString
+    )
+    
+    $restCallUrl = ( "{0}/{1}/_apis/distributedtask/machinegroups/{2}/Machines?api-version=3.1-preview" -f $tfsUrl, $projectName, $machineGroupId )
+    
+    WriteAddTagsLog "Url for adding tags - $restCallUrl"
+    
+    $basicAuth = ("{0}:{1}" -f '', $patToken)
+    $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
+    $basicAuth = [System.Convert]::ToBase64String($basicAuth)
+    $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
+    
+    $requestBody = "[{'tags':" + $tagsAsJsonString + ",'agent':{'id':" + $agentId + "}}]"
+    
+    WriteAddTagsLog "Add tags request body - $requestBody"
+
+    $ret = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
+    
+}

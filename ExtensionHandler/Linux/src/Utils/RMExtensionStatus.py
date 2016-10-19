@@ -106,6 +106,11 @@ rm_extension_status = {
     'Message' : 'An agent is already running with same settings, skipping agent configuration',
     'operationName' : 'Agent Configuration'
   },
+  'AgentTagsAdded' : {
+    'Code' : 23,
+    'Message' : 'Successfully added the tags to deployment agent',
+    'operationName' : 'Agent Tags'
+  },
   #
   # Warnings
   #

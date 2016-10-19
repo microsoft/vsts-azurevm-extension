@@ -13,7 +13,7 @@ log_function = None
 
 def write_configuration_log(log_message):
   global log_function
-  log = '[Configuration]: ' + log_message
+  log = '[Configuration]: {}'.format(log_message)
   if(log_function is not None):
     log_function(log)
 
@@ -23,6 +23,11 @@ def write_log(log_message):
   if(log_function is not None):
     log_function(log)
 
+def write_add_tags_log(log_message):
+  global log_function
+  log = '[AddTags]: {0}'.format(log_message)
+  if(log_function is not None):
+    log_function(log)
 
 def test_configured_agent_exists_internal(working_folder, log_func):
   global log_function
@@ -44,7 +49,7 @@ def construct_machine_group_name_address(project_name, machine_group_id):
   machine_group_name_address = machine_group_address_format(project_name, machine_group_id)
   return machine_group_name_address
 
-def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token machine_group_name_address):
+def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_group_name_address):
   write_log('\t\t Form header for making http call')
   if(vsts_url.startswith('http://')):
     vsts_url = vsts_url[7:]
@@ -120,6 +125,7 @@ def get_agent_listener_path(working_folder):
 
 def get_agent_service_path(working_folder):
   global agent_service_path
+  print 'Working folder is ' + working_folder
   if(agent_service_path == ''):
     agent_service_path = os.path.join(working_folder, Constants.agent_service)
 
@@ -160,21 +166,49 @@ def remove_existing_agent(pat_token, working_folder, log_func):
   write_configuration_log('srderr : {0}'.format(std_err))
   if(not (return_code == 0)):
     raise Exception('Agent removal failed with error : {0}'.format(std_err))
-  
 
-def install_dependencies():
-  install_command = ''
-  linux_distr = platform.linux_distribution()
-  if(linux_distr[0] == Constants.red_hat_distr_name):
-    install_command += 'sudo yum -y install libunwind.x86_64 icu'
-  elif(linux_distr[0] == Constants.ubuntu_distr_name):
-    install_command += 'sudo apt-get install -y libunwind8 libcurl3'
-    version = linux_distr[1].split('.')[0]
-    if(version == '14'):
-      install_command += ' libicu52'     
-  proc = subprocess.Popen(install_command, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-  install_out, install_err = proc.communicate()
+def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
+  if(vsts_url.startswith('http://')):
+    vsts_url = vsts_url[7:]
+  elif(vsts_url.startswith('https://')):
+    vsts_url = vsts_url[8:]
+  basic_auth = '{0}:{1}'.format(user_name, pat_token)
+  #Todo Shlold be converted to byte array? unicode?
+  basic_auth = base64.b64encode(basic_auth)
+  headers = {
+              'Authorization' : 'Basic {0}'.format(basic_auth)
+            }
+  tags_address = Constants.tags_address_format.format(machine_group_id)
+  request_body = str([{'tags' : tags_string, 'agent' : {'id' : agent_id}}])
+  write_download_log('Add tags request body : {0}'.format(request_body))
+  conn = httplib.HTTPSConnection(vsts_url)
+  conn.request('PATCH', tags_address, headers = headers, body = request_body)
+  response = conn.getresponse()
   
+ 
+def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, tags_string, log_func):
+  global log_function
+  log_function = log_func
+  try:
+    write_add_tags_log('Adding the tags for configured agent')
+    agent_setting_file_path = os.path.join(working_folder, Constants.agent_setting)
+    write_add_tags_log('\t\t Agent setting path : {0}'.format(agent_setting_file_path))
+    if(not(os.path.isfile(agent_setting_file_path))):
+      raise Exception('Unable to find the .agent file {0}. Ensure to configure the agent before adding tags to it'.format(agent_setting_file_path))
+    setting_params = json.load(codecs.open(agent_setting_file, 'r', 'utf-8-sig'))
+    agent_id = setting_params['agentId']
+    machine_group_id = ''
+    try:
+      machine_group_id = setting_params['machineGroupId']
+    except Exception as e:
+      pass
+    if(agent_id == '' or machine_group_id == ''):
+      raise Exception('Unable to get the machineGroupId or agent id with .agent file from {0}. Ensure before adding tags, agent is configured'.format(working_folder))
+    add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string)
+    return Constants.return_success 
+  except Exception as e:
+    write_add_tags_log(e.message)
+    raise e
 
 def configure_agent_internal(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder):
   global agent_listener_path, agent_service_path
@@ -226,7 +260,6 @@ def configure_agent(vsts_url, pat_token, project_name, machine_group_name, agent
       agent_name = platform.node() + "-MG"
       write_configuration_log('Agent name not provided, agent name will be set as ' + agent_name)
     write_configuration_log('Configuring agent')
-    install_dependencies()
     configure_agent_internal(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder)
     return Constants.return_success
   except Exception as e:

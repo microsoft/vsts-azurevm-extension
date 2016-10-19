@@ -28,6 +28,7 @@ service_uninstall_command = '{0} uninstall'
 #configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} --auth PAT --token {2} --agent {3} --work {4} --pool default'
 package_data_address_format = '/_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}'
 machine_group_address_format = '/{0}/_apis/distributedtask/machinegroups/{1}'
+tags_address_format = '_apis/distributedtask/machinegroups/{0}/Machines?api-version=3.1-preview'
 
 red_hat_distr_name = 'Red Hat Enterprise Linux Server'
 ubuntu_distr_name = 'Ubuntu'

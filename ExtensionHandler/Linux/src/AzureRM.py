@@ -10,6 +10,7 @@ import platform
 import Constants
 import DownloadDeploymentAgent
 import ConfigureDeploymentAgent
+import json
 
 configured_agent_exists = False
 agent_configuration_required = True
@@ -238,7 +239,7 @@ def execute_agent_pre_check():
   global config, configured_agent_exists, agent_configuration_required
   configured_agent_exists = test_configured_agent_exists()
   if(configured_agent_exists == True):
-    agent_configuration_required = ConfigureDeploymentAgent.test_agent_configuration_required(config['VSTSUrl'], config['MachineGroup'], config['TeamProject'], config['AgentWorkingFolder'], handler_utility.log)
+    agent_configuration_required = ConfigureDeploymentAgent.test_agent_configuration_required(config['VSTSUrl'], config['PATToken'], config['MachineGroup'], config['TeamProject'], config['AgentWorkingFolder'], handler_utility.log)
     
 
 def get_agent():
@@ -264,7 +265,7 @@ def download_agent_if_required():
   if(configured_agent_exists == False):
     get_agent()
   else:
-    handlerUtility.log('Skipping agent download as agent already exists.')
+    handler_utility.log('Skipping agent download as agent already exists.')
     ss_code = RMExtensionStatus.rm_extension_status['SkippingDownloadDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['SkippingDownloadDeploymentAgent']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['SkippingDownloadDeploymentAgent']['operationName']
@@ -303,17 +304,45 @@ def remove_existing_agent_if_required():
   global configured_agent_exists, agent_configuration_required, config
   if((configured_agent_exists == True) and (agent_configuration_required == True)):
     handler_utility.log('Remove existing configured agent')
-    config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
-    ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config_path, handler_utility.log)
+    #config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
+    #ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config_path, handler_utility.log)
+    ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config['AgentWorkingFolder'], handler_utility.log)
 
 def configure_agent_if_required():
   if(agent_configuration_required):
     register_agent()
   else:
-    ss_code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['Disabled']['operationName']
+    ss_code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
+    sub_status_message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
+    operation_name = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+
+def add_agent_tags_internal(config):
+  try:
+    ss_code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
+    sub_status_message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
+    operation_name = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['operationName']
+    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    
+
+def add_agent_tags():
+  if(confg['Tags'] !=None and len(config) > 0):
+    handler_utility.log('Adding tags to configured agent - {0}'.format(str(config['Tags'])))
+    try:
+      tags_string = json.dumps(config['Tags'], ensure_ascii = False)
+      ConfigureDeployment.add_agent_tags_internal(config['VSTSUrl'], config['TeamPoject'], config['PATToken'], config['AgentWorkingFolder'], tags_string, handler_utility.log)
+      ss_code = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Code']
+      sub_status_message = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Message']
+      operation_name = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName']
+      handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+      code = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Code']
+      message = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Message']
+      handler_utility.set_handler_status(code = code, status = 'success', message = message)
+    except Exception as e:
+      Util.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName'])
+      exit_with_code_zero()
+  else:
+    handler_utility.log('No tags provided for agent')
 
 def enable():
   global configured_agent_exists, agent_configuration_required, config
@@ -324,6 +353,7 @@ def enable():
   download_agent_if_required()
   remove_existing_agent_if_required()
   configure_agent_if_required()
+  add_agent_tags()
   set_last_sequence_number()
   handler_utility.log('Extension is enabled. Removing any disable markup file..')
   remove_extension_disabled_markup()
@@ -365,6 +395,23 @@ def check_version():
     message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(major + '.' + minor)
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
+
+def install_dependencies():
+  install_command = ''
+  linux_distr = platform.linux_distribution()
+  if(linux_distr[0] == Constants.red_hat_distr_name):
+    install_command += 'sudo yum -y install libunwind.x86_64 icu'
+  elif(linux_distr[0] == Constants.ubuntu_distr_name):
+    install_command += 'sudo apt-get install -y libunwind8 libcurl3'
+    version = linux_distr[1].split('.')[0]
+    if(version == '14'):
+      install_command += ' libicu52'     
+  proc = subprocess.Popen(install_command, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+  install_out, install_err = proc.communicate()
+  print 'INSTALL OUT, INSTALL ERR'
+  print install_out
+  print install_err
+
 def main():
   check_version()
   global root_dir
@@ -373,6 +420,7 @@ def main():
   waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
   waagent.Log("Azure RM extension started to handle.")
   handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
+  install_dependencies()
   if(len(sys.argv) == 2):
     if(sys.argv[1] == '-enable'):
       enable()

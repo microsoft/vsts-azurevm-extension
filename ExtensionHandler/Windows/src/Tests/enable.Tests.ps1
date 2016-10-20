@@ -23,6 +23,7 @@ Describe "Enable RM extension tests" {
         Mock Write-Log {}
         Mock Set-LastSequenceNumber {}
         Mock Remove-ExtensionDisabledMarkup {}
+        Mock Add-AgentTags {}
         
         . ..\bin\enable.ps1
 
@@ -44,6 +45,7 @@ Describe "Enable RM extension tests" {
         Mock Write-Log {}
         Mock Set-LastSequenceNumber {}
         Mock Remove-ExtensionDisabledMarkup {}
+        Mock Add-AgentTags {}
         
         try
         {
@@ -71,6 +73,7 @@ Describe "Enable RM extension tests" {
         Mock Write-Log {}
         Mock Set-LastSequenceNumber {}
         Mock Remove-ExtensionDisabledMarkup {}
+        Mock Add-AgentTags {}
         
         . ..\bin\enable.ps1
 
@@ -96,6 +99,7 @@ Describe "Enable RM extension tests" {
         Mock Write-Log {}
         Mock Set-LastSequenceNumber {}
         Mock Remove-ExtensionDisabledMarkup {}
+        Mock Add-AgentTags {}
         
         . ..\bin\enable.ps1
 
@@ -121,6 +125,7 @@ Describe "Enable RM extension tests" {
         Mock Write-Log {}
         Mock Set-LastSequenceNumber {}
         Mock Remove-ExtensionDisabledMarkup {}
+        Mock Add-AgentTags {}
         
         . ..\bin\enable.ps1
 

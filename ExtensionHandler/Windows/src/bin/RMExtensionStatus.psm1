@@ -127,7 +127,12 @@ $global:RM_Extension_Status = @{
     AgentTagsAdded = @{
         Code = 23
         Message = 'Successfully added the tags to deployment agent'
-        operationName = 'Agent Tags'
+        operationName = 'Add Agent Tags'
+    }
+    AddingAgentTags = @{
+        Code = 24
+        Message = 'Adding agent tags'
+        operationName = 'Adding Agent Tags'
     }
 
     #

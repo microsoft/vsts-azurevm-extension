@@ -237,9 +237,19 @@ function Add-AgentTags {
 
     try 
     {
+        Add-HandlerSubStatus $RM_Extension_Status.AddingAgentTags.Code $RM_Extension_Status.AddingAgentTags.Message -operationName $RM_Extension_Status.AddingAgentTags.operationName
+     
         Write-Log "Add-AgentTags command started"
-        Invoke-AddTagsToAgentScript $config
-
+    
+        if( ( $config.Tags -ne $null ) -and ( $config.Tags.Count  -gt 0 ) )
+        {
+            Invoke-AddTagsToAgentScript $config
+        }
+        else
+        {
+            Write-Log "No tags provided for agent"
+        }
+        
         Add-HandlerSubStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -operationName $RM_Extension_Status.AgentTagsAdded.operationName
         Set-HandlerStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -Status success
     }

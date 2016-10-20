@@ -68,19 +68,6 @@ function ConfigureAgentIfRequired
     }
 }
 
-function AddAgentTags
-{
-    if( ( $config.Tags -ne $null ) -and ( $config.Tags.Count  -gt 0 ) )
-    {
-        Write-Log "Adding tags to configured agent - $($config.Tags)"
-        Add-AgentTags $config
-    }
-    else
-    {
-        Write-Log "No tags provided for agent"
-    }
-}
-
 Start-RMExtensionHandler
 $config = Get-ConfigurationFromSettings
 
@@ -92,7 +79,7 @@ RemoveExistingAgentIfRequired
 
 ConfigureAgentIfRequired
 
-AddAgentTags
+Add-AgentTags $config
 
 Set-LastSequenceNumber
 

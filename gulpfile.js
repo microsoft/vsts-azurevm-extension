@@ -50,7 +50,7 @@ gulp.task('createTempWindowsHandlerPackage', ['test'], function () {
 gulp.task('copyWindowsHandlerDefinitionFile', ['test'], function () {
         
     // copying definition xml file to output location
-    return gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test.xml'])
+    return gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test.xml', 'ExtensionHandler/Windows/ExtensionDefinition_Prod.xml'])
     	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
 });
 

@@ -33,7 +33,7 @@ $isReplicated = $false
 $retryInterval = 120
 
 # maximum number of retries to attempt
-$maxRetries = 720
+$maxRetries = 1440
 
 do
 {

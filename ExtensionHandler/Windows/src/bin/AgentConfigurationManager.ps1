@@ -83,7 +83,7 @@ function RemoveExistingAgent
     }
 }
 
-function AddTagsToAgent
+function ApplyTagsToAgent
 {
     param(
     [Parameter(Mandatory=$true)]
@@ -104,10 +104,7 @@ function AddTagsToAgent
     
     WriteAddTagsLog "Url for adding tags - $restCallUrl"
     
-    $basicAuth = ("{0}:{1}" -f '', $patToken)
-    $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
-    $basicAuth = [System.Convert]::ToBase64String($basicAuth)
-    $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
+    $headers = GetRESTCallHeader $patToken
     
     $requestBody = "[{'tags':" + $tagsAsJsonString + ",'agent':{'id':" + $agentId + "}}]"
     
@@ -115,4 +112,78 @@ function AddTagsToAgent
 
     $ret = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
     
+}
+
+function AddTagsToAgent
+{
+    param(
+    [Parameter(Mandatory=$true)]
+    [string]$tfsUrl,
+    [Parameter(Mandatory=$true)]
+    [string]$projectName,
+    [Parameter(Mandatory=$true)]
+    [string]$patToken,
+    [Parameter(Mandatory=$true)]
+    [string]$machineGroupId,    
+    [Parameter(Mandatory=$true)]
+    [string]$agentId,
+    [Parameter(Mandatory=$true)]
+    [string]$tagsAsJsonString
+    )
+
+    $restCallUrlToGetExistingTags = ( "{0}/{1}/_apis/distributedtask/machinegroups/{2}/Machines?api-version=3.1-preview" -f $tfsUrl, $projectName, $machineGroupId )
+    
+    WriteAddTagsLog "Url for adding getting existing tags if any - $restCallUrlToGetExistingTags"
+
+    $headers = GetRESTCallHeader $patToken
+    
+    $machineGroup = Invoke-RestMethod -Uri $($restCallUrlToGetExistingTags) -headers $headers -Method Get -ContentType "application/json"
+    
+    for( $i = 0; $i -lt $machineGroup.count; $i++ )
+    {
+        $eachMachine = $machineGroup.value[$i]
+        if( ($eachMachine -ne $null) -and ($eachMachine.agent -ne $null) -and ($eachMachine.agent.id  -eq $agentId) )
+        {
+            $existingTags = $eachMachine.tags
+            break
+        }
+    }
+
+    $tags = @()
+    $newTags =  ( $tagsAsJsonString | ConvertFrom-Json )
+
+    if($existingTags.count -gt 0)
+    {    
+        $tags = $existingTags    ## Append new tags to existing tags, this will ensure existing tags are not modified due to case change
+        WriteAddTagsLog "Found existing tags for agent - $existingTags"
+        
+        foreach( $newTag in $newTags) 
+        {
+            if(!($tags -Contains $newTag))
+            {
+                $tags += $newTag
+            }
+        }
+    }
+    else    ## In case not exiting tags are present
+    {
+        $tags = $newTags
+    }
+    
+    ApplyTagsToAgent -tfsUrl $tfsUrl -projectName $projectName -patToken $patToken -machineGroupId $machineGroupId -agentId $agentId -tagsAsJsonString ($tags | ConvertTo-Json)
+}
+
+function GetRESTCallHeader
+{
+    param(
+    [Parameter(Mandatory=$true)]
+    [string]$patToken    
+    )
+    
+    $basicAuth = ("{0}:{1}" -f '', $patToken)
+    $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
+    $basicAuth = [System.Convert]::ToBase64String($basicAuth)
+    $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
+    
+    return $headers
 }

@@ -24,7 +24,7 @@ param(
 $key = Get-AzureStorageKey -StorageAccountName $storageAccountName
 $ctx = New-AzureStorageContext $storageAccountName -StorageAccountKey $key.Primary
 
-$startTime = Get-Date
-$endTime = $startTime.AddYears(5)
-$sasToken = New-AzureStorageBlobSASToken -Container $storageContainerName -Blob $storageBlobName -Permission r -StartTime $startTime -ExpiryTime $endTime -Context $ctx
+$startTime = (Get-Date).AddDays(-2)
+$endTime = $startTime.AddDays(4)
+$sasToken = New-AzureStorageBlobSASToken -Container $storageContainerName -Blob $storageBlobName -Permission r -ExpiryTime $endTime -Context $ctx
 Write-Host "SAS token for blob $storageBlobName in container $storageContainerName : $sasToken"

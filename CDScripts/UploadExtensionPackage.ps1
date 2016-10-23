@@ -45,9 +45,11 @@ Set-AzureStorageBlobContent -Container $storageContainerName -File $packagePath 
 
 $startTime = Get-Date
 $endTime = $startTime.AddDays(7)
-$sasToken = New-AzureStorageBlobSASToken -Container $storageContainerName -Blob $storageBlobName -Permission r -StartTime $startTime -ExpiryTime $endTime -Context $ctx
+$sasToken = New-AzureStorageBlobSASToken -Container $storageContainerName -Blob $storageBlobName -Permission r -ExpiryTime $endTime -Context $ctx -FullUri
 
+$sasToken
 [xml]$definitionXml = [xml](Get-Content $definitionFile)
-$definitionXml.ExtensionImage.MediaLink = $definitionXml.ExtensionImage.MediaLink + $sasToken
+$definitionXml.ExtensionImage.MediaLink = [string]$sasToken
+$($definitionXml.ExtensionImage.MediaLink)
 
 $definitionXml.Save((Resolve-Path $definitionFile))

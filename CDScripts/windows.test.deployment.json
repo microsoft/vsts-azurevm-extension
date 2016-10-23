@@ -1,11 +1,11 @@
 {
     "ExtensionDrop": "VM extension\\ExtensionHandler\\Windows",
     "ExtensionPackageName": "RMExtension.zip",
-    "ExtensionPackageStorageBlob": "VSTSAgentExtension.zip",
+    "ExtensionPackageStorageBlob": "vstsagentextension.zip",
     "ExtensionDefinitionFile": "ExtensionDefinition_Test.xml",
     "StorageResourceGroup": "vstsvmextensiontest",
     "StorageAccountName": "vstsvmextensiontest",
-    "StorageContainerName": "agentextension",
+    "StorageContainerName": "privateagentextension",
     "ExtensionName": "TeamServicesAgent",
     "ExtensionPublisher": "Test.Microsoft.VisualStudio.Services",
     "Location": "southcentralus"

@@ -11,7 +11,7 @@
         "constraints": {
           "required": true,
           "regex": "^(?!.*(https:\\/\\/|visualstudio\\.com)).*$",
-          "validationMessage": "Account url must not start with https:// and must not end with visualstudio.com"
+          "validationMessage": "Account name must not start with https:// and must not end with visualstudio.com"
         }
       },
       {

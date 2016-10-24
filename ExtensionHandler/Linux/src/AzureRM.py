@@ -347,6 +347,7 @@ def enable():
   set_last_sequence_number()
   handler_utility.log('Extension is enabled. Removing any disable markup file..')
   remove_extension_disabled_markup()
+  exit_with_code_zero()
 
 def disable():
   working_folder = '{0}/VSTSAgent'.format('')
@@ -364,6 +365,7 @@ def disable():
     code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
     message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
     handler_utility.set_handler_status(code = code, status = 'success', message = message)
+    exit_with_code_zero()
 
 def uninstall():
   global configured_agent_exists, config
@@ -374,6 +376,7 @@ def uninstall():
   config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
   if(configured_agent_exists == True):
     ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config['AgentWorkingFolder'], handler_utility.log)
+  exit_with_code_zero()
 
 def check_version():
   version_info = sys.version_info

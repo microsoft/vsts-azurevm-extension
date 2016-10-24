@@ -161,6 +161,7 @@ def get_configutation_from_settings():
       raise new_handler_terminating_error(code, message)
     platform_value = get_platform_value()
     handler_utility.log("Platform: {0}".format(platform_value))
+    print str(public_settings)
     vsts_account_name = public_settings['VSTSAccountUrl']
     handler_utility.verify_input_not_null('VSTSAccountUrl', vsts_account_name)
     if(not (check_account_name_prefix(vsts_account_name) and check_account_name_suffix(vsts_account_name))):
@@ -210,6 +211,8 @@ def get_configutation_from_settings():
           }
     return ret_val
   except Exception as e:
+    print e.message
+    print e.args
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'])
     exit_with_code_zero()
 
@@ -315,8 +318,14 @@ def configure_agent_if_required():
     operation_name = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
 
+def are_all_tags_of_valid_length(tags):
+  for tag in tags:
+    if(tag != None and len(tag) > 256):
+      return False
+  return True
+
 def add_agent_tags():
-  if(config['Tags'] !=None and len(config) > 0):
+  if(config['Tags'] !=None and len(config) > 0 and are_all_tags_of_valid_length(config['Tags'])):
     handler_utility.log('Adding tags to configured agent - {0}'.format(str(config['Tags'])))
     try:
       tags_string = json.dumps(config['Tags'], ensure_ascii = False)

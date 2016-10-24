@@ -241,13 +241,13 @@ function Add-AgentTags {
      
         Write-Log "Add-AgentTags command started"
     
-        if( ( $config.Tags -ne $null ) -and ( $config.Tags.Count  -gt 0 ) )
+        if( ( $config.Tags -ne $null ) -and ( $config.Tags.Count  -gt 0 ) -and (IsTagsHavingValidLength $($config.Tags)) )
         {
             Invoke-AddTagsToAgentScript $config
         }
         else
         {
-            Write-Log "No tags provided for agent"
+            Write-Log "No tags provided for agent or one of tag length is more than 256"
         }
         
         Add-HandlerSubStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -operationName $RM_Extension_Status.AgentTagsAdded.operationName
@@ -483,6 +483,22 @@ function VeriftInputNotNull {
             $message = "$inputKey should be specified"
             throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
         }
+}
+
+function IsTagsHavingValidLength{
+    param(
+    [string[]]$tags
+    )
+    
+    foreach ( $tag in $tags )
+    {
+        if( (-not [string]::IsNullOrEmpty($tag)) -and ( $tag.Length -gt 256 ) )
+        {
+            return $false
+        }
+    }    
+    
+    return $true
 }
 
 #

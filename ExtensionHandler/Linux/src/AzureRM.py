@@ -210,8 +210,6 @@ def get_configutation_from_settings():
           }
     return ret_val
   except Exception as e:
-    print e.message
-    print e.args
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'])
     exit_with_code_zero()
 
@@ -317,20 +315,12 @@ def configure_agent_if_required():
     operation_name = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
 
-def add_agent_tags_internal(config):
-  try:
-    ss_code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-    
-
 def add_agent_tags():
-  if(confg['Tags'] !=None and len(config) > 0):
+  if(config['Tags'] !=None and len(config) > 0):
     handler_utility.log('Adding tags to configured agent - {0}'.format(str(config['Tags'])))
     try:
       tags_string = json.dumps(config['Tags'], ensure_ascii = False)
-      ConfigureDeployment.add_agent_tags_internal(config['VSTSUrl'], config['TeamPoject'], config['PATToken'], config['AgentWorkingFolder'], tags_string, handler_utility.log)
+      ConfigureDeploymentAgent.add_agent_tags_internal(config['VSTSUrl'], config['TeamProject'], config['PATToken'], config['AgentWorkingFolder'], tags_string, handler_utility.log)
       ss_code = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Code']
       sub_status_message = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Message']
       operation_name = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName']
@@ -397,20 +387,17 @@ def check_version():
 
 
 def install_dependencies():
-  install_command = ''
+  install_command = []
   linux_distr = platform.linux_distribution()
   if(linux_distr[0] == Constants.red_hat_distr_name):
-    install_command += 'sudo yum -y install libunwind.x86_64 icu'
+    install_command += ['/bin/yum', '-yq', 'install', 'libunwind.x86_64', 'icu']
   elif(linux_distr[0] == Constants.ubuntu_distr_name):
-    install_command += 'sudo apt-get install -y libunwind8 libcurl3'
+    install_command += ['/usr/bin/apt-get', 'install', '-yq', 'libunwind8', 'libcurl3']
     version = linux_distr[1].split('.')[0]
     if(version == '14'):
-      install_command += ' libicu52'     
-  proc = subprocess.Popen(install_command, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+      install_command += ['libicu52']
+  proc = subprocess.Popen(install_command)
   install_out, install_err = proc.communicate()
-  print 'INSTALL OUT, INSTALL ERR'
-  print install_out
-  print install_err
 
 def main():
   check_version()

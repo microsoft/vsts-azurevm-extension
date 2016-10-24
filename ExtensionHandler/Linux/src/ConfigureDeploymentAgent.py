@@ -46,7 +46,7 @@ def test_configured_agent_exists_internal(working_folder, log_func):
     raise e
 
 def construct_machine_group_name_address(project_name, machine_group_id):
-  machine_group_name_address = machine_group_address_format(project_name, machine_group_id)
+  machine_group_name_address = Constants.machine_group_address_format(project_name, machine_group_id)
   return machine_group_name_address
 
 def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_group_name_address):
@@ -61,7 +61,7 @@ def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_gr
   headers = {
               'Authorization' : 'Basic {0}'.format(basic_auth)
             }
-  write_download_log('\t\t Making HTTP request for machine group name')
+  write_add_tags_log('\t\t Making HTTP request for machine group name')
   conn = httplib.HTTPSConnection(vsts_url)
   conn.request('GET', machine_group_name_address, headers = headers)
   response = conn.getresponse()
@@ -79,7 +79,7 @@ def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, 
     write_log('\t\t Machine group id - {0}'.format(machine_group_id))
   except Exception as e:
     pass
-  if(machine_group_id == ''):
+  if(machine_group_id != ''):
     machine_group_name_address = construct_machine_group_name_address(project_name, machine_group_id)
     machine_group_name = invoke_url_for_machine_group_name(vsts_url, '', pat_token, machine_group_name_address)
     return machine_group_name
@@ -125,7 +125,6 @@ def get_agent_listener_path(working_folder):
 
 def get_agent_service_path(working_folder):
   global agent_service_path
-  print 'Working folder is ' + working_folder
   if(agent_service_path == ''):
     agent_service_path = os.path.join(working_folder, Constants.agent_service)
 
@@ -167,24 +166,57 @@ def remove_existing_agent(pat_token, working_folder, log_func):
   if(not (return_code == 0)):
     raise Exception('Agent removal failed with error : {0}'.format(std_err))
 
+def apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
+  if(vsts_url.startswith('http://')):
+    vsts_url = vsts_url[7:]
+  elif(vsts_url.startswith('https://')):
+    vsts_url = vsts_url[8:]
+  basic_auth = '{0}:{1}'.format('', pat_token)
+  #Todo Shlold be converted to byte array? unicode?
+  basic_auth = base64.b64encode(basic_auth)
+  headers = {
+              'Authorization' : 'Basic {0}'.format(basic_auth),
+              'Content-Type' : 'application/json'
+            }
+  print 'TAGS STRING IS '
+  print tags_string
+  tags_address = Constants.tags_address_format.format(project_name, machine_group_id, Constants.tags_api_version)
+  request_body = json.dumps([{'tags' : json.loads(tags_string), 'agent' : {'id' : agent_id}}])
+  print 'REQUEST BODY IS'
+  print request_body
+  write_add_tags_log('Add tags request body : {0}'.format(request_body))
+  conn = httplib.HTTPSConnection(vsts_url)
+  conn.request('PATCH', tags_address, headers = headers, body = request_body)
+  response = conn.getresponse()
+
 def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
   if(vsts_url.startswith('http://')):
     vsts_url = vsts_url[7:]
   elif(vsts_url.startswith('https://')):
     vsts_url = vsts_url[8:]
-  basic_auth = '{0}:{1}'.format(user_name, pat_token)
+  basic_auth = '{0}:{1}'.format('', pat_token)
   #Todo Shlold be converted to byte array? unicode?
   basic_auth = base64.b64encode(basic_auth)
   headers = {
               'Authorization' : 'Basic {0}'.format(basic_auth)
             }
-  tags_address = Constants.tags_address_format.format(machine_group_id)
-  request_body = str([{'tags' : tags_string, 'agent' : {'id' : agent_id}}])
-  write_download_log('Add tags request body : {0}'.format(request_body))
+  tags_address = Constants.machines_address_format.format(project_name, machine_group_id, Constants.tags_api_version)
   conn = httplib.HTTPSConnection(vsts_url)
-  conn.request('PATCH', tags_address, headers = headers, body = request_body)
+  conn.request('GET', tags_address, headers = headers)
   response = conn.getresponse()
-  
+  val = {}
+  response_string = response.read()
+  val = json.loads(response_string)
+  existing_tags = []
+  for i in range(1, val['count']):
+    each_machine = val['value'][i]
+    if(each_machine != None and each_machine.has_key('agent') and each_machine['agent']['id'] == agent_id):
+      if(each_machine.has_key('tags')):
+        existing_tags = each_machine['tags']
+        break
+  tags = json.loads(tags_string)
+  tags = list(set(tags + existing_tags))
+  apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, json.dumps(tags, ensure_ascii = False))
  
 def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, tags_string, log_func):
   global log_function
@@ -195,11 +227,38 @@ def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, t
     write_add_tags_log('\t\t Agent setting path : {0}'.format(agent_setting_file_path))
     if(not(os.path.isfile(agent_setting_file_path))):
       raise Exception('Unable to find the .agent file {0}. Ensure to configure the agent before adding tags to it'.format(agent_setting_file_path))
-    setting_params = json.load(codecs.open(agent_setting_file, 'r', 'utf-8-sig'))
+    setting_params = json.load(codecs.open(agent_setting_file_path, 'r', 'utf-8-sig'))
     agent_id = setting_params['agentId']
     machine_group_id = ''
     try:
-      machine_group_id = setting_params['machineGroupId']
+      #Back compat
+      if(setting_params.has_key('machineGroupId')):
+        machine_group_id = setting_params['machineGroupId']
+      else:
+        machine_group_name = setting_params['machineGroupName']
+        if(vsts_url.startswith('http://')):
+          vsts_url = vsts_url[7:]
+        elif(vsts_url.startswith('https://')):
+          vsts_url = vsts_url[8:]
+        basic_auth = '{0}:{1}'.format('', pat_token)
+        #Todo Shlold be converted to byte array? unicode?
+        basic_auth = base64.b64encode(basic_auth)
+        headers = {
+          'Authorization' : 'Basic {0}'.format(basic_auth)
+        }
+        machine_groups_address = Constants.machine_groups_address_format.format(project_name)
+        conn = httplib.HTTPSConnection(vsts_url)
+        conn.request('GET', machine_groups_address, headers = headers)
+        response = conn.getresponse()
+        val = {}
+        response_string = response.read()
+        val = json.loads(response_string)
+        #val = response.read()
+        for i in range(1, val['count']):
+          each_machine_group = val['value'][i]
+          if(each_machine_group != None and each_machine_group['name'] == machine_group_name):
+            machine_group_id = each_machine_group['id']
+            break
     except Exception as e:
       pass
     if(agent_id == '' or machine_group_id == ''):

@@ -54,6 +54,15 @@
         "options": {
             "hideConfirmation": true
         }
+      },
+      {
+        "name": "Tags",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Tags",
+        "toolTip": "(Optional) Specify a comma separated list of tags which will be set on agent",
+        "constraints": {
+          "required": false
+        }
       }
     ],
     "outputs": {
@@ -63,7 +72,8 @@
       "TeamProject": "[elements('TeamProject')]",
       "MachineGroup": "[elements('MachineGroup')]",
       "AgentName": "[elements('AgentName')]",
-      "PATToken": "[elements('PATToken')]"
+      "PATToken": "[elements('PATToken')]",
+      "Tags": "[elements('Tags')]"      
     }
   }
 }

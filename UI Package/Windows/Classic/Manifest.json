@@ -37,7 +37,7 @@
   "links": [
     {
       "displayName": "ms-resource:link1",
-      "uri": "https://www.visualstudio.com/products/visual-studio-team-services-vs"
+      "uri": "https://www.visualstudio.com/team-services/release-management/"
     },
     {
       "displayName": "ms-resource:link2",

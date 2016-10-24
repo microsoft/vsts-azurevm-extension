@@ -23,6 +23,9 @@
     },
     "PATToken": {
       "type": "securestring"
+    },
+    "Tags": {
+      "type": "string"
     }
   },
   "resources": [
@@ -40,7 +43,8 @@
               "VSTSAccountName": "[parameters('VSTSAccountName')]",
               "TeamProject": "[parameters('TeamProject')]",
               "MachineGroup": "[parameters('MachineGroup')]",
-              "AgentName": "[parameters('AgentName')]"
+              "AgentName": "[parameters('AgentName')]",
+              "Tags": "[parameters('Tags')]"
             },
             "private": {
               "PATToken": "[parameters('PATToken')]"

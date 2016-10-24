@@ -337,6 +337,40 @@ Describe "parse tags settings tests" {
             $settings.Tags[1] | Should Be "hashValue2"
         }
     }
+
+    Context "Should create array of values if input is string" {
+        
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "abc"
+                        TeamProject = "project"
+                        MachineGroup = "group"
+                        Tags = "tag1,  ,  tag2 ,, tag3,"
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                }
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VeriftInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+
+        $settings = Get-ConfigurationFromSettings
+
+        It "tags should be an array with proper entries" {
+            $settings.Tags.GetType().IsArray | Should Be True
+            $settings.Tags[0] | Should Be "tag1"
+            $settings.Tags[1] | Should Be "tag2"
+            $settings.Tags[2] | Should Be "tag3"            
+        }
+    }
 }
 
 Describe "AgentReconfigurationRequired tests" {

@@ -134,15 +134,15 @@ def format_tags_input(tags_input):
   tags = []
   if(tags_input.__class__.__name__ == 'list'):
     tags = tags_input
-  elif(tags_input.__class__.__name__ == 'set'):
-    tags = list(tags_input)
   elif(tags_input.__class__.__name__ == 'dict'):
     tags = tags_input.values()
+  elif(tags_input.__class__.__name__ == 'str'):
+    tags = tags_input.split(',')
   else:
-    message = 'Tags input should be either a list, a set, or a dictionary'
+    message = 'Tags input should be either a list or a dictionary'
     raise RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['ArgumentError'], message)
   tags.sort()
-  ret_val =  list(set(tags))
+  ret_val =  filter(lambda x : x!='', list(set(map(lambda x : x.strip(), tags))))
   return ret_val
 
 def get_configutation_from_settings():

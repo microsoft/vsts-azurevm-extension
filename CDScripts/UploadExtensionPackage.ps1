@@ -43,13 +43,14 @@ $ctx = New-AzureStorageContext $storageAccountName -StorageAccountKey $key.Prima
 Write-Host "Uploading extension package $packagePath to azure storage account $storageAccountName container $storageContainerName blob $storageBlobName"
 Set-AzureStorageBlobContent -Container $storageContainerName -File $packagePath -Blob $storageBlobName -Context $ctx -Force
 
-$startTime = Get-Date
-$endTime = $startTime.AddDays(7)
-$sasToken = New-AzureStorageBlobSASToken -Container $storageContainerName -Blob $storageBlobName -Permission r -ExpiryTime $endTime -Context $ctx -FullUri
+## Commenting this out as Azure PIR replication does not support SAS tokens
+#$startTime = Get-Date
+#$endTime = $startTime.AddDays(7)
+#$sasToken = New-AzureStorageBlobSASToken -Container $storageContainerName -Blob $storageBlobName -Permission r -ExpiryTime $endTime -Context $ctx -FullUri
 
-$sasToken
-[xml]$definitionXml = [xml](Get-Content $definitionFile)
-$definitionXml.ExtensionImage.MediaLink = [string]$sasToken
-$($definitionXml.ExtensionImage.MediaLink)
+#$sasToken
+#[xml]$definitionXml = [xml](Get-Content $definitionFile)
+#$definitionXml.ExtensionImage.MediaLink = [string]$sasToken
+#$($definitionXml.ExtensionImage.MediaLink)
 
-$definitionXml.Save((Resolve-Path $definitionFile))
+#$definitionXml.Save((Resolve-Path $definitionFile))

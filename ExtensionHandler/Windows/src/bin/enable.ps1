@@ -79,6 +79,8 @@ RemoveExistingAgentIfRequired
 
 ConfigureAgentIfRequired
 
+Add-AgentTags $config
+
 Set-LastSequenceNumber
 
 Write-Log "Extension is enabled. Removing any disable markup file.."

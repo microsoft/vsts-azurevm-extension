@@ -226,6 +226,42 @@ function Remove-Agent {
 
 <#
 .Synopsis
+   Adds the tag to configured agent. 
+#>
+function Add-AgentTags {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
+    try 
+    {
+        Add-HandlerSubStatus $RM_Extension_Status.AddingAgentTags.Code $RM_Extension_Status.AddingAgentTags.Message -operationName $RM_Extension_Status.AddingAgentTags.operationName
+     
+        Write-Log "Add-AgentTags command started"
+    
+        if( ( $config.Tags -ne $null ) -and ( $config.Tags.Count  -gt 0 ) )
+        {
+            Invoke-AddTagsToAgentScript $config
+        }
+        else
+        {
+            Write-Log "No tags provided for agent or one of tag length is more than 256"
+        }
+        
+        Add-HandlerSubStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -operationName $RM_Extension_Status.AgentTagsAdded.operationName
+        Set-HandlerStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -Status success
+    }
+    catch 
+    {
+        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.AgentTagsAdded.operationName
+        Exit-WithCode0
+    } 
+}
+
+<#
+.Synopsis
    Reads .settings file and generates configuration settings required for downloading and configuring agent
 #>
 function Get-ConfigurationFromSettings {
@@ -426,6 +462,15 @@ function Invoke-RemoveAgentScript {
     . $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
 }
 
+function Invoke-AddTagsToAgentScript{
+    [CmdletBinding()]
+    param(
+    [hashtable] $config
+    )
+
+    . $PSScriptRoot\AddTagsToDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -tagsAsJsonString ( $config.Tags | ConvertTo-Json )  -logFunction $script:logger
+}
+
 function VeriftInputNotNull {
     [CmdletBinding()]
     param(
@@ -451,4 +496,5 @@ Export-ModuleMember `
         Get-Agent, `
         Remove-Agent, `
         Get-ConfigurationFromSettings, `
-        Register-Agent
+        Register-Agent, `
+        Add-AgentTags

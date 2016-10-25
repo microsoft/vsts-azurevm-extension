@@ -124,6 +124,16 @@ $global:RM_Extension_Status = @{
         Message = 'An agent is already running with same settings, skipping agent configuration'
         operationName = 'Agent Configuration'
     }
+    AgentTagsAdded = @{
+        Code = 23
+        Message = 'Successfully added the tags to deployment agent'
+        operationName = 'Add Agent Tags'
+    }
+    AddingAgentTags = @{
+        Code = 24
+        Message = 'Adding agent tags'
+        operationName = 'Adding Agent Tags'
+    }
 
     #
     # Warnings

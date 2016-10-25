@@ -5,7 +5,7 @@
     "ExtensionDefinitionFile": "ExtensionDefinition_Test.xml",
     "StorageResourceGroup": "vstsvmextensiontest",
     "StorageAccountName": "vstsvmextensiontest",
-    "StorageContainerName": "privateagentextension",
+    "StorageContainerName": "agentextension",
     "ExtensionName": "TeamServicesAgent",
     "ExtensionPublisher": "Test2.Microsoft.VisualStudio.Services",
     "Location": "southcentralus"

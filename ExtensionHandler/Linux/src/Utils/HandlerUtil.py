@@ -359,11 +359,11 @@ class HandlerUtility:
             sub_status_list = status_object['status']['subStatus']
             if(code != None):
                 self.log("Setting handler message to '{0}'".format(message))
-                status_object['message'] = message
+                status_object['status']['formattedMessage']['message'] = message
                 self.log("Setting handler status to '{0}'".format(status))
                 status_object['status']['status'] = status
                 self.log("Setting handler code to '{0}'".format(code))
-                status_object['code'] = code
+                status_object['status']['code'] = code
                 status_object['timeStampUTC'] = timestamp_utc
                 status_object['status']['configurationAppliedTime'] = timestamp_utc
             elif(ss_code != None):
@@ -393,7 +393,7 @@ class HandlerUtility:
         waagent.SetFileContents(status_file, new_contents)
 
     def set_handler_error_status(self, e, operation_name):
-        self.log(getattr(e,'Message'))
+        self.log(getattr(e,'message'))
         if(getattr(e,'ErrorId') == RMExtensionStatus.rm_terminating_error_id):
             error_code = getattr(e,'Code')
         else:

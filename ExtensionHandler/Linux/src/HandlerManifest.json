@@ -2,10 +2,10 @@
   "name" : "AzureRM",
   "version": "1.0",
   "handlerManifest": {
-    "installCommand": "",
+    "installCommand": "AzureRM.py",
     "enableCommand":      "AzureRM.py -enable",
-    "uninstallCommand": "",
+    "uninstallCommand": "AzureRM.py -uninstall",
     "updateCommand": "",
-    "disableCommand": "",
+    "disableCommand": "AzureRM.py -disable"
   }
 }]

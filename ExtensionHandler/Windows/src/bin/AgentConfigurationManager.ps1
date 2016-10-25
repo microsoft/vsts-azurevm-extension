@@ -151,7 +151,7 @@ function AddTagsToAgent
     }
 
     $tags = @()
-    $newTags =  ( $tagsAsJsonString | ConvertFrom-Json )
+    $newTags =  @($tagsAsJsonString | ConvertFrom-Json)
 
     if($existingTags.count -gt 0)
     {    
@@ -171,7 +171,8 @@ function AddTagsToAgent
         $tags = $newTags
     }
     
-    ApplyTagsToAgent -tfsUrl $tfsUrl -projectName $projectName -patToken $patToken -machineGroupId $machineGroupId -agentId $agentId -tagsAsJsonString ($tags | ConvertTo-Json)
+    $newTagsJsonString = ConvertTo-Json $tags
+    ApplyTagsToAgent -tfsUrl $tfsUrl -projectName $projectName -patToken $patToken -machineGroupId $machineGroupId -agentId $agentId -tagsAsJsonString $newTagsJsonString
 }
 
 function GetRESTCallHeader

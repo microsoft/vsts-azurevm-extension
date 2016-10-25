@@ -251,7 +251,7 @@ function Add-AgentTags {
         }
         
         Add-HandlerSubStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -operationName $RM_Extension_Status.AgentTagsAdded.operationName
-        Set-HandlerStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -Status success
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
     }
     catch 
     {
@@ -347,7 +347,7 @@ function Get-ConfigurationFromSettings {
             $tagsString = $tagsInput | Out-String
             Write-Log "Tags: $tagsString"
 
-            $tags = Format-TagsInput $tagsInput
+            $tags = @(Format-TagsInput $tagsInput)
         }
 
         $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"

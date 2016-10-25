@@ -136,7 +136,7 @@ def format_tags_input(tags_input):
     tags = tags_input
   elif(tags_input.__class__.__name__ == 'dict'):
     tags = tags_input.values()
-  elif(tags_input.__class__.__name__ == 'str'):
+  elif(tags_input.__class__.__name__ == 'str' or tags_input.__class__.__name__ == 'unicode'):
     tags = tags_input.split(',')
   else:
     message = 'Tags input should be either a list or a dictionary'

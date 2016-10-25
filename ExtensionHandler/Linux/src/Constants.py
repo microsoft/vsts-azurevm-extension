@@ -1,6 +1,7 @@
 agent_setting = '.agent'
 #agent_setting = 'agent.json'
-
+markup_file_format = '{0}/EXTENSIONDISABLED'
+last_seq_num_file = 'LASTSEQNUM'
 download_api_version = '3.0-preview.2'
 
 tags_api_version = '3.1-preview'

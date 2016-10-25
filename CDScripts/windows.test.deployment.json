@@ -7,6 +7,6 @@
     "StorageAccountName": "vstsvmextensiontest",
     "StorageContainerName": "agentextension",
     "ExtensionName": "TeamServicesAgent",
-    "ExtensionPublisher": "Test2.Microsoft.VisualStudio.Services",
+    "ExtensionPublisher": "Test3.Microsoft.VisualStudio.Services",
     "Location": "southcentralus"
 }

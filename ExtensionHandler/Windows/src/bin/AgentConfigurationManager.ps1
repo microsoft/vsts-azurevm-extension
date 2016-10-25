@@ -139,12 +139,13 @@ function AddTagsToAgent
     
     $machineGroup = Invoke-RestMethod -Uri $($restCallUrlToGetExistingTags) -headers $headers -Method Get -ContentType "application/json"
     
+    $existingTags = @()
     for( $i = 0; $i -lt $machineGroup.count; $i++ )
     {
         $eachMachine = $machineGroup.value[$i]
-        if( ($eachMachine -ne $null) -and ($eachMachine.agent -ne $null) -and ($eachMachine.agent.id  -eq $agentId) )
+        if( ($eachMachine -ne $null) -and ($eachMachine.agent -ne $null) -and ($eachMachine.agent.id  -eq $agentId) -and ($eachMachine.PSObject.Properties.Match('tags').Count))
         {
-            $existingTags = $eachMachine.tags
+            $existingTags += $eachMachine.tags
             break
         }
     }

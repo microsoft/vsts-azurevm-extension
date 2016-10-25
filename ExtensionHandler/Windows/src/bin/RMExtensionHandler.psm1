@@ -241,7 +241,7 @@ function Add-AgentTags {
      
         Write-Log "Add-AgentTags command started"
     
-        if( ( $config.Tags -ne $null ) -and ( $config.Tags.Count  -gt 0 ) -and (IsTagsHavingValidLength $($config.Tags)) )
+        if( ( $config.Tags -ne $null ) -and ( $config.Tags.Count  -gt 0 ) )
         {
             Invoke-AddTagsToAgentScript $config
         }
@@ -483,22 +483,6 @@ function VeriftInputNotNull {
             $message = "$inputKey should be specified"
             throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
         }
-}
-
-function IsTagsHavingValidLength{
-    param(
-    [string[]]$tags
-    )
-    
-    foreach ( $tag in $tags )
-    {
-        if( (-not [string]::IsNullOrEmpty($tag)) -and ( $tag.Length -gt 256 ) )
-        {
-            return $false
-        }
-    }    
-    
-    return $true
 }
 
 #

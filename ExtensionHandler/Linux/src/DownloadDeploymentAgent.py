@@ -6,6 +6,8 @@ import json
 import Constants
 import os
 
+log_function = None
+
 def write_download_log(log_message):
   log = '[Download]: ' + log_message
   if(log_function is not None):
@@ -20,7 +22,7 @@ def empty_dir(dir_name):
 
 
 def construct_package_data_address(vsts_url, platform):
-  package_data_address = "/_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}".format(platform, Constants.download_api_version)
+  package_data_address = Constants.package_data_address_format.format(platform, Constants.download_api_version)
   write_download_log('\t\t Package data adderss' + package_data_address)
   return package_data_address
 
@@ -41,7 +43,6 @@ def get_agent_package_data(vsts_url, package_data_address, user_name, pat_token)
   conn.request('GET', package_data_address, headers = headers)
   response = conn.getresponse()
   #Should response be json parsd?
-  write_download_log('\t\t Agent Package Data : {0}'.format(response))
   val = json.loads(response.read())
   return val['value'][0]['downloadUrl']
 

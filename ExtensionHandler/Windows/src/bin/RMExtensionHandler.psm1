@@ -401,13 +401,19 @@ function Format-TagsInput {
         $tagsInput.Values | % { $tagsList.Add($_) > $null }
         $tags = $tagsList.ToArray()
     }
+    elseif($tagsInput.GetType().Name -eq "String")
+    {
+        $tags = $tagsInput.Split(',', [System.StringSplitOptions]::RemoveEmptyEntries).trim()
+    }
     else 
     {
-        $message = "Tags input should either be an array of string or an object containing key-value pairs"
+        $message = "Tags input should either be a string, or an array of strings, or an object containing key-value pairs"
         throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message    
     }
 
-    return $tags | Sort-Object | Get-Unique -AsString
+    $uniqueTags = $tags | Sort-Object | Get-Unique -AsString | Where { -not [string]::IsNullOrWhiteSpace($_) }
+    
+    return $uniqueTags
 }
 
 function Invoke-GetAgentScript {

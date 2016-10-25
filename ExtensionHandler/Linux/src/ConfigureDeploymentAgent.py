@@ -51,8 +51,10 @@ def construct_machine_group_name_address(project_name, machine_group_id):
 
 def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_group_name_address):
   write_log('\t\t Form header for making http call')
+  method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):
     vsts_url = vsts_url[7:]
+    method = httplib.HTTPConnection
   elif(vsts_url.startswith('https://')):
     vsts_url = vsts_url[8:]
   basic_auth = '{0}:{1}'.format(user_name, pat_token)
@@ -62,7 +64,7 @@ def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_gr
               'Authorization' : 'Basic {0}'.format(basic_auth)
             }
   write_add_tags_log('\t\t Making HTTP request for machine group name')
-  conn = httplib.HTTPSConnection(vsts_url)
+  conn = method(vsts_url)
   conn.request('GET', machine_group_name_address, headers = headers)
   response = conn.getresponse()
   #Should response be json parsd?
@@ -167,8 +169,10 @@ def remove_existing_agent(pat_token, working_folder, log_func):
     raise Exception('Agent removal failed with error : {0}'.format(std_err))
 
 def apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
+  method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):
     vsts_url = vsts_url[7:]
+    method = httplib.HTTPConnection
   elif(vsts_url.startswith('https://')):
     vsts_url = vsts_url[8:]
   basic_auth = '{0}:{1}'.format('', pat_token)
@@ -181,13 +185,15 @@ def apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, age
   tags_address = Constants.tags_address_format.format(project_name, machine_group_id, Constants.tags_api_version)
   request_body = json.dumps([{'tags' : json.loads(tags_string), 'agent' : {'id' : agent_id}}])
   write_add_tags_log('Add tags request body : {0}'.format(request_body))
-  conn = httplib.HTTPSConnection(vsts_url)
+  conn = method(vsts_url)
   conn.request('PATCH', tags_address, headers = headers, body = request_body)
   response = conn.getresponse()
 
 def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
+  method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):
     vsts_url = vsts_url[7:]
+    method = httplib.HTTPConnection
   elif(vsts_url.startswith('https://')):
     vsts_url = vsts_url[8:]
   basic_auth = '{0}:{1}'.format('', pat_token)
@@ -197,7 +203,7 @@ def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent
               'Authorization' : 'Basic {0}'.format(basic_auth)
             }
   tags_address = Constants.machines_address_format.format(project_name, machine_group_id, Constants.tags_api_version)
-  conn = httplib.HTTPSConnection(vsts_url)
+  conn = method(vsts_url)
   conn.request('GET', tags_address, headers = headers)
   response = conn.getresponse()
   val = {}
@@ -232,8 +238,10 @@ def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, t
         machine_group_id = setting_params['machineGroupId']
       else:
         machine_group_name = setting_params['machineGroupName']
+        method = httplib.HTTPSConnection
         if(vsts_url.startswith('http://')):
           vsts_url = vsts_url[7:]
+          method = httplib.HTTPConnection
         elif(vsts_url.startswith('https://')):
           vsts_url = vsts_url[8:]
         basic_auth = '{0}:{1}'.format('', pat_token)
@@ -243,7 +251,7 @@ def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, t
           'Authorization' : 'Basic {0}'.format(basic_auth)
         }
         machine_groups_address = Constants.machine_groups_address_format.format(project_name)
-        conn = httplib.HTTPSConnection(vsts_url)
+        conn = method(vsts_url)
         conn.request('GET', machine_groups_address, headers = headers)
         response = conn.getresponse()
         val = {}

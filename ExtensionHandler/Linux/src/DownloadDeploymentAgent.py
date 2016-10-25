@@ -28,8 +28,10 @@ def construct_package_data_address(vsts_url, platform):
 
 def get_agent_package_data(vsts_url, package_data_address, user_name, pat_token):
   write_download_log('\t\t Forming the header for making HTTP request call')
+  method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):
     vsts_url = vsts_url[7:]
+    method = httplib.HTTPConnection
   elif(vsts_url.startswith('https://')):
     vsts_url = vsts_url[8:]
   basic_auth = '{0}:{1}'.format(user_name, pat_token)
@@ -39,7 +41,7 @@ def get_agent_package_data(vsts_url, package_data_address, user_name, pat_token)
               'Authorization' : 'Basic {0}'.format(basic_auth)
             }
   write_download_log('\t\t Making HTTP request for package data')
-  conn = httplib.HTTPSConnection(vsts_url)
+  conn = method(vsts_url)
   conn.request('GET', package_data_address, headers = headers)
   response = conn.getresponse()
   #Should response be json parsd?

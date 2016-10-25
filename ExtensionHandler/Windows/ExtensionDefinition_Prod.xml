@@ -5,7 +5,7 @@
   <Version>1.0.0.0</Version>
   <Label>Team Services Agent</Label>
   <HostingResources>VmRole</HostingResources>
-  <MediaLink>https://rmextprodncus.blob.core.windows.net/agentextension/VSTSAgentExtension.zip</MediaLink>
+  <MediaLink>https://vstsextensionprod.blob.core.windows.net/agentextension/vstsagentextension.zip</MediaLink>
   <Certificate>
 	<StoreLocation>LocalMachine</StoreLocation>
 	<StoreName>My</StoreName>

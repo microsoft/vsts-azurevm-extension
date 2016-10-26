@@ -10,6 +10,7 @@ import platform
 import Constants
 import DownloadDeploymentAgent
 import ConfigureDeploymentAgent
+import json
 
 configured_agent_exists = False
 agent_configuration_required = True
@@ -133,15 +134,15 @@ def format_tags_input(tags_input):
   tags = []
   if(tags_input.__class__.__name__ == 'list'):
     tags = tags_input
-  elif(tags_input.__class__.__name__ == 'set'):
-    tags = list(tags_input)
   elif(tags_input.__class__.__name__ == 'dict'):
     tags = tags_input.values()
+  elif(tags_input.__class__.__name__ == 'str' or tags_input.__class__.__name__ == 'unicode'):
+    tags = tags_input.split(',')
   else:
-    message = 'Tags input should be either a list, a set, or a dictionary'
+    message = 'Tags input should be either a list or a dictionary'
     raise RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['ArgumentError'], message)
   tags.sort()
-  ret_val =  list(set(tags))
+  ret_val =  filter(lambda x : x!='', list(set(map(lambda x : x.strip(), tags))))
   return ret_val
 
 def get_configutation_from_settings():
@@ -160,8 +161,8 @@ def get_configutation_from_settings():
       raise new_handler_terminating_error(code, message)
     platform_value = get_platform_value()
     handler_utility.log("Platform: {0}".format(platform_value))
-    vsts_account_name = public_settings['VSTSAccountUrl']
-    handler_utility.verify_input_not_null('VSTSAccountUrl', vsts_account_name)
+    vsts_account_name = public_settings['VSTSAccountName']
+    handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
     if(not (check_account_name_prefix(vsts_account_name) and check_account_name_suffix(vsts_account_name))):
       vsts_url = format_string.format(vsts_account_name)
     else:
@@ -209,8 +210,6 @@ def get_configutation_from_settings():
           }
     return ret_val
   except Exception as e:
-    print e.message
-    print e.args
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'])
     exit_with_code_zero()
 
@@ -238,7 +237,7 @@ def execute_agent_pre_check():
   global config, configured_agent_exists, agent_configuration_required
   configured_agent_exists = test_configured_agent_exists()
   if(configured_agent_exists == True):
-    agent_configuration_required = ConfigureDeploymentAgent.test_agent_configuration_required(config['VSTSUrl'], config['MachineGroup'], config['TeamProject'], config['AgentWorkingFolder'])
+    agent_configuration_required = ConfigureDeploymentAgent.test_agent_configuration_required(config['VSTSUrl'], config['PATToken'], config['MachineGroup'], config['TeamProject'], config['AgentWorkingFolder'], handler_utility.log)
     
 
 def get_agent():
@@ -264,7 +263,7 @@ def download_agent_if_required():
   if(configured_agent_exists == False):
     get_agent()
   else:
-    handlerUtility.log('Skipping agent download as agent already exists.')
+    handler_utility.log('Skipping agent download as agent already exists.')
     ss_code = RMExtensionStatus.rm_extension_status['SkippingDownloadDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['SkippingDownloadDeploymentAgent']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['SkippingDownloadDeploymentAgent']['operationName']
@@ -303,17 +302,38 @@ def remove_existing_agent_if_required():
   global configured_agent_exists, agent_configuration_required, config
   if((configured_agent_exists == True) and (agent_configuration_required == True)):
     handler_utility.log('Remove existing configured agent')
-    config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
-    ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config_path, handler_utility.log)
+    #config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
+    #ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config_path, handler_utility.log)
+    ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config['AgentWorkingFolder'], handler_utility.log)
 
 def configure_agent_if_required():
   if(agent_configuration_required):
     register_agent()
   else:
-    ss_code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['Disabled']['operationName']
+    ss_code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
+    sub_status_message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
+    operation_name = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+
+
+def add_agent_tags():
+  if(config['Tags'] !=None and len(config) > 0):
+    handler_utility.log('Adding tags to configured agent - {0}'.format(str(config['Tags'])))
+    try:
+      tags_string = json.dumps(config['Tags'], ensure_ascii = False)
+      ConfigureDeploymentAgent.add_agent_tags_internal(config['VSTSUrl'], config['TeamProject'], config['PATToken'], config['AgentWorkingFolder'], tags_string, handler_utility.log)
+      ss_code = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Code']
+      sub_status_message = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Message']
+      operation_name = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName']
+      handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+      code = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Code']
+      message = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Message']
+      handler_utility.set_handler_status(code = code, status = 'success', message = message)
+    except Exception as e:
+      Util.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName'])
+      exit_with_code_zero()
+  else:
+    handler_utility.log('No tags provided for agent')
 
 def enable():
   global configured_agent_exists, agent_configuration_required, config
@@ -324,6 +344,7 @@ def enable():
   download_agent_if_required()
   remove_existing_agent_if_required()
   configure_agent_if_required()
+  add_agent_tags()
   set_last_sequence_number()
   handler_utility.log('Extension is enabled. Removing any disable markup file..')
   remove_extension_disabled_markup()
@@ -365,6 +386,20 @@ def check_version():
     message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(major + '.' + minor)
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
+
+def install_dependencies():
+  install_command = []
+  linux_distr = platform.linux_distribution()
+  if(linux_distr[0] == Constants.red_hat_distr_name):
+    install_command += ['/bin/yum', '-yq', 'install', 'libunwind.x86_64', 'icu']
+  elif(linux_distr[0] == Constants.ubuntu_distr_name):
+    install_command += ['/usr/bin/apt-get', 'install', '-yq', 'libunwind8', 'libcurl3']
+    version = linux_distr[1].split('.')[0]
+    if(version == '14'):
+      install_command += ['libicu52']
+  proc = subprocess.Popen(install_command)
+  install_out, install_err = proc.communicate()
+
 def main():
   check_version()
   global root_dir
@@ -373,6 +408,7 @@ def main():
   waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
   waagent.Log("Azure RM extension started to handle.")
   handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
+  install_dependencies()
   if(len(sys.argv) == 2):
     if(sys.argv[1] == '-enable'):
       enable()
@@ -380,6 +416,7 @@ def main():
       disable()
     elif(sys.argv[1] == '-uninstall'):
       uninstall()
+  exit_with_code_zero()
 
 if(__name__ == '__main__'):
   main()

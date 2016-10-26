@@ -4,49 +4,121 @@ import json
 import platform
 import Constants
 import codecs
+import base64
+import httplib
 
 agent_listener_path = ''
 agent_service_path = ''
 log_function = None
 
 def write_configuration_log(log_message):
-  log = '[Configuration]: ' + log_message
+  global log_function
+  log = '[Configuration]: {}'.format(log_message)
   if(log_function is not None):
     log_function(log)
 
-def write_log(log_message, log_function):
+def write_log(log_message):
+  global log_function
   log = '[Agent Checker]: {0}'.format(log_message)
   if(log_function is not None):
     log_function(log)
 
+def write_add_tags_log(log_message):
+  global log_function
+  log = '[AddTags]: {0}'.format(log_message)
+  if(log_function is not None):
+    log_function(log)
 
-def test_configured_agent_exists_internal(working_folder, log_function):
+def test_configured_agent_exists_internal(working_folder, log_func):
+  global log_function
+  log_function = log_func
   try:
     agent_setting = Constants.agent_setting
-    write_log("Initialization for deployment agent started.", log_function)
+    write_log("Initialization for deployment agent started.")
     # Is Python version check required here?
-    write_log("Checking if existing agent is running from {0}".format(working_folder), log_function)
+    write_log("Checking if existing agent is running from {0}".format(working_folder))
     agent_path = os.path.join(working_folder, agent_setting)
     agent_setting_file_exists = os.path.isfile(agent_path)
-    write_log('\t\t Agent setting file exists : {0}'.format(agent_setting_file_exists), log_function)
+    write_log('\t\t Agent setting file exists : {0}'.format(agent_setting_file_exists))
     return agent_setting_file_exists
   except Exception as e:
-    write_log(e.message, log_function)
+    write_log(e.message)
     raise e
 
-def test_agent_configuration_required(vsts_url, machine_group_name, project_name, working_folder):
-  agent_setting = Constants.agent_setting
-  agent_setting_file =  os.path.join(working_folder, agent_setting)
-  setting_params = json.load(codecs.open(agent_setting_file, 'r', 'utf-8-sig'))
-  existing_vsts_url = setting_params['serverUrl']
-  existing_machine_group = setting_params['machineGroup']
-  existing_project_name = setting_params['projectName']
-  f.close()
-  if(existing_vsts_url == vsts_url and existing_machine_group == machine_group_name and existing_project_name == project_name):
-    return False
-  else:
-    return True
+def construct_machine_group_name_address(project_name, machine_group_id):
+  machine_group_name_address = Constants.machine_group_address_format(project_name, machine_group_id)
+  return machine_group_name_address
 
+def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_group_name_address):
+  write_log('\t\t Form header for making http call')
+  method = httplib.HTTPSConnection
+  if(vsts_url.startswith('http://')):
+    vsts_url = vsts_url[7:]
+    method = httplib.HTTPConnection
+  elif(vsts_url.startswith('https://')):
+    vsts_url = vsts_url[8:]
+  basic_auth = '{0}:{1}'.format(user_name, pat_token)
+  #Todo Shlold be converted to byte array? unicode?
+  basic_auth = base64.b64encode(basic_auth)
+  headers = {
+              'Authorization' : 'Basic {0}'.format(basic_auth)
+            }
+  write_add_tags_log('\t\t Making HTTP request for machine group name')
+  conn = method(vsts_url)
+  conn.request('GET', machine_group_name_address, headers = headers)
+  response = conn.getresponse()
+  #Should response be json parsd?
+  val = json.loads(response.read())
+  write_log('\t\t Machine group details : {0}'.format(val))
+  machine_group_name = val['Name']
+  return machine_group_name
+  
+
+def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, pat_token):
+  machine_group_id = ''
+  try:
+    machine_group_id = setting_params['MachineGroupId']
+    write_log('\t\t Machine group id - {0}'.format(machine_group_id))
+  except Exception as e:
+    pass
+  if(machine_group_id != ''):
+    machine_group_name_address = construct_machine_group_name_address(project_name, machine_group_id)
+    machine_group_name = invoke_url_for_machine_group_name(vsts_url, '', pat_token, machine_group_name_address)
+    return machine_group_name
+  return setting_params['machineGroupName']
+
+def test_agent_configuration_required(vsts_url, pat_token, machine_group_name, project_name, working_folder, log_func):
+  global log_function
+  log_function = log_func
+  try:
+    write_log("AgentReConfigurationRequired check started.")
+    agent_setting = Constants.agent_setting
+    agent_setting_file =  os.path.join(working_folder, agent_setting)
+    setting_params = json.load(codecs.open(agent_setting_file, 'r', 'utf-8-sig'))
+    existing_vsts_url = setting_params['serverUrl']
+    if(vsts_url[-1] == '/'):
+      vsts_url = vsts_url[:-1]
+    if(existing_vsts_url[-1] == '/'):
+      existing_vsts_url = existing_vsts_url[:-1]
+    existing_machine_group_name = ''
+    try:
+      existing_machine_group_name = get_machine_group_name_from_setting(setting_params, vsts_url, project_name, pat_token)
+    except Exception as e:
+      write_log('\t\t\t Unable to get the machine group name - {0}'.format(e.message))
+    existing_project_name = setting_params['projectName']
+    write_log('\t\t\t Agent configured with \t\t\t\t Agent needs to be configured with')
+    write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_vsts_url, vsts_url))
+    write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_project_name, project_name))
+    write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_machine_group_name, machine_group_name))
+    if(existing_vsts_url == vsts_url and existing_machine_group_name == machine_group_name and existing_project_name == project_name):
+      write_log('\t\t\t test_agent_configuration_required : False') 
+      return False
+    else:
+      write_log('\t\t\t test_agent_configuration_required : True') 
+      return True
+  except Exception as e:
+    write_log(e.message)
+    raise e
 
 def get_agent_listener_path(working_folder):
   global agent_listener_path
@@ -95,21 +167,111 @@ def remove_existing_agent(pat_token, working_folder, log_func):
   write_configuration_log('srderr : {0}'.format(std_err))
   if(not (return_code == 0)):
     raise Exception('Agent removal failed with error : {0}'.format(std_err))
-  
 
-def install_dependencies():
-  install_command = ''
-  linux_distr = platform.linux_distribution()
-  if(linux_distr[0] == Constants.red_hat_distr_name):
-    install_command += 'sudo yum -y install libunwind.x86_64 icu'
-  elif(linux_distr[0] == Constants.ubuntu_distr_name):
-    install_command += 'sudo apt-get install -y libunwind8 libcurl3'
-    version = linux_distr[1].split('.')[0]
-    if(version == '14'):
-      install_command += ' libicu52'     
-  proc = subprocess.Popen(install_command, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-  install_out, install_err = proc.communicate()
-  
+def apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
+  method = httplib.HTTPSConnection
+  if(vsts_url.startswith('http://')):
+    vsts_url = vsts_url[7:]
+    method = httplib.HTTPConnection
+  elif(vsts_url.startswith('https://')):
+    vsts_url = vsts_url[8:]
+  basic_auth = '{0}:{1}'.format('', pat_token)
+  #Todo Shlold be converted to byte array? unicode?
+  basic_auth = base64.b64encode(basic_auth)
+  headers = {
+              'Authorization' : 'Basic {0}'.format(basic_auth),
+              'Content-Type' : 'application/json'
+            }
+  tags_address = Constants.machines_address_format.format(project_name, machine_group_id, Constants.tags_api_version)
+  request_body = json.dumps([{'tags' : json.loads(tags_string), 'agent' : {'id' : agent_id}}])
+  write_add_tags_log('Add tags request body : {0}'.format(request_body))
+  conn = method(vsts_url)
+  conn.request('PATCH', tags_address, headers = headers, body = request_body)
+  response = conn.getresponse()
+
+def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
+  method = httplib.HTTPSConnection
+  if(vsts_url.startswith('http://')):
+    vsts_url = vsts_url[7:]
+    method = httplib.HTTPConnection
+  elif(vsts_url.startswith('https://')):
+    vsts_url = vsts_url[8:]
+  basic_auth = '{0}:{1}'.format('', pat_token)
+  #Todo Shlold be converted to byte array? unicode?
+  basic_auth = base64.b64encode(basic_auth)
+  headers = {
+              'Authorization' : 'Basic {0}'.format(basic_auth)
+            }
+  tags_address = Constants.machines_address_format.format(project_name, machine_group_id, Constants.tags_api_version)
+  conn = method(vsts_url)
+  conn.request('GET', tags_address, headers = headers)
+  response = conn.getresponse()
+  val = {}
+  response_string = response.read()
+  val = json.loads(response_string)
+  existing_tags = []
+  for i in range(1, val['count']):
+    each_machine = val['value'][i]
+    if(each_machine != None and each_machine.has_key('agent') and each_machine['agent']['id'] == agent_id):
+      if(each_machine.has_key('tags')):
+        existing_tags = each_machine['tags']
+        break
+  tags = json.loads(tags_string)
+  tags = list(set(tags + existing_tags))
+  apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, json.dumps(tags, ensure_ascii = False))
+ 
+def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, tags_string, log_func):
+  global log_function
+  log_function = log_func
+  try:
+    write_add_tags_log('Adding the tags for configured agent')
+    agent_setting_file_path = os.path.join(working_folder, Constants.agent_setting)
+    write_add_tags_log('\t\t Agent setting path : {0}'.format(agent_setting_file_path))
+    if(not(os.path.isfile(agent_setting_file_path))):
+      raise Exception('Unable to find the .agent file {0}. Ensure to configure the agent before adding tags to it'.format(agent_setting_file_path))
+    setting_params = json.load(codecs.open(agent_setting_file_path, 'r', 'utf-8-sig'))
+    agent_id = setting_params['agentId']
+    machine_group_id = ''
+    try:
+      #Back compat
+      if(setting_params.has_key('machineGroupId')):
+        machine_group_id = setting_params['machineGroupId']
+      else:
+        machine_group_name = setting_params['machineGroupName']
+        method = httplib.HTTPSConnection
+        if(vsts_url.startswith('http://')):
+          vsts_url = vsts_url[7:]
+          method = httplib.HTTPConnection
+        elif(vsts_url.startswith('https://')):
+          vsts_url = vsts_url[8:]
+        basic_auth = '{0}:{1}'.format('', pat_token)
+        #Todo Shlold be converted to byte array? unicode?
+        basic_auth = base64.b64encode(basic_auth)
+        headers = {
+          'Authorization' : 'Basic {0}'.format(basic_auth)
+        }
+        machine_groups_address = Constants.machine_groups_address_format.format(project_name)
+        conn = method(vsts_url)
+        conn.request('GET', machine_groups_address, headers = headers)
+        response = conn.getresponse()
+        val = {}
+        response_string = response.read()
+        val = json.loads(response_string)
+        #val = response.read()
+        for i in range(1, val['count']):
+          each_machine_group = val['value'][i]
+          if(each_machine_group != None and each_machine_group['name'] == machine_group_name):
+            machine_group_id = each_machine_group['id']
+            break
+    except Exception as e:
+      pass
+    if(agent_id == '' or machine_group_id == ''):
+      raise Exception('Unable to get the machineGroupId or agent id with .agent file from {0}. Ensure before adding tags, agent is configured'.format(working_folder))
+    add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string)
+    return Constants.return_success 
+  except Exception as e:
+    write_add_tags_log(e.message)
+    raise e
 
 def configure_agent_internal(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder):
   global agent_listener_path, agent_service_path
@@ -161,7 +323,6 @@ def configure_agent(vsts_url, pat_token, project_name, machine_group_name, agent
       agent_name = platform.node() + "-MG"
       write_configuration_log('Agent name not provided, agent name will be set as ' + agent_name)
     write_configuration_log('Configuring agent')
-    install_dependencies()
     configure_agent_internal(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder)
     return Constants.return_success
   except Exception as e:

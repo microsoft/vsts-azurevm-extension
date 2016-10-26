@@ -182,7 +182,7 @@ def apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, age
               'Authorization' : 'Basic {0}'.format(basic_auth),
               'Content-Type' : 'application/json'
             }
-  tags_address = Constants.tags_address_format.format(project_name, machine_group_id, Constants.tags_api_version)
+  tags_address = Constants.machines_address_format.format(project_name, machine_group_id, Constants.tags_api_version)
   request_body = json.dumps([{'tags' : json.loads(tags_string), 'agent' : {'id' : agent_id}}])
   write_add_tags_log('Add tags request body : {0}'.format(request_body))
   conn = method(vsts_url)

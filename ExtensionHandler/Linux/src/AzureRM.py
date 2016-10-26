@@ -315,14 +315,9 @@ def configure_agent_if_required():
     operation_name = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
 
-def are_all_tags_of_valid_length(tags):
-  for tag in tags:
-    if(tag != None and len(tag) > 256):
-      return False
-  return True
 
 def add_agent_tags():
-  if(config['Tags'] !=None and len(config) > 0 and are_all_tags_of_valid_length(config['Tags'])):
+  if(config['Tags'] !=None and len(config) > 0):
     handler_utility.log('Adding tags to configured agent - {0}'.format(str(config['Tags'])))
     try:
       tags_string = json.dumps(config['Tags'], ensure_ascii = False)

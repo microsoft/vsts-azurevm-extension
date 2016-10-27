@@ -25,7 +25,8 @@
       "type": "securestring"
     },
     "Tags": {
-      "type": "string"
+      "type": "string",
+      "defaultValue": ""
     }
   },
   "resources": [
@@ -35,7 +36,7 @@
       "location": "[parameters('location')]",
       "apiVersion": "2015-06-01",
       "properties": {
-        "publisher": "Test.Microsoft.VisualStudio.Services",
+        "publisher": "Microsoft.VisualStudio.Services",
         "extension": "TeamServicesAgent",
         "version": "1.*",
         "parameters": {

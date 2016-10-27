@@ -151,7 +151,7 @@ function AddTagsToAgent
     }
 
     $tags = @()
-    $newTags =  @($tagsAsJsonString | ConvertFrom-Json)
+    [Array]$newTags =  ConvertFrom-Json $tagsAsJsonString
 
     if($existingTags.count -gt 0)
     {    

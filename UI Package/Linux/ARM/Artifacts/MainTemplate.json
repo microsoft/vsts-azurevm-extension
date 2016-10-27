@@ -1,0 +1,56 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "VSTSAccountName": {
+      "type": "string"
+    },
+    "TeamProject": {
+      "type": "string"
+    },
+    "MachineGroup": {
+      "type": "string"
+    },
+    "AgentName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "PATToken": {
+      "type": "securestring"
+    },
+    "Tags": {
+      "type": "string",
+      "defaultValue": ""
+    }
+  },
+  "resources": [
+    {
+      "name": "[concat(parameters('vmName'),'/TeamServicesAgentLinux')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "properties": {
+        "publisher": "Microsoft.VisualStudio.Services",
+        "type": "TeamServicesAgentLinux",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "VSTSAccountName": "[parameters('VSTSAccountName')]",
+          "TeamProject": "[parameters('TeamProject')]",
+          "MachineGroup": "[parameters('MachineGroup')]",
+          "AgentName": "[parameters('AgentName')]",
+          "Tags": "[parameters('Tags')]"
+        },
+        "protectedSettings": {
+          "PATToken": "[parameters('PATToken')]"
+        }
+      }
+    }
+  ]
+}

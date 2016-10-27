@@ -1,0 +1,79 @@
+{
+  "handler": "Microsoft.Compute.VmExtension",
+  "version": "0.0.1-preview",
+  "parameters": {
+    "elements": [
+      {
+        "name": "VSTSAccountName",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Team Services Account Name",
+        "toolTip": "Specify the Team Services account to use. Example: If yout account URL is https://contoso.visualstudio.com, just specify \"contoso\"",
+        "constraints": {
+          "required": true,
+          "regex": "^(?!.*(https:\\/\\/|visualstudio\\.com)).*$",
+          "validationMessage": "Account name must not start with https:// and must not end with visualstudio.com"
+        }
+      },
+      {
+        "name": "TeamProject",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Team Project",
+        "toolTip": "Specify the Team Project which has the machine group defined in it",
+        "constraints": {
+          "required": true
+        }
+      },
+      {
+        "name": "MachineGroup",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Machine Group",
+        "toolTip": "Specify the Machine Group against which deployment agent will be registered",
+        "constraints": {
+          "required": true
+        }
+      },
+      {
+        "name": "AgentName",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Agent Name",
+        "toolTip": "(Optional) Specify a name for the agent. If not specified, VM name appended with \"-MG\" will be used",
+        "constraints": {
+          "required": false
+        }
+      },
+      {
+        "name": "PATToken",
+        "type": "Microsoft.Common.PasswordBox",
+        "label": {
+          "password": "PAT Token"
+        },
+        "toolTip": "Enter the Personal Access Token which would be used to authenticate against Team Services account to download and configure agent",
+        "constraints": {
+          "required": true
+        },
+        "options": {
+            "hideConfirmation": true
+        }
+      },
+      {
+        "name": "Tags",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Tags",
+        "toolTip": "(Optional) Specify a comma separated list of tags which will be set on agent. Each tag must not be more than 256 characters long",
+        "constraints": {
+          "required": false
+        }
+      }
+    ],
+    "outputs": {
+      "vmName": "[vmName()]",
+      "location": "[location()]",
+      "VSTSAccountName": "[elements('VSTSAccountName')]",
+      "TeamProject": "[elements('TeamProject')]",
+      "MachineGroup": "[elements('MachineGroup')]",
+      "AgentName": "[elements('AgentName')]",
+      "PATToken": "[elements('PATToken')]",
+      "Tags": "[elements('Tags')]"      
+    }
+  }
+}

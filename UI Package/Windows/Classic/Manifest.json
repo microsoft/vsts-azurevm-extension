@@ -1,8 +1,8 @@
 {
   "$schema": "https://gallery.azure.com/schemas/2015-04-01/manifest.json#",
-  "name": "vsts-agent-test-windows",
+  "name": "vsts-agent-windows",
   "publisher": "microsoft",
-  "version": "0.0.3",
+  "version": "0.0.1",
   "displayName": "ms-resource:displayName",
   "publisherDisplayName": "ms-resource:publisherDisplayName",
   "publisherLegalName": "ms-resource:publisherDisplayName",
@@ -50,7 +50,7 @@
   "filters": [
     {
       "type": "HideKey",
-      "value": "microsoft_vsts-agent-test-windows"
+      "value": "microsoft_vsts-agent-windows"
     }
   ]
 }

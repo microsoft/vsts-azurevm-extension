@@ -247,7 +247,7 @@ function Add-AgentTags {
         }
         else
         {
-            Write-Log "No tags provided for agent or one of tag length is more than 256"
+            Write-Log "No tags provided for agent"
         }
         
         Add-HandlerSubStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -operationName $RM_Extension_Status.AgentTagsAdded.operationName

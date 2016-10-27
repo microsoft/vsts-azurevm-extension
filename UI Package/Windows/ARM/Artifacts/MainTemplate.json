@@ -25,7 +25,8 @@
       "type": "securestring"
     },
     "Tags": {
-      "type": "string"
+      "type": "string",
+      "defaultValue": ""
     }
   },
   "resources": [
@@ -35,9 +36,9 @@
       "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "properties": {
-        "publisher": "Test.Microsoft.VisualStudio.Services",
+        "publisher": "Microsoft.VisualStudio.Services",
         "type": "TeamServicesAgent",
-        "typeHandlerVersion": "1.33",
+        "typeHandlerVersion": "1.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
           "VSTSAccountName": "[parameters('VSTSAccountName')]",

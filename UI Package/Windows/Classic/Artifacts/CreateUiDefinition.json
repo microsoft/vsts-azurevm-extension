@@ -59,7 +59,7 @@
         "name": "Tags",
         "type": "Microsoft.Common.TextBox",
         "label": "Tags",
-        "toolTip": "(Optional) Specify a comma separated list of tags which will be set on agent",
+        "toolTip": "(Optional) Specify a comma separated list of tags which will be set on agent. Each tag must not be more than 256 characters long",
         "constraints": {
           "required": false
         }

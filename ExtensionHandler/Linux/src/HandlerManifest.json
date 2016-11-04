@@ -6,6 +6,8 @@
     "enableCommand":      "AzureRM.py -enable",
     "uninstallCommand": "AzureRM.py -uninstall",
     "updateCommand": "",
-    "disableCommand": "AzureRM.py -disable"
+    "disableCommand": "AzureRM.py -disable",
+    "rebootAfterInstall": false,
+    "reportHeartbeat":    false
   }
 }]

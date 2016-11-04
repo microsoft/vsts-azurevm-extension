@@ -77,7 +77,7 @@ def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_gr
 def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, pat_token):
   machine_group_id = ''
   try:
-    machine_group_id = setting_params['MachineGroupId']
+    machine_group_id = setting_params['machineGroupId']
     write_log('\t\t Machine group id - {0}'.format(machine_group_id))
   except Exception as e:
     pass

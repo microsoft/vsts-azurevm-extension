@@ -74,7 +74,7 @@ def remove_extension_disabled_markup():
     os.remove(markup_file)
 
 def exit_with_code_zero():
-  sys.exit()
+  sys.exit(0)
 
 
 

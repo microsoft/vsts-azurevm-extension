@@ -356,7 +356,7 @@ class HandlerUtility:
             status_file_contents = waagent.GetFileContents(status_file)
             status_list = json.loads(status_file_contents)
             status_object = status_list[0]
-            sub_status_list = status_object['status']['subStatus']
+            sub_status_list = status_object['status']['substatus']
             if(code != None):
                 self.log("Setting handler message to '{0}'".format(message))
                 status_object['status']['formattedMessage']['message'] = message
@@ -364,7 +364,7 @@ class HandlerUtility:
                 status_object['status']['status'] = status
                 self.log("Setting handler code to '{0}'".format(code))
                 status_object['status']['code'] = code
-                status_object['timeStampUTC'] = timestamp_utc
+                status_object['timestampUTC'] = timestamp_utc
                 status_object['status']['configurationAppliedTime'] = timestamp_utc
             elif(ss_code != None):
                 self.log("Appending sub status")
@@ -378,20 +378,22 @@ class HandlerUtility:
                         'message' : message,
                         'lang' : 'en-US'
                     },
+                    'name' : self._context._name,
+                    'operation' : '',
                     'status' : status,
                     'code' : code,
-                    'subStatus' : [],
+                    'substatus' : [],
                     'configurationAppliedTime' : timestamp_utc
                 },
-                'version' : '1.0',
-                'timeStampUTC' : timestamp_utc
+                'version' : self._context._version,
+                'timestampUTC' : timestamp_utc
             }]
             if(ss_code != None):
                 self.log("Appending sub status")
-                status_list['status']['subStatus'].append({'name' : operation_name, 'code' : ss_code, 'status' : sub_status, 'formattedMessage' : {'lang' : 'eng-US', 'message' : sub_status_message}})
+                status_list[0]['status']['substatus'].append({'name' : operation_name, 'code' : ss_code, 'status' : sub_status, 'formattedMessage' : {'lang' : 'eng-US', 'message' : sub_status_message}})
         new_contents = json.dumps(status_list)
         waagent.SetFileContents(status_file, new_contents)
-
+ 
     def set_handler_error_status(self, e, operation_name):
         self.log(getattr(e,'message'))
         if(getattr(e,'ErrorId') == RMExtensionStatus.rm_terminating_error_id):

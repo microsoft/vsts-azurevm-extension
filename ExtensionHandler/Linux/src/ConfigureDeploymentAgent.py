@@ -46,7 +46,7 @@ def test_configured_agent_exists_internal(working_folder, log_func):
     raise e
 
 def construct_machine_group_name_address(project_name, machine_group_id):
-  machine_group_name_address = Constants.machine_group_address_format(project_name, machine_group_id)
+  machine_group_name_address = Constants.machine_group_address_format.format(project_name, machine_group_id)
   return machine_group_name_address
 
 def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_group_name_address):
@@ -70,14 +70,14 @@ def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_gr
   #Should response be json parsd?
   val = json.loads(response.read())
   write_log('\t\t Machine group details : {0}'.format(val))
-  machine_group_name = val['Name']
+  machine_group_name = val['name']
   return machine_group_name
   
 
 def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, pat_token):
   machine_group_id = ''
   try:
-    machine_group_id = setting_params['machineGroupId']
+    machine_group_id = str(setting_params['machineGroupId'])
     write_log('\t\t Machine group id - {0}'.format(machine_group_id))
   except Exception as e:
     pass

@@ -76,11 +76,42 @@ def remove_extension_disabled_markup():
 def exit_with_code_zero():
   sys.exit(0)
 
+def check_python_version():
+  version_info = sys.version_info
+  major = version_info[0]
+  minor = version_info[1]
+  #try:
+  if(major < 2 or (major == 2 and minor < 6)):
+    code = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Code']
+    message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(major + '.' + minor)
+    raise RMExtensionStatus.new_handler_terminating_error(code, message)
+
+def install_dependencies():
+  install_command = []
+  linux_version_valid = False
+  linux_distr = platform.linux_distribution()
+  version = linux_distr[1]
+  if(linux_distr[0] == Constants.red_hat_distr_name):
+    if(version == '7.2'):
+      linux_version_valid = True
+      install_command += ['/bin/yum', '-yq', 'install', 'libunwind.x86_64', 'icu']
+  elif(linux_distr[0] == Constants.ubuntu_distr_name):
+    if(version == '16.04'):
+      linux_version_valid = True
+      install_command += ['/usr/bin/apt-get', 'install', '-yq', 'libunwind8', 'libcurl3']
+  if(linux_version_valid == False):
+    code = RMExtensionStatus.rm_extension_status['LinuxVersionNotSupported']['Code']
+    message = RMExtensionStatus.rm_extension_status['LinuxVersionNotSupported']['Message'].format(version)
+    raise RMExtensionStatus.new_handler_terminating_error(code, message)
+  proc = subprocess.Popen(install_command)
+  install_out, install_err = proc.communicate()
 
 
 def start_rm_extension_handler(operation):
   try:
+    check_python_version()
     handler_utility.do_parse_context(operation)
+    install_dependencies()
     sequence_number = handler_utility._context._seq_no
     last_sequence_number = get_last_sequence_number()
     if((sequence_number == last_sequence_number) and not(test_extension_disabled_markup())):
@@ -100,6 +131,7 @@ def start_rm_extension_handler(operation):
     operation_name = RMExtensionStatus.rm_extension_status['Initialized']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
+    print e.message
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'])
     exit_with_code_zero()
 
@@ -376,39 +408,13 @@ def uninstall():
   if(configured_agent_exists == True):
     ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config['AgentWorkingFolder'], handler_utility.log)
 
-def check_version():
-  version_info = sys.version_info
-  major = version_info[0]
-  minor = version_info[1]
-  #try:
-  if(major < 2 or (major == 2 and minor < 6)):
-    code = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Code']
-    message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(major + '.' + minor)
-    raise RMExtensionStatus.new_handler_terminating_error(code, message)
-
-
-def install_dependencies():
-  install_command = []
-  linux_distr = platform.linux_distribution()
-  if(linux_distr[0] == Constants.red_hat_distr_name):
-    install_command += ['/bin/yum', '-yq', 'install', 'libunwind.x86_64', 'icu']
-  elif(linux_distr[0] == Constants.ubuntu_distr_name):
-    install_command += ['/usr/bin/apt-get', 'install', '-yq', 'libunwind8', 'libcurl3']
-    version = linux_distr[1].split('.')[0]
-    if(version == '14'):
-      install_command += ['libicu52']
-  proc = subprocess.Popen(install_command)
-  install_out, install_err = proc.communicate()
-
 def main():
-  check_version()
   global root_dir
   global handler_utility
   root_dir = os.getcwd()
   waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
   waagent.Log("Azure RM extension started to handle.")
   handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
-  install_dependencies()
   if(len(sys.argv) == 2):
     if(sys.argv[1] == '-enable'):
       enable()

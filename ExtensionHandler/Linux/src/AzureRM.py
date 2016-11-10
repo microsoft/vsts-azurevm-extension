@@ -83,7 +83,7 @@ def check_python_version():
   #try:
   if(major < 2 or (major == 2 and minor < 6)):
     code = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Code']
-    message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(major + '.' + minor)
+    message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(str(major) + '.' + str(minor))
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
 def install_dependencies():
@@ -109,9 +109,6 @@ def install_dependencies():
 
 def start_rm_extension_handler(operation):
   try:
-    check_python_version()
-    handler_utility.do_parse_context(operation)
-    install_dependencies()
     sequence_number = handler_utility._context._seq_no
     last_sequence_number = get_last_sequence_number()
     if((sequence_number == last_sequence_number) and not(test_extension_disabled_markup())):
@@ -131,7 +128,6 @@ def start_rm_extension_handler(operation):
     operation_name = RMExtensionStatus.rm_extension_status['Initialized']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
-    print e.message
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'])
     exit_with_code_zero()
 
@@ -401,7 +397,6 @@ def disable():
 def uninstall():
   global configured_agent_exists, config
   operation = 'uninstall'
-  handler_utility.do_parse_context(operation)
   config = get_configutation_from_settings()
   configured_agent_exists = test_configured_agent_exists()
   config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
@@ -409,20 +404,28 @@ def uninstall():
     ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config['AgentWorkingFolder'], handler_utility.log)
 
 def main():
-  global root_dir
-  global handler_utility
-  root_dir = os.getcwd()
-  waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
-  waagent.Log("Azure RM extension started to handle.")
-  handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
-  if(len(sys.argv) == 2):
-    if(sys.argv[1] == '-enable'):
-      enable()
-    elif(sys.argv[1] == '-disable'):
-      disable()
-    elif(sys.argv[1] == '-uninstall'):
-      uninstall()
-  exit_with_code_zero()
+  try:
+    global root_dir
+    global handler_utility
+    root_dir = os.getcwd()
+    waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
+    waagent.Log("Azure RM extension started to handle.")
+    handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
+    if(len(sys.argv) == 2):
+      operation = sys.argv[1]
+      handler_utility.do_parse_context(operation)
+      check_python_version()
+      install_dependencies()
+      if(sys.argv[1] == '-enable'):
+        enable()
+      elif(sys.argv[1] == '-disable'):
+        disable()
+      elif(sys.argv[1] == '-uninstall'):
+        uninstall()
+    exit_with_code_zero()
+  except Exception as e:
+    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'])
+    exit_with_code_zero()
 
 if(__name__ == '__main__'):
   main()

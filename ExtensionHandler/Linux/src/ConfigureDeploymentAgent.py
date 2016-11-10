@@ -320,7 +320,7 @@ def configure_agent(vsts_url, pat_token, project_name, machine_group_name, agent
       raise Exception("Unable to find the agent listener, ensure to download the agent exists before starting the agent configuration")
     if(agent_name is None or agent_name == ''):
       #todo
-      agent_name = platform.node() + "-MG"
+      agent_name = platform.node()
       write_configuration_log('Agent name not provided, agent name will be set as ' + agent_name)
     write_configuration_log('Configuring agent')
     configure_agent_internal(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder)

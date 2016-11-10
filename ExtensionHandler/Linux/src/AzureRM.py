@@ -98,12 +98,15 @@ def install_dependencies():
   elif(linux_distr[0] == Constants.ubuntu_distr_name):
     if(version == '16.04'):
       linux_version_valid = True
+      update_package_list_command = ['/usr/bin/apt-get', 'update', '-yq']
+      proc = subprocess.Popen(update_package_list_command, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+      update_out, update_err = proc.communicate()
       install_command += ['/usr/bin/apt-get', 'install', '-yq', 'libunwind8', 'libcurl3']
   if(linux_version_valid == False):
     code = RMExtensionStatus.rm_extension_status['LinuxVersionNotSupported']['Code']
     message = RMExtensionStatus.rm_extension_status['LinuxVersionNotSupported']['Message'].format(version)
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
-  proc = subprocess.Popen(install_command)
+  proc = subprocess.Popen(install_command, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   install_out, install_err = proc.communicate()
 
 

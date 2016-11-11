@@ -87,7 +87,7 @@ def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, 
     return machine_group_name
   return setting_params['machineGroupName']
 
-def test_agent_configuration_required(vsts_url, pat_token, machine_group_name, project_name, working_folder, log_func):
+def test_agent_configuration_required_internal(vsts_url, pat_token, machine_group_name, project_name, working_folder, log_func):
   global log_function
   log_function = log_func
   try:
@@ -138,35 +138,39 @@ def agent_listener_exists(working_folder):
   return agent_listener_exists
 
 
-def remove_existing_agent(pat_token, working_folder, log_func):
-  global agent_listener_path, agent_service_path, log_function
-  log_function = log_func
-  get_agent_listener_path(working_folder)
-  get_agent_service_path(working_folder) 
-  service_stop_proc = subprocess.Popen(Constants.service_stop_command.format(agent_service_path).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE, cwd = working_folder)
-  std_out, std_err = service_stop_proc.communicate()
-  return_code = service_stop_proc.returncode
-  write_configuration_log('Service Stop process exit code : {0}'.format(return_code))
-  write_configuration_log('stdout : {0}'.format(std_out))
-  write_configuration_log('srderr : {0}'.format(std_err))
-  if(not (return_code == 0)):
-    raise Exception('Service stop failed with error : {0}'.format(std_err))
-  service_uninstall_proc = subprocess.Popen(Constants.service_uninstall_command.format(agent_service_path).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE, cwd = working_folder)
-  std_out, std_err = service_uninstall_proc.communicate()
-  return_code = service_uninstall_proc.returncode
-  write_configuration_log('Service uninstall process exit code : {0}'.format(return_code))
-  write_configuration_log('stdout : {0}'.format(std_out))
-  write_configuration_log('srderr : {0}'.format(std_err))
-  if(not (return_code == 0)):
-    raise Exception('Service uninstall failed with error : {0}'.format(std_err))
-  remove_agent_proc = subprocess.Popen(Constants.remove_agent_command.format(agent_listener_path, pat_token).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-  std_out, std_err = remove_agent_proc.communicate()
-  return_code = remove_agent_proc.returncode
-  write_configuration_log('RemoveAgentProcess exit code : {0}'.format(return_code))
-  write_configuration_log('stdout : {0}'.format(std_out))
-  write_configuration_log('srderr : {0}'.format(std_err))
-  if(not (return_code == 0)):
-    raise Exception('Agent removal failed with error : {0}'.format(std_err))
+def remove_existing_agent_internal(pat_token, working_folder, log_func):
+  try:
+    global agent_listener_path, agent_service_path, log_function
+    log_function = log_func
+    get_agent_listener_path(working_folder)
+    get_agent_service_path(working_folder) 
+    service_stop_proc = subprocess.Popen(Constants.service_stop_command.format(agent_service_path).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE, cwd = working_folder)
+    std_out, std_err = service_stop_proc.communicate()
+    return_code = service_stop_proc.returncode
+    write_configuration_log('Service Stop process exit code : {0}'.format(return_code))
+    write_configuration_log('stdout : {0}'.format(std_out))
+    write_configuration_log('srderr : {0}'.format(std_err))
+    if(not (return_code == 0)):
+      raise Exception('Service stop failed with error : {0}'.format(std_err))
+    service_uninstall_proc = subprocess.Popen(Constants.service_uninstall_command.format(agent_service_path).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE, cwd = working_folder)
+    std_out, std_err = service_uninstall_proc.communicate()
+    return_code = service_uninstall_proc.returncode
+    write_configuration_log('Service uninstall process exit code : {0}'.format(return_code))
+    write_configuration_log('stdout : {0}'.format(std_out))
+    write_configuration_log('srderr : {0}'.format(std_err))
+    if(not (return_code == 0)):
+      raise Exception('Service uninstall failed with error : {0}'.format(std_err))
+    remove_agent_proc = subprocess.Popen(Constants.remove_agent_command.format(agent_listener_path, pat_token).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    std_out, std_err = remove_agent_proc.communicate()
+    return_code = remove_agent_proc.returncode
+    write_configuration_log('RemoveAgentProcess exit code : {0}'.format(return_code))
+    write_configuration_log('stdout : {0}'.format(std_out))
+    write_configuration_log('srderr : {0}'.format(std_err))
+    if(not (return_code == 0)):
+      raise Exception('Agent removal failed with error : {0}'.format(std_err))
+  except Exception as e:
+    write_configuration_log(e.message)
+    raise e
 
 def apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
   method = httplib.HTTPSConnection

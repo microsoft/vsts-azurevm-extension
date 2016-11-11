@@ -99,7 +99,7 @@ rm_extension_status = {
   'AgentReConfigurationRequiredChecked' : {
     'Code' : 20,
     'Message' : 'Checked if re-configuration is required for existing agent',
-    'oeprationName' : 'Agent Configuration'
+    'operationName' : 'Agent Configuration'
   },
   'SkippingAgentConfiguration' : {
     'Code' : 21,

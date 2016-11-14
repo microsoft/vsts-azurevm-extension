@@ -99,7 +99,7 @@ rm_extension_status = {
   'AgentReConfigurationRequiredChecked' : {
     'Code' : 20,
     'Message' : 'Checked if re-configuration is required for existing agent',
-    'oeprationName' : 'Agent Configuration'
+    'operationName' : 'Agent Configuration'
   },
   'SkippingAgentConfiguration' : {
     'Code' : 21,
@@ -128,6 +128,10 @@ rm_extension_status = {
     'Code' : 1003,
     'Message' : 'Installed Python version is {0}. Minimum required version is 2.6'
   },
+  'LinuxVersionNotSupported' : {
+    'Code' : 1004,
+    'Message' : 'Linux version on system is {0}. Only supported Linux versions are Ubuntu 16.04 and Red Hat 7.2.'
+  },
   #
   # ArgumentError indicates a problem in the input provided by the user. The message for the error is provided by the specific exception
   #
@@ -136,7 +140,7 @@ rm_extension_status = {
 
 
 def new_handler_terminating_error(code, message):
-  e = Exception()
+  e = Exception(message)
   setattr(e, 'Code', code)
   setattr(e, 'Message', message)
   setattr(e, 'ErrorId', rm_terminating_error_id)

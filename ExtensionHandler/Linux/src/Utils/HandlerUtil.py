@@ -356,7 +356,7 @@ class HandlerUtility:
             status_file_contents = waagent.GetFileContents(status_file)
             status_list = json.loads(status_file_contents)
             status_object = status_list[0]
-            sub_status_list = status_object['status']['subStatus']
+            sub_status_list = status_object['status']['substatus']
             if(code != None):
                 self.log("Setting handler message to '{0}'".format(message))
                 status_object['status']['formattedMessage']['message'] = message
@@ -364,7 +364,7 @@ class HandlerUtility:
                 status_object['status']['status'] = status
                 self.log("Setting handler code to '{0}'".format(code))
                 status_object['status']['code'] = code
-                status_object['timeStampUTC'] = timestamp_utc
+                status_object['timestampUTC'] = timestamp_utc
                 status_object['status']['configurationAppliedTime'] = timestamp_utc
             elif(ss_code != None):
                 self.log("Appending sub status")
@@ -378,34 +378,36 @@ class HandlerUtility:
                         'message' : message,
                         'lang' : 'en-US'
                     },
+                    'name' : self._context._name,
+                    'operation' : '',
                     'status' : status,
                     'code' : code,
-                    'subStatus' : [],
+                    'substatus' : [],
                     'configurationAppliedTime' : timestamp_utc
                 },
-                'version' : '1.0',
-                'timeStampUTC' : timestamp_utc
+                'version' : self._context._version,
+                'timestampUTC' : timestamp_utc
             }]
             if(ss_code != None):
                 self.log("Appending sub status")
-                status_list['status']['subStatus'].append({'name' : operation_name, 'code' : ss_code, 'status' : sub_status, 'formattedMessage' : {'lang' : 'eng-US', 'message' : sub_status_message}})
+                status_list[0]['status']['substatus'].append({'name' : operation_name, 'code' : ss_code, 'status' : sub_status, 'formattedMessage' : {'lang' : 'eng-US', 'message' : sub_status_message}})
         new_contents = json.dumps(status_list)
         waagent.SetFileContents(status_file, new_contents)
-
+ 
     def set_handler_error_status(self, e, operation_name):
         self.log(getattr(e,'message'))
         if(getattr(e,'ErrorId') == RMExtensionStatus.rm_terminating_error_id):
             error_code = getattr(e,'Code')
         else:
             error_code = RMExtensionStatus.rm_extension_status['GenericError']
-        if(errorCode == RMExtensionStatus.rm_extension_status['InstallError']):
-            error_message = 'The RM Extension failed to install: {0}.More information about the failure can be found in the logs located under \'{1}\' on the VM.To retry install, please remove the extension from the VM first.'.format(e.message, self._context._lof_dir)
+        if(error_code == RMExtensionStatus.rm_extension_status['InstallError']):
+            error_message = 'The RM Extension failed to install: {0}.More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.'.format(e.message, self._context._log_dir)
         elif(error_code == RMExtensionStatus.rm_extension_status['ArgumentError']):
             error_message = 'The RM Extension received an incorrect input: {0}.Please correct the input and retry executing the extension.'.format(e.message)
         else:
-            error_message = 'The RM Extension failed to execute: {0}.More information about the failure can be found in the logs located under \'{1}\' on the VM.'.format(e.message, self._context._lof_dir)
-        set_handler_status(code = error_code, message = error_message, operation = operation_name, sub_status = 'error')
-        set_handler_status(ssCode = error_code, sub_status_message = error_message, status = 'error')
+            error_message = 'The RM Extension failed to execute: {0}.More information about the failure can be found in the logs located under {1} on the VM.'.format(e.message, self._context._log_dir)
+        self.set_handler_status(code = error_code, message = error_message, status = 'error')
+        self.set_handler_status(ss_code = error_code, sub_status_message = error_message, sub_status = 'error', operation_name = operation_name)
 
     def get_os_version(self):
         value = platform.uname()[4]

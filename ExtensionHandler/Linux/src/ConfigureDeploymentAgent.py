@@ -46,7 +46,7 @@ def test_configured_agent_exists_internal(working_folder, log_func):
     raise e
 
 def construct_machine_group_name_address(project_name, machine_group_id):
-  machine_group_name_address = Constants.machine_group_address_format(project_name, machine_group_id)
+  machine_group_name_address = Constants.machine_group_address_format.format(project_name, machine_group_id)
   return machine_group_name_address
 
 def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_group_name_address):
@@ -70,14 +70,14 @@ def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_gr
   #Should response be json parsd?
   val = json.loads(response.read())
   write_log('\t\t Machine group details : {0}'.format(val))
-  machine_group_name = val['Name']
+  machine_group_name = val['name']
   return machine_group_name
   
 
 def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, pat_token):
   machine_group_id = ''
   try:
-    machine_group_id = setting_params['MachineGroupId']
+    machine_group_id = str(setting_params['machineGroupId'])
     write_log('\t\t Machine group id - {0}'.format(machine_group_id))
   except Exception as e:
     pass
@@ -87,7 +87,7 @@ def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, 
     return machine_group_name
   return setting_params['machineGroupName']
 
-def test_agent_configuration_required(vsts_url, pat_token, machine_group_name, project_name, working_folder, log_func):
+def test_agent_configuration_required_internal(vsts_url, pat_token, machine_group_name, project_name, working_folder, log_func):
   global log_function
   log_function = log_func
   try:
@@ -138,35 +138,39 @@ def agent_listener_exists(working_folder):
   return agent_listener_exists
 
 
-def remove_existing_agent(pat_token, working_folder, log_func):
-  global agent_listener_path, agent_service_path, log_function
-  log_function = log_func
-  get_agent_listener_path(working_folder)
-  get_agent_service_path(working_folder) 
-  service_stop_proc = subprocess.Popen(Constants.service_stop_command.format(agent_service_path), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True, cwd = working_folder)
-  std_out, std_err = service_stop_proc.communicate()
-  return_code = service_stop_proc.returncode
-  write_configuration_log('Service Stop process exit code : {0}'.format(return_code))
-  write_configuration_log('stdout : {0}'.format(std_out))
-  write_configuration_log('srderr : {0}'.format(std_err))
-  if(not (return_code == 0)):
-    raise Exception('Service stop failed with error : {0}'.format(std_err))
-  service_uninstall_proc = subprocess.Popen(Constants.service_uninstall_command.format(agent_service_path), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True, cwd = working_folder)
-  std_out, std_err = service_uninstall_proc.communicate()
-  return_code = service_uninstall_proc.returncode
-  write_configuration_log('Service uninstall process exit code : {0}'.format(return_code))
-  write_configuration_log('stdout : {0}'.format(std_out))
-  write_configuration_log('srderr : {0}'.format(std_err))
-  if(not (return_code == 0)):
-    raise Exception('Service uninstall failed with error : {0}'.format(std_err))
-  remove_agent_proc = subprocess.Popen(Constants.remove_agent_command.format(agent_listener_path, pat_token), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
-  std_out, std_err = remove_agent_proc.communicate()
-  return_code = remove_agent_proc.returncode
-  write_configuration_log('RemoveAgentProcess exit code : {0}'.format(return_code))
-  write_configuration_log('stdout : {0}'.format(std_out))
-  write_configuration_log('srderr : {0}'.format(std_err))
-  if(not (return_code == 0)):
-    raise Exception('Agent removal failed with error : {0}'.format(std_err))
+def remove_existing_agent_internal(pat_token, working_folder, log_func):
+  try:
+    global agent_listener_path, agent_service_path, log_function
+    log_function = log_func
+    get_agent_listener_path(working_folder)
+    get_agent_service_path(working_folder) 
+    service_stop_proc = subprocess.Popen(Constants.service_stop_command.format(agent_service_path).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE, cwd = working_folder)
+    std_out, std_err = service_stop_proc.communicate()
+    return_code = service_stop_proc.returncode
+    write_configuration_log('Service Stop process exit code : {0}'.format(return_code))
+    write_configuration_log('stdout : {0}'.format(std_out))
+    write_configuration_log('srderr : {0}'.format(std_err))
+    if(not (return_code == 0)):
+      raise Exception('Service stop failed with error : {0}'.format(std_err))
+    service_uninstall_proc = subprocess.Popen(Constants.service_uninstall_command.format(agent_service_path).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE, cwd = working_folder)
+    std_out, std_err = service_uninstall_proc.communicate()
+    return_code = service_uninstall_proc.returncode
+    write_configuration_log('Service uninstall process exit code : {0}'.format(return_code))
+    write_configuration_log('stdout : {0}'.format(std_out))
+    write_configuration_log('srderr : {0}'.format(std_err))
+    if(not (return_code == 0)):
+      raise Exception('Service uninstall failed with error : {0}'.format(std_err))
+    remove_agent_proc = subprocess.Popen(Constants.remove_agent_command.format(agent_listener_path, pat_token).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    std_out, std_err = remove_agent_proc.communicate()
+    return_code = remove_agent_proc.returncode
+    write_configuration_log('RemoveAgentProcess exit code : {0}'.format(return_code))
+    write_configuration_log('stdout : {0}'.format(std_out))
+    write_configuration_log('srderr : {0}'.format(std_err))
+    if(not (return_code == 0)):
+      raise Exception('Agent removal failed with error : {0}'.format(std_err))
+  except Exception as e:
+    write_configuration_log(e.message)
+    raise e
 
 def apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
   method = httplib.HTTPSConnection
@@ -280,7 +284,7 @@ def configure_agent_internal(vsts_url, pat_token, project_name, machine_group_na
   #configure_command = Constants.configure_agent_command.format(agent_listener_path, vsts_url, pat_token, agent_name, Constants.default_agent_work_dir, project_name, machine_group_name, machine_group_name)
   configure_command = Constants.configure_agent_command.format(agent_listener_path, vsts_url, pat_token, agent_name, Constants.default_agent_work_dir, project_name, machine_group_name)
   write_configuration_log('Agent configuration command is {0}'.format(configure_command))
-  config_agent_proc = subprocess.Popen(configure_command, shell = True)
+  config_agent_proc = subprocess.Popen(configure_command.split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   std_out, std_err = config_agent_proc.communicate()
   return_code = config_agent_proc.returncode
   write_configuration_log('Configure Agent Process exit code : {0}'.format(return_code))
@@ -290,7 +294,7 @@ def configure_agent_internal(vsts_url, pat_token, project_name, machine_group_na
     raise Exception('Agent configuration failed with error : {0}'.format(std_err))
   install_command = Constants.service_install_command.format(agent_service_path)
   write_configuration_log('Service install command is {0}'.format(install_command))
-  install_service_proc = subprocess.Popen(install_command, shell = True, cwd = working_folder)
+  install_service_proc = subprocess.Popen(install_command.split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE, cwd = working_folder)
   std_out, std_err = install_service_proc.communicate()
   return_code = install_service_proc.returncode
   write_configuration_log('Service Installation process exit code : {0}'.format(return_code))
@@ -300,7 +304,7 @@ def configure_agent_internal(vsts_url, pat_token, project_name, machine_group_na
     raise Exception('Service installation failed with error : {0}'.format(std_err))
   start_command = Constants.service_start_command.format(agent_service_path)
   write_configuration_log('Service start command is {0}'.format(start_command))
-  start_service_proc = subprocess.Popen(start_command, shell = True, cwd = working_folder)
+  start_service_proc = subprocess.Popen(start_command.split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE, cwd = working_folder)
   std_out, std_err = start_service_proc.communicate()
   return_code = start_service_proc.returncode
   write_configuration_log('Service start process exit code : {0}'.format(return_code))
@@ -320,7 +324,7 @@ def configure_agent(vsts_url, pat_token, project_name, machine_group_name, agent
       raise Exception("Unable to find the agent listener, ensure to download the agent exists before starting the agent configuration")
     if(agent_name is None or agent_name == ''):
       #todo
-      agent_name = platform.node() + "-MG"
+      agent_name = platform.node()
       write_configuration_log('Agent name not provided, agent name will be set as ' + agent_name)
     write_configuration_log('Configuring agent')
     configure_agent_internal(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder)

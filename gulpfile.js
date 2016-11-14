@@ -7,7 +7,7 @@ var zip = require('gulp-zip');
 var minimist = require('minimist');
 
 var outputPath = '_build';
-var osOfVM = ''
+var osOfVM = 'Windows'
 var options = minimist(process.argv.slice(2));
 if(!!options.outputPath) {
 	outputPath = options.outputPath;

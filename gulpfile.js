@@ -35,8 +35,8 @@ gulp.task("test", function(done){
 	}
 	});
 	pester.on('error', function(err) {
-	gutil.log('We may be in a non-windows machine or powershell.exe is not in path. Skip pester tests.');
-	done();
+		gutil.log('We may be in a non-windows machine or powershell.exe is not in path. Skip pester tests.');
+		done();
 	}); 
 });
 
@@ -44,42 +44,51 @@ gulp.task('cleanExistingBuild', function() {
 	return gulp.src(outputPath).pipe(clean({force: true}));
 });
 
-gulp.task('createTempHandlerPackage', ['test', 'cleanExistingBuild'], function () {
+gulp.task('createTempWindowsHandlerPackage', ['test', 'cleanExistingBuild'], function () {
 	gutil.log("Copying windows extension handler files selectively to temp location: " + tempWindowsHandlerFilesPath);
-	gulp.src(['ExtensionHandler/Windows/src/bin/**.**', 'ExtensionHandler/Windows/src/enable.cmd', 'ExtensionHandler/Windows/src/disable.cmd', 'ExtensionHandler/Windows/src/uninstall.cmd', 'ExtensionHandler/Windows/src/HandlerManifest.json'],  {base: 'ExtensionHandler/Windows/src/'})
+	return gulp.src(['ExtensionHandler/Windows/src/bin/**.**', 'ExtensionHandler/Windows/src/enable.cmd', 'ExtensionHandler/Windows/src/disable.cmd', 'ExtensionHandler/Windows/src/uninstall.cmd', 'ExtensionHandler/Windows/src/HandlerManifest.json'],  {base: 'ExtensionHandler/Windows/src/'})
 	.pipe(gulp.dest(tempWindowsHandlerFilesPath));
+});
+
+gulp.task('createTempLinuxHandlerPackage', ['test', 'cleanExistingBuild'], function () {
 	gutil.log("Copying linux extension handler files selectively to temp location: " + tempLinuxHandlerFilesPath);
 	return gulp.src(['ExtensionHandler/Linux/src/**.**', 'ExtensionHandler/Linux/src/Utils/**.**'],  {base: 'ExtensionHandler/Linux/src/'})
 	.pipe(gulp.dest(tempLinuxHandlerFilesPath));
 });
 
-gulp.task('copyHandlerDefinitionFile', ['test', 'cleanExistingBuild'], function () {
+gulp.task('copyWindowsHandlerDefinitionFile', ['test', 'cleanExistingBuild'], function () {
 	// copying definition xml file to output location
-	gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test.xml', 'ExtensionHandler/Windows/ExtensionDefinition_Prod.xml'])
+	return gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test.xml', 'ExtensionHandler/Windows/ExtensionDefinition_Prod.xml'])
 	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
+});
+
+gulp.task('copyLinuxHandlerDefinitionFile', ['test', 'cleanExistingBuild'], function () {
 	// copying definition xml file to output location
-	gulp.src(['ExtensionHandler/Linux/ExtensionDefinition_Test.xml', 'ExtensionHandler/Linux/ExtensionDefinition_Prod.xml'])
+	return gulp.src(['ExtensionHandler/Linux/ExtensionDefinition_Test.xml', 'ExtensionHandler/Linux/ExtensionDefinition_Prod.xml'])
 	.pipe(gulp.dest(linuxHandlerArchievePackageLocation));
 });
 
-gulp.task('createHandlerPackage', ['test', 'createTempHandlerPackage', 'copyHandlerDefinitionFile', 'cleanExistingBuild'], function () {
+gulp.task('createWindowsHandlerPackage', ['test', 'createTempWindowsHandlerPackage', 'copyWindowsHandlerDefinitionFile', 'cleanExistingBuild'], function () {
 	gutil.log("Archieving the windows extension handler package from location: " + tempWindowsHandlerFilesPath);
 	gutil.log("Archieve output location: " + windowsHandlerArchievePackageLocation);
 	var tempWindowsHandlerFilesSource = path.join(tempWindowsHandlerFilesPath, '**');
 	// archieving handler files to output location
-	gulp.src([tempWindowsHandlerFilesSource])
+	return gulp.src([tempWindowsHandlerFilesSource])
 	.pipe(zip('RMExtension.zip'))
 	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
+});
+
+gulp.task('createLinuxHandlerPackage', ['test', 'createTempLinuxHandlerPackage', 'copyLinuxHandlerDefinitionFile', 'cleanExistingBuild'], function () {
 	gutil.log("Archieving the linux extension handler package from location: " + tempLinuxHandlerFilesPath);
 	gutil.log("Archieve output location: " + linuxHandlerArchievePackageLocation);
 	var tempLinuxHandlerFilesSource = path.join(tempLinuxHandlerFilesPath, '**');
 	// archieving handler files to output location
-	gulp.src([tempLinuxHandlerFilesSource])
+	return gulp.src([tempLinuxHandlerFilesSource])
 	.pipe(zip('RMExtension.zip'))
 	.pipe(gulp.dest(linuxHandlerArchievePackageLocation));
 });
 
-gulp.task('createUIPackage', ['cleanExistingBuild'], function () {
+gulp.task('createWindowsUIPackage', ['cleanExistingBuild'], function () {
 	// Create ARM UI package
 	var armUIFilesPath = 'UI Package/Windows/ARM';
 	var armUIPackageLocation = path.join(outputPath, armUIFilesPath);
@@ -95,9 +104,12 @@ gulp.task('createUIPackage', ['cleanExistingBuild'], function () {
 	gutil.log("Archieving the windows extension Classic UI package from location: " + classicUIFilesPath);
 	gutil.log("Archieve output location: " + classicUIPackageLocation);
 	// archieving handler files to output location
-	gulp.src(['UI Package/Windows/Classic/**'])
+	return gulp.src(['UI Package/Windows/Classic/**'])
 	.pipe(zip('UIPackage.zip'))
 	.pipe(gulp.dest(classicUIPackageLocation));
+});
+
+gulp.task('createLinuxUIPackage', ['cleanExistingBuild'], function () {
 	// Create ARM UI package
 	var armUIFilesPath = 'UI Package/Linux/ARM';
 	var armUIPackageLocation = path.join(outputPath, armUIFilesPath);
@@ -113,13 +125,13 @@ gulp.task('createUIPackage', ['cleanExistingBuild'], function () {
 	gutil.log("Archieving the linux extension Classic UI package from location: " + classicUIFilesPath);
 	gutil.log("Archieve output location: " + classicUIPackageLocation);
 	// archieving handler files to output location
-	gulp.src(['UI Package/Linux/Classic/**'])
+	return gulp.src(['UI Package/Linux/Classic/**'])
 	.pipe(zip('UIPackage.zip'))
 	.pipe(gulp.dest(classicUIPackageLocation));
 });
 
 gulp.task('default', ['build']);
 
-gulp.task('build', ['createHandlerPackage', 'createUIPackage'], function() {
+gulp.task('build', ['createWindowsHandlerPackage', 'createWindowsUIPackage', 'createLinuxHandlerPackage', 'createLinuxUIPackage'], function() {
     gutil.log("VM extension packages created at " + outputPath);
 });

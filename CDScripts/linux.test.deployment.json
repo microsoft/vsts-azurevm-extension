@@ -1,7 +1,7 @@
 {
     "ExtensionDrop": "VM extension\\ExtensionHandler\\Linux",
     "ExtensionPackageName": "RMExtension.zip",
-    "ExtensionPackageStorageBlob": "vstsagentextensionlinux.zip",
+    "ExtensionPackageStorageBlob": "TeamServicesAgentLinux.zip",
     "ExtensionDefinitionFile": "ExtensionDefinition_Test.xml",
     "StorageResourceGroup": "vstsvmextensiontest",
     "StorageAccountName": "vstsvmextensiontest",

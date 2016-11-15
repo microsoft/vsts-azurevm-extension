@@ -5,6 +5,7 @@ var os = require('os');
 var path = require('path');
 var zip = require('gulp-zip');
 var minimist = require('minimist');
+var clean = require('gulp-clean');
 
 var outputPath = '_build';
 var options = minimist(process.argv.slice(2));
@@ -39,7 +40,11 @@ gulp.task("test", function(done){
 	}); 
 });
 
-gulp.task('createTempHandlerPackage', ['test'], function () {
+gulp.task('cleanExistingBuild', function() {
+	return gulp.src(outputPath).pipe(clean({force: true}));
+});
+
+gulp.task('createTempHandlerPackage', ['test', 'cleanExistingBuild'], function () {
 	gutil.log("Copying windows extension handler files selectively to temp location: " + tempWindowsHandlerFilesPath);
 	gulp.src(['ExtensionHandler/Windows/src/bin/**.**', 'ExtensionHandler/Windows/src/enable.cmd', 'ExtensionHandler/Windows/src/disable.cmd', 'ExtensionHandler/Windows/src/uninstall.cmd', 'ExtensionHandler/Windows/src/HandlerManifest.json'],  {base: 'ExtensionHandler/Windows/src/'})
 	.pipe(gulp.dest(tempWindowsHandlerFilesPath));
@@ -48,7 +53,7 @@ gulp.task('createTempHandlerPackage', ['test'], function () {
 	.pipe(gulp.dest(tempLinuxHandlerFilesPath));
 });
 
-gulp.task('copyHandlerDefinitionFile', ['test'], function () {
+gulp.task('copyHandlerDefinitionFile', ['test', 'cleanExistingBuild'], function () {
 	// copying definition xml file to output location
 	gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test.xml', 'ExtensionHandler/Windows/ExtensionDefinition_Prod.xml'])
 	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
@@ -57,7 +62,7 @@ gulp.task('copyHandlerDefinitionFile', ['test'], function () {
 	.pipe(gulp.dest(linuxHandlerArchievePackageLocation));
 });
 
-gulp.task('createHandlerPackage', ['test', 'createTempHandlerPackage', 'copyHandlerDefinitionFile'], function () {
+gulp.task('createHandlerPackage', ['test', 'createTempHandlerPackage', 'copyHandlerDefinitionFile', 'cleanExistingBuild'], function () {
 	gutil.log("Archieving the windows extension handler package from location: " + tempWindowsHandlerFilesPath);
 	gutil.log("Archieve output location: " + windowsHandlerArchievePackageLocation);
 	var tempWindowsHandlerFilesSource = path.join(tempWindowsHandlerFilesPath, '**');
@@ -74,7 +79,7 @@ gulp.task('createHandlerPackage', ['test', 'createTempHandlerPackage', 'copyHand
 	.pipe(gulp.dest(linuxHandlerArchievePackageLocation));
 });
 
-gulp.task('createUIPackage', function () {
+gulp.task('createUIPackage', ['cleanExistingBuild'], function () {
 	// Create ARM UI package
 	var armUIFilesPath = 'UI Package/Windows/ARM';
 	var armUIPackageLocation = path.join(outputPath, armUIFilesPath);

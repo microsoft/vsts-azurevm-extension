@@ -58,7 +58,7 @@ gulp.task('copyHandlerDefinitionFile', ['test', 'cleanExistingBuild'], function 
 	gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test.xml', 'ExtensionHandler/Windows/ExtensionDefinition_Prod.xml'])
 	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
 	// copying definition xml file to output location
-	gulp.src(['ExtensionHandler/Linux/manifest.xml', 'ExtensionHandler/Linux/manifest_prod.xml'])
+	gulp.src(['ExtensionHandler/Linux/ExtensionDefinition_Test.xml', 'ExtensionHandler/Linux/ExtensionDefinition_Prod.xml'])
 	.pipe(gulp.dest(linuxHandlerArchievePackageLocation));
 });
 

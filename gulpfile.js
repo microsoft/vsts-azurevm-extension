@@ -49,7 +49,7 @@ gulp.task('createTempHandlerPackage', ['test', 'cleanExistingBuild'], function (
 	gulp.src(['ExtensionHandler/Windows/src/bin/**.**', 'ExtensionHandler/Windows/src/enable.cmd', 'ExtensionHandler/Windows/src/disable.cmd', 'ExtensionHandler/Windows/src/uninstall.cmd', 'ExtensionHandler/Windows/src/HandlerManifest.json'],  {base: 'ExtensionHandler/Windows/src/'})
 	.pipe(gulp.dest(tempWindowsHandlerFilesPath));
 	gutil.log("Copying linux extension handler files selectively to temp location: " + tempLinuxHandlerFilesPath);
-	gulp.src(['ExtensionHandler/Linux/src/**.**', 'ExtensionHandler/Linux/src/Utils/**.**'],  {base: 'ExtensionHandler/Linux/src/'})
+	return gulp.src(['ExtensionHandler/Linux/src/**.**', 'ExtensionHandler/Linux/src/Utils/**.**'],  {base: 'ExtensionHandler/Linux/src/'})
 	.pipe(gulp.dest(tempLinuxHandlerFilesPath));
 });
 

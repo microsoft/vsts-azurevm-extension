@@ -1,0 +1,12 @@
+{
+    "ExtensionDrop": "VM extension\\ExtensionHandler\\Linux",
+    "ExtensionPackageName": "RMExtension.zip",
+    "ExtensionPackageStorageBlob": "vstsagentextensionlinux.zip",
+    "ExtensionDefinitionFile": "ExtensionDefinition_Prod.xml",
+    "StorageResourceGroup": "vstsvmextension",
+    "StorageAccountName": "vstsextensionprod",
+    "StorageContainerName": "agentextension",
+    "ExtensionName": "TeamServicesAgentLinux",
+    "ExtensionPublisher": "Microsoft.VisualStudio.Services",
+    "Location": "southcentralus"
+}

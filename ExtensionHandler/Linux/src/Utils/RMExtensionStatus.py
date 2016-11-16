@@ -128,9 +128,9 @@ rm_extension_status = {
     'Code' : 1003,
     'Message' : 'Installed Python version is {0}. Minimum required version is 2.6'
   },
-  'LinuxVersionNotSupported' : {
+  'LinuxDistributionNotSupported' : {
     'Code' : 1004,
-    'Message' : 'Linux version on system is {0}. Only supported Linux versions are Ubuntu 16.04 and Red Hat 7.2.'
+    'Message' : 'Linux distribution on system is {0} {1}. Only Linux distributions Ubuntu 16.04 and Red Hat Enterprise Linux Server 7.2 are supported.'
   },
   #
   # ArgumentError indicates a problem in the input provided by the user. The message for the error is provided by the specific exception

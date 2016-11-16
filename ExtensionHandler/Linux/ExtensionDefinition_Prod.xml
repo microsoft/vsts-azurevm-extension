@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <ExtensionImage xmlns="http://schemas.microsoft.com/windowsazure" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">   
+  <ProviderNameSpace>Microsoft.VisualStudio.Services</ProviderNameSpace>
+  <Type>TeamServicesAgentLinux</Type>
+  <Version>1.0.0.0</Version>
+  <Label>Team Services Agent For Linux</Label>
+  <HostingResources>VmRole</HostingResources>
+  <MediaLink>https://vstsextensionprod.blob.core.windows.net/agentextension/vstsagentextensionlinux.zip</MediaLink>
+  <Certificate>
+	<StoreLocation>LocalMachine</StoreLocation>
+	<StoreName>My</StoreName>
+	<ThumbprintRequired>true</ThumbprintRequired>
+	<ThumbprintAlgorithm>sha1</ThumbprintAlgorithm> 
+  </Certificate>
+  <Endpoints />
+  <PublicConfigurationSchema />
+  <PrivateConfigurationSchema />
+  <Description>Team Services agent for linux machine group machines</Description>
+  <IsInternalExtension>false</IsInternalExtension>
+  <Eula>http://go.microsoft.com/fwlink/?LinkId=828975</Eula> 
+  <PrivacyUri>http://www.microsoft.com/privacystatement/en-us/OnlineServices/Default.aspx</PrivacyUri> 
+  <HomepageUri>https://www.visualstudio.com/products/visual-studio-team-services-vs</HomepageUri>
+  <IsJsonExtension>true</IsJsonExtension>  
+  <CompanyName>Microsoft</CompanyName>
+  <SupportedOS>Linux</SupportedOS>
+  </ExtensionImage>

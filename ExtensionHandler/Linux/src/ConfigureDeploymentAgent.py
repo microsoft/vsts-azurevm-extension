@@ -131,10 +131,10 @@ def get_agent_service_path(working_folder):
     agent_service_path = os.path.join(working_folder, Constants.agent_service)
 
 def agent_listener_exists(working_folder):
-  agent_listener = get_agent_listener_path(working_folder)
-  write_configuration_log('\t\t Agent listener file : ' + agent_listener)
-  agent_listener_exists = os.path.isfile(agent_listener)
-  write_configuration_log('\t\t Agent listener file exists : ' + agent_listener_exists)
+  get_agent_listener_path(working_folder)
+  write_configuration_log('\t\t Agent listener file : {0}'.format(agent_listener_path))
+  agent_listener_exists = os.path.isfile(agent_listener_path)
+  write_configuration_log('\t\t Agent listener file exists : {0}'.format(agent_listener_exists))
   return agent_listener_exists
 
 
@@ -320,11 +320,11 @@ def configure_agent(vsts_url, pat_token, project_name, machine_group_name, agent
   global log_function
   log_function = log_func
   try:
-    if(not agent_listener_exists):
+    if(not agent_listener_exists(working_folder)):
       raise Exception("Unable to find the agent listener, ensure to download the agent exists before starting the agent configuration")
     if(agent_name is None or agent_name == ''):
       #todo
-      agent_name = platform.node()
+      agent_name = platform.node() + "-MG"
       write_configuration_log('Agent name not provided, agent name will be set as ' + agent_name)
     write_configuration_log('Configuring agent')
     configure_agent_internal(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder)

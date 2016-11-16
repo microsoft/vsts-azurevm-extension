@@ -93,12 +93,13 @@ def install_dependencies():
   install_command = []
   linux_version_valid = False
   linux_distr = platform.linux_distribution()
+  distr_name = linux_distr[0]
   version = linux_distr[1]
-  if(linux_distr[0] == Constants.red_hat_distr_name):
+  if(distr_name == Constants.red_hat_distr_name):
     if(version == '7.2'):
       linux_version_valid = True
       install_command += ['/bin/yum', '-yq', 'install', 'libunwind.x86_64', 'icu']
-  elif(linux_distr[0] == Constants.ubuntu_distr_name):
+  elif(distr_name == Constants.ubuntu_distr_name):
     if(version == '16.04'):
       linux_version_valid = True
       update_package_list_command = ['/usr/bin/apt-get', 'update', '-yq']
@@ -106,8 +107,8 @@ def install_dependencies():
       update_out, update_err = proc.communicate()
       install_command += ['/usr/bin/apt-get', 'install', '-yq', 'libunwind8', 'libcurl3']
   if(linux_version_valid == False):
-    code = RMExtensionStatus.rm_extension_status['LinuxVersionNotSupported']['Code']
-    message = RMExtensionStatus.rm_extension_status['LinuxVersionNotSupported']['Message'].format(version)
+    code = RMExtensionStatus.rm_extension_status['LinuxDistributionNotSupported']['Code']
+    message = RMExtensionStatus.rm_extension_status['LinuxDistributionNotSupported']['Message'].format(distr_name, version)
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
   proc = subprocess.Popen(install_command, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   install_out, install_err = proc.communicate()

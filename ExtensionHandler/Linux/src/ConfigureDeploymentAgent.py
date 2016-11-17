@@ -231,9 +231,9 @@ def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent
           break
     tags = json.loads(tags_string)
     tags = list(set(tags + existing_tags))
-    apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, json.dumps(tags, ensure_ascii = False))
   else:
     raise Exception(response.read())
+  apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, json.dumps(tags, ensure_ascii = False))
  
 def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, tags_string, log_func):
   global log_function

@@ -211,7 +211,7 @@ def get_configutation_from_settings():
       handler_utility.verify_input_not_null('PATToken', pat_token)
     team_project_name = public_settings['TeamProject']
     handler_utility.verify_input_not_null('TeamProject', team_project_name)
-    handler_utility.log('Team Project : (0)'.format(team_project_name))
+    handler_utility.log('Team Project : {0}'.format(team_project_name))
     machine_group_name = public_settings['MachineGroup']
     handler_utility.verify_input_not_null('MachineGroup', machine_group_name)
     handler_utility.log('Machine Group : {0}'.format(machine_group_name))
@@ -394,7 +394,7 @@ def add_agent_tags():
       message = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Message']
       handler_utility.set_handler_status(code = code, status = 'success', message = message)
     except Exception as e:
-      Util.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName'])
+      handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName'])
       exit_with_code_zero()
   else:
     handler_utility.log('No tags provided for agent')
@@ -460,7 +460,6 @@ def main():
         uninstall()
     exit_with_code_zero()
   except Exception as e:
-    print e.message
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'])
     exit_with_code_zero()
 

@@ -68,10 +68,13 @@ def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_gr
   conn.request('GET', machine_group_name_address, headers = headers)
   response = conn.getresponse()
   #Should response be json parsd?
-  val = json.loads(response.read())
-  write_log('\t\t Machine group details : {0}'.format(val))
-  machine_group_name = val['name']
-  return machine_group_name
+  if(response.status == 200):
+    val = json.loads(response.read())
+    write_log('\t\t Machine group details : {0}'.format(val))
+    machine_group_name = val['name']
+    return machine_group_name
+  else:
+    raise Exception(response.read())
   
 
 def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, pat_token):
@@ -192,6 +195,11 @@ def apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, age
   conn = method(vsts_url)
   conn.request('PATCH', tags_address, headers = headers, body = request_body)
   response = conn.getresponse()
+  if(response.status == 200):
+    write_add_tags_log('Patch call for tags succeeded')
+  else:
+    raise Exception(response.read())
+
 
 def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
   method = httplib.HTTPSConnection
@@ -210,19 +218,22 @@ def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent
   conn = method(vsts_url)
   conn.request('GET', tags_address, headers = headers)
   response = conn.getresponse()
-  val = {}
-  response_string = response.read()
-  val = json.loads(response_string)
-  existing_tags = []
-  for i in range(1, val['count']):
-    each_machine = val['value'][i]
-    if(each_machine != None and each_machine.has_key('agent') and each_machine['agent']['id'] == agent_id):
-      if(each_machine.has_key('tags')):
-        existing_tags = each_machine['tags']
-        break
-  tags = json.loads(tags_string)
-  tags = list(set(tags + existing_tags))
-  apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, json.dumps(tags, ensure_ascii = False))
+  if(response.status == 200):
+    val = {}
+    response_string = response.read()
+    val = json.loads(response_string)
+    existing_tags = []
+    for i in range(1, val['count']):
+      each_machine = val['value'][i]
+      if(each_machine != None and each_machine.has_key('agent') and each_machine['agent']['id'] == agent_id):
+        if(each_machine.has_key('tags')):
+          existing_tags = each_machine['tags']
+          break
+    tags = json.loads(tags_string)
+    tags = list(set(tags + existing_tags))
+    apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, json.dumps(tags, ensure_ascii = False))
+  else:
+    raise Exception(response.read())
  
 def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, tags_string, log_func):
   global log_function
@@ -258,15 +269,16 @@ def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, t
         conn = method(vsts_url)
         conn.request('GET', machine_groups_address, headers = headers)
         response = conn.getresponse()
-        val = {}
-        response_string = response.read()
-        val = json.loads(response_string)
-        #val = response.read()
-        for i in range(1, val['count']):
-          each_machine_group = val['value'][i]
-          if(each_machine_group != None and each_machine_group['name'] == machine_group_name):
-            machine_group_id = each_machine_group['id']
-            break
+        if(response.status == 200):
+          val = {}
+          response_string = response.read()
+          val = json.loads(response_string)
+          #val = response.read()
+          for i in range(1, val['count']):
+            each_machine_group = val['value'][i]
+            if(each_machine_group != None and each_machine_group['name'] == machine_group_name):
+              machine_group_id = each_machine_group['id']
+              break
     except Exception as e:
       pass
     if(agent_id == '' or machine_group_id == ''):

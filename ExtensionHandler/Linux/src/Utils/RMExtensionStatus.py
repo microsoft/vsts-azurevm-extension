@@ -98,17 +98,17 @@ rm_extension_status = {
   },
   'AgentReConfigurationRequiredChecked' : {
     'Code' : 20,
-    'Message' : 'Checked if re-configuration is required for existing agent',
+    'Message' : 'Checked if re-configuration is required for existing agent.',
     'operationName' : 'Agent Configuration'
   },
   'SkippingAgentConfiguration' : {
     'Code' : 21,
-    'Message' : 'An agent is already running with same settings, skipping agent configuration',
+    'Message' : 'An agent is already running with same settings, skipping agent configuration.',
     'operationName' : 'Agent Configuration'
   },
   'AgentTagsAdded' : {
     'Code' : 23,
-    'Message' : 'Successfully added the tags to deployment agent',
+    'Message' : 'Successfully added the tags to deployment agent.',
     'operationName' : 'Agent Tags'
   },
   #
@@ -126,7 +126,7 @@ rm_extension_status = {
   },
   'PythonVersionNotSupported' : {
     'Code' : 1003,
-    'Message' : 'Installed Python version is {0}. Minimum required version is 2.6'
+    'Message' : 'Installed Python version is {0}. Minimum required version is 2.6.'
   },
   'LinuxDistributionNotSupported' : {
     'Code' : 1004,

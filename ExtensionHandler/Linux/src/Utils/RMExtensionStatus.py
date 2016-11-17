@@ -13,12 +13,12 @@ rm_extension_status = {
   },
   'Initializing' : {
     'Code' : 3,
-    'Message' : 'Initializing RM extension.',
+    'Message' : 'Initializing extension.',
     'operationName' : 'Initialization'
   },
   'Initialized' : {
     'Code' : 4,
-    'Message' : 'Done Initializing RM extension.',
+    'Message' : 'Done Initializing extension.',
     'operationName' : 'Initialization'
   },
   'PreCheckingDeploymentAgent' : {
@@ -122,7 +122,7 @@ rm_extension_status = {
   'InstallError' : 1001, # The message for this error is provided by the specific exception
   'ArchitectureNotSupported' : {
     'Code' : 1002,
-    'Message' : 'The current CPU architecture is not supported. RM agent requires x64 architecture.'
+    'Message' : 'The current CPU architecture is not supported. Deployment agent requires x64 architecture.'
   },
   'PythonVersionNotSupported' : {
     'Code' : 1003,
@@ -130,7 +130,7 @@ rm_extension_status = {
   },
   'LinuxDistributionNotSupported' : {
     'Code' : 1004,
-    'Message' : 'Linux distribution on system is {0} {1}. Only Linux distributions Ubuntu 16.04 and Red Hat Enterprise Linux Server 7.2 are supported.'
+    'Message' : 'Linux distribution {0} {1} not supported.'
   },
   #
   # ArgumentError indicates a problem in the input provided by the user. The message for the error is provided by the specific exception

@@ -24,7 +24,7 @@
       "type": "Custom",
       "path": "Artifacts\\CreateUIDefinition.json",
       "isDefault": false
-    },
+    }
   ],
   "icons": {
     "small": "Icons\\small.png",

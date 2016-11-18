@@ -34,7 +34,7 @@ def get_last_sequence_number():
   except IOError as e:
     pass
   except ValueError as e:
-    handler_utility.log("Contents of \'Last Sequence File\' not Integer")
+    handler_utility.log('Contents of \'Last Sequence File\' not Integer')
     raise e
   return -1
 
@@ -195,7 +195,7 @@ def get_configutation_from_settings():
       RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Message']
       raise new_handler_terminating_error(code, message)
     platform_value = get_platform_value()
-    handler_utility.log("Platform: {0}".format(platform_value))
+    handler_utility.log('Platform: {0}'.format(platform_value))
     vsts_account_name = public_settings['VSTSAccountName']
     handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
     if(not (check_account_name_prefix(vsts_account_name) and check_account_name_suffix(vsts_account_name))):
@@ -255,9 +255,9 @@ def test_configured_agent_exists():
     sub_status_message = RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-    handler_utility.log("Invoking function to pre-check agent configuration...")
+    handler_utility.log('Invoking function to pre-check agent configuration...')
     agent_exists = ConfigureDeploymentAgent.test_configured_agent_exists_internal(config['AgentWorkingFolder'], handler_utility.log)
-    handler_utility.log("Done pre-checking agent configuration")
+    handler_utility.log('Done pre-checking agent configuration')
     ss_code = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['operationName']
@@ -445,7 +445,7 @@ def main():
     global handler_utility
     root_dir = os.getcwd()
     waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
-    waagent.Log("Azure RM extension started to handle.")
+    waagent.Log('Azure RM extension started to handle.')
     handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
     if(len(sys.argv) == 2):
       operation = sys.argv[1]

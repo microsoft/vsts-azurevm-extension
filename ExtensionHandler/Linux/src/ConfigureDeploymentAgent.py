@@ -34,9 +34,9 @@ def test_configured_agent_exists_internal(working_folder, log_func):
   log_function = log_func
   try:
     agent_setting = Constants.agent_setting
-    write_log("Initialization for deployment agent started.")
+    write_log('Initialization for deployment agent started.')
     # Is Python version check required here?
-    write_log("Checking if existing agent is running from {0}".format(working_folder))
+    write_log('Checking if existing agent is running from {0}'.format(working_folder))
     agent_path = os.path.join(working_folder, agent_setting)
     agent_setting_file_exists = os.path.isfile(agent_path)
     write_log('\t\t Agent setting file exists : {0}'.format(agent_setting_file_exists))
@@ -74,7 +74,7 @@ def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_gr
     machine_group_name = val['name']
     return machine_group_name
   else:
-    raise Exception(response.read())
+    raise Exception('The HTTP request for machine group name did not succeed')
   
 
 def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, pat_token):
@@ -94,7 +94,7 @@ def test_agent_configuration_required_internal(vsts_url, pat_token, machine_grou
   global log_function
   log_function = log_func
   try:
-    write_log("AgentReConfigurationRequired check started.")
+    write_log('AgentReConfigurationRequired check started.')
     agent_setting = Constants.agent_setting
     agent_setting_file =  os.path.join(working_folder, agent_setting)
     setting_params = json.load(codecs.open(agent_setting_file, 'r', 'utf-8-sig'))
@@ -198,7 +198,7 @@ def apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, age
   if(response.status == 200):
     write_add_tags_log('Patch call for tags succeeded')
   else:
-    raise Exception(response.read())
+    raise Exception('The HTTP request for adding tags did not succeed')
 
 
 def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
@@ -232,7 +232,7 @@ def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent
     tags = json.loads(tags_string)
     tags = list(set(tags + existing_tags))
   else:
-    raise Exception(response.read())
+    raise Exception('The HTTP call for fetching existing tags did not succeed')
   apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, json.dumps(tags, ensure_ascii = False))
  
 def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, tags_string, log_func):
@@ -333,10 +333,10 @@ def configure_agent(vsts_url, pat_token, project_name, machine_group_name, agent
   log_function = log_func
   try:
     if(not agent_listener_exists(working_folder)):
-      raise Exception("Unable to find the agent listener, ensure to download the agent exists before starting the agent configuration")
+      raise Exception('Unable to find the agent listener, ensure to download the agent exists before starting the agent configuration')
     if(agent_name is None or agent_name == ''):
       #todo
-      agent_name = platform.node() + "-MG"
+      agent_name = platform.node() + '-MG'
       write_configuration_log('Agent name not provided, agent name will be set as ' + agent_name)
     write_configuration_log('Configuring agent')
     configure_agent_internal(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder)

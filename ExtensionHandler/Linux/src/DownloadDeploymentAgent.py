@@ -49,7 +49,7 @@ def get_agent_package_data(vsts_url, package_data_address, user_name, pat_token)
     val = json.loads(response.read())
     return val['value'][0]['downloadUrl']
   else:
-    raise Exception(response.read())
+    raise Exception('The HTTP request for package data did not succeed')
 
 def get_agent_download_url(vsts_url, platform, user_name, pat_token):
   package_data_address = construct_package_data_address(vsts_url, platform)

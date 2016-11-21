@@ -23,7 +23,7 @@ def empty_dir(dir_name):
 
 def construct_package_data_address(vsts_url, platform):
   package_data_address = Constants.package_data_address_format.format(platform, Constants.download_api_version)
-  write_download_log('\t\t Package data adderss' + package_data_address)
+  write_download_log('\t\t Package data address' + package_data_address)
   return package_data_address
 
 def get_agent_package_data(vsts_url, package_data_address, user_name, pat_token):
@@ -49,7 +49,7 @@ def get_agent_package_data(vsts_url, package_data_address, user_name, pat_token)
     val = json.loads(response.read())
     return val['value'][0]['downloadUrl']
   else:
-    raise Exception('The HTTP request for package data did not succeed')
+    raise Exception('Error while downloading VSTS extension. Please make sure that you enter the correct VSTS account name and PAT token.')
 
 def get_agent_download_url(vsts_url, platform, user_name, pat_token):
   package_data_address = construct_package_data_address(vsts_url, platform)

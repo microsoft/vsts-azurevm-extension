@@ -404,8 +404,8 @@ class HandlerUtility:
             error_status_message = 'The Extension failed to install: {0}'.format(e.message)
             error_sub_status_message = 'The Extension failed to install: {0} More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.'.format(e.message, self._context._log_dir)
         elif(error_code == RMExtensionStatus.rm_extension_status['ArgumentError']):
-            error_status_message = 'The Extension received an incorrect input: {0} Please correct the input and retry executing the extension.'.format(e.message)
-            error_sub_status_message = 'The Extension received an incorrect input: {0} Please correct the input and retry executing the extension.'.format(e.message)
+            error_status_message = 'Incorrect VSTS account credentials'
+            error_sub_status_message = e.message
         else:
             error_status_message = 'The Extension failed to execute: {0}'.format(e.message)
             error_sub_status_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(e.message, self._context._log_dir)

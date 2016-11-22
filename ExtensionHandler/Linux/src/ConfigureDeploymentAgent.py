@@ -34,9 +34,9 @@ def test_configured_agent_exists_internal(working_folder, log_func):
   log_function = log_func
   try:
     agent_setting = Constants.agent_setting
-    write_log("Initialization for deployment agent started.")
+    write_log('Initialization for deployment agent started.')
     # Is Python version check required here?
-    write_log("Checking if existing agent is running from {0}".format(working_folder))
+    write_log('Checking if existing agent is running from {0}'.format(working_folder))
     agent_path = os.path.join(working_folder, agent_setting)
     agent_setting_file_exists = os.path.isfile(agent_path)
     write_log('\t\t Agent setting file exists : {0}'.format(agent_setting_file_exists))
@@ -68,10 +68,13 @@ def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_gr
   conn.request('GET', machine_group_name_address, headers = headers)
   response = conn.getresponse()
   #Should response be json parsd?
-  val = json.loads(response.read())
-  write_log('\t\t Machine group details : {0}'.format(val))
-  machine_group_name = val['name']
-  return machine_group_name
+  if(response.status == 200):
+    val = json.loads(response.read())
+    write_log('\t\t Machine group details : {0}'.format(val))
+    machine_group_name = val['name']
+    return machine_group_name
+  else:
+    raise Exception('Unable to fetch the machine group information from VSTS server. Please make sure that you enter correct details.')
   
 
 def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, pat_token):
@@ -91,7 +94,7 @@ def test_agent_configuration_required_internal(vsts_url, pat_token, machine_grou
   global log_function
   log_function = log_func
   try:
-    write_log("AgentReConfigurationRequired check started.")
+    write_log('AgentReConfigurationRequired check started.')
     agent_setting = Constants.agent_setting
     agent_setting_file =  os.path.join(working_folder, agent_setting)
     setting_params = json.load(codecs.open(agent_setting_file, 'r', 'utf-8-sig'))
@@ -192,6 +195,11 @@ def apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, age
   conn = method(vsts_url)
   conn.request('PATCH', tags_address, headers = headers, body = request_body)
   response = conn.getresponse()
+  if(response.status == 200):
+    write_add_tags_log('Patch call for tags succeeded')
+  else:
+    raise Exception('Tags could not be added. Please make sure that you enter correct details.')
+
 
 def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
   method = httplib.HTTPSConnection
@@ -210,18 +218,21 @@ def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent
   conn = method(vsts_url)
   conn.request('GET', tags_address, headers = headers)
   response = conn.getresponse()
-  val = {}
-  response_string = response.read()
-  val = json.loads(response_string)
-  existing_tags = []
-  for i in range(1, val['count']):
-    each_machine = val['value'][i]
-    if(each_machine != None and each_machine.has_key('agent') and each_machine['agent']['id'] == agent_id):
-      if(each_machine.has_key('tags')):
-        existing_tags = each_machine['tags']
-        break
-  tags = json.loads(tags_string)
-  tags = list(set(tags + existing_tags))
+  if(response.status == 200):
+    val = {}
+    response_string = response.read()
+    val = json.loads(response_string)
+    existing_tags = []
+    for i in range(1, val['count']):
+      each_machine = val['value'][i]
+      if(each_machine != None and each_machine.has_key('agent') and each_machine['agent']['id'] == agent_id):
+        if(each_machine.has_key('tags')):
+          existing_tags = each_machine['tags']
+          break
+    tags = json.loads(tags_string)
+    tags = list(set(tags + existing_tags))
+  else:
+    raise Exception('Tags could not be added. Unable to fetch the existing tags. Please make sure that you enter correct details.')
   apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, json.dumps(tags, ensure_ascii = False))
  
 def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, tags_string, log_func):
@@ -232,7 +243,7 @@ def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, t
     agent_setting_file_path = os.path.join(working_folder, Constants.agent_setting)
     write_add_tags_log('\t\t Agent setting path : {0}'.format(agent_setting_file_path))
     if(not(os.path.isfile(agent_setting_file_path))):
-      raise Exception('Unable to find the .agent file {0}. Ensure to configure the agent before adding tags to it'.format(agent_setting_file_path))
+      raise Exception('Unable to find the .agent file {0}. Ensure that the agent is configured before adding tags.'.format(agent_setting_file_path))
     setting_params = json.load(codecs.open(agent_setting_file_path, 'r', 'utf-8-sig'))
     agent_id = setting_params['agentId']
     machine_group_id = ''
@@ -258,19 +269,20 @@ def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, t
         conn = method(vsts_url)
         conn.request('GET', machine_groups_address, headers = headers)
         response = conn.getresponse()
-        val = {}
-        response_string = response.read()
-        val = json.loads(response_string)
-        #val = response.read()
-        for i in range(1, val['count']):
-          each_machine_group = val['value'][i]
-          if(each_machine_group != None and each_machine_group['name'] == machine_group_name):
-            machine_group_id = each_machine_group['id']
-            break
+        if(response.status == 200):
+          val = {}
+          response_string = response.read()
+          val = json.loads(response_string)
+          #val = response.read()
+          for i in range(1, val['count']):
+            each_machine_group = val['value'][i]
+            if(each_machine_group != None and each_machine_group['name'] == machine_group_name):
+              machine_group_id = each_machine_group['id']
+              break
     except Exception as e:
       pass
     if(agent_id == '' or machine_group_id == ''):
-      raise Exception('Unable to get the machineGroupId or agent id with .agent file from {0}. Ensure before adding tags, agent is configured'.format(working_folder))
+      raise Exception('Unable to get the machine group id or agent id. Ensure that the agent is configured before adding tags.'.format(working_folder))
     add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string)
     return Constants.return_success 
   except Exception as e:
@@ -321,10 +333,10 @@ def configure_agent(vsts_url, pat_token, project_name, machine_group_name, agent
   log_function = log_func
   try:
     if(not agent_listener_exists(working_folder)):
-      raise Exception("Unable to find the agent listener, ensure to download the agent exists before starting the agent configuration")
+      raise Exception('Unable to find the agent listener, ensure to download the agent before configuring.')
     if(agent_name is None or agent_name == ''):
       #todo
-      agent_name = platform.node() + "-MG"
+      agent_name = platform.node() + '-MG'
       write_configuration_log('Agent name not provided, agent name will be set as ' + agent_name)
     write_configuration_log('Configuring agent')
     configure_agent_internal(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder)

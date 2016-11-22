@@ -58,7 +58,7 @@ try
     
     if( ! $(AgentSettingExist) )
     {
-        throw "Unable to find the .agent file $agentSettingPath. Ensure to configure the agent before adding tags to it"
+        throw "Unable to find the .agent file $agentSettingPath. Ensure that the agent is configured before addding tags."
     }
     
     $agentSettings = Get-Content -Path $agentSettingPath | Out-String | ConvertFrom-Json
@@ -75,7 +75,7 @@ try
     
     if([string]::IsNullOrEmpty($machineGroupId) -or [string]::IsNullOrEmpty($agentId))
     {
-        throw "Unable to get the machineGroupId or agent id with .agent file from $workingFolder. Ensure before adding tags, agent is configured"
+        throw "Unable to get the machine group id or agent id. Ensure that the agent is configured before addding tags."
     }
     
     AddTagsToAgent -tfsUrl $tfsUrl -projectName $projectName -patToken $patToken -machineGroupId $machineGroupId -agentId $agentId -tagsAsJsonString $tagsAsJsonString

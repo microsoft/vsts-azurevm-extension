@@ -72,8 +72,14 @@ function WriteDownloadLog
     WriteDownloadLog "`t`t Invoke-rest call for packageData"
     $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
     WriteDownloadLog "`t`t Agent PackageData : $response"
-
-    return $response.Value[0]
+    if($response.Value -ne $null)
+    {
+        return $response.Value[0]
+    }
+    else
+    {
+        throw "Error while downloading VSTS extension. Please make sure that you enter the correct VSTS account name and PAT tokenn."
+    }
  }
  
  function GetAgentDownloadUrl

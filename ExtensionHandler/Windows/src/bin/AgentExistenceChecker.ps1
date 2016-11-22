@@ -180,9 +180,15 @@ function ContructRESTCallUrl
     
     WriteLog "`t`t Invoke-rest call for machine group name" $logFunction
     $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
-    WriteLog "`t`t Machine Group Details : $response" $logFunction
-
-    return $response.Name
+    if($response.Value -ne $null)
+    {
+        WriteLog "`t`t Machine Group Details : $response" $logFunction
+        return $response.Name
+    }
+    else
+    {
+        throw "Unable to fetch the machine group information from VSTS server. Please make sure that you enter correct details."
+    }
  }
  
 

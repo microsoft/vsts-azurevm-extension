@@ -440,13 +440,13 @@ def uninstall():
     remove_existing_agent(config)
 
 def main():
+  waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
+  waagent.Log('Azure RM extension started to handle.')
+  handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
   try:
     global root_dir
     global handler_utility
     root_dir = os.getcwd()
-    waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
-    waagent.Log('Azure RM extension started to handle.')
-    handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
     if(len(sys.argv) == 2):
       operation = sys.argv[1]
       handler_utility.do_parse_context(operation)

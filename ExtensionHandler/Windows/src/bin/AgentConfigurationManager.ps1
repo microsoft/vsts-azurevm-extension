@@ -111,7 +111,7 @@ function ApplyTagsToAgent
     WriteAddTagsLog "Add tags request body - $requestBody"
 
     $ret = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
-    if($ret.Value -ne $null)
+    if($ret.PSObject.Properties -contains "value")
     {
         return $response.Value[0]
     }
@@ -145,7 +145,7 @@ function AddTagsToAgent
     $headers = GetRESTCallHeader $patToken
     
     $machineGroup = Invoke-RestMethod -Uri $($restCallUrlToGetExistingTags) -headers $headers -Method Get -ContentType "application/json"
-    if($machineGroup.Value -ne $null)
+    if($machineGroup.PSObject.Properties -contains "value")
     {
         $existingTags = @()
         for( $i = 0; $i -lt $machineGroup.count; $i++ )

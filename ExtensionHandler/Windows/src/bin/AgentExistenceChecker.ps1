@@ -180,7 +180,7 @@ function ContructRESTCallUrl
     
     WriteLog "`t`t Invoke-rest call for machine group name" $logFunction
     $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
-    if($response.Value -ne $null)
+    if($response.PSObject.Properties -contains "value")
     {
         WriteLog "`t`t Machine Group Details : $response" $logFunction
         return $response.Name

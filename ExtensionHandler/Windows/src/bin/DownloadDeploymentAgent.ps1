@@ -72,7 +72,7 @@ function WriteDownloadLog
     WriteDownloadLog "`t`t Invoke-rest call for packageData"
     $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
     WriteDownloadLog "`t`t Agent PackageData : $response"
-    if($response.Value -ne $null)
+    if($response.PSObject.Properties -contains "value")
     {
         return $response.Value[0]
     }

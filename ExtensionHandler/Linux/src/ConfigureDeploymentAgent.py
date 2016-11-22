@@ -74,7 +74,7 @@ def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_gr
     machine_group_name = val['name']
     return machine_group_name
   else:
-    raise Exception('Unable to fetch the machine group information from VSTS server. Please make sure that you enter the correct VSTS account name and PAT token.')
+    raise Exception('Unable to fetch the machine group information from VSTS server. Please make sure that you enter correct details.')
   
 
 def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, pat_token):
@@ -198,7 +198,7 @@ def apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, age
   if(response.status == 200):
     write_add_tags_log('Patch call for tags succeeded')
   else:
-    raise Exception('Tags could not be added. Please make sure that you enter the correct VSTS account name and PAT token.')
+    raise Exception('Tags could not be added. Please make sure that you enter correct details.')
 
 
 def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
@@ -232,7 +232,7 @@ def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent
     tags = json.loads(tags_string)
     tags = list(set(tags + existing_tags))
   else:
-    raise Exception('Tags could not be added. Unable to fetch the existing tags. Please make sure that you enter the correct VSTS account name and PAT token.')
+    raise Exception('Tags could not be added. Unable to fetch the existing tags. Please make sure that you enter correct details.')
   apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, json.dumps(tags, ensure_ascii = False))
  
 def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, tags_string, log_func):
@@ -243,7 +243,7 @@ def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, t
     agent_setting_file_path = os.path.join(working_folder, Constants.agent_setting)
     write_add_tags_log('\t\t Agent setting path : {0}'.format(agent_setting_file_path))
     if(not(os.path.isfile(agent_setting_file_path))):
-      raise Exception('Unable to find the .agent file {0}. Ensure to configure the agent before adding tags to it'.format(agent_setting_file_path))
+      raise Exception('Unable to find the .agent file {0}. Ensure that the agent is configured before adding tags.'.format(agent_setting_file_path))
     setting_params = json.load(codecs.open(agent_setting_file_path, 'r', 'utf-8-sig'))
     agent_id = setting_params['agentId']
     machine_group_id = ''
@@ -282,7 +282,7 @@ def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, t
     except Exception as e:
       pass
     if(agent_id == '' or machine_group_id == ''):
-      raise Exception('Unable to get the machine group id or agent id with .agent file from {0}. Ensure before adding tags, agent is configured'.format(working_folder))
+      raise Exception('Unable to get the machine group id or agent id. Ensure that the agent is configured before adding tags.'.format(working_folder))
     add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string)
     return Constants.return_success 
   except Exception as e:
@@ -333,7 +333,7 @@ def configure_agent(vsts_url, pat_token, project_name, machine_group_name, agent
   log_function = log_func
   try:
     if(not agent_listener_exists(working_folder)):
-      raise Exception('Unable to find the agent listener, ensure to download the agent exists before starting the agent configuration')
+      raise Exception('Unable to find the agent listener, ensure to download the agent before configuring.')
     if(agent_name is None or agent_name == ''):
       #todo
       agent_name = platform.node() + '-MG'

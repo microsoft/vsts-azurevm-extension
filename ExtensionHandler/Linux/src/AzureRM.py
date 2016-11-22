@@ -441,7 +441,7 @@ def uninstall():
 
 def main():
   waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
-  waagent.Log('Azure RM extension started to handle.')
+  waagent.Log('VSTS machine group extension handler started.')
   handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
   try:
     global root_dir

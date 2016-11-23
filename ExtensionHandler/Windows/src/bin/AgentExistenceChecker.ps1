@@ -183,7 +183,14 @@ function ContructRESTCallUrl
     {
         $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
         WriteLog "`t`t Machine Group Details : $response" $logFunction
-        return $response.Name
+        if($response.PSObject.Properties.name -contains "name")
+        {
+            return $response.Name
+        }
+        else
+        {
+            throw "REST call failed"
+        }
     }
     catch
     {

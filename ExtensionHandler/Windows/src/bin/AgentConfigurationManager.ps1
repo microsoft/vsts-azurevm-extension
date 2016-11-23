@@ -112,7 +112,10 @@ function ApplyTagsToAgent
     try
     {
         $ret = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
-        return $response.Value[0]
+        if($ret.PSObject.Properties.name -notcontains "value")
+        {
+            throw "PATCH call failed"
+        }
     }
     catch
     {

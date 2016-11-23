@@ -194,7 +194,7 @@ function ContructRESTCallUrl
     }
     catch
     {
-        throw "Unable to fetch the machine group information from VSTS server. Please make sure that you enter correct details."
+        throw "Unable to fetch the machine group information from VSTS server."
     }
  }
  

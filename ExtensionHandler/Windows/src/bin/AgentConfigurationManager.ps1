@@ -184,7 +184,7 @@ function AddTagsToAgent
     }
     catch
     {
-        throw "Tags could not be added. Unable to fetch the existing tags. Please make sure that you enter correct details."
+        throw "Tags could not be added. Unable to fetch the existing tags."
     }
     
     ApplyTagsToAgent -tfsUrl $tfsUrl -projectName $projectName -patToken $patToken -machineGroupId $machineGroupId -agentId $agentId -tagsAsJsonString $newTagsJsonString

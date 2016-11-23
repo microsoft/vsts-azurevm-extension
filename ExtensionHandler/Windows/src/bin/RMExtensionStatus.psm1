@@ -36,7 +36,7 @@ $global:RM_Extension_Status = @{
     }
     Initialized = @{
         Code = 4
-        Message = 'Done Initializing extension'
+        Message = 'Initialized extension successfully'
         operationName = 'Initialization'
     }
     PreCheckingDeploymentAgent = @{
@@ -46,7 +46,7 @@ $global:RM_Extension_Status = @{
     }
     PreCheckedDeploymentAgent = @{
         Code = 6
-        Message = 'Checked for exising deployment agent'
+        Message = 'Checked for existing deployment agent'
         operationName = 'Check existing Agent'
     }
     SkippingDownloadDeploymentAgent = @{
@@ -61,7 +61,7 @@ $global:RM_Extension_Status = @{
     }
     DownloadedDeploymentAgent = @{
         Code = 9
-        Message = 'Downloaded deployment agent package'
+        Message = 'Downloaded deployment agent package successfully'
         operationName = 'Agent download'
     }
     RemovingAndConfiguringDeploymentAgent = @{
@@ -86,7 +86,7 @@ $global:RM_Extension_Status = @{
     }
     SuccessfullyReadSettings = @{
         Code = 14
-        Message = 'Successfully read and validated config settings from file'
+        Message = 'Read and validated config settings from file successfully'
         operationName = 'Read Config settings'
     }
     SkippedInstallation = @{
@@ -96,7 +96,7 @@ $global:RM_Extension_Status = @{
     }
     Disabled = @{
         Code = 16
-        Message = 'Disabled extension. This will have no affect on team services agent. It will keep running and will still be registered with VSTS.'
+        Message = 'Disabled extension Successfully. This will have no affect on team services agent. It will keep running and will still be registered with VSTS.'
         operationName = 'Disable'
     }
     Uninstalling = @{
@@ -126,13 +126,13 @@ $global:RM_Extension_Status = @{
     }
     AgentTagsAdded = @{
         Code = 23
-        Message = 'Successfully added the tags to deployment agent'
+        Message = 'Added the tags to deployment agent successfully'
         operationName = 'Add Agent Tags'
     }
     AddingAgentTags = @{
         Code = 24
         Message = 'Adding agent tags'
-        operationName = 'Adding Agent Tags'
+        operationName = 'Add Agent Tags'
     }
 
     #

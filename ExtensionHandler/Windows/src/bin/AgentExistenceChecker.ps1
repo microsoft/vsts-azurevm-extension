@@ -179,13 +179,13 @@ function ContructRESTCallUrl
     $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
     
     WriteLog "`t`t Invoke-rest call for machine group name" $logFunction
-    $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
-    if($response.PSObject.Properties -contains "value")
+    try
     {
+        $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
         WriteLog "`t`t Machine Group Details : $response" $logFunction
         return $response.Name
     }
-    else
+    catch
     {
         throw "Unable to fetch the machine group information from VSTS server. Please make sure that you enter correct details."
     }

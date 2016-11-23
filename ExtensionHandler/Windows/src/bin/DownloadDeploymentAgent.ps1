@@ -70,17 +70,17 @@ function WriteDownloadLog
     $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
     
     WriteDownloadLog "`t`t Invoke-rest call for packageData"
-    $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
-    WriteDownloadLog "`t`t Agent PackageData : $response"
-    if($response.PSObject.Properties -contains "value")
+    try
     {
+        $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
+        WriteDownloadLog "`t`t Agent PackageData : $response"
         return $response.Value[0]
     }
-    else
+    catch
     {
         throw "Error while downloading VSTS extension. Please make sure that you enter the correct VSTS account name and PAT tokenn."
     }
- }
+}
  
  function GetAgentDownloadUrl
  {

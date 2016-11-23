@@ -109,13 +109,12 @@ function ApplyTagsToAgent
     $requestBody = "[{'tags':" + $tagsAsJsonString + ",'agent':{'id':" + $agentId + "}}]"
     
     WriteAddTagsLog "Add tags request body - $requestBody"
-
-    $ret = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
-    if($ret.PSObject.Properties -contains "value")
+    try
     {
+        $ret = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
         return $response.Value[0]
     }
-    else
+    catch
     {
         throw "Tags could not be added. Please make sure that you enter correct details."
     }
@@ -143,10 +142,9 @@ function AddTagsToAgent
     WriteAddTagsLog "Url for adding getting existing tags if any - $restCallUrlToGetExistingTags"
 
     $headers = GetRESTCallHeader $patToken
-    
-    $machineGroup = Invoke-RestMethod -Uri $($restCallUrlToGetExistingTags) -headers $headers -Method Get -ContentType "application/json"
-    if($machineGroup.PSObject.Properties -contains "value")
+    try
     {
+        $machineGroup = Invoke-RestMethod -Uri $($restCallUrlToGetExistingTags) -headers $headers -Method Get -ContentType "application/json"
         $existingTags = @()
         for( $i = 0; $i -lt $machineGroup.count; $i++ )
         {
@@ -181,7 +179,7 @@ function AddTagsToAgent
     
         $newTagsJsonString = ConvertTo-Json $tags
     }
-    else
+    catch
     {
         throw "Tags could not be added. Unable to fetch the existing tags. Please make sure that you enter correct details."
     }

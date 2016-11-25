@@ -41,13 +41,13 @@ $global:RM_Extension_Status = @{
     }
     PreCheckingDeploymentAgent = @{
         Code = 5
-        Message = 'Checking whether a deployment agent is already exising'
-        operationName = 'Check existing Agent'
+        Message = 'Checking whether a deployment agent is already existing'
+        operationName = 'Check existing agent'
     }
     PreCheckedDeploymentAgent = @{
         Code = 6
         Message = 'Checked for existing deployment agent'
-        operationName = 'Check existing Agent'
+        operationName = 'Check existing agent'
     }
     SkippingDownloadDeploymentAgent = @{
         Code = 7
@@ -61,7 +61,7 @@ $global:RM_Extension_Status = @{
     }
     DownloadedDeploymentAgent = @{
         Code = 9
-        Message = 'Downloaded deployment agent package successfully'
+        Message = 'Downloaded deployment agent package'
         operationName = 'Agent download'
     }
     RemovingAndConfiguringDeploymentAgent = @{
@@ -86,22 +86,22 @@ $global:RM_Extension_Status = @{
     }
     SuccessfullyReadSettings = @{
         Code = 14
-        Message = 'Read and validated config settings from file successfully'
-        operationName = 'Read Config settings'
+        Message = 'Successfully read and validated config settings from file'
+        operationName = 'Read config settings'
     }
     SkippedInstallation = @{
         Code = 15
-        Message = 'Same config settings have already been processed. This can happen if extension has been set again without changing any config settings or if VM has been rebooted. Skipping this time.'
+        Message = 'No change in config settings or VM has just been rebooted. Skipping initialization.'
         operationName = 'Initialization'
     }
     Disabled = @{
         Code = 16
-        Message = 'Disabled extension Successfully. This will have no affect on team services agent. It will keep running and will still be registered with VSTS.'
+        Message = 'Disabled extension. However, Team services agent would continue to be registered with VSTS and will keep running'
         operationName = 'Disable'
     }
     Uninstalling = @{
         Code = 17
-        Message = 'Uninstalling extension and removing the deployment agent form machine group' 
+        Message = 'Uninstalling extension and removing the deployment agent from machine group' 
         operationName = 'Uninstall'
     }
     RemovedAgent = @{
@@ -111,28 +111,28 @@ $global:RM_Extension_Status = @{
     }
     CheckingAgentReConfigurationRequired = @{
         Code = 19
-        Message = 'Checking if re-configuration is required for existing agent by comparing existing agent settings'
-        operationName = 'Agent Configuration'
+        Message = 'Checking if re-configuration is required for existing agent by comparing agent settings'
+        operationName = 'Agent configuration'
     }
     AgentReConfigurationRequiredChecked = @{
         Code = 20
         Message = 'Checked if re-configuration is required for existing agent'
-        operationName = 'Agent Configuration'
+        operationName = 'Agent configuration'
     }
     SkippingAgentConfiguration = @{
         Code = 21
         Message = 'An agent is already running with same settings, skipping agent configuration'
-        operationName = 'Agent Configuration'
+        operationName = 'Agent configuration'
     }
     AgentTagsAdded = @{
         Code = 23
-        Message = 'Added the tags to deployment agent successfully'
-        operationName = 'Add Agent Tags'
+        Message = 'Successfully added the tags to deployment agent'
+        operationName = 'Add agent tags'
     }
     AddingAgentTags = @{
         Code = 24
         Message = 'Adding agent tags'
-        operationName = 'Add Agent Tags'
+        operationName = 'Add agent tags'
     }
 
     #
@@ -158,7 +158,7 @@ $global:RM_Extension_Status = @{
     }
     
     #
-    # ArgumentError indicates a problem in the input provided by the user. The message for the error is provided by the specific exception
+    # ArgumentError indicates a problem in the user input. The message for the error is provided by the specific exception
     #
     ArgumentError = 1100 
 }

@@ -35,7 +35,7 @@ function ConfigureAgent
     
     $processStartInfo = GetProcessStartInfo
     $processStartInfo.FileName = $configCmdPath
-    $processStartInfo.Arguments = "$configCommonArgs --agent $agentName --url $tfsUrl --token $patToken --work $workingFolder --projectname $projectName --machinegroupname $machineGroupName --pool $machineGroupName"
+    $processStartInfo.Arguments = "$configCommonArgs --agent $agentName --url $tfsUrl --token $patToken --work $workingFolder --projectname $projectName --machinegroupname $machineGroupName"
     
     $configProcess = New-Object System.Diagnostics.Process
     $configProcess.StartInfo = $processStartInfo
@@ -109,9 +109,18 @@ function ApplyTagsToAgent
     $requestBody = "[{'tags':" + $tagsAsJsonString + ",'agent':{'id':" + $agentId + "}}]"
     
     WriteAddTagsLog "Add tags request body - $requestBody"
-
-    $ret = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
-    
+    try
+    {
+        $ret = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
+        if($ret.PSObject.Properties.name -notcontains "value")
+        {
+            throw "PATCH call failed"
+        }
+    }
+    catch
+    {
+        throw "Tags could not be added. Please make sure that you enter correct details."
+    }
 }
 
 function AddTagsToAgent
@@ -136,42 +145,48 @@ function AddTagsToAgent
     WriteAddTagsLog "Url for adding getting existing tags if any - $restCallUrlToGetExistingTags"
 
     $headers = GetRESTCallHeader $patToken
-    
-    $machineGroup = Invoke-RestMethod -Uri $($restCallUrlToGetExistingTags) -headers $headers -Method Get -ContentType "application/json"
-    
-    $existingTags = @()
-    for( $i = 0; $i -lt $machineGroup.count; $i++ )
+    try
     {
-        $eachMachine = $machineGroup.value[$i]
-        if( ($eachMachine -ne $null) -and ($eachMachine.agent -ne $null) -and ($eachMachine.agent.id  -eq $agentId) -and ($eachMachine.PSObject.Properties.Match('tags').Count))
+        $machineGroup = Invoke-RestMethod -Uri $($restCallUrlToGetExistingTags) -headers $headers -Method Get -ContentType "application/json"
+        $existingTags = @()
+        for( $i = 0; $i -lt $machineGroup.count; $i++ )
         {
-            $existingTags += $eachMachine.tags
-            break
-        }
-    }
-
-    $tags = @()
-    [Array]$newTags =  ConvertFrom-Json $tagsAsJsonString
-
-    if($existingTags.count -gt 0)
-    {    
-        $tags = $existingTags    ## Append new tags to existing tags, this will ensure existing tags are not modified due to case change
-        WriteAddTagsLog "Found existing tags for agent - $existingTags"
-        
-        foreach( $newTag in $newTags) 
-        {
-            if(!($tags -Contains $newTag))
+            $eachMachine = $machineGroup.value[$i]
+            if( ($eachMachine -ne $null) -and ($eachMachine.agent -ne $null) -and ($eachMachine.agent.id  -eq $agentId) -and ($eachMachine.PSObject.Properties.Match('tags').Count))
             {
-                $tags += $newTag
+                $existingTags += $eachMachine.tags
+                break
             }
         }
+        
+        $tags = @()
+        [Array]$newTags =  ConvertFrom-Json $tagsAsJsonString
+
+        if($existingTags.count -gt 0)
+        {    
+            $tags = $existingTags    ## Append new tags to existing tags, this will ensure existing tags are not modified due to case change
+            WriteAddTagsLog "Found existing tags for agent - $existingTags"
+        
+            foreach( $newTag in $newTags) 
+            {
+                if(!($tags -Contains $newTag))
+                {
+                    $tags += $newTag
+                }
+            }
+        }
+        else    ## In case not exiting tags are present
+        {
+            $tags = $newTags
+        }
+    
+        $newTagsJsonString = ConvertTo-Json $tags
     }
-    else    ## In case not exiting tags are present
+    catch
     {
-        $tags = $newTags
+        throw "Tags could not be added. Unable to fetch the existing tags."
     }
     
-    $newTagsJsonString = ConvertTo-Json $tags
     ApplyTagsToAgent -tfsUrl $tfsUrl -projectName $projectName -patToken $patToken -machineGroupId $machineGroupId -agentId $agentId -tagsAsJsonString $newTagsJsonString
 }
 

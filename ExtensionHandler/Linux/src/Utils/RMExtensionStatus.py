@@ -5,11 +5,11 @@ rm_terminating_error_id = 'RMHandlerTerminatingError'
 rm_extension_status = {
   'Installing' : {
     'Code' : 1,
-    'Message' : 'Installing and configuring Deployment agent.' 
+    'Message' : 'Installing and configuring deployment agent.'
   },
   'Installed' : {
     'Code' : 2,
-    'Message' : 'Configured Deployment agent successfully.' 
+    'Message' : 'Configured deployment agent successfully.'
   },
   'Initializing' : {
     'Code' : 3,
@@ -18,18 +18,18 @@ rm_extension_status = {
   },
   'Initialized' : {
     'Code' : 4,
-    'Message' : 'Done Initializing extension.',
+    'Message' : 'Initialized extension successfully.',
     'operationName' : 'Initialization'
   },
   'PreCheckingDeploymentAgent' : {
     'Code' : 5,
-    'Message' : 'Checking whether an agent is already exising.',
+    'Message' : 'Checking whether an agent is already existing.',
     'operationName' : 'Check existing Agent'
   },
   'PreCheckedDeploymentAgent' : {
     'Code' : 6,
-    'Message' : 'Checked for exising deployment agent.',
-    'operationName' : 'Check existing Agent'
+    'Message' : 'Checked for existing deployment agent.',
+    'operationName' : 'Check existing agent'
   },
   'SkippingDownloadDeploymentAgent' : {
     'Code' : 7,
@@ -38,12 +38,12 @@ rm_extension_status = {
   },
   'DownloadingDeploymentAgent' : {
     'Code' : 8,
-    'Message' : 'Downloading Deployment agent package.',
+    'Message' : 'Downloading deployment agent package.',
     'operationName' : 'Agent download'
   },
   'DownloadedDeploymentAgent' : {
     'Code' : 9,
-    'Message' : 'Downloaded Deployment agent package.',
+    'Message' : 'Downloaded deployment agent package.',
     'operationName' : 'Agent download'
   },
   'RemovingAndConfiguringDeploymentAgent' : {
@@ -58,27 +58,27 @@ rm_extension_status = {
   },
   'ConfiguredDeploymentAgent' : {
     'Code' : 12,
-    'Message' : 'Configured Deployment agent successfully.',
+    'Message' : 'Configured deployment agent successfully.',
     'operationName' : 'Agent configuration'
   },
   'ReadingSettings' : {
     'Code' : 13,
     'Message' : 'Reading config settings from file.',
-    'operationName' : 'Read Config settings'
+    'operationName' : 'Read config settings'
   },
   'SuccessfullyReadSettings' : {
     'Code' : 14,
     'Message' : 'Successfully read config settings from file.',
-    'operationName' : 'Read Config settings'
+    'operationName' : 'Read config settings'
   },
   'SkippedInstallation' : {
     'Code' : 15,
-    'Message' : 'Same config settings have already been processed. This can happen if extension has been set again without changing any config settings or if VM has been rebooted. Skipping this time.',
+    'Message' : 'No change in config settings or VM has just been rebooted. Skipping initialization.',
     'operationName' : 'Initialization'
   },
   'Disabled' : {
     'Code' : 16,
-    'Message' : 'Disabled extension. This will have no affect on team services agent. It will keep running and will still be registered with VSTS.',
+    'Message' : 'Disabled extension. However, Team services agent would continue to be registered with VSTS and will keep running.',
     'operationName' : 'Disable'
   },
   'Uninstalling' : {
@@ -88,28 +88,28 @@ rm_extension_status = {
   },
   'RemovedAgent' : {
     'Code' : 18,
-    'Message' : 'Uninstalling extension has no affect on team services agent. It will keep running and will still be registered with VSTS.',
+    'Message' : 'Uninstalled extension. However, Team services agent would continue to be registered with VSTS and will keep running.',
     'operationName' : 'Uninstall'
   },
   'CheckingAgentReConfigurationRequired' : {
     'Code' : 19,
-    'Message' : 'Checking if re-configuration is required for existing agent by comparing existing agent settings',
-    'operationName' : 'Agent Configuration'
+    'Message' : 'Checking if re-configuration is required for existing agent by comparing agent settings.',
+    'operationName' : 'Agent configuration'
   },
   'AgentReConfigurationRequiredChecked' : {
     'Code' : 20,
     'Message' : 'Checked if re-configuration is required for existing agent.',
-    'operationName' : 'Agent Configuration'
+    'operationName' : 'Agent configuration'
   },
   'SkippingAgentConfiguration' : {
     'Code' : 21,
     'Message' : 'An agent is already running with same settings, skipping agent configuration.',
-    'operationName' : 'Agent Configuration'
+    'operationName' : 'Agent configuration'
   },
   'AgentTagsAdded' : {
     'Code' : 23,
     'Message' : 'Successfully added the tags to deployment agent.',
-    'operationName' : 'Agent Tags'
+    'operationName' : 'Agent tags'
   },
   #
   # Warnings

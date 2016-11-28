@@ -1,5 +1,5 @@
 {
-    "VSTSAccountName": "testking123",
+    "VSTSAccountName": "https://testking123.visualstudio.com",
     "TeamProject": "AzureProj",
     "MachineGroup": "biprasad",
     "AgentName": "vm-ext-e2e-clsc-agent"

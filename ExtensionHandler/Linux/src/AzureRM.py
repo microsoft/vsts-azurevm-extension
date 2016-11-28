@@ -17,6 +17,7 @@ agent_configuration_required = True
 config = {}
 root_dir = ''
 markup_file_format = '{0}/EXTENSIONDISABLED'
+is_tfs_account = False
 
 def get_last_sequence_number_file_path():
   global root_dir
@@ -157,12 +158,23 @@ def check_account_name_prefix(account_name):
   ans = (account_name_lower.startswith(prefix_1) or account_name_lower.startswith(prefix_2))
   return ans 
 
+def modify_address_formats():
+  Constants.package_data_address_format = '/tfs' + Constants.package_data_address_format
+  Constants.machine_group_address_format = '/tfs' + Constants.machine_group_address_format
+  Constants.machines_address_format = '/tfs' + Constants.machines_address_format
+  Constants.machine_groups_address_format = '/tfs' + Constants.machine_groups_address_format
+
 def check_account_name_suffix(account_name):
+  global is_tfs_account
   suffix_1 = 'vsallin.net'
   suffix_2 = 'tfsallin.net'
   suffix_3 = 'visualstudio.com'
+  suffix_4 = '/tfs'
   account_name_lower = account_name.lower()
-  ans = (account_name_lower.endswith(suffix_1) or account_name_lower.endswith(suffix_2) or account_name_lower.endswith(suffix_3)) 
+  ans = (account_name_lower.endswith(suffix_1) or account_name_lower.endswith(suffix_2) or account_name_lower.endswith(suffix_3) or account_name_lower.endswith(suffix_4))
+  if(account_name_lower.endswith(suffix_4)):
+    is_tfs_account = True
+    modify_address_formats()
   return ans
 
 def format_tags_input(tags_input):
@@ -202,7 +214,10 @@ def get_configutation_from_settings():
     vsts_account_name = public_settings['VSTSAccountName']
     handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
     if(not (check_account_name_prefix(vsts_account_name) and check_account_name_suffix(vsts_account_name))):
-      vsts_url = format_string.format(vsts_account_name)
+      if(is_tfs_account):
+        vsts_url = vsts_account_name[:-4]
+      else:
+        vsts_url = format_string.format(vsts_account_name)
     else:
       vsts_url = vsts_account_name
     handler_utility.log('VSTS service URL : {0}'.format(vsts_url))

@@ -230,7 +230,7 @@ def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent
           existing_tags = each_machine['tags']
           break
     tags = json.loads(tags_string)
-    tags = list(set(tags + existing_tags))
+    tags = list(set(map(lambda x:x.lower(), (tags + existing_tags))))
   else:
     raise Exception('Tags could not be added. Unable to fetch the existing tags.')
   apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, json.dumps(tags, ensure_ascii = False))

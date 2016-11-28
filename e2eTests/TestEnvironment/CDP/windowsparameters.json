@@ -1,0 +1,75 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "southcentralus"
+        },
+        "virtualMachineName": {
+            "value": "vm-ext-cdp-win"
+        },
+        "virtualMachineSize": {
+            "value": "Standard_A1"
+        },
+        "adminUsername": {
+            "value": "tfs"
+        },
+        "storageAccountName": {
+            "value": "vmextcdpdiskswin"
+        },
+        "virtualNetworkName": {
+            "value": "vm-ext-cdp-vnet"
+        },
+        "networkInterfaceName": {
+            "value": "vm-ext-cdp-win741"
+        },
+        "networkSecurityGroupName": {
+            "value": "vm-ext-cdp-win-nsg"
+        },
+        "adminPassword": {
+            "value": null
+        },
+        "diagnosticsStorageAccountName": {
+            "value": "vmextcdpdiag350"
+        },
+        "diagnosticsStorageAccountId": {
+            "value": "/subscriptions/393a91ee-f98d-43ff-b964-009bda0fdf2e/resourceGroups/vm-ext-cdp/providers/Microsoft.Storage/storageAccounts/vmextcdpdiag350"
+        },
+        "subnetName": {
+            "value": "default"
+        },
+        "publicIpAddressName": {
+            "value": "vm-ext-cdp-win-ip"
+        },
+        "publicIpAddressType": {
+            "value": "Dynamic"
+        },
+        "vaultName": {
+            "value": "vm-ext-cdp-kv"
+        },
+        "certSecretUrl": {
+            "value": "https://vm-ext-cdp-kv.vault.azure.net/secrets/vm-ext-cdp-cert/0a25cadba1c141e6a6e2e034231175ed"
+        },
+        "caCertSecretUrl": {
+            "value": "https://vm-ext-cdp-kv.vault.azure.net/secrets/vm-ext-cdp-cacert/d5ab564a52b04a199a49293553571e61"
+        },
+        "VSTSAccountName": {
+            "value": ""
+        },
+        "TeamProject": {
+            "value": ""
+        },
+        "MachineGroup": {
+            "value": ""
+        },
+        "WindowsAgentName": {
+            "value": ""
+        },
+        "Tags": {
+            "value": ""
+        },
+        "PATToken": {
+            "value": ""
+        }
+    }
+}

@@ -1,10 +1,11 @@
 {
-  "resourceGroupName": "vm-ext-rg",
-  "vmName": "vm-ext-e2e",
-  "location": "southeastasia",
-  "storageAccountName": "vmextrg114",
-  "templateFile": "template.json",
-  "templateParameterFile": "parameters.json",
-  "extensionPublicSettingsFile": "publicConfig.json",
-  "extensionProtectedSettingsFile": "_protectedConfig.json"
+  "resourceGroupName": "vm-ext-cdp",
+  "location": "southcentralus",
+  "windowsVmName": "vm-ext-cdp-win",
+  "windowsVmStorageAccountName": "vmextcdpdiskswin",
+  "windowsVmTemplateFile": "windowstemplate.json",
+  "windowsVmTemplateParameterFile": "windowsparameters.json",
+  "windowsExtensionPublicSettingsFile": "windowsExtensionPublicConfig.json",
+  "windowsExtensionName": "TeamServicesAgent",
+  "windowsExtensionPublisher": "Microsoft.VisualStudio.Services"
 }

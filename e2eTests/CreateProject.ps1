@@ -1,7 +1,12 @@
+param (
+    [Parameter(Mandatory=$true)]
+    [String]$teamProject
+    )
+
 $uri = "http://localhost:8080/tfs/defaultcollection/_apis/projects?api-version=3.0-preview.2"
 
 $projectParams = @{
-    name = "test7";
+    name = $teamProject;
     description = "Test project for VM extension";
     capabilities = @{
         versioncontrol = @{

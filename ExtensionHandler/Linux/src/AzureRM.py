@@ -28,7 +28,7 @@ def get_last_sequence_number():
   try:
     #Will raise IOError if file does not exist
     with open(last_seq_file) as f:
-      contents = f.read()
+      contents = int(f.read())
       return contents
       f.close()
   except IOError as e:
@@ -116,11 +116,11 @@ def install_dependencies():
 
 def start_rm_extension_handler(operation):
   try:
-    sequence_number = handler_utility._context._seq_no
+    sequence_number = int(handler_utility._context._seq_no)
     last_sequence_number = get_last_sequence_number()
     if((sequence_number == last_sequence_number) and not(test_extension_disabled_markup())):
       handler_utility.log(RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'])
-      handler_utility.log('Current sequence number : ' + sequence_number + ', last sequence number : ' + last_sequence_number)
+      handler_utility.log('Current sequence number : {0}, last sequence number : {1}'.format(sequence_number, last_sequence_number))
       ss_code = RMExtensionStatus.rm_extension_status['SkippedInstallation']['Code']
       sub_status_message = RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message']
       operation_name = RMExtensionStatus.rm_extension_status['SkippedInstallation']['operationName']
@@ -176,8 +176,11 @@ def format_tags_input(tags_input):
   else:
     message = 'Tags input should be either a list or a dictionary'
     raise RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['ArgumentError'], message)
-  tags.sort()
-  ret_val =  filter(lambda x : x!='', list(set(map(lambda x : x.strip(), tags))))
+  ret_val = []
+  temp = list(set(map(lambda x : x.strip(), tags)))
+  for x in  temp:
+    if(x!='' and x.lower() not in map(lambda x:x.lower(), ret_val)):
+      ret_val.append(x)
   return ret_val
 
 def get_configutation_from_settings():
@@ -416,19 +419,18 @@ def enable():
 def disable():
   working_folder = '{0}/VSTSAgent'.format('')
   agent_exists = ConfigureDeploymentAgent.test_configured_agent_exists_internal(working_folder, handler_utility.log)
-  if(agent_exists):
-    handler_utility.log('Disable command is no-op for agent')
-    handler_utility.log('Creating a markup file...')
-    operation = 'disable'
-    handler_utility.do_parse_context(operation) 
-    set_extension_disabled_markup()
-    ss_code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['Disabled']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-    code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
-    message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
-    handler_utility.set_handler_status(code = code, status = 'success', message = message)
+  handler_utility.log('Disable command is no-op for agent')
+  handler_utility.log('Creating a markup file...')
+  operation = 'disable'
+  handler_utility.do_parse_context(operation)
+  set_extension_disabled_markup()
+  ss_code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
+  sub_status_message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
+  operation_name = RMExtensionStatus.rm_extension_status['Disabled']['operationName']
+  handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+  code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
+  message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
+  handler_utility.set_handler_status(code = code, status = 'success', message = message)
 
 def uninstall():
   global configured_agent_exists, config
@@ -438,30 +440,34 @@ def uninstall():
   config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
   if(configured_agent_exists == True):
     remove_existing_agent(config)
+  else:
+    code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
+    message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']
+    handler_utility.set_handler_status(code = code, status = 'success', message = message)
 
 def main():
   waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
   waagent.Log('VSTS machine group extension handler started.')
-  handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
-  try:
-    global root_dir
+  if(len(sys.argv) == 2):
     global handler_utility
-    root_dir = os.getcwd()
-    if(len(sys.argv) == 2):
-      operation = sys.argv[1]
-      handler_utility.do_parse_context(operation)
+    handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
+    operation = sys.argv[1]
+    handler_utility.do_parse_context(operation)
+    try:
       check_python_version()
       install_dependencies()
+      global root_dir
+      root_dir = os.getcwd()
       if(sys.argv[1] == '-enable'):
-        enable()
+	enable()
       elif(sys.argv[1] == '-disable'):
-        disable()
+	disable()
       elif(sys.argv[1] == '-uninstall'):
-        uninstall()
-    exit_with_code_zero()
-  except Exception as e:
-    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'])
-    exit_with_code_zero()
+	uninstall()
+      exit_with_code_zero()
+    except Exception as e:
+      handler_utility.set_handler_error_status(e, 'Some error occured')
+      exit_with_code_zero()
 
 if(__name__ == '__main__'):
   main()

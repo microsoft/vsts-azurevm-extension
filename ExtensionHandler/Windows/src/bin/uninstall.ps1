@@ -15,6 +15,7 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
 
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionHandler.psm1
+Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 
 Initialize-ExtensionLogFile
 $config = Get-ConfigurationFromSettings
@@ -22,4 +23,8 @@ $configuredAgentExists = Test-AgentAlreadyExists $config
 if($configuredAgentExists)
 {
     Remove-Agent $config
+}
+else
+{
+	Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
 }

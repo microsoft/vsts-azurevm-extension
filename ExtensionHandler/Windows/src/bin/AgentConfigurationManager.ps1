@@ -169,7 +169,7 @@ function AddTagsToAgent
         
             foreach( $newTag in $newTags) 
             {
-                if(!($tags -Contains $newTag))
+                if(!($tags -iContains $newTag))
                 {
                     $tags += $newTag
                 }

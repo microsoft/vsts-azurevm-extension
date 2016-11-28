@@ -411,7 +411,7 @@ function Format-TagsInput {
         throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message    
     }
 
-    $uniqueTags = $tags | Sort-Object | Get-Unique -AsString | Where { -not [string]::IsNullOrWhiteSpace($_) }
+    $uniqueTags = $tags | Sort-Object -Unique | Where { -not [string]::IsNullOrWhiteSpace($_) }
     
     return $uniqueTags
 }

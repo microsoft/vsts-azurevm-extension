@@ -176,8 +176,11 @@ def format_tags_input(tags_input):
   else:
     message = 'Tags input should be either a list or a dictionary'
     raise RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['ArgumentError'], message)
-  tags.sort()
-  ret_val =  filter(lambda x : x!='', list(set(map(lambda x : x.strip(), tags))))
+  ret_val = []
+  temp = list(set(map(lambda x : x.strip(), tags)))
+  for x in  temp:
+    if(x!='' and x.lower() not in map(lambda x:x.lower(), ret_val)):
+      ret_val.append(x)
   return ret_val
 
 def get_configutation_from_settings():

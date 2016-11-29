@@ -2,6 +2,7 @@ RMExtension/HandlerEnvironment.json
 CDScripts/node_modules/
 node_modules/
 _build/
+_temp/
 _testResults/
 ExtensionHandler/Windows/src/LASTSEQNUM
 ExtensionHandler/Windows/src/HandlerEnvironment.json

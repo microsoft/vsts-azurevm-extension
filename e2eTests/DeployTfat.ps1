@@ -92,18 +92,24 @@ function Add-TeamProject
     } While (($isProjectCreated -ne $true) -and ($retryCount -lt $maxRetries))
 }
 
-# clean-up existing tfat
-Write-Verbose -Verbose "Cleaning up existing tfat..."
-$cleanupScript = Join-Path $BinariesDir "scripts\CDPScripts\TfsOnpremCleanup.ps1"
-& $cleanupScript -BinariesDir $BinariesDir -Configuration $Configuration
+try 
+{
+    # clean-up existing tfat
+    Write-Verbose -Verbose "Cleaning up existing tfat..."
+    $cleanupScript = Join-Path $BinariesDir "scripts\CDPScripts\TfsOnpremCleanup.ps1"
+    & $cleanupScript -BinariesDir $BinariesDir -Configuration $Configuration
 
-# Run tfat.cmd
-Write-Verbose -Verbose "Running tfat.cmd..."
-$tfatScriptDir = Join-Path $BinariesDir "scripts"
-$tfatScript = "$tfatScriptDir\tfat.cmd"
+    # Run tfat.cmd
+    Write-Verbose -Verbose "Running tfat.cmd..."
+    $tfatScriptDir = Join-Path $BinariesDir "scripts"
+    $tfatScript = "$tfatScriptDir\tfat.cmd"
 
-Set-Location $tfatScriptDir
-& $tfatScript /$Configuration
+    Set-Location $tfatScriptDir
+    & $tfatScript /$Configuration
+}
+catch
+{
+}
 
 # Create team project
 Write-Verbose -Verbose "Creating team project..."

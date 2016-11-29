@@ -25,3 +25,5 @@ if(Test-Path $Destination)
 
 $dropFetch = Join-Path $DropFetchExeLocation VssDropFetch.exe
 & $dropFetch FetchProduct /productGroups:$ProductGroups /configuration:$Configuration  /dropService:$msengDropService /project:$msengProject /build:$msengBuildNumber /destination:"$Destination\bin" /purge /WarningsToStdOut /accessToken:$msengPATToken
+
+& $dropFetch FetchDrop /ItemPath:"ReleaseManagement" /dropservice:$msengDropService /proj:$msengProject /build:$msengBuildNumber /dest:"$Destination\bin" /WarningsToStdOut /accessToken:$msengPATToken

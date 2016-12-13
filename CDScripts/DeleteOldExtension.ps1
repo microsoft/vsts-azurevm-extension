@@ -28,7 +28,7 @@ if(($versionToDelete -eq "WILL_BET_SET_AT_RUNTIME") -or ($versionToDelete -eq ""
 
     if($extensions.Count -ge 5) 
     {
-        $versionToDelete = $extensions[0].Version
+        $versionToDelete = $extensions[1].Version
         Write-Host "5 or more extension handler versions are published. Oldest version will be deleted"
     }
     else

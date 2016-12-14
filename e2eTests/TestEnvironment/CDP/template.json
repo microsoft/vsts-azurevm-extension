@@ -44,6 +44,21 @@
         "publicIpAddressType": {
             "type": "string"
         },
+        "linuxVirtualMachineName": {
+            "type": "string"
+        },
+        "linuxStorageAccountName": {
+            "type": "string"
+        },
+        "linuxNetworkInterfaceName": {
+            "type": "string"
+        },
+        "linuxNetworkSecurityGroupName": {
+            "type": "string"
+        },
+        "linuxPublicIpAddressName": {
+            "type": "string"
+        },
         "vaultName": {
             "type": "string",
             "metadata": {
@@ -72,6 +87,9 @@
             "type": "string"
         },
         "WindowsAgentName": {
+            "type": "string"
+        },
+        "LinuxAgentName": {
             "type": "string"
         },
         "Tags": {
@@ -173,7 +191,90 @@
                 }
                 }
             ]
-        }
+        },
+        {
+            "name": "[parameters('linuxVirtualMachineName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2015-06-15",
+            "location": "[parameters('location')]",
+            "properties": {
+                "osProfile": {
+                    "computerName": "[parameters('linuxVirtualMachineName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "secrets": [{
+                        "sourceVault": {
+                            "id": "[resourceId('vm-ext-cdp', 'Microsoft.KeyVault/vaults', parameters('vaultName'))]"
+                        },
+                        "vaultCertificates": [{
+                            "certificateUrl": "[parameters('caCertSecretUrl')]"
+                        },
+                        {
+                            "certificateUrl": "[parameters('certSecretUrl')]"
+                        }]
+                    }]
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "16.04.0-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[parameters('linuxVirtualMachineName')]",
+                        "vhd": {
+                            "uri": "[concat(concat(reference(resourceId('vm-ext-cdp', 'Microsoft.Storage/storageAccounts', parameters('linuxStorageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('linuxVirtualMachineName'), '2016102814175.vhd')]"
+                        },
+                        "createOption": "fromImage"
+                    },
+                    "dataDisks": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('linuxNetworkInterfaceName'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('vm-ext-cdp', 'Microsoft.Storage/storageAccounts', parameters('diagnosticsStorageAccountName')), '2015-06-15').primaryEndpoints['blob']]"
+                    }
+                }
+            },
+            "resources": [
+                {
+                "name": "[concat(parameters('linuxVirtualMachineName'),'/TeamServicesAgentLinux')]",
+                "type": "Microsoft.Compute/virtualMachines/extensions",
+                "location": "[parameters('location')]",
+                "apiVersion": "2015-06-15",
+                "dependsOn": [
+                    "[concat('Microsoft.Compute/virtualMachines/', parameters('linuxVirtualMachineName'))]"
+                ],
+                "properties": {
+                    "publisher": "Microsoft.VisualStudio.Services",
+                    "type": "TeamServicesAgentLinux",
+                    "typeHandlerVersion": "1.0",
+                    "autoUpgradeMinorVersion": true,
+                    "settings": {
+                    "VSTSAccountName": "[parameters('VSTSAccountName')]",
+                    "TeamProject": "[parameters('TeamProject')]",
+                    "MachineGroup": "[parameters('MachineGroup')]",
+                    "AgentName": "[parameters('LinuxAgentName')]",
+                    "Tags": "[parameters('Tags')]"
+                    },
+                    "protectedSettings": {
+                    "PATToken": "[parameters('PATToken')]"
+                    }
+                }
+                }
+            ]
+        },
     ],
     "outputs": {
         "adminUsername": {

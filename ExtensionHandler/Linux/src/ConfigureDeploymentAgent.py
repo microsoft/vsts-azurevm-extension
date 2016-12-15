@@ -216,7 +216,7 @@ def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent
     response_string = response.read()
     val = json.loads(response_string)
     existing_tags = []
-    for i in range(1, val['count']):
+    for i in range(0, val['count']):
       each_machine = val['value'][i]
       if(each_machine != None and each_machine.has_key('agent') and each_machine['agent']['id'] == agent_id):
         if(each_machine.has_key('tags')):

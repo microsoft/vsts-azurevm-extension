@@ -422,7 +422,7 @@ def configure_agent_if_required():
 
 
 def add_agent_tags():
-  if(config['Tags'] !=None and len(config) > 0):
+  if(config['Tags'] !=None and len(config['Tags']) > 0):
     handler_utility.log('Adding tags to configured agent - {0}'.format(str(config['Tags'])))
     try:
       tags_string = json.dumps(config['Tags'], ensure_ascii = False)

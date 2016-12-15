@@ -88,7 +88,6 @@ def check_python_version():
   version_info = sys.version_info
   major = version_info[0]
   minor = version_info[1]
-  #try:
   if(major < 2 or (major == 2 and minor < 6)):
     code = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Code']
     message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(str(major) + '.' + str(minor))
@@ -262,7 +261,6 @@ def get_configutation_from_settings():
     tags = format_tags_input(tags_input)
     agent_working_folder = '{0}/VSTSAgent'.format('')
     handler_utility.log('Working folder for VSTS agent : {0}'.format(agent_working_folder))
-    #Check for links
     if(not os.path.isdir(agent_working_folder)):
       handler_utility.log('Working folder does not exist. Creating it...')
       os.makedirs(agent_working_folder, 0700)

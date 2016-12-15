@@ -17,7 +17,11 @@ agent_configuration_required = True
 config = {}
 root_dir = ''
 markup_file_format = '{0}/EXTENSIONDISABLED'
-is_tfs_account = False
+is_on_prem = False
+collection = ''
+virtual_application = ''
+base_url = ''
+
 
 def get_last_sequence_number_file_path():
   global root_dir
@@ -158,24 +162,33 @@ def check_account_name_prefix(account_name):
   ans = (account_name_lower.startswith(prefix_1) or account_name_lower.startswith(prefix_2))
   return ans 
 
-def modify_address_formats():
-  Constants.package_data_address_format = '/tfs' + Constants.package_data_address_format
-  Constants.machine_group_address_format = '/tfs/defaultcollection' + Constants.machine_group_address_format
-  Constants.machines_address_format = '/tfs/defaultcollection' + Constants.machines_address_format
-  Constants.machine_groups_address_format = '/tfs/defaultcollection' + Constants.machine_groups_address_format
-
 def check_account_name_suffix(account_name):
-  global is_tfs_account
   suffix_1 = 'vsallin.net'
   suffix_2 = 'tfsallin.net'
   suffix_3 = 'visualstudio.com'
-  suffix_4 = '/tfs'
   account_name_lower = account_name.lower()
   ans = (account_name_lower.endswith(suffix_1) or account_name_lower.endswith(suffix_2) or account_name_lower.endswith(suffix_3))
-  if(account_name_lower.endswith(suffix_4)):
-    is_tfs_account = True
-    modify_address_formats()
   return ans
+
+def modify_paths():
+  Constants.package_data_address_format = '/' + virtual_application + Constants.package_data_address_format
+  Constants.machine_group_address_format = '/' + virtual_application + '/' + collection + Constants.machine_group_address_format
+  Constants.machines_address_format = '/' + virtual_application + '/' + collection + Constants.machines_address_format
+  Constants.machine_groups_address_format = '/' + virtual_application + '/' + collection + Constants.machine_groups_address_format
+
+
+def parse_account_name(account_name): 
+  global base_url, virtual_application, collection, is_on_prem
+  if(check_account_name_prefix(account_name)):
+    account_name = account_name[7:]
+    account_name = account_name.strip('/')
+  if(account_name.find('/') > -1):
+    is_on_prem = True
+    url_split = filter(lambda x: x!='', account_name.split('/'))
+    if(len(url_split) == 3):
+      base_url = url_split[0]
+      virtual_application = url_split[1]
+      collection = url_split[2]
 
 def format_tags_input(tags_input):
   tags = []
@@ -213,13 +226,15 @@ def get_configutation_from_settings():
     handler_utility.log('Platform: {0}'.format(platform_value))
     vsts_account_name = public_settings['VSTSAccountName']
     handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
-    if(not (check_account_name_prefix(vsts_account_name) and check_account_name_suffix(vsts_account_name))):
-      if(is_tfs_account):
-        vsts_url = vsts_account_name[:-4]
+    parse_account_name(vsts_account_name)
+    if(check_account_name_prefix(vsts_account_name) and check_account_name_suffix(vsts_account_name)):
+      vsts_url = vsts_account_name
+    else:
+      if(is_on_prem):
+        modify_paths()
+        vsts_url = base_url
       else:
         vsts_url = format_string.format(vsts_account_name)
-    else:
-      vsts_url = vsts_account_name
     handler_utility.log('VSTS service URL : {0}'.format(vsts_url))
     pat_token = ''
     if(protected_settings.has_key('PATToken')):
@@ -253,6 +268,8 @@ def get_configutation_from_settings():
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     ret_val = {
              'VSTSUrl':vsts_url,
+             'VirtualApplication':virtual_application,
+             'Collection':collection,
              'PATToken':pat_token, 
              'Platform':platform_value, 
              'TeamProject':team_project_name, 
@@ -292,7 +309,7 @@ def test_agent_configuration_required(config):
     operation_name = RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log('Invoking script to check existing agent settings with given configuration settings...')
-    config_required = ConfigureDeploymentAgent.test_agent_configuration_required_internal(config['VSTSUrl'], config['PATToken'], config['MachineGroup'], config['TeamProject'], config['AgentWorkingFolder'], is_tfs_account, handler_utility.log)
+    config_required = ConfigureDeploymentAgent.test_agent_configuration_required_internal(config['VSTSUrl'], config['VirtualApplication'], config['PATToken'], config['MachineGroup'], config['TeamProject'], config['AgentWorkingFolder'], handler_utility.log)
     ss_code = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['operationName']
@@ -355,8 +372,8 @@ def register_agent():
       handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
       handler_utility.log('Configuring Deployment agent...')
     vsts_url = config['VSTSUrl']
-    if(is_tfs_account):
-      vsts_url = '/tfs' + vsts_url
+    if(is_on_prem):
+      vsts_url = vsts_url + '/' + virtual_application
     ConfigureDeploymentAgent.configure_agent(vsts_url, config['PATToken'], config['TeamProject'], config['MachineGroup'], config['AgentName'], config['AgentWorkingFolder'], configured_agent_exists, handler_utility.log)
     handler_utility.log('Done configuring Deployment agent')
     ss_code = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Code']

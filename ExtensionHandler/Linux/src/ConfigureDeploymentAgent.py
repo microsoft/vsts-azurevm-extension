@@ -90,7 +90,7 @@ def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, 
     return machine_group_name
   return setting_params['machineGroupName']
 
-def test_agent_configuration_required_internal(vsts_url, pat_token, machine_group_name, project_name, working_folder, is_tfs_account, log_func):
+def test_agent_configuration_required_internal(vsts_url, virtual_application, pat_token, machine_group_name, project_name, working_folder, log_func):
   global log_function
   log_function = log_func
   try:
@@ -99,10 +99,6 @@ def test_agent_configuration_required_internal(vsts_url, pat_token, machine_grou
     agent_setting_file =  os.path.join(working_folder, agent_setting)
     setting_params = json.load(codecs.open(agent_setting_file, 'r', 'utf-8-sig'))
     existing_vsts_url = setting_params['serverUrl']
-    if(vsts_url[-1] == '/'):
-      vsts_url = vsts_url[:-1]
-    if(existing_vsts_url[-1] == '/'):
-      existing_vsts_url = existing_vsts_url[:-1]
     existing_machine_group_name = ''
     try:
       existing_machine_group_name = get_machine_group_name_from_setting(setting_params, vsts_url, project_name, pat_token)
@@ -113,9 +109,7 @@ def test_agent_configuration_required_internal(vsts_url, pat_token, machine_grou
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_vsts_url, vsts_url))
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_project_name, project_name))
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_machine_group_name, machine_group_name))
-    vsts_url_for_configuration = vsts_url
-    if(is_tfs_account):
-      vsts_url_for_configuration = vsts_url_for_configuration + '/tfs'
+    vsts_url_for_configuration = vsts_url + '/' + virtual_application + '/'
     if(existing_vsts_url == vsts_url_for_configuration and existing_machine_group_name == machine_group_name and existing_project_name == project_name):
       write_log('\t\t\t test_agent_configuration_required : False') 
       return False

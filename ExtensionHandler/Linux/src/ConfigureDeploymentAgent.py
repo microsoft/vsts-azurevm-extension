@@ -268,7 +268,7 @@ def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, t
           val = {}
           response_string = response.read()
           val = json.loads(response_string)
-          for i in range(1, val['count']):
+          for i in range(0, val['count']):
             each_machine_group = val['value'][i]
             if(each_machine_group != None and each_machine_group['name'] == machine_group_name):
               machine_group_id = each_machine_group['id']

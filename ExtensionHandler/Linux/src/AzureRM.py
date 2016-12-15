@@ -21,7 +21,7 @@ is_on_prem = False
 collection = ''
 virtual_application = ''
 base_url = ''
-
+prefix = ''
 
 def get_last_sequence_number_file_path():
   global root_dir
@@ -156,10 +156,15 @@ def get_platform_value():
   return platform_value
 
 def check_account_name_prefix(account_name):
+  global prefix
   prefix_1 = 'http://'
   prefix_2 = 'https://'
   account_name_lower = account_name.lower()
   ans = (account_name_lower.startswith(prefix_1) or account_name_lower.startswith(prefix_2))
+  if(account_name_lower.startswith(prefix_1)):
+    prefix = prefix_1
+  if(account_name_lower.startswith(prefix_2)):
+    prefix = prefix_2
   return ans 
 
 def check_account_name_suffix(account_name):
@@ -178,15 +183,15 @@ def modify_paths():
 
 
 def parse_account_name(account_name): 
-  global base_url, virtual_application, collection, is_on_prem
+  global base_url, virtual_application, collection, is_on_prem, prefix
   if(check_account_name_prefix(account_name)):
     account_name = account_name[7:]
-    account_name = account_name.strip('/')
+  account_name = account_name.strip('/')
   if(account_name.find('/') > -1):
     is_on_prem = True
     url_split = filter(lambda x: x!='', account_name.split('/'))
     if(len(url_split) == 3):
-      base_url = url_split[0]
+      base_url = prefix + url_split[0]
       virtual_application = url_split[1]
       collection = url_split[2]
 

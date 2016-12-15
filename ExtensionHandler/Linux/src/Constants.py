@@ -1,5 +1,4 @@
 agent_setting = '.agent'
-#agent_setting = 'agent.json'
 markup_file_format = '{0}/EXTENSIONDISABLED'
 last_seq_num_file = 'LASTSEQNUM'
 download_api_version = '3.0-preview.2'
@@ -19,19 +18,14 @@ return_success = 0
 platform_format = '{0}.{1}.{2}-{3}'
 
 remove_agent_command = '{0} remove --unattended --auth PAT --token {1}'
-#configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} --auth PAT --token {2} --agent {3} --work {4} --projectname {5} --machinegroup {6} --pool {7}'
 configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} --auth PAT --token {2} --agent {3} --work {4} --projectname {5} --machinegroup --machinegroupname {6}'
-#configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} --auth PAT --token {2} --agent {3} --work {4} --projectname {5} --machinegroupname {6} --pool {7}'
-#configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} --auth PAT --token {2} --agent {3} --work {4} --projectname {5} --machinegroup {6}'
 
 service_install_command = '{0} install root'
 service_start_command = '{0} start'
 service_stop_command = '{0} stop'
 service_uninstall_command = '{0} uninstall'
-#configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} --auth PAT --token {2} --agent {3} --work {4} --pool default'
 package_data_address_format = '/_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}'
 machine_group_address_format = '/{0}/_apis/distributedtask/machinegroups/{1}'
-#tags_address_format = '/{0}/_apis/distributedtask/machinegroups/{1}/Machines?api-version={2}'
 machines_address_format = '/{0}/_apis/distributedtask/machinegroups/{1}/Machines?api-version={2}'
 
 machine_groups_address_format = '/{0}/_apis/distributedtask/machinegroups'

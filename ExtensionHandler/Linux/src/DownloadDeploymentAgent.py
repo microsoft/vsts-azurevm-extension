@@ -53,7 +53,7 @@ def get_agent_package_data(vsts_url, package_data_address, user_name, pat_token)
 
 def get_agent_download_url(vsts_url, platform, user_name, pat_token):
   package_data_address = construct_package_data_address(vsts_url, platform)
-  write_download_log('\t\tFetching Agent PackageData using (0)'.format(package_data_address))
+  write_download_log('\t\tFetching Agent PackageData using {0}'.format(package_data_address))
   package_data = get_agent_package_data(vsts_url, package_data_address, user_name, pat_token)
   write_download_log('Deployment Agent download url - {0}'.format(package_data))
   return package_data

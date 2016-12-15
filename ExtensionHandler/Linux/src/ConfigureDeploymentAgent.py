@@ -99,6 +99,8 @@ def test_agent_configuration_required_internal(vsts_url, virtual_application, pa
     agent_setting_file =  os.path.join(working_folder, agent_setting)
     setting_params = json.load(codecs.open(agent_setting_file, 'r', 'utf-8-sig'))
     existing_vsts_url = setting_params['serverUrl']
+    vsts_url = vsts_url.strip('/')
+    existing_vsts_url = existing_vsts_url.strip('/')
     existing_machine_group_name = ''
     try:
       existing_machine_group_name = get_machine_group_name_from_setting(setting_params, vsts_url, project_name, pat_token)

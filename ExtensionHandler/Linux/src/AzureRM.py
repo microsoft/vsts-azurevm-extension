@@ -160,9 +160,9 @@ def check_account_name_prefix(account_name):
 
 def modify_address_formats():
   Constants.package_data_address_format = '/tfs' + Constants.package_data_address_format
-  Constants.machine_group_address_format = '/tfs' + Constants.machine_group_address_format
-  Constants.machines_address_format = '/tfs' + Constants.machines_address_format
-  Constants.machine_groups_address_format = '/tfs' + Constants.machine_groups_address_format
+  Constants.machine_group_address_format = '/tfs/defaultcollection' + Constants.machine_group_address_format
+  Constants.machines_address_format = '/tfs/defaultcollection' + Constants.machines_address_format
+  Constants.machine_groups_address_format = '/tfs/defaultcollection' + Constants.machine_groups_address_format
 
 def check_account_name_suffix(account_name):
   global is_tfs_account

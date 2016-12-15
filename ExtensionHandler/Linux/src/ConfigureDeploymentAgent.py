@@ -90,7 +90,7 @@ def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, 
     return machine_group_name
   return setting_params['machineGroupName']
 
-def test_agent_configuration_required_internal(vsts_url, pat_token, machine_group_name, project_name, working_folder, log_func):
+def test_agent_configuration_required_internal(vsts_url, pat_token, machine_group_name, project_name, working_folder, is_tfs_account, log_func):
   global log_function
   log_function = log_func
   try:
@@ -113,7 +113,10 @@ def test_agent_configuration_required_internal(vsts_url, pat_token, machine_grou
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_vsts_url, vsts_url))
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_project_name, project_name))
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_machine_group_name, machine_group_name))
-    if(existing_vsts_url == vsts_url and existing_machine_group_name == machine_group_name and existing_project_name == project_name):
+    vsts_url_for_configuration = vsts_url
+    if(is_tfs_account):
+      vsts_url_for_configuration = vsts_url_for_configuration + '/tfs'
+    if(existing_vsts_url == vsts_url_for_configuration and existing_machine_group_name == machine_group_name and existing_project_name == project_name):
       write_log('\t\t\t test_agent_configuration_required : False') 
       return False
     else:

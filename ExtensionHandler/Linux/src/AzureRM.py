@@ -171,7 +171,7 @@ def check_account_name_suffix(account_name):
   suffix_3 = 'visualstudio.com'
   suffix_4 = '/tfs'
   account_name_lower = account_name.lower()
-  ans = (account_name_lower.endswith(suffix_1) or account_name_lower.endswith(suffix_2) or account_name_lower.endswith(suffix_3) or account_name_lower.endswith(suffix_4))
+  ans = (account_name_lower.endswith(suffix_1) or account_name_lower.endswith(suffix_2) or account_name_lower.endswith(suffix_3))
   if(account_name_lower.endswith(suffix_4)):
     is_tfs_account = True
     modify_address_formats()
@@ -292,7 +292,7 @@ def test_agent_configuration_required(config):
     operation_name = RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log('Invoking script to check existing agent settings with given configuration settings...')
-    config_required = ConfigureDeploymentAgent.test_agent_configuration_required_internal(config['VSTSUrl'], config['PATToken'], config['MachineGroup'], config['TeamProject'], config['AgentWorkingFolder'], handler_utility.log)
+    config_required = ConfigureDeploymentAgent.test_agent_configuration_required_internal(config['VSTSUrl'], config['PATToken'], config['MachineGroup'], config['TeamProject'], config['AgentWorkingFolder'], is_tfs_account, handler_utility.log)
     ss_code = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['operationName']
@@ -354,7 +354,10 @@ def register_agent():
       operation_name = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName']
       handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
       handler_utility.log('Configuring Deployment agent...')
-    ConfigureDeploymentAgent.configure_agent(config['VSTSUrl'], config['PATToken'], config['TeamProject'], config['MachineGroup'], config['AgentName'], config['AgentWorkingFolder'], configured_agent_exists, handler_utility.log)
+    vsts_url = config['VSTSUrl']
+    if(is_tfs_account):
+      vsts_url = '/tfs' + vsts_url
+    ConfigureDeploymentAgent.configure_agent(vsts_url, config['PATToken'], config['TeamProject'], config['MachineGroup'], config['AgentName'], config['AgentWorkingFolder'], configured_agent_exists, handler_utility.log)
     handler_utility.log('Done configuring Deployment agent')
     ss_code = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Message']

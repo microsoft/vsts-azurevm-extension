@@ -43,6 +43,9 @@ function Test-AgentSettingsAreSame
         [Parameter(Mandatory=$true)]
         [string]$tfsUrl,
         [Parameter(Mandatory=$true)]
+        [AllowEmptyString()]
+        [string]$collection,
+        [Parameter(Mandatory=$true)]
         [string]$projectName,
         [Parameter(Mandatory=$true)]
         [string]$machineGroupName,
@@ -73,7 +76,13 @@ function Test-AgentSettingsAreSame
         
         try
         {
-            $machineGroupNameAsPerSetting = GetMachineGroupNameFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentTfsUrl -projectName $($agentSetting.projectName) -patToken $patToken -logFunction $logFunction
+            $url = $tfsUrl
+            if($collection)
+            {
+                $url = -join($tfsUrl, '/', $collection)
+            }
+
+            $machineGroupNameAsPerSetting = GetMachineGroupNameFromAgentSetting -agentSetting $agentSetting -tfsUrl $url -projectName $($agentSetting.projectName) -patToken $patToken -logFunction $logFunction
         }
         catch
         {

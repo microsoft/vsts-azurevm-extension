@@ -293,10 +293,41 @@ function Get-ConfigurationFromSettings {
         Write-Log "Platform: $platform"
 
         $vstsAccountName = $publicSettings['VSTSAccountName']
+        $tfsVirtualApplication = ""
+        $tfsCollection = ""
         VeriftInputNotNull "VSTSAccountName" $vstsAccountName
+        $vstsAccountName = $vstsAccountName.TrimEnd('/')
         if((($vstsAccountName.ToLower().StartsWith("https://")) -or ($vstsAccountName.ToLower().StartsWith("http://"))))
         {
-            $vstsUrl = $vstsAccountName
+            $parts = $vstsAccountName.Split(@('://'), [System.StringSplitOptions]::RemoveEmptyEntries)
+
+            if($parts.Count > 1)
+            {
+                $protocolHeader = $parts[0] + "://"
+                $urlWithoutProtocol = $parts[1].trim()                      
+            }
+            else 
+            {
+                $protocolHeader = ""
+                $urlWithoutProtocol = $parts[0].trim()                        
+            }
+
+            $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
+
+            $vstsUrl = -join($protocolHeader, $subparts[0].trim())
+            
+            # This is for the on-prem tfs scenario where url is supposed to be of format http(s)://<server-name>/<application>/<collection>
+            if($subparts.Count -eq 3)
+            {
+                $tfsVirtualApplication = $subparts[1]
+                $tfsCollection = $subparts[2].trim()
+            }
+
+            if(($subparts.Count -gt 1) -and ($subparts.Count -ne 3))
+            {   
+                $message = "Account url should either be of format https://<account>.visualstudio.com (for hosted) or of format http(s)://<server>/<application>/<collection>(for on-prem)"
+                throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message    
+            }
         }
         else
         {
@@ -363,6 +394,8 @@ function Get-ConfigurationFromSettings {
 
         return @{
             VSTSUrl  = $vstsUrl
+            TfsVirtualApplication = $tfsVirtualApplication
+            TfsCollection = $tfsCollection
             PATToken = $patToken
             Platform = $platform
             TeamProject        = $teamProjectName
@@ -423,7 +456,8 @@ function Invoke-GetAgentScript {
     [hashtable] $config
     )
 
-    . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -platform $config.Platform -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    $url = Get-AccountUrl $config.VSTSUrl $config.TfsVirtualApplication
+    . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $url -userName "" -platform $config.Platform -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
 }
 
 function Test-AgentAlreadyExistsInternal {
@@ -446,7 +480,8 @@ function Test-AgentReConfigurationRequiredInternal {
     )
 
     . $PSScriptRoot\AgentExistenceChecker.ps1
-    $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -machineGroupName $config.MachineGroup -patToken $config.PATToken -logFunction $script:logger)
+    $url = Get-AccountUrl $config.VSTSUrl $config.TfsVirtualApplication    
+    $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $url -collection $config.TfsCollection -projectName $config.TeamProject -machineGroupName $config.MachineGroup -patToken $config.PATToken -logFunction $script:logger)
     return $agentReConfigurationRequired
 }
 
@@ -456,7 +491,8 @@ function Invoke-ConfigureAgentScript {
     [hashtable] $config
     )
 
-    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    $url = Get-AccountUrl $config.VSTSUrl $config.TfsVirtualApplication
+    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $url -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
 }
 
 function Invoke-RemoveAgentScript {
@@ -474,7 +510,8 @@ function Invoke-AddTagsToAgentScript{
     [hashtable] $config
     )
 
-    . $PSScriptRoot\AddTagsToDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -tagsAsJsonString ( $config.Tags | ConvertTo-Json )  -logFunction $script:logger
+    $url = Get-CollectionUrl $config.VSTSUrl $config.TfsVirtualApplication $config.TfsCollection
+    . $PSScriptRoot\AddTagsToDeploymentAgent.ps1 -tfsUrl $url -projectName $config.TeamProject -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -tagsAsJsonString ( $config.Tags | ConvertTo-Json )  -logFunction $script:logger
 }
 
 function VeriftInputNotNull {
@@ -491,6 +528,43 @@ function VeriftInputNotNull {
         }
 }
 
+function Get-AccountUrl
+{
+    [CmdletBinding()]
+    param(
+    [string] $baseUrl,
+    [string] $virtualApplication
+    )   
+
+    $url = $baseUrl
+
+    if($virtualApplication) 
+    {
+        $url = -join($url, '/', $virtualApplication)
+    }
+
+    return $url
+}
+
+function Get-CollectionUrl
+{
+    [CmdletBinding()]
+    param(
+    [string] $baseUrl,
+    [string] $virtualApplication,
+    [string] $collection
+    )   
+
+    $url = Get-AccountUrl $baseUrl $virtualApplication
+
+    if($collection)
+    {
+        $url = -join($url, '/', $collection)
+    }
+
+    return $url
+}
+
 #
 # Exports
 #
@@ -503,4 +577,6 @@ Export-ModuleMember `
         Remove-Agent, `
         Get-ConfigurationFromSettings, `
         Register-Agent, `
+        Get-AccountUrl, `
+        Get-CollectionUrl, `
         Add-AgentTags

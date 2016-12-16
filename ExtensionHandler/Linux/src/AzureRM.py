@@ -17,6 +17,8 @@ agent_configuration_required = True
 config = {}
 root_dir = ''
 markup_file_format = '{0}/EXTENSIONDISABLED'
+is_on_prem = False
+collection = ''
 
 def get_last_sequence_number_file_path():
   global root_dir
@@ -83,7 +85,6 @@ def check_python_version():
   version_info = sys.version_info
   major = version_info[0]
   minor = version_info[1]
-  #try:
   if(major < 2 or (major == 2 and minor < 6)):
     code = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Code']
     message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(str(major) + '.' + str(minor))
@@ -151,19 +152,50 @@ def get_platform_value():
   return platform_value
 
 def check_account_name_prefix(account_name):
+  global prefix
   prefix_1 = 'http://'
   prefix_2 = 'https://'
   account_name_lower = account_name.lower()
   ans = (account_name_lower.startswith(prefix_1) or account_name_lower.startswith(prefix_2))
+  if(account_name_lower.startswith(prefix_1)):
+    prefix = prefix_1
+  if(account_name_lower.startswith(prefix_2)):
+    prefix = prefix_2
   return ans 
 
-def check_account_name_suffix(account_name):
-  suffix_1 = 'vsallin.net'
-  suffix_2 = 'tfsallin.net'
-  suffix_3 = 'visualstudio.com'
-  account_name_lower = account_name.lower()
-  ans = (account_name_lower.endswith(suffix_1) or account_name_lower.endswith(suffix_2) or account_name_lower.endswith(suffix_3)) 
-  return ans
+def modify_paths(account_name_split):
+  Constants.package_data_address_format = '/' + account_name_split['VirtualApplication'] + Constants.package_data_address_format
+  Constants.machine_group_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.machine_group_address_format
+  Constants.machines_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.machines_address_format
+  Constants.machine_groups_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.machine_groups_address_format
+
+
+def parse_account_name(account_name): 
+  global is_on_prem, prefix
+  base_url = ''
+  virtual_application = ''
+  collection = ''
+  if(check_account_name_prefix(account_name)):
+    account_name = account_name[7:]
+  account_name = account_name.strip('/')
+  if(account_name.find('/') > -1):
+    is_on_prem = True
+    account_name_split = filter(lambda x: x!='', account_name.split('/'))
+    if(len(account_name_split) == 3):
+      base_url = prefix + account_name_split[0]
+      virtual_application = account_name_split[1]
+      collection = account_name_split[2]
+    elif(len(account_name_split) != 1):
+      code = RMExtensionStatus.rm_extension_status['ArgumentError']
+      message = 'Account url should either be of format https://<account>.visualstudio.com (for hosted) or of format http(s)://<server>/<application>/<collection>(for on-prem)'
+      raise RMExtensionStatus.new_handler_terminating_error(code, message)
+    else:
+      base_url = prefix + account_name_split[0]
+  return {
+         'VSTSUrl':base_url,
+         'VirtualApplication':virtual_application,
+         'Collection':collection
+         }
 
 def format_tags_input(tags_input):
   tags = []
@@ -199,12 +231,19 @@ def get_configutation_from_settings():
       raise new_handler_terminating_error(code, message)
     platform_value = get_platform_value()
     handler_utility.log('Platform: {0}'.format(platform_value))
-    vsts_account_name = public_settings['VSTSAccountName']
+    vsts_account_name = public_settings['VSTSAccountName'].strip('/')
     handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
-    if(not (check_account_name_prefix(vsts_account_name) and check_account_name_suffix(vsts_account_name))):
-      vsts_url = format_string.format(vsts_account_name)
+    account_name_split = parse_account_name(vsts_account_name)
+    vsts_url = account_name_split['VSTSUrl']
+    virtual_application = account_name_split['VirtualApplication']
+    collection = account_name_split['Collection']
+    if(check_account_name_prefix(vsts_account_name)):
+      if(is_on_prem):
+        modify_paths(account_name_split)
+      else:
+        vsts_url = vsts_account_name
     else:
-      vsts_url = vsts_account_name
+      vsts_url = format_string.format(vsts_account_name)
     handler_utility.log('VSTS service URL : {0}'.format(vsts_url))
     pat_token = ''
     if(protected_settings.has_key('PATToken')):
@@ -227,7 +266,6 @@ def get_configutation_from_settings():
     tags = format_tags_input(tags_input)
     agent_working_folder = '{0}/VSTSAgent'.format('')
     handler_utility.log('Working folder for VSTS agent : {0}'.format(agent_working_folder))
-    #Check for links
     if(not os.path.isdir(agent_working_folder)):
       handler_utility.log('Working folder does not exist. Creating it...')
       os.makedirs(agent_working_folder, 0700)
@@ -238,6 +276,8 @@ def get_configutation_from_settings():
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     ret_val = {
              'VSTSUrl':vsts_url,
+             'VirtualApplication':virtual_application,
+             'Collection':collection,
              'PATToken':pat_token, 
              'Platform':platform_value, 
              'TeamProject':team_project_name, 
@@ -277,7 +317,7 @@ def test_agent_configuration_required(config):
     operation_name = RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log('Invoking script to check existing agent settings with given configuration settings...')
-    config_required = ConfigureDeploymentAgent.test_agent_configuration_required_internal(config['VSTSUrl'], config['PATToken'], config['MachineGroup'], config['TeamProject'], config['AgentWorkingFolder'], handler_utility.log)
+    config_required = ConfigureDeploymentAgent.test_agent_configuration_required_internal(config['VSTSUrl'], config['VirtualApplication'], config['PATToken'], config['MachineGroup'], config['TeamProject'], config['AgentWorkingFolder'], handler_utility.log)
     ss_code = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['operationName']
@@ -339,7 +379,10 @@ def register_agent():
       operation_name = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName']
       handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
       handler_utility.log('Configuring Deployment agent...')
-    ConfigureDeploymentAgent.configure_agent(config['VSTSUrl'], config['PATToken'], config['TeamProject'], config['MachineGroup'], config['AgentName'], config['AgentWorkingFolder'], configured_agent_exists, handler_utility.log)
+    vsts_url = config['VSTSUrl']
+    if(is_on_prem):
+      vsts_url = vsts_url + '/' + config['VirtualApplication']
+    ConfigureDeploymentAgent.configure_agent(vsts_url, config['PATToken'], config['TeamProject'], config['MachineGroup'], config['AgentName'], config['AgentWorkingFolder'], configured_agent_exists, handler_utility.log)
     handler_utility.log('Done configuring Deployment agent')
     ss_code = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Message']
@@ -384,7 +427,7 @@ def configure_agent_if_required():
 
 
 def add_agent_tags():
-  if(config['Tags'] !=None and len(config) > 0):
+  if(config['Tags'] !=None and len(config['Tags']) > 0):
     handler_utility.log('Adding tags to configured agent - {0}'.format(str(config['Tags'])))
     try:
       tags_string = json.dumps(config['Tags'], ensure_ascii = False)

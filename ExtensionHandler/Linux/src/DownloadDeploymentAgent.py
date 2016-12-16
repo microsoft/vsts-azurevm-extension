@@ -35,7 +35,6 @@ def get_agent_package_data(vsts_url, package_data_address, user_name, pat_token)
   elif(vsts_url.startswith('https://')):
     vsts_url = vsts_url[8:]
   basic_auth = '{0}:{1}'.format(user_name, pat_token)
-  #Todo Shlold be converted to byte array? unicode?
   basic_auth = base64.b64encode(basic_auth)
   headers = {
               'Authorization' : 'Basic {0}'.format(basic_auth)
@@ -44,7 +43,6 @@ def get_agent_package_data(vsts_url, package_data_address, user_name, pat_token)
   conn = method(vsts_url)
   conn.request('GET', package_data_address, headers = headers)
   response = conn.getresponse()
-  #Should response be json parsd?
   if(response.status == 200):
     val = json.loads(response.read())
     return val['value'][0]['downloadUrl']
@@ -53,7 +51,7 @@ def get_agent_package_data(vsts_url, package_data_address, user_name, pat_token)
 
 def get_agent_download_url(vsts_url, platform, user_name, pat_token):
   package_data_address = construct_package_data_address(vsts_url, platform)
-  write_download_log('\t\tFetching Agent PackageData using (0)'.format(package_data_address))
+  write_download_log('\t\tFetching Agent PackageData using {0}'.format(package_data_address))
   package_data = get_agent_package_data(vsts_url, package_data_address, user_name, pat_token)
   write_download_log('Deployment Agent download url - {0}'.format(package_data))
   return package_data

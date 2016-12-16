@@ -6,11 +6,14 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$MachineGroup,
     [Parameter(Mandatory=$true)]
-    [string[]]$AgentNames
+    [string]$WindowsAgentName,
+    [Parameter(Mandatory=$true)]
+    [string]$LinuxAgentName
 )
 
 . "$PSScriptRoot\VSTSAgentTestHelper.ps1"
 
+$AgentNames = @($WindowsAgentName, $LinuxAgentName)
 $AgentNames | % {
     Confirm-AgentRegistered -TeamProject $TeamProject -PATToken $PATToken -MachineGroup -AgentName $_
 }

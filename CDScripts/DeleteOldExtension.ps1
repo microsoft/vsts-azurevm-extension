@@ -18,7 +18,7 @@ param(
     [string]$versionToDelete
 )
 
-. .\RetryHelper.ps1
+. "$PSScriptRoot\RetryHelper.ps1"
 
 if($versionToDelete -eq "NOTHING_TO_DELETE")
 {

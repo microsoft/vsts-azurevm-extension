@@ -103,7 +103,7 @@ def test_agent_configuration_required_internal(vsts_url, virtual_application, pa
     except Exception as e:
       write_log('\t\t\t Unable to get the machine group name - {0}'.format(e.message))
     existing_project_name = setting_params['projectName']
-    vsts_url_for_configuration = vsts_url + '/' + virtual_application
+    vsts_url_for_configuration = (vsts_url + '/' + virtual_application).strip('/')
     write_log('\t\t\t Agent configured with \t\t\t\t Agent needs to be configured with')
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_vsts_url, vsts_url_for_configuration))
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_project_name, project_name))

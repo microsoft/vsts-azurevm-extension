@@ -301,7 +301,7 @@ function Get-ConfigurationFromSettings {
         {
             $parts = $vstsAccountName.Split(@('://'), [System.StringSplitOptions]::RemoveEmptyEntries)
 
-            if($parts.Count > 1)
+            if($parts.Count -gt 1)
             {
                 $protocolHeader = $parts[0] + "://"
                 $urlWithoutProtocol = $parts[1].trim()                      

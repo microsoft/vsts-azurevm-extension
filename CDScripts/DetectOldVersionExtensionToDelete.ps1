@@ -12,11 +12,10 @@ param(
     [string]$extensionName,
 
     [Parameter(Mandatory=$true)]
-    [string]$publisher,
-    
-    [string]$versionToDelete
+    [string]$publisher
 )
 
+$versionToDelete = "NOTHING_TO_DELETE"
 
 # Fetching list of published extension handler. Using South Central US location. Since, we are insterested in oldest version, it does not matter which location we use as replication would have anyways completed.
 # The returned list is already sorted by oldest published version first

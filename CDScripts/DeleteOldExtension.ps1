@@ -18,6 +18,8 @@ param(
     [string]$versionToDelete
 )
 
+. .\RetryHelper.ps1
+
 if($versionToDelete -eq "NOTHING_TO_DELETE")
 {
     Write-Host "No extension will be deleted"
@@ -45,13 +47,8 @@ $($definitionXml.ExtensionImage.version)
 
 $putUri = "https://management.core.windows.net/$($subscription.SubscriptionId)/services/extensions?action=update"
 Write-Host "Updating extension to mark it as internal. using uri: $putUri"
-try {
-    Invoke-RestMethod -Method PUT -Uri $putUri -Certificate $subscription.Certificate -Headers @{'x-ms-version'='2014-08-01'} -Body $definitionXml -ContentType application/xml
-}
-catch {
-    Write-Host $Error[0]
-    throw
-}
+
+Invoke-WithRetry -retryCommand { Invoke-RestMethod -Method PUT -Uri $putUri -Certificate $subscription.Certificate -Headers @{'x-ms-version'='2014-08-01'} -Body $definitionXml -ContentType application/xml -ErrorAction SilentlyContinue }
 
 Start-Sleep -Seconds 10
 
@@ -59,4 +56,4 @@ Start-Sleep -Seconds 10
 $uri = "https://management.core.windows.net/$($subscription.SubscriptionId)/services/extensions/$publisher/$extensionName/$versionToDelete"
 Write-Host "Deleting extension. using uri: $uri"
 
-Invoke-RestMethod -Method DELETE -Uri $uri -Certificate $subscription.Certificate -Headers @{'x-ms-version'='2014-08-01'}
+Invoke-WithRetry -retryCommand { Invoke-RestMethod -Method DELETE -Uri $uri -Certificate $subscription.Certificate -Headers @{'x-ms-version'='2014-08-01'} -ErrorAction SilentlyContinue }

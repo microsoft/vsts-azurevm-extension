@@ -296,11 +296,22 @@ function Get-ConfigurationFromSettings {
         $tfsVirtualApplication = ""
         $tfsCollection = ""
         VeriftInputNotNull "VSTSAccountName" $vstsAccountName
+        $vstsAccountName = $vstsAccountName.TrimEnd('/')
         if((($vstsAccountName.ToLower().StartsWith("https://")) -or ($vstsAccountName.ToLower().StartsWith("http://"))))
         {
             $parts = $vstsAccountName.Split(@('://'), [System.StringSplitOptions]::RemoveEmptyEntries)
-            $protocolHeader = $parts[0] + "://"
-            $urlWithoutProtocol = $parts[1].trim()
+
+            if($parts.Count > 1)
+            {
+                $protocolHeader = $parts[0] + "://"
+                $urlWithoutProtocol = $parts[1].trim()                      
+            }
+            else 
+            {
+                $protocolHeader = ""
+                $urlWithoutProtocol = $parts[0].trim()                        
+            }
+
             $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
 
             $vstsUrl = -join($protocolHeader, $subparts[0].trim())

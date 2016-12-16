@@ -1,9 +1,9 @@
 <#
 .Synopsis
-    Delete older version of extension from PIR. this is required as Azure only suuports 15 extension versions from a partiular subscription.
+    Detects the oldest version of published extension and sets a release variable value
 
 .Usage
-    DeleteOldExtension.ps1 -extensionName ReleaseManagement1 -publisher Test.Microsoft.VisualStudio.Services -versionToDelete 1.9.0.0
+    DetectOldVersionExtensionToDelete.ps1 -extensionName ReleaseManagement1 -publisher Test.Microsoft.VisualStudio.Services -versionToDelete 1.9.0.0
 #>
 
 [CmdletBinding()]

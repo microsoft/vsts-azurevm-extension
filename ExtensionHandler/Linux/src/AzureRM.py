@@ -19,9 +19,6 @@ root_dir = ''
 markup_file_format = '{0}/EXTENSIONDISABLED'
 is_on_prem = False
 collection = ''
-virtual_application = ''
-base_url = ''
-prefix = ''
 
 def get_last_sequence_number_file_path():
   global root_dir
@@ -174,15 +171,18 @@ def check_account_name_suffix(account_name):
   ans = (account_name_lower.endswith(suffix_1) or account_name_lower.endswith(suffix_2) or account_name_lower.endswith(suffix_3))
   return ans
 
-def modify_paths():
-  Constants.package_data_address_format = '/' + virtual_application + Constants.package_data_address_format
-  Constants.machine_group_address_format = '/' + virtual_application + '/' + collection + Constants.machine_group_address_format
-  Constants.machines_address_format = '/' + virtual_application + '/' + collection + Constants.machines_address_format
-  Constants.machine_groups_address_format = '/' + virtual_application + '/' + collection + Constants.machine_groups_address_format
+def modify_paths(account_name_split):
+  Constants.package_data_address_format = '/' + account_name_split['VirtualApplication'] + Constants.package_data_address_format
+  Constants.machine_group_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.machine_group_address_format
+  Constants.machines_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.machines_address_format
+  Constants.machine_groups_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.machine_groups_address_format
 
 
 def parse_account_name(account_name): 
-  global base_url, virtual_application, collection, is_on_prem, prefix
+  global is_on_prem, prefix
+  base_url = ''
+  virtual_application = ''
+  collection = ''
   if(check_account_name_prefix(account_name)):
     account_name = account_name[7:]
   account_name = account_name.strip('/')
@@ -193,6 +193,11 @@ def parse_account_name(account_name):
       base_url = prefix + url_split[0]
       virtual_application = url_split[1]
       collection = url_split[2]
+  return {
+         'VSTSUrl':base_url,
+         'VirtualApplication':virtual_application,
+         'Collection':collection
+         }
 
 def format_tags_input(tags_input):
   tags = []
@@ -230,13 +235,15 @@ def get_configutation_from_settings():
     handler_utility.log('Platform: {0}'.format(platform_value))
     vsts_account_name = public_settings['VSTSAccountName']
     handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
-    parse_account_name(vsts_account_name)
+    account_name_split = parse_account_name(vsts_account_name)
+    vsts_url = account_name_split['VSTSUrl']
+    virtual_application = account_name_split['VirtualApplication']
+    collection = account_name_split['Collection']
     if(check_account_name_prefix(vsts_account_name) and check_account_name_suffix(vsts_account_name)):
       vsts_url = vsts_account_name
     else:
       if(is_on_prem):
-        modify_paths()
-        vsts_url = base_url
+        modify_paths(account_name_split)
       else:
         vsts_url = format_string.format(vsts_account_name)
     handler_utility.log('VSTS service URL : {0}'.format(vsts_url))
@@ -376,7 +383,7 @@ def register_agent():
       handler_utility.log('Configuring Deployment agent...')
     vsts_url = config['VSTSUrl']
     if(is_on_prem):
-      vsts_url = vsts_url + '/' + virtual_application
+      vsts_url = vsts_url + '/' + config['VirtualApplication']
     ConfigureDeploymentAgent.configure_agent(vsts_url, config['PATToken'], config['TeamProject'], config['MachineGroup'], config['AgentName'], config['AgentWorkingFolder'], configured_agent_exists, handler_utility.log)
     handler_utility.log('Done configuring Deployment agent')
     ss_code = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Code']

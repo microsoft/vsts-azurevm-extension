@@ -188,11 +188,17 @@ def parse_account_name(account_name):
   account_name = account_name.strip('/')
   if(account_name.find('/') > -1):
     is_on_prem = True
-    url_split = filter(lambda x: x!='', account_name.split('/'))
-    if(len(url_split) == 3):
-      base_url = prefix + url_split[0]
-      virtual_application = url_split[1]
-      collection = url_split[2]
+    account_name_split = filter(lambda x: x!='', account_name.split('/'))
+    if(len(account_name_split) == 3):
+      base_url = prefix + account_name_split[0]
+      virtual_application = account_name_split[1]
+      collection = account_name_split[2]
+    elif(len(account_name_split) != 1):
+      code = RMExtensionStatus.rm_extension_status['ArgumentError']
+      message = 'Account url should either be of format https://<account>.visualstudio.com (for hosted) or of format http(s)://<server>/<application>/<collection>(for on-prem)'
+      raise RMExtensionStatus.new_handler_terminating_error(code, message)
+    else:
+      base_url = prefix + account_name_split[0]
   return {
          'VSTSUrl':base_url,
          'VirtualApplication':virtual_application,
@@ -233,7 +239,7 @@ def get_configutation_from_settings():
       raise new_handler_terminating_error(code, message)
     platform_value = get_platform_value()
     handler_utility.log('Platform: {0}'.format(platform_value))
-    vsts_account_name = public_settings['VSTSAccountName']
+    vsts_account_name = public_settings['VSTSAccountName'].strip('/')
     handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
     account_name_split = parse_account_name(vsts_account_name)
     vsts_url = account_name_split['VSTSUrl']

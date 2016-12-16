@@ -3,9 +3,14 @@
   "location": "southcentralus",
   "windowsVmName": "vm-ext-cdp-win",
   "windowsVmStorageAccountName": "vmextcdpdiskswin",
-  "windowsVmTemplateFile": "windowstemplate.json",
-  "windowsVmTemplateParameterFile": "windowsparameters.json",
+  "TemplateFile": "template.json",
+  "TemplateParameterFile": "parameters.json",
   "windowsExtensionPublicSettingsFile": "windowsExtensionPublicConfig.json",
   "windowsExtensionName": "TeamServicesAgent",
-  "windowsExtensionPublisher": "Microsoft.VisualStudio.Services"
+  "windowsExtensionPublisher": "Microsoft.VisualStudio.Services",
+  "linuxVmName": "vm-ext-cdp-linux",
+  "linuxVmStorageAccountName": "vmextcdpdiskslinux",
+  "linuxExtensionPublicSettingsFile": "linuxExtensionPublicConfig.json",
+  "linuxExtensionName": "TeamServicesAgentLinux",
+  "linuxExtensionPublisher": "Microsoft.VisualStudio.Services"
 }

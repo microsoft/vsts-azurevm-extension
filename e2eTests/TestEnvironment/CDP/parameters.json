@@ -41,6 +41,21 @@
         "publicIpAddressName": {
             "value": "vm-ext-cdp-win-ip"
         },
+        "linuxVirtualMachineName": {
+            "value": "vm-ext-cdp-linux"
+        },
+        "linuxStorageAccountName": {
+            "value": "vmextcdpdiskslinux"
+        },
+        "linuxNetworkInterfaceName": {
+            "value": "vm-ext-cdp-linux785"
+        },
+        "linuxNetworkSecurityGroupName": {
+            "value": "vm-ext-cdp-linux-nsg"
+        },
+        "linuxPublicIpAddressName": {
+            "value": "vm-ext-cdp-linux-ip"
+        },
         "publicIpAddressType": {
             "value": "Dynamic"
         },
@@ -63,6 +78,9 @@
             "value": ""
         },
         "WindowsAgentName": {
+            "value": ""
+        },
+        "LinuxAgentName": {
             "value": ""
         },
         "Tags": {

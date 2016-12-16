@@ -163,14 +163,6 @@ def check_account_name_prefix(account_name):
     prefix = prefix_2
   return ans 
 
-def check_account_name_suffix(account_name):
-  suffix_1 = 'vsallin.net'
-  suffix_2 = 'tfsallin.net'
-  suffix_3 = 'visualstudio.com'
-  account_name_lower = account_name.lower()
-  ans = (account_name_lower.endswith(suffix_1) or account_name_lower.endswith(suffix_2) or account_name_lower.endswith(suffix_3))
-  return ans
-
 def modify_paths(account_name_split):
   Constants.package_data_address_format = '/' + account_name_split['VirtualApplication'] + Constants.package_data_address_format
   Constants.machine_group_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.machine_group_address_format
@@ -245,13 +237,13 @@ def get_configutation_from_settings():
     vsts_url = account_name_split['VSTSUrl']
     virtual_application = account_name_split['VirtualApplication']
     collection = account_name_split['Collection']
-    if(check_account_name_prefix(vsts_account_name) and check_account_name_suffix(vsts_account_name)):
-      vsts_url = vsts_account_name
-    else:
+    if(check_account_name_prefix(vsts_account_name)):
       if(is_on_prem):
         modify_paths(account_name_split)
       else:
-        vsts_url = format_string.format(vsts_account_name)
+        vsts_url = vsts_account_name
+    else:
+      vsts_url = format_string.format(vsts_account_name)
     handler_utility.log('VSTS service URL : {0}'.format(vsts_url))
     pat_token = ''
     if(protected_settings.has_key('PATToken')):

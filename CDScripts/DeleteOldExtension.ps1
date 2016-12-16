@@ -14,6 +14,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$publisher,
     
+    [Parameter(Mandatory=$true)]
     [string]$versionToDelete
 )
 

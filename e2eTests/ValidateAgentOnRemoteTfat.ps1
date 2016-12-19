@@ -11,13 +11,6 @@ param(
     [string]$LinuxAgentName
 )
 
-. "$PSScriptRoot\VSTSAgentTestHelper.ps1"
-
-$AgentNames = @($WindowsAgentName, $LinuxAgentName)
-$AgentNames | % {
-    Confirm-AgentRegistered -TeamProject $TeamProject -PATToken $PATToken -MachineGroup -AgentName $_
-}
-
 function Confirm-AgentRegistered
 {
     param(
@@ -32,8 +25,8 @@ function Confirm-AgentRegistered
     )
 
     # Verify that agent is correctly configured against VSTS
-    Write-Host "Validating that agent $AgentName has been registered..."
-    Write-Host "Getting agent information from VSTS"
+    Write-Verbose -Verbose "Validating that agent $AgentName has been registered..."
+    Write-Verbose -Verbose "Getting agent information from VSTS"
 
     $agentInfo = Get-VSTSAgentInformation -vstsUrl "http://localhost:8080/tfs/defaultcollection" -teamProject $TeamProject -patToken $PATToken -machineGroup $MachineGroup -agentName $AgentName
 
@@ -43,6 +36,13 @@ function Confirm-AgentRegistered
     }
     else
     {
-        Write-Host "Agent $AgentName has been successfully registered with VSTS!!"
+        Write-Verbose -Verbose "Agent $AgentName has been successfully registered with VSTS!!"
     }
+}
+
+. "$PSScriptRoot\VSTSAgentTestHelper.ps1"
+
+$AgentNames = @($WindowsAgentName, $LinuxAgentName)
+$AgentNames | % {
+    Confirm-AgentRegistered -TeamProject $TeamProject -PATToken $PATToken -MachineGroup $MachineGroup -AgentName $_
 }

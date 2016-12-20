@@ -12,7 +12,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$extensionVersion,
     [string]$personalAccessToken,
-    [String]$osType='Windows'
+    [String]$osType
 )
 
 function Remove-ExistingVM

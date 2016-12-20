@@ -86,7 +86,7 @@
                     "osDisk": {
                         "name": "[parameters('linuxVirtualMachineName')]",
                         "vhd": {
-                            "uri": "[concat(concat(reference(resourceId('vm-ext-rg-clsc', 'Microsoft.Storage/storageAccounts', parameters('linuxStorageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('linuxVirtualMachineName'), '2016912134036.vhd')]"
+                            "uri": "[concat(concat(reference(resourceId('vm-ext-rg-clsc', 'Microsoft.Storage/storageAccounts', parameters('linuxStorageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('linuxVirtualMachineName'), '20161220105632.vhd')]"
                         },
                         "createOption": "fromImage"
                     },

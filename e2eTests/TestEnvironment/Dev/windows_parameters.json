@@ -6,7 +6,7 @@
             "value": "southcentralus"
         },
         "virtualMachineName": {
-            "value": "vm-ext-e2e-clsc-win"
+            "value": "vm-ext-e2e-clsc"
         },
         "virtualMachineSize": {
             "value": "Standard_DS1_v2"
@@ -15,16 +15,16 @@
             "value": "tfs"
         },
         "storageAccountName": {
-            "value": "vmextrgclscdiskswin643"
+            "value": "vmextrgclscdisks643"
         },
         "virtualNetworkName": {
             "value": "vm-ext-rg-clsc-vnet"
         },
         "networkInterfaceName": {
-            "value": "vm-ext-e2e-clsc-win604"
+            "value": "vm-ext-e2e-clsc604"
         },
         "networkSecurityGroupName": {
-            "value": "vm-ext-e2e-clsc-win-nsg"
+            "value": "vm-ext-e2e-clsc-nsg"
         },
         "adminPassword": {
             "value": null
@@ -51,7 +51,7 @@
             "value": "10.14.0.0/24"
         },
         "publicIpAddressName": {
-            "value": "vm-ext-e2e-clsc-win-ip"
+            "value": "vm-ext-e2e-clsc-ip"
         },
         "publicIpAddressType": {
             "value": "Dynamic"

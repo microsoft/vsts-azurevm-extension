@@ -15,13 +15,13 @@
             "value": "tfs"
         },
         "linuxStorageAccountName": {
-            "value": "vmextrgclscdiskslinux643"
+            "value": "vmextrgclscdiskslinux"
         },
         "virtualNetworkName": {
             "value": "vm-ext-rg-clsc-vnet"
         },
         "linuxNetworkInterfaceName": {
-            "value": "vm-ext-e2e-clsc-linux604"
+            "value": "vm-ext-e2e-clsc-linu146"
         },
         "linuxNetworkSecurityGroupName": {
             "value": "vm-ext-e2e-clsc-linux-nsg"

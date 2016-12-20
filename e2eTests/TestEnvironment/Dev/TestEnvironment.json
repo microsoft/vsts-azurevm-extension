@@ -10,7 +10,5 @@
   "linuxVmName": "vm-ext-e2e-clsc-linux",
   "linuxVmstorageAccountName": "vmextrgclscdiskslinux643",
   "linuxTemplateFile": "linux_template.json",
-  "linuxTemplateParameterFile": "linux_parameters.json",
-  "extensionPublicSettingsFile": "publicConfig.json",
-  "extensionProtectedSettingsFile": "_protectedConfig.json"
+  "linuxTemplateParameterFile": "linux_parameters.json"
 }

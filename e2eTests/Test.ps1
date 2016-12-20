@@ -169,7 +169,7 @@ else
     Write-Host "Agent has been successfully registered with VSTS!!"
 }
 
-#####
+<#####
 # Clean-up
 #####
 
@@ -191,3 +191,4 @@ if(Test-Path $extensionProtectedSettingsFile)
 {
     Remove-Item -Path $extensionProtectedSettingsFile -Force
 }
+#>

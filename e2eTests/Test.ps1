@@ -139,6 +139,11 @@ if($oldAgentInfo.isAgentExists -eq $true)
 Write-Host "Creating VM $vmName"
 Create-VM -resourceGroupName $resourceGroupName -templateFile $templateFile -templateParameterFile $templateParameterFile -vmPasswordString $vmPassword
 
+for($i=0;$i -lt 150; $i++){
+    Start-Sleep -s 2
+    "Hello World"
+}
+
 Write-Host "Installing extension $extension version $extensionVersion on VM $vmName"
 Install-ExtensionOnVM -resourceGroupName $resourceGroupName -vmName $vmName -location $location -publisher $publisher -extension $extension -extensionVersion $extensionVersion -extensionPublicSettingsFile $extensionPublicSettingsFile -extensionProtectedSettingsFile $extensionProtectedSettingsFile
 

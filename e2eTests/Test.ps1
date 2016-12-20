@@ -11,8 +11,7 @@ param(
     [string]$extension,
     [Parameter(Mandatory=$true)]
     [string]$extensionVersion,
-    [string]$personalAccessToken,
-    [String]$osType="Windows"
+    [string]$personalAccessToken
 )
 
 function Remove-ExistingVM
@@ -103,19 +102,11 @@ $currentScriptPath = $PSScriptRoot
 #####
 $inputs = Get-Content (Join-Path $currentScriptPath $testEnvironmentFile) | Out-String | ConvertFrom-Json
 $resourceGroupName = $inputs.resourceGroupName
+$vmName = $inputs.vmName
 $location = $inputs.location
-if($osType -eq 'Linux'){
-    $vmName = $inputs.linuxVmName
-    $storageAccountName = $inputs.linuxVmstorageAccountName
-    $templateFile = Join-Path $currentScriptPath $inputs.linuxTemplateFile
-    $templateParameterFile = Join-Path $currentScriptPath $inputs.linuxTemplateParameterFile
-}
-else{
-    $vmName = $inputs.windowsVmName
-    $storageAccountName = $inputs.windowsVmstorageAccountName
-    $templateFile = Join-Path $currentScriptPath $inputs.windowsTemplateFile
-    $templateParameterFile = Join-Path $currentScriptPath $inputs.windowsTemplateParameterFile    
-}
+$storageAccountName = $inputs.storageAccountName
+$templateFile = Join-Path $currentScriptPath $inputs.templateFile
+$templateParameterFile = Join-Path $currentScriptPath $inputs.templateParameterFile
 $extensionPublicSettingsFile = Join-Path $currentScriptPath $inputs.extensionPublicSettingsFile
 $extensionProtectedSettingsFile = Join-Path $currentScriptPath $inputs.extensionProtectedSettingsFile
 

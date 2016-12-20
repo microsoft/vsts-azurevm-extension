@@ -1,0 +1,60 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "southcentralus"
+        },
+        "virtualMachineName": {
+            "value": "vm-ext-e2e-clsc-win"
+        },
+        "virtualMachineSize": {
+            "value": "Standard_DS1_v2"
+        },
+        "adminUsername": {
+            "value": "tfs"
+        },
+        "storageAccountName": {
+            "value": "vmextrgclscdiskswin643"
+        },
+        "virtualNetworkName": {
+            "value": "vm-ext-rg-clsc-vnet"
+        },
+        "networkInterfaceName": {
+            "value": "vm-ext-e2e-clsc-win604"
+        },
+        "networkSecurityGroupName": {
+            "value": "vm-ext-e2e-clsc-win-nsg"
+        },
+        "adminPassword": {
+            "value": null
+        },
+        "storageAccountType": {
+            "value": "Premium_LRS"
+        },
+        "diagnosticsStorageAccountName": {
+            "value": "vmextrgclscdiag505"
+        },
+        "diagnosticsStorageAccountType": {
+            "value": "Standard_LRS"
+        },
+        "diagnosticsStorageAccountId": {
+            "value": "Microsoft.Storage/storageAccounts/vmextrgclscdiag505"
+        },
+        "addressPrefix": {
+            "value": "10.14.0.0/16"
+        },
+        "subnetName": {
+            "value": "default"
+        },
+        "subnetPrefix": {
+            "value": "10.14.0.0/24"
+        },
+        "publicIpAddressName": {
+            "value": "vm-ext-e2e-clsc-win-ip"
+        },
+        "publicIpAddressType": {
+            "value": "Dynamic"
+        }
+    }
+}

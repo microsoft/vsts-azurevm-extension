@@ -259,7 +259,7 @@ def get_configutation_from_settings():
     handler_utility.log('Machine Group : {0}'.format(machine_group_name))
     agent_name = public_settings['AgentName']
     handler_utility.log('Agent Name : {0}'.format(agent_name))
-    tags_input = None 
+    tags_input = [] 
     if(public_settings.has_key('Tags')):
       tags_input = public_settings['Tags']
     handler_utility.log('Tags : {0}'.format(tags_input))

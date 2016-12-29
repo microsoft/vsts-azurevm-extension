@@ -424,7 +424,9 @@ def configure_agent_if_required():
     sub_status_message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-
+    code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
+    message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
+    handler_utility.set_handler_status(code = code, status = 'success', message = message) 
 
 def add_agent_tags():
   if(config['Tags'] !=None and len(config['Tags']) > 0):

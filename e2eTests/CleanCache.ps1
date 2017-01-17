@@ -1,0 +1,1 @@
+cmd /c "if exist c:\_cache rd /s /q c:\_cache"

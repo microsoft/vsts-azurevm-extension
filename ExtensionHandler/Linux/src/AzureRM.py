@@ -398,7 +398,7 @@ def register_agent():
 def remove_existing_agent(config):
   try:
     handler_utility.log('Agent removal started')
-    ConfigureDeploymentAgent.remove_existing_agent_internal(config['PATToken'], config['AgentWorkingFolder'], handler_utility.log)
+    ConfigureDeploymentAgent.remove_existing_agent_internal(config['PATToken'], config['AgentWorkingFolder'], config['AgentName'], handler_utility.log)
     ss_code = RMExtensionStatus.rm_extension_status['RemovedAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['RemovedAgent']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['RemovedAgent']['operationName']

@@ -501,7 +501,7 @@ function Invoke-RemoveAgentScript {
     [hashtable] $config
     )
 
-    . $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    . $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -$agentName $config.AgentName -logFunction $script:logger
 }
 
 function Invoke-AddTagsToAgentScript{

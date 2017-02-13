@@ -73,9 +73,9 @@ $config = Get-ConfigurationFromSettings
 
 ExecuteAgentPreCheck ([ref]$Enable_ConfiguredAgentExists) ([ref]$Enable_AgentConfigurationRequired)
 
-DownloadAgentIfRequired
-
 RemoveExistingAgentIfRequired
+
+DownloadAgentIfRequired
 
 ConfigureAgentIfRequired
 

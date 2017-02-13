@@ -367,18 +367,11 @@ def download_agent_if_required():
 def register_agent():
   global config, configured_agent_exists
   try:
-    if(configured_agent_exists == True):
-      ss_code = RMExtensionStatus.rm_extension_status['RemovingAndConfiguringDeploymentAgent']['Code']
-      sub_status_message = RMExtensionStatus.rm_extension_status['RemovingAndConfiguringDeploymentAgent']['Message']
-      operation_name = RMExtensionStatus.rm_extension_status['RemovingAndConfiguringDeploymentAgent']['operationName']
-      handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-      handler_utility.log('Removing existing agent and configuring again...')
-    else:
-      ss_code = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['Code']
-      sub_status_message = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['Message']
-      operation_name = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName']
-      handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-      handler_utility.log('Configuring Deployment agent...')
+    ss_code = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['Code']
+    sub_status_message = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['Message']
+    operation_name = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName']
+    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    handler_utility.log('Configuring Deployment agent...')
     vsts_url = config['VSTSUrl']
     if(is_on_prem):
       vsts_url = vsts_url + '/' + config['VirtualApplication']
@@ -453,8 +446,8 @@ def enable():
   start_rm_extension_handler(input_operation)
   config = get_configutation_from_settings()
   execute_agent_pre_check()
-  download_agent_if_required()
   remove_existing_agent_if_required()
+  download_agent_if_required()
   configure_agent_if_required()
   add_agent_tags()
   set_last_sequence_number()

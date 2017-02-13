@@ -11,6 +11,8 @@ import time
 agent_listener_path = ''
 agent_service_path = ''
 log_function = None
+configured_agent_exists = False
+agent_configuration_required = True
 
 def write_configuration_log(log_message):
   global log_function
@@ -138,6 +140,7 @@ def agent_listener_exists(working_folder):
 
 
 def remove_existing_agent_internal(pat_token, working_folder, agent_name, log_func):
+  global configured_agent_exists
   try:
     global agent_listener_path, agent_service_path, log_function
     log_function = log_func
@@ -166,6 +169,7 @@ def remove_existing_agent_internal(pat_token, working_folder, agent_name, log_fu
     write_configuration_log('stdout : {0}'.format(std_out))
     write_configuration_log('srderr : {0}'.format(std_err))
     if(not (return_code == 0)):
+      configured_agent_exists = False
       cur_time = '%.6f'%(time.time())
       old_agent_folder_name = working_folder + cur_time
       write_configuration_log('Failed to unconfigure the VSTS agent. Renaming the agent directory to {0}.'.format(old_agent_folder_name))
@@ -178,6 +182,7 @@ def remove_existing_agent_internal(pat_token, working_folder, agent_name, log_fu
       write_configuration_log('srderr : {0}'.format(std_err))
       if(not (return_code == 0)):
         raise Exception('Deletion of agent directory failed with error : {0}'.format(std_err))
+      os.makedirs(working_folder, 0700)
   except Exception as e:
     write_configuration_log(e.message)
     raise e

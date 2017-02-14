@@ -75,6 +75,8 @@ ExecuteAgentPreCheck ([ref]$Enable_ConfiguredAgentExists) ([ref]$Enable_AgentCon
 
 RemoveExistingAgentIfRequired
 
+ExecuteAgentPreCheck ([ref]$Enable_ConfiguredAgentExists) ([ref]$Enable_AgentConfigurationRequired)
+
 DownloadAgentIfRequired
 
 ConfigureAgentIfRequired

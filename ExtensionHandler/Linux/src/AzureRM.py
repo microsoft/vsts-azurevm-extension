@@ -215,6 +215,14 @@ def format_tags_input(tags_input):
       ret_val.append(x)
   return ret_val
 
+def create_agent_working_folder():
+  agent_working_folder = '{0}/VSTSAgent'.format('')
+  handler_utility.log('Working folder for VSTS agent : {0}'.format(agent_working_folder))
+  if(not os.path.isdir(agent_working_folder)):
+    handler_utility.log('Working folder does not exist. Creating it...')
+    os.makedirs(agent_working_folder, 0700)
+  return agent_working_folder
+
 def get_configutation_from_settings():
   try:
     format_string = 'https://{0}.visualstudio.com'
@@ -264,11 +272,7 @@ def get_configutation_from_settings():
       tags_input = public_settings['Tags']
     handler_utility.log('Tags : {0}'.format(tags_input))
     tags = format_tags_input(tags_input)
-    agent_working_folder = '{0}/VSTSAgent'.format('')
-    handler_utility.log('Working folder for VSTS agent : {0}'.format(agent_working_folder))
-    if(not os.path.isdir(agent_working_folder)):
-      handler_utility.log('Working folder does not exist. Creating it...')
-      os.makedirs(agent_working_folder, 0700)
+    agent_working_folder = create_agent_working_folder()
     handler_utility.log('Done reading config settings from file...')
     ss_code = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['Message']
@@ -333,6 +337,8 @@ def execute_agent_pre_check():
   configured_agent_exists = test_configured_agent_exists()
   if(configured_agent_exists == True):
     agent_configuration_required = test_agent_configuration_required(config)
+  else:
+    create_agent_working_folder()
 
 def get_agent():
   global config
@@ -447,6 +453,7 @@ def enable():
   config = get_configutation_from_settings()
   execute_agent_pre_check()
   remove_existing_agent_if_required()
+  execute_agent_pre_check()
   download_agent_if_required()
   configure_agent_if_required()
   add_agent_tags()

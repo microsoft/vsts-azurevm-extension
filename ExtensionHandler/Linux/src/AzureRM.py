@@ -12,6 +12,8 @@ import DownloadDeploymentAgent
 import ConfigureDeploymentAgent
 import json
 
+configured_agent_exists = False
+agent_configuration_required = True
 config = {}
 root_dir = ''
 markup_file_format = '{0}/EXTENSIONDISABLED'
@@ -290,7 +292,7 @@ def get_configutation_from_settings():
     exit_with_code_zero()
 
 def test_configured_agent_exists():
-  global config
+  global configured_agent_exists, config
   try:
     ss_code = RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['Message']
@@ -327,10 +329,10 @@ def test_agent_configuration_required(config):
     exit_with_code_zero()
 
 def execute_agent_pre_check():
-  global config
-  ConfigureDeploymentAgent.configured_agent_exists = test_configured_agent_exists()
-  if(ConfigureDeploymentAgent.configured_agent_exists == True):
-    ConfigureDeploymentAgent.agent_configuration_required = test_agent_configuration_required(config)
+  global config, configured_agent_exists, agent_configuration_required
+  configured_agent_exists = test_configured_agent_exists()
+  if(configured_agent_exists == True):
+    agent_configuration_required = test_agent_configuration_required(config)
 
 def get_agent():
   global config
@@ -351,7 +353,8 @@ def get_agent():
     exit_with_code_zero()
 
 def download_agent_if_required():
-  if(ConfigureDeploymentAgent.configured_agent_exists == False):
+  global configured_agent_exists
+  if(configured_agent_exists == False):
     get_agent()
   else:
     handler_utility.log('Skipping agent download as agent already exists.')
@@ -362,7 +365,7 @@ def download_agent_if_required():
   
 
 def register_agent():
-  global config
+  global config, configured_agent_exists
   try:
     ss_code = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['Message']
@@ -372,7 +375,7 @@ def register_agent():
     vsts_url = config['VSTSUrl']
     if(is_on_prem):
       vsts_url = vsts_url + '/' + config['VirtualApplication']
-    ConfigureDeploymentAgent.configure_agent(vsts_url, config['PATToken'], config['TeamProject'], config['MachineGroup'], config['AgentName'], config['AgentWorkingFolder'], ConfigureDeploymentAgent.configured_agent_exists, handler_utility.log)
+    ConfigureDeploymentAgent.configure_agent(vsts_url, config['PATToken'], config['TeamProject'], config['MachineGroup'], config['AgentName'], config['AgentWorkingFolder'], configured_agent_exists, handler_utility.log)
     handler_utility.log('Done configuring Deployment agent')
     ss_code = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Message']
@@ -401,13 +404,13 @@ def remove_existing_agent(config):
     exit_with_code_zero()
 
 def remove_existing_agent_if_required():
-  global config
-  if((ConfigureDeploymentAgent.configured_agent_exists == True) and (ConfigureDeploymentAgent.agent_configuration_required == True)):
+  global configured_agent_exists, agent_configuration_required, config
+  if((configured_agent_exists == True) and (agent_configuration_required == True)):
     handler_utility.log('Remove existing configured agent')
     remove_existing_agent(config)
 
 def configure_agent_if_required():
-  if(ConfigureDeploymentAgent.agent_configuration_required):
+  if(agent_configuration_required):
     register_agent()
   else:
     ss_code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
@@ -416,7 +419,7 @@ def configure_agent_if_required():
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
     message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
-    handler_utility.set_handler_status(code = code, status = 'success', message = message)
+    handler_utility.set_handler_status(code = code, status = 'success', message = message) 
 
 def add_agent_tags():
   if(config['Tags'] !=None and len(config['Tags']) > 0):
@@ -438,7 +441,7 @@ def add_agent_tags():
     handler_utility.log('No tags provided for agent')
 
 def enable():
-  global config
+  global configured_agent_exists, agent_configuration_required, config
   input_operation = 'enable'
   start_rm_extension_handler(input_operation)
   config = get_configutation_from_settings()
@@ -468,12 +471,12 @@ def disable():
   handler_utility.set_handler_status(code = code, status = 'success', message = message)
 
 def uninstall():
-  global config
+  global configured_agent_exists, config
   operation = 'uninstall'
   config = get_configutation_from_settings()
-  ConfigureDeploymentAgent.configured_agent_exists = test_configured_agent_exists()
+  configured_agent_exists = test_configured_agent_exists()
   config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
-  if(ConfigureDeploymentAgent.configured_agent_exists == True):
+  if(configured_agent_exists == True):
     remove_existing_agent(config)
   else:
     code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']

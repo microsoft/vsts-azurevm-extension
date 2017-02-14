@@ -3,8 +3,6 @@ param(
     [string]$patToken,
     [Parameter(Mandatory=$true)]
     [string]$workingFolder,
-    [Parameter(Mandatory=$true)],
-    [string]$agentName
     [scriptblock]$logFunction    
 )
 

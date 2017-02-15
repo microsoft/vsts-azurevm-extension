@@ -146,7 +146,7 @@ def agent_listener_exists(working_folder):
 
 def remove_existing_agent_internal(pat_token, working_folder, log_func):
   try:
-    global agent_listener_path, agent_service_path, log_function
+    global agent_listener_path, agent_service_path, log_function, setting_params
     log_function = log_func
     get_agent_listener_path(working_folder)
     get_agent_service_path(working_folder) 
@@ -176,7 +176,8 @@ def remove_existing_agent_internal(pat_token, working_folder, log_func):
       cur_time = '%.6f'%(time.time())
       old_agent_folder_name = working_folder + cur_time
       write_configuration_log('Failed to unconfigure the VSTS agent. Renaming the agent directory to {0}.'.format(old_agent_folder_name))
-      agent_name = get_agent_setting('agentName')
+      agent_name = get_agent_setting(working_folder, 'agentName')
+      setting_params = {}
       write_configuration_log('Please delete the agent {0} manually from the machine group.'.format(agent_name))
       remove_agent_proc = subprocess.Popen('mv {0} {1}'.format(working_folder, old_agent_folder_name).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
       std_out, std_err = remove_agent_proc.communicate()

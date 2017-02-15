@@ -224,6 +224,7 @@ function Remove-Agent {
     } 
 }
 
+
 <#
 .Synopsis
    Adds the tag to configured agent. 
@@ -381,13 +382,7 @@ function Get-ConfigurationFromSettings {
             $tags = @(Format-TagsInput $tagsInput)
         }
 
-        $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
-        Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
-        if(!(Test-Path $agentWorkingFolder))
-        {
-            Write-Log "Working folder does not exist. Creating it..."
-            New-Item -ItemType Directory $agentWorkingFolder > $null
-        }
+        $agentWorkingFolder = Create-AgentWorkingFolder
 
         Write-Log "Done reading config settings from file..."
         Add-HandlerSubStatus $RM_Extension_Status.SuccessfullyReadSettings.Code $RM_Extension_Status.SuccessfullyReadSettings.Message -operationName $RM_Extension_Status.SuccessfullyReadSettings.operationName
@@ -410,6 +405,21 @@ function Get-ConfigurationFromSettings {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ReadingSettings.operationName
         Exit-WithCode0
     } 
+}
+
+
+function Create-AgentWorkingFolder {
+    [CmdletBinding()]
+    param()
+
+    $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
+    Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
+    if(!(Test-Path $agentWorkingFolder))
+    {
+        Write-Log "Working folder does not exist. Creating it..."
+        New-Item -ItemType Directory $agentWorkingFolder > $null
+    }
+    return $agentWorkingFolder
 }
 
 function Exit-WithCode0 {
@@ -579,4 +589,5 @@ Export-ModuleMember `
         Register-Agent, `
         Get-AccountUrl, `
         Get-CollectionUrl, `
+        Create-AgentWorkingFolder, `
         Add-AgentTags

@@ -83,7 +83,7 @@ function RemoveExistingAgent
         $currentTime = Get-Date
         [string]$timeSinceEpoch = (New-TimeSpan -Start $epochTime -End $currentTime).Ticks
         $oldWorkingFolderName = $workingFolder + $timeSinceEpoch
-        WriteConfigurationLog "Renaming agent folder to {0}" -f $oldWorkingFolderName
+        WriteConfigurationLog ("Renaming agent folder to {0}" -f $oldWorkingFolderName)
         WriteConfigurationLog "Please delete the agent manually from the machine group."
         Rename-Item $workingFolder $oldWorkingFolderName
     }

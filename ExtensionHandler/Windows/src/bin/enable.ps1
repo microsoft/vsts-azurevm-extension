@@ -29,6 +29,9 @@ function ExecuteAgentPreCheck([ref]$configuredAgentExists, [ref]$agentConfigurat
     if($configuredAgentExists.value)
     {   
         $agentConfigurationRequired.value = Test-AgentReconfigurationRequired $config
+    }
+    else{
+        Create-AgentWorkingFolder
     }    
 }
 

@@ -4,6 +4,8 @@
 #>
 
 $ErrorActionPreference = 'stop'
+$AgentUnconfigFailed = $false
+
 Set-StrictMode -Version latest
 
 if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot is not defined in 2.0
@@ -188,7 +190,12 @@ function Register-Agent {
         Write-Log "Done configuring Deployment agent"
 
         Add-HandlerSubStatus $RM_Extension_Status.ConfiguredDeploymentAgent.Code $RM_Extension_Status.ConfiguredDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguredDeploymentAgent.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
+        if($AgentUnconfigFailed){
+            Set-HandlerStatus $RM_Extension_Status.Installed.Code ($RM_Extension_Status.Installed.Message + $RM_Extension_Status.AgentUnConfigureFailWarning) -Status success
+        }
+        else{
+            Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
+        }
     }
     catch 
     {
@@ -206,16 +213,37 @@ function Remove-Agent {
     [CmdletBinding()]
     param(
     [Parameter(Mandatory=$true, Position=0)]
-    [hashtable] $config
+    [hashtable] $config,
+    [Parameter(Mandatory=$false, Position=1)]
+    [hashtable] $operation = ""
     )
-
     try 
     {
         Write-Log "Remove-Agent command started"
-        Invoke-RemoveAgentScript $config
-
-        Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
-        Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
+        try{
+            Invoke-RemoveAgentScript $config
+            Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
+            Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
+        }
+        catch{
+            if(($operation == "enable") -and ($_.Exception.Data['Reason'] == "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder)){
+                $AgentUnconfigFailed = $true
+                $epochTime = Get-Date "01/01/1970"
+                $currentTime = Get-Date
+                [string]$timeSinceEpoch = (New-TimeSpan -Start $epochTime -End $currentTime).Ticks
+                $oldWorkingFolderName = $workingFolder + $timeSinceEpoch
+                $agentSettingPath = Join-Path $workingFolder $agentSetting
+                $agentSettings = Get-Content -Path $agentSettingPath | Out-String | ConvertFrom-Json
+                $agentName = $($agentSettings.agentName)
+                Write-Log ("Renaming agent folder to {0}" -f $oldWorkingFolderName)
+                Write-Log ("Please delete the agent {0} manually from the machine group." -f $agentName)
+                Rename-Item $workingFolder $oldWorkingFolderName
+                Add-HandlerSubStatus $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Code $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Message -operationName $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.operationName
+            }
+            else{
+                throw $_
+            }
+        }
     }
     catch 
     {
@@ -252,7 +280,12 @@ function Add-AgentTags {
         }
         
         Add-HandlerSubStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -operationName $RM_Extension_Status.AgentTagsAdded.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
+        if($AgentUnconfigFailed){
+            Set-HandlerStatus $RM_Extension_Status.Installed.Code ($RM_Extension_Status.Installed.Message + $RM_Extension_Status.AgentUnConfigureFailWarning) -Status success
+        }
+        else{
+            Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
+        }
     }
     catch 
     {

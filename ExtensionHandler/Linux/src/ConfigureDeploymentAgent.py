@@ -6,7 +6,6 @@ import Constants
 import codecs
 import base64
 import httplib
-import time
 
 agent_listener_path = ''
 agent_service_path = ''
@@ -173,20 +172,9 @@ def remove_existing_agent_internal(pat_token, working_folder, log_func):
     write_configuration_log('stdout : {0}'.format(std_out))
     write_configuration_log('srderr : {0}'.format(std_err))
     if(not (return_code == 0)):
-      cur_time = '%.6f'%(time.time())
-      old_agent_folder_name = working_folder + cur_time
-      write_configuration_log('Failed to unconfigure the VSTS agent. Renaming the agent directory to {0}.'.format(old_agent_folder_name))
-      agent_name = get_agent_setting(working_folder, 'agentName')
-      setting_params = {}
-      write_configuration_log('Please delete the agent {0} manually from the machine group.'.format(agent_name))
-      remove_agent_proc = subprocess.Popen('mv {0} {1}'.format(working_folder, old_agent_folder_name).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-      std_out, std_err = remove_agent_proc.communicate()
-      return_code = remove_agent_proc.returncode
-      write_configuration_log('Renaming agent directory process exit code : {0}'.format(return_code))
-      write_configuration_log('stdout : {0}'.format(std_out))
-      write_configuration_log('srderr : {0}'.format(std_err))
-      if(not (return_code == 0)):
-        raise Exception('Deletion of agent directory failed with error : {0}'.format(std_err))
+      e = Exception('Agent removal failed with error : {0}'.format(std_err))
+      setattr(e, 'Reason', 'UnConfigFailed')
+      raise e
   except Exception as e:
     write_configuration_log(e.message)
     raise e

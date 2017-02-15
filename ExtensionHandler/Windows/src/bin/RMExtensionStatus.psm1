@@ -134,6 +134,11 @@ $global:RM_Extension_Status = @{
         Message = 'Adding agent tags'
         operationName = 'Add agent tags'
     }
+    UnConfiguringDeploymentAgentFailed = @{
+        Code = 25
+        Message = 'The deployment agent could not be unconfigured. Please manually remove it from the machine group'
+        operationName = 'Uninstall'
+    }
 
     #
     # Warnings
@@ -161,6 +166,7 @@ $global:RM_Extension_Status = @{
     # ArgumentError indicates a problem in the user input. The message for the error is provided by the specific exception
     #
     ArgumentError = 1100 
+    AgentUnConfigureFailWarning = 'There are some warnings in the agent installation. Please check "Detailed Status" for more details.'
 }
 
 #endregion

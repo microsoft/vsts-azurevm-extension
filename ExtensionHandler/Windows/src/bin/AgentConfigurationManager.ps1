@@ -79,13 +79,9 @@ function RemoveExistingAgent
 
     if($removeAgentProcess.ExitCode -ne 0 )
     {
-        $epochTime = Get-Date "01/01/1970"
-        $currentTime = Get-Date
-        [string]$timeSinceEpoch = (New-TimeSpan -Start $epochTime -End $currentTime).Ticks
-        $oldWorkingFolderName = $workingFolder + $timeSinceEpoch
-        WriteConfigurationLog ("Renaming agent folder to {0}" -f $oldWorkingFolderName)
-        WriteConfigurationLog "Please delete the agent manually from the machine group."
-        Rename-Item $workingFolder $oldWorkingFolderName
+        $exception = New-Object System.Exception("Agent removal failed with error - $stderr")
+        $exception.Data["Reason"] = "UnConfigFailed"
+        throw $exception
     }
 }
 

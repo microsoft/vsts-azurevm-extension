@@ -187,7 +187,7 @@ Describe "Enable RM extension tests" {
         Mock Write-Log {}
         Mock Set-LastSequenceNumber {}
         Mock Remove-ExtensionDisabledMarkup {}
-        Mock ConfigureAgentIfRequired {}
+        Mock Add-AgentTags {}
         Mock Test-Path { return $true}
         Mock Get-Content { return @{
                 agentName = 'TestName'
@@ -200,7 +200,7 @@ Describe "Enable RM extension tests" {
 
         It "should call rename the agent folder followed by download and configure" {
             Assert-MockCalled Get-Agent -Times 1
-            Assert-MockCalled ConfigureAgentIfRequired -Times 1
+            Assert-MockCalled Add-AgentTags -Times 1
         }
     }
 }

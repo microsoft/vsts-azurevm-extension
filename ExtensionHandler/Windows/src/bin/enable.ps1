@@ -10,8 +10,6 @@
 $ErrorActionPreference = 'stop'
 Set-StrictMode -Version latest
 
-. "$PSScriptRoot\Constants.ps1"
-
 if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) {
     # $PSScriptRoot is not defined in 2.0
     $PSScriptRoot = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
@@ -27,7 +25,10 @@ $Enable_AgentConfigurationRequired = $true
 function ExecuteAgentPreCheck([ref]$configuredAgentExists, [ref]$agentConfigurationRequired) {
 
     $configuredAgentExists.value  = Test-AgentAlreadyExists $config
-    $agentConfigurationRequired.value = Test-AgentReconfigurationRequired $config    
+    if($configuredAgentExists.value)
+    {
+        $agentConfigurationRequired.value = Test-AgentReconfigurationRequired $config
+    }    
 }
 
 function DownloadAgentIfRequired {
@@ -44,6 +45,9 @@ function RemoveExistingAgentIfRequired {
     if( $Enable_ConfiguredAgentExists -and $Enable_AgentConfigurationRequired) {   
         Write-Log "Remove existing configured agent"
         Remove-Agent $config $false
+        
+        #Execution has reached till here means that either the agent was removed successfully, or we renamed the agent folder successfully. 
+        $Enable_ConfiguredAgentExists = $false
     }
 }
 

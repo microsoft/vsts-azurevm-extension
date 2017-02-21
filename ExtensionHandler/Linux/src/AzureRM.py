@@ -337,7 +337,8 @@ def test_agent_configuration_required(config):
 def execute_agent_pre_check():
   global config, configured_agent_exists, agent_configuration_required
   configured_agent_exists = test_configured_agent_exists()
-  agent_configuration_required = test_agent_configuration_required(config)
+  if(configured_agent_exists == True):
+    agent_configuration_required = test_agent_configuration_required(config)
   
 def get_agent():
   global config
@@ -410,12 +411,12 @@ def remove_existing_agent(config, ignore_unconfiguration_failure = True):
       if((ignore_unconfiguration_failure == False) and ('Reason' in dir(e) and getattr(e, 'Reason') == 'UnConfigFailed') and (os.access(config['AgentWorkingFolder'], os.F_OK))):
         include_warning_status = True
         cur_time = '%.6f'%(time.time())
-        old_agent_folder_name = working_folder + cur_time
+        old_agent_folder_name = config['AgentWorkingFolder'] + cur_time
         handler_utility.log('Failed to unconfigure the VSTS agent. Renaming the agent directory to {0}.'.format(old_agent_folder_name))
-        agent_name = get_agent_setting(working_folder, 'agentName')
+        agent_name = get_agent_setting(config['AgentWorkingFolder'], 'agentName')
         ConfigureDeploymentAgent.setting_params = {}
         handler_utility.log('Please delete the agent {0} manually from the machine group.'.format(agent_name))
-        rename_agent_folder_proc = subprocess.Popen('mv {0} {1}'.format(working_folder, old_agent_folder_name).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        rename_agent_folder_proc = subprocess.Popen('mv {0} {1}'.format(config['AgentWorkingFolder'], old_agent_folder_name).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         std_out, std_err = rename_agent_folder_proc.communicate()
         return_code = rename_agent_folder_proc.returncode
         handler_utility.log('Renaming agent directory process exit code : {0}'.format(return_code))
@@ -423,7 +424,6 @@ def remove_existing_agent(config, ignore_unconfiguration_failure = True):
         handler_utility.log('srderr : {0}'.format(std_err))
         if(not (return_code == 0)):
           raise Exception('Renaming of agent directory failed with error : {0}'.format(std_err))
-        configured_agent_exists = False
         create_agent_working_folder()
         ss_code = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['Code']
         sub_status_message = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['Message']
@@ -440,6 +440,8 @@ def remove_existing_agent_if_required():
   if((configured_agent_exists == True) and (agent_configuration_required == True)):
     handler_utility.log('Remove existing configured agent')
     remove_existing_agent(config, False)
+    #Execution has reached till here means that either the agent was removed successfully, or we renamed the agent folder successfully. 
+    configured_agent_exists = False
 
 def configure_agent_if_required():
   if(agent_configuration_required):

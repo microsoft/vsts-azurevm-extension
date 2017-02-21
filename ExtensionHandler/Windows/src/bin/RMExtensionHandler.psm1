@@ -214,6 +214,7 @@ function Remove-Agent {
     )
     try 
     {
+        . $PSScriptRoot\Constants.ps1
         Write-Log "Remove-Agent command started"
         try{
             Invoke-RemoveAgentScript $config
@@ -231,7 +232,6 @@ function Remove-Agent {
                 Write-Log ("Renaming agent folder to {0}" -f $oldWorkingFolderName)
                 Write-Log ("Please delete the agent {0} manually from the machine group." -f $agentName)
                 Rename-Item $workingFolder $oldWorkingFolderName
-                $Enable_ConfiguredAgentExists = $false
                 Create-AgentWorkingFolder
                 Add-HandlerSubStatus $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Code $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Message -operationName $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.operationName
             }

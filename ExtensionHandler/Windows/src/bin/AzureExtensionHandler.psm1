@@ -474,7 +474,7 @@ function Set-HandlerStatus
         [ValidateSet('transitioning', 'error', 'success', 'warning')]
         [string] $Status = 'transitioning',
 
-        [Parameter()]
+        [Parameter(Mandatory=$false,Position=4)]
         [boolean] $IncludeWarningStatus = $false
     )
 

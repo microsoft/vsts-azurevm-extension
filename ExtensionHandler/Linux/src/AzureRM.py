@@ -394,7 +394,7 @@ def register_agent():
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName'])
     exit_with_code_zero()
 
-def remove_existing_agent(config, ignore_unconfiguration_failure = True):
+def remove_existing_agent(config, ignore_unconfiguration_failure = False):
   global include_warning_status
   try:
     handler_utility.log('Agent removal started')
@@ -413,7 +413,7 @@ def remove_existing_agent(config, ignore_unconfiguration_failure = True):
         cur_time = '%.6f'%(time.time())
         old_agent_folder_name = config['AgentWorkingFolder'] + cur_time
         handler_utility.log('Failed to unconfigure the VSTS agent. Renaming the agent directory to {0}.'.format(old_agent_folder_name))
-        agent_name = get_agent_setting(config['AgentWorkingFolder'], 'agentName')
+        agent_name = ConfigureDeploymentAgent.get_agent_setting(config['AgentWorkingFolder'], 'agentName')
         ConfigureDeploymentAgent.setting_params = {}
         handler_utility.log('Please delete the agent {0} manually from the machine group.'.format(agent_name))
         rename_agent_folder_proc = subprocess.Popen('mv {0} {1}'.format(config['AgentWorkingFolder'], old_agent_folder_name).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE)

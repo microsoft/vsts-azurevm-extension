@@ -222,16 +222,16 @@ function Remove-Agent {
             Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
         }
         catch{
-            if($ignoreUnconfigurationFailure -and ($_.Exception.Data['Reason'] == "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder)){
+            if(!($ignoreUnconfigurationFailure) -and ($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder)){
                 $IncludeWarningStatus = $true
                 [string]$timeSinceEpoch = Get-TimeSinceEpoch
-                $oldWorkingFolderName = $workingFolder + $timeSinceEpoch
-                $agentSettingPath = Join-Path $workingFolder $agentSetting
+                $oldWorkingFolderName = $config.AgentWorkingFolder + $timeSinceEpoch
+                $agentSettingPath = Join-Path $config.AgentWorkingFolder $agentSetting
                 $agentSettings = Get-Content -Path $agentSettingPath | Out-String | ConvertFrom-Json
                 $agentName = $($agentSettings.agentName)
                 Write-Log ("Renaming agent folder to {0}" -f $oldWorkingFolderName)
                 Write-Log ("Please delete the agent {0} manually from the machine group." -f $agentName)
-                Rename-Item $workingFolder $oldWorkingFolderName
+                Rename-Item $config.AgentWorkingFolder $oldWorkingFolderName
                 Create-AgentWorkingFolder
                 Add-HandlerSubStatus $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Code $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Message -operationName $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.operationName
             }

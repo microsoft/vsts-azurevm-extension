@@ -47,7 +47,7 @@ function RemoveExistingAgentIfRequired {
         Remove-Agent $config $false
         
         #Execution has reached till here means that either the agent was removed successfully, or we renamed the agent folder successfully. 
-        $Enable_ConfiguredAgentExists = $false
+        $script:Enable_ConfiguredAgentExists = $false
     }
 }
 

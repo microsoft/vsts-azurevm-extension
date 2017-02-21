@@ -189,13 +189,15 @@ Describe "Enable RM extension tests" {
         Mock Remove-ExtensionDisabledMarkup {}
         Mock Add-AgentTags {}
         Mock Test-Path { return $true}
-        Mock Get-Content { return @{
+        Mock Get-Content {}
+        Mock Rename-Item {}
+        Mock Create-AgentWorkingFolder {}
+        Mock Out-String {}
+        Mock ConvertFrom-Json { 
+            return @{
                 agentName = 'TestName'
             }
         }
-        Mock Rename-Item {}
-        Mock Create-AgentWorkingFolder {}
-        Mock Add-HandlerSubStatus {}
 
         . ..\bin\enable.ps1
 

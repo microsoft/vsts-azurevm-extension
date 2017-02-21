@@ -7,9 +7,9 @@ Import-Module "$currentScriptPath\..\bin\Log.psm1"
 
 Describe "Enable RM extension tests" {
 
-        $config = @{
-            Tags = @()
-        }
+    $config = @{
+        Tags = @()
+    }
 
     Context "Should save last sequence number file and remove disable mockup file" {
 
@@ -47,11 +47,11 @@ Describe "Enable RM extension tests" {
         Mock Remove-ExtensionDisabledMarkup {}
         Mock Add-AgentTags {}
         
-        try
-        {
+        try {
             . ..\bin\enable.ps1
         }
-        catch {}
+        catch {
+        }
 
         It "should call clean up functions" {
             Assert-MockCalled Set-LastSequenceNumber -Times 0
@@ -162,6 +162,46 @@ Describe "Enable RM extension tests" {
         It "should call remove-agent followed by register-agent" {
             Assert-MockCalled Add-AgentTags -Times 1
             Assert-MockCalled Set-LastSequenceNumber -Times 1
+        }
+    }
+
+    Context "If agent removal fails doe to unconfiguration error, should rename the agent folder and continue" {
+        
+        $configWithTags = @{
+            AgentWorkingFolder = 'TestFolder'
+            Tags = @("Tag1")
+        }
+        
+        Mock Start-RMExtensionHandler {}
+        Mock Get-ConfigurationFromSettings { return $configWithTags }
+        Mock Test-AgentAlreadyExists { return $true}
+        Mock Test-AgentReconfigurationRequired { return $false}
+        Mock Get-Agent {}
+        Mock DownloadAgentIfRequired {}
+        Mock Invoke-RemoveAgentScript {
+            $exception = New-Object System.Exception("Agent removal failed ")
+            $exception.Data["Reason"] = "UnConfigFailed"
+            throw $exception
+        }
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
+        Mock Write-Log {}
+        Mock Set-LastSequenceNumber {}
+        Mock Remove-ExtensionDisabledMarkup {}
+        Mock ConfigureAgentIfRequired {}
+        Mock Test-Path { return $true}
+        Mock Get-Content { return @{
+                agentName = 'TestName'
+            }
+        }
+        Mock Rename-Item {}
+        Mock Create-AgentWorkingFolder {}
+
+        . ..\bin\enable.ps1
+
+        It "should call remove-agent followed by register-agent" {
+            Assert-MockCalled DownloadAgentIfRequired -Times 1
+            Assert-MockCalled ConfigureAgentIfRequired -Times 1
         }
     }
 }

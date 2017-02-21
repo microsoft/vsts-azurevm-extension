@@ -198,6 +198,7 @@ Describe "Enable RM extension tests" {
                 agentName = 'TestName'
             }
         }
+        Mock Join-Path {}
 
         . ..\bin\enable.ps1
 

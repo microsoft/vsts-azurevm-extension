@@ -199,6 +199,7 @@ Describe "Enable RM extension tests" {
             }
         }
         Mock Join-Path {}
+        Mock Register-Agent {}
 
         . ..\bin\enable.ps1
 

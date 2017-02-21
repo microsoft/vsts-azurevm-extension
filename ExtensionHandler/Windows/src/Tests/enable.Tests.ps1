@@ -167,13 +167,13 @@ Describe "Enable RM extension tests" {
 
     Context "If agent removal fails doe to unconfiguration error, should rename the agent folder and continue" {
         
-        $configWithTags = @{
+        $config = @{
             AgentWorkingFolder = 'TestFolder'
             Tags = @("Tag1")
         }
         
         Mock Start-RMExtensionHandler {}
-        Mock Get-ConfigurationFromSettings { return $configWithTags }
+        Mock Get-ConfigurationFromSettings { return $config }
         Mock Test-AgentAlreadyExists { return $true}
         Mock Test-AgentReconfigurationRequired { return $true}
         Mock Get-Agent {}

@@ -613,4 +613,5 @@ Export-ModuleMember `
         Get-AccountUrl, `
         Get-CollectionUrl, `
         Create-AgentWorkingFolder, `
-        Add-AgentTags
+        Add-AgentTags, `
+        Invoke-RemoveAgentScript

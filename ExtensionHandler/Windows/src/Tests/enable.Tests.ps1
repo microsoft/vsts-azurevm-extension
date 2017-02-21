@@ -195,6 +195,7 @@ Describe "Enable RM extension tests" {
         }
         Mock Rename-Item {}
         Mock Create-AgentWorkingFolder {}
+        Mock Add-HandlerSubStatus {}
 
         . ..\bin\enable.ps1
 

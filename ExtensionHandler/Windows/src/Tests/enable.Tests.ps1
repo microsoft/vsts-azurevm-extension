@@ -175,9 +175,8 @@ Describe "Enable RM extension tests" {
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $configWithTags }
         Mock Test-AgentAlreadyExists { return $true}
-        Mock Test-AgentReconfigurationRequired { return $false}
+        Mock Test-AgentReconfigurationRequired { return $true}
         Mock Get-Agent {}
-        Mock DownloadAgentIfRequired {}
         Mock Invoke-RemoveAgentScript {
             $exception = New-Object System.Exception("Agent removal failed ")
             $exception.Data["Reason"] = "UnConfigFailed"
@@ -199,8 +198,8 @@ Describe "Enable RM extension tests" {
 
         . ..\bin\enable.ps1
 
-        It "should call remove-agent followed by register-agent" {
-            Assert-MockCalled DownloadAgentIfRequired -Times 1
+        It "should call rename the agent folder followed by download and configure" {
+            Assert-MockCalled Get-Agent -Times 1
             Assert-MockCalled ConfigureAgentIfRequired -Times 1
         }
     }

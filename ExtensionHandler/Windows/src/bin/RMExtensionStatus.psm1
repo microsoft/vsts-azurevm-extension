@@ -137,7 +137,7 @@ $global:RM_Extension_Status = @{
     UnConfiguringDeploymentAgentFailed = @{
         Code = 25
         Message = 'The deployment agent could not be unconfigured. Please manually remove it from the machine group'
-        operationName = 'Uninstall'
+        operationName = 'Unconfigure existing agent'
     }
 
     #

@@ -347,10 +347,12 @@ class HandlerUtility:
         self.log("Clearing status file " + status_file)
         open(status_file, 'w').close()
 
-    def set_handler_status(self, code=None, message=None, status = 'transitioning', operation_name = None, sub_status = 'success', ss_code = None, sub_status_message = None):
+    def set_handler_status(self, code=None, message=None, status = 'transitioning', operation_name = None, sub_status = 'success', ss_code = None, sub_status_message = None, include_warning_status = False):
         status_file = '{0}/{1}.status'.format(self._context._status_dir, self._context._seq_no)
         #handlerUtility.log("Setting handler status to '{0}' ({1})".format(status, message))
         #to do correctr time, correct time format
+        if(include_warning_status):
+            message = message + RMExtensionStatus.rm_extension_status['AgentUnConfigureFailWarning']
         timestamp_utc = time.strftime(DateTimeFormat, time.gmtime())
         if(os.path.isfile(status_file) and os.stat(status_file).st_size != 0):
             status_file_contents = waagent.GetFileContents(status_file)

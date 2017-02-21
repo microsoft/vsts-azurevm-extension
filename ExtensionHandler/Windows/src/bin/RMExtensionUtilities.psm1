@@ -80,7 +80,15 @@ function Get-OSVersion {
     }
 }
 
+function Get-TimeSinceEpoch {
+    $epochTime = Get-Date "01/01/1970"
+    $currentTime = Get-Date
+    $timeSinceEpoch = (New-TimeSpan -Start $epochTime -End $currentTime).Ticks
+    return $timeSinceEpoch
+}
+
 Export-ModuleMember `
     -Function `
             ConvertTo-Hashtable, `
-            Get-OSVersion
+            Get-OSVersion, `
+            Get-TimeSinceEpoch

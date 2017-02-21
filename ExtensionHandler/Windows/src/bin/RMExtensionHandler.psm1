@@ -4,7 +4,7 @@
 #>
 
 $ErrorActionPreference = 'stop'
-$AgentUnconfigFailed = $false
+$IncludeWarningStatus = $false
 
 Set-StrictMode -Version latest
 
@@ -190,12 +190,7 @@ function Register-Agent {
         Write-Log "Done configuring Deployment agent"
 
         Add-HandlerSubStatus $RM_Extension_Status.ConfiguredDeploymentAgent.Code $RM_Extension_Status.ConfiguredDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguredDeploymentAgent.operationName
-        if($AgentUnconfigFailed){
-            Set-HandlerStatus $RM_Extension_Status.Installed.Code ($RM_Extension_Status.Installed.Message + $RM_Extension_Status.AgentUnConfigureFailWarning) -Status success
-        }
-        else{
-            Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
-        }
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success $IncludeWarningStatus
     }
     catch 
     {
@@ -215,7 +210,7 @@ function Remove-Agent {
     [Parameter(Mandatory=$true, Position=0)]
     [hashtable] $config,
     [Parameter(Mandatory=$false, Position=1)]
-    [hashtable] $operation = ""
+    [boolean] $ignoreUnconfigurationFailure = $false
     )
     try 
     {
@@ -226,11 +221,9 @@ function Remove-Agent {
             Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
         }
         catch{
-            if(($operation == "enable") -and ($_.Exception.Data['Reason'] == "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder)){
-                $AgentUnconfigFailed = $true
-                $epochTime = Get-Date "01/01/1970"
-                $currentTime = Get-Date
-                [string]$timeSinceEpoch = (New-TimeSpan -Start $epochTime -End $currentTime).Ticks
+            if($ignoreUnconfigurationFailure -and ($_.Exception.Data['Reason'] == "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder)){
+                $IncludeWarningStatus = $true
+                [string]$timeSinceEpoch = Get-TimeSinceEpoch
                 $oldWorkingFolderName = $workingFolder + $timeSinceEpoch
                 $agentSettingPath = Join-Path $workingFolder $agentSetting
                 $agentSettings = Get-Content -Path $agentSettingPath | Out-String | ConvertFrom-Json
@@ -238,6 +231,8 @@ function Remove-Agent {
                 Write-Log ("Renaming agent folder to {0}" -f $oldWorkingFolderName)
                 Write-Log ("Please delete the agent {0} manually from the machine group." -f $agentName)
                 Rename-Item $workingFolder $oldWorkingFolderName
+                $Enable_ConfiguredAgentExists = $false
+                Create-AgentWorkingFolder
                 Add-HandlerSubStatus $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Code $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Message -operationName $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.operationName
             }
             else{
@@ -280,12 +275,7 @@ function Add-AgentTags {
         }
         
         Add-HandlerSubStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -operationName $RM_Extension_Status.AgentTagsAdded.operationName
-        if($AgentUnconfigFailed){
-            Set-HandlerStatus $RM_Extension_Status.Installed.Code ($RM_Extension_Status.Installed.Message + $RM_Extension_Status.AgentUnConfigureFailWarning) -Status success
-        }
-        else{
-            Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
-        }
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success $IncludeWarningStatus
     }
     catch 
     {

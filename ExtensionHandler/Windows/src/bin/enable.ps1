@@ -27,13 +27,7 @@ $Enable_AgentConfigurationRequired = $true
 function ExecuteAgentPreCheck([ref]$configuredAgentExists, [ref]$agentConfigurationRequired) {
 
     $configuredAgentExists.value  = Test-AgentAlreadyExists $config
-
-    if($configuredAgentExists.value) {   
-        $agentConfigurationRequired.value = Test-AgentReconfigurationRequired $config
-    }
-    else{
-        Create-AgentWorkingFolder
-    }    
+    $agentConfigurationRequired.value = Test-AgentReconfigurationRequired $config    
 }
 
 function DownloadAgentIfRequired {
@@ -47,14 +41,9 @@ function DownloadAgentIfRequired {
 }
 
 function RemoveExistingAgentIfRequired {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$false, Position=0)]
-        [hashtable] $operation = ""
-    ) 
     if( $Enable_ConfiguredAgentExists -and $Enable_AgentConfigurationRequired) {   
         Write-Log "Remove existing configured agent"
-        Remove-Agent $config $operation
+        Remove-Agent $config $false
     }
 }
 
@@ -74,9 +63,7 @@ $config = Get-ConfigurationFromSettings
 
 ExecuteAgentPreCheck ([ref]$Enable_ConfiguredAgentExists) ([ref]$Enable_AgentConfigurationRequired)
 
-RemoveExistingAgentIfRequired "enable"
-
-ExecuteAgentPreCheck ([ref]$Enable_ConfiguredAgentExists) ([ref]$Enable_AgentConfigurationRequired)
+RemoveExistingAgentIfRequired
 
 DownloadAgentIfRequired
 

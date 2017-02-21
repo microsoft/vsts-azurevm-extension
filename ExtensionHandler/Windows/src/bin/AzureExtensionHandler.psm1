@@ -472,8 +472,15 @@ function Set-HandlerStatus
 
         [Parameter()]
         [ValidateSet('transitioning', 'error', 'success', 'warning')]
-        [string] $Status = 'transitioning'
+        [string] $Status = 'transitioning',
+
+        [Parameter()]
+        [boolean] $IncludeWarningStatus = $false
     )
+
+    if($IncludeWarningStatus){
+        $Message = $Message + $RM_Extension_Status.AgentUnConfigureFailWarning
+    }
 
     $statusFile = '{0}\{1}.status' -f (Get-HandlerEnvironment).statusFolder, (Get-HandlerExecutionSequenceNumber)
 

@@ -7,9 +7,9 @@ Import-Module "$currentScriptPath\..\bin\Log.psm1"
 
 Describe "Enable RM extension tests" {
 
-    $config = @{
-        Tags = @()
-    }
+        $config = @{
+            Tags = @()
+        }
 
     Context "Should save last sequence number file and remove disable mockup file" {
 
@@ -47,11 +47,11 @@ Describe "Enable RM extension tests" {
         Mock Remove-ExtensionDisabledMarkup {}
         Mock Add-AgentTags {}
         
-        try {
+        try 
+        {
             . ..\bin\enable.ps1
         }
-        catch {
-        }
+        catch {}
 
         It "should call clean up functions" {
             Assert-MockCalled Set-LastSequenceNumber -Times 0

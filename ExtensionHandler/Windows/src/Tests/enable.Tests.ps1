@@ -177,29 +177,30 @@ Describe "Enable RM extension tests" {
         Mock Test-AgentAlreadyExists { return $true}
         Mock Test-AgentReconfigurationRequired { return $true}
         Mock Get-Agent {}
-        Mock Invoke-RemoveAgentScript {
-            $exception = New-Object System.Exception("Agent removal failed ")
-            $exception.Data["Reason"] = "UnConfigFailed"
-            throw $exception
-        }
+        Mock Register-Agent {}
+        Mock Remove-Agent {}
         Mock Add-HandlerSubStatus {}
         Mock Set-HandlerStatus {}
         Mock Write-Log {}
         Mock Set-LastSequenceNumber {}
         Mock Remove-ExtensionDisabledMarkup {}
         Mock Add-AgentTags {}
+        Mock Invoke-RemoveAgentScript {
+            $exception = New-Object System.Exception("Agent removal failed ")
+            $exception.Data["Reason"] = "UnConfigFailed"
+            throw $exception
+        }
         Mock Test-Path { return $true}
+        Mock Join-Path {}
         Mock Get-Content {}
-        Mock Rename-Item {}
-        Mock Create-AgentWorkingFolder {}
         Mock Out-String {}
         Mock ConvertFrom-Json { 
             return @{
                 agentName = 'TestName'
             }
         }
-        Mock Join-Path {}
-        Mock Register-Agent {}
+        Mock Rename-Item {}
+        Mock Create-AgentWorkingFolder {}
 
         . ..\bin\enable.ps1
 

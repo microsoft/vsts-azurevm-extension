@@ -47,7 +47,7 @@ Describe "Enable RM extension tests" {
         Mock Remove-ExtensionDisabledMarkup {}
         Mock Add-AgentTags {}
         
-        try 
+        try
         {
             . ..\bin\enable.ps1
         }

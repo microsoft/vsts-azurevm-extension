@@ -164,49 +164,4 @@ Describe "Enable RM extension tests" {
             Assert-MockCalled Set-LastSequenceNumber -Times 1
         }
     }
-
-    Context "If agent removal fails doe to unconfiguration error, should rename the agent folder and continue" {
-        
-        $config = @{
-            AgentWorkingFolder = 'TestFolder'
-            Tags = @("Tag1")
-        }
-        
-        Mock Start-RMExtensionHandler {}
-        Mock Get-ConfigurationFromSettings { return $config }
-        Mock Test-AgentAlreadyExists { return $true}
-        Mock Test-AgentReconfigurationRequired { return $true}
-        Mock Get-Agent {}
-        Mock Register-Agent {}
-        Mock Remove-Agent {}
-        Mock Add-HandlerSubStatus {}
-        Mock Set-HandlerStatus {}
-        Mock Write-Log {}
-        Mock Set-LastSequenceNumber {}
-        Mock Remove-ExtensionDisabledMarkup {}
-        Mock Add-AgentTags {}
-        Mock Invoke-RemoveAgentScript {
-            $exception = New-Object System.Exception("Agent removal failed ")
-            $exception.Data["Reason"] = "UnConfigFailed"
-            throw $exception
-        }
-        Mock Test-Path { return $true}
-        Mock Join-Path {}
-        Mock Get-Content {}
-        Mock Out-String {}
-        Mock ConvertFrom-Json { 
-            return @{
-                agentName = 'TestName'
-            }
-        }
-        Mock Rename-Item {}
-        Mock Create-AgentWorkingFolder {}
-
-        . ..\bin\enable.ps1
-
-        It "should call rename the agent folder followed by download and configure" {
-            Assert-MockCalled Get-Agent -Times 1
-            Assert-MockCalled Add-AgentTags -Times 1
-        }
-    }
 }

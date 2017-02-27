@@ -10,8 +10,7 @@
 $ErrorActionPreference = 'stop'
 Set-StrictMode -Version latest
 
-if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) {
-    # $PSScriptRoot is not defined in 2.0
+if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot is not defined in 2.0
     $PSScriptRoot = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
 }
 
@@ -22,27 +21,33 @@ Import-Module $PSScriptRoot\Log.psm1
 $Enable_ConfiguredAgentExists = $false
 $Enable_AgentConfigurationRequired = $true
 
-function ExecuteAgentPreCheck([ref]$configuredAgentExists, [ref]$agentConfigurationRequired) {
+function ExecuteAgentPreCheck([ref]$configuredAgentExists, [ref]$agentConfigurationRequired) 
+{
 
     $configuredAgentExists.value  = Test-AgentAlreadyExists $config
     if($configuredAgentExists.value)
-    {
+    {   
         $agentConfigurationRequired.value = Test-AgentReconfigurationRequired $config
     }    
 }
 
-function DownloadAgentIfRequired {
-    if(!$Enable_ConfiguredAgentExists) {
+function DownloadAgentIfRequired 
+{
+    if(!$Enable_ConfiguredAgentExists) 
+    {
         Get-Agent $config
     }
-    else {
+    else 
+    {
         Write-Log "Skipping agent download as a configured agent already exists."
         Add-HandlerSubStatus $RM_Extension_Status.SkippingDownloadDeploymentAgent.Code $RM_Extension_Status.SkippingDownloadDeploymentAgent.Message -operationName $RM_Extension_Status.SkippingDownloadDeploymentAgent.operationName
     }
 }
 
-function RemoveExistingAgentIfRequired {
-    if( $Enable_ConfiguredAgentExists -and $Enable_AgentConfigurationRequired) {   
+function RemoveExistingAgentIfRequired 
+{
+    if( $Enable_ConfiguredAgentExists -and $Enable_AgentConfigurationRequired) 
+    {   
         Write-Log "Remove existing configured agent"
         Remove-Agent $config $false
         
@@ -51,11 +56,14 @@ function RemoveExistingAgentIfRequired {
     }
 }
 
-function ConfigureAgentIfRequired {
-    if($Enable_AgentConfigurationRequired ) {   
+function ConfigureAgentIfRequired 
+{
+    if($Enable_AgentConfigurationRequired ) 
+    {   
         Register-Agent $config
     }
-    else {
+    else 
+    {
         Write-Log "Skipping agent configuration. Agent is already configured with given set of parameters"
         Add-HandlerSubStatus $RM_Extension_Status.SkippingAgentConfiguration.Code $RM_Extension_Status.SkippingAgentConfiguration.Message -operationName $RM_Extension_Status.SkippingAgentConfiguration.operationName
         Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success

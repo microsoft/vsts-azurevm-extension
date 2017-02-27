@@ -118,7 +118,7 @@ rm_extension_status = {
   },
   'UnConfiguringDeploymentAgentFailed' : {
     'Code' : 25,
-    'Message' : 'The deployment agent could not be unconfigured. Please manually remove it from the machine group',
+    'Message' : 'The deployment agent {0} could not be uninstalled. Ensure to remove it manually from its machine group in VSTS',
     'operationName' : 'Unconfigure existing agent'
   },
   #
@@ -146,7 +146,7 @@ rm_extension_status = {
   # ArgumentError indicates a problem in the input provided by the user. The message for the error is provided by the specific exception
   #
   'ArgumentError' : 1100,
-  'AgentUnConfigureFailWarning' : 'There are some warnings in the agent installation. Please check "Detailed Status" for more details.'
+  'AgentUnConfigureFailWarning' : 'There are some warnings in the agent installation. Check "Detailed Status" for more details.'
 }
 
 

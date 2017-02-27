@@ -105,11 +105,11 @@ def test_agent_configuration_required_internal(vsts_url, virtual_application, pa
     existing_vsts_url = get_agent_setting(working_folder, 'serverUrl')
     existing_vsts_url = existing_vsts_url.strip('/')
     existing_machine_group_name = ''
+    existing_project_name = setting_params['projectName']
     try:
-      existing_machine_group_name = get_machine_group_name_from_setting(vsts_url, project_name, pat_token)
+      existing_machine_group_name = get_machine_group_name_from_setting(existing_vsts_url, existing_project_name, pat_token)
     except Exception as e:
       write_log('\t\t\t Unable to get the machine group name - {0}'.format(e.message))
-    existing_project_name = setting_params['projectName']
     vsts_url_for_configuration = (vsts_url + '/' + virtual_application).strip('/')
     write_log('\t\t\t Agent configured with \t\t\t\t Agent needs to be configured with')
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_vsts_url, vsts_url_for_configuration))

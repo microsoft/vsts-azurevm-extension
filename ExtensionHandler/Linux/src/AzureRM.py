@@ -426,7 +426,7 @@ def remove_existing_agent(config, ignore_unconfiguration_failure = False):
           raise Exception('Renaming of agent directory failed with error : {0}'.format(std_err))
         create_agent_working_folder()
         ss_code = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['Code']
-        sub_status_message = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['Message']
+        sub_status_message = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['Message'].format(agent_name)
         operation_name = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['operationName']
         handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
       else:
@@ -514,7 +514,7 @@ def uninstall():
   configured_agent_exists = test_configured_agent_exists()
   config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
   if(configured_agent_exists == True):
-    remove_existing_agent(config, 'uninstall')
+    remove_existing_agent(config, False)
   else:
     code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
     message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']

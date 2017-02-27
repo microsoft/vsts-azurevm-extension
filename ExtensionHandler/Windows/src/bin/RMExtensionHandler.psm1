@@ -233,7 +233,8 @@ function Remove-Agent {
                 Write-Log ("Please delete the agent {0} manually from the machine group." -f $agentName)
                 Rename-Item $config.AgentWorkingFolder $oldWorkingFolderName
                 Create-AgentWorkingFolder
-                Add-HandlerSubStatus $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Code $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Message -operationName $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.operationName
+                $message = ($RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Message -f $agentName)
+                Add-HandlerSubStatus $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Code $message -operationName $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.operationName
             }
             else{
                 throw $_

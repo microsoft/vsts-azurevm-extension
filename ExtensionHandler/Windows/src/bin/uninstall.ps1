@@ -22,7 +22,7 @@ $config = Get-ConfigurationFromSettings
 $configuredAgentExists = Test-AgentAlreadyExists $config
 if($configuredAgentExists)
 {
-    Remove-Agent $config
+    Remove-Agent $config $false
 }
 else
 {

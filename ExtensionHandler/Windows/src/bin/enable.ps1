@@ -21,7 +21,7 @@ Import-Module $PSScriptRoot\Log.psm1
 $Enable_ConfiguredAgentExists = $false
 $Enable_AgentConfigurationRequired = $true
 
-function ExecuteAgentPreCheck([ref]$configuredAgentExists, [ref]$agentConfigurationRequired) 
+function ExecuteAgentPreCheck([ref]$configuredAgentExists, [ref]$agentConfigurationRequired)
 {
 
     $configuredAgentExists.value  = Test-AgentAlreadyExists $config
@@ -31,22 +31,22 @@ function ExecuteAgentPreCheck([ref]$configuredAgentExists, [ref]$agentConfigurat
     }    
 }
 
-function DownloadAgentIfRequired 
+function DownloadAgentIfRequired
 {
-    if(!$Enable_ConfiguredAgentExists) 
+    if(!$Enable_ConfiguredAgentExists)
     {
         Get-Agent $config
     }
-    else 
+    else
     {
         Write-Log "Skipping agent download as a configured agent already exists."
         Add-HandlerSubStatus $RM_Extension_Status.SkippingDownloadDeploymentAgent.Code $RM_Extension_Status.SkippingDownloadDeploymentAgent.Message -operationName $RM_Extension_Status.SkippingDownloadDeploymentAgent.operationName
     }
 }
 
-function RemoveExistingAgentIfRequired 
+function RemoveExistingAgentIfRequired
 {
-    if( $Enable_ConfiguredAgentExists -and $Enable_AgentConfigurationRequired) 
+    if( $Enable_ConfiguredAgentExists -and $Enable_AgentConfigurationRequired)
     {   
         Write-Log "Remove existing configured agent"
         Remove-Agent $config $false
@@ -56,13 +56,13 @@ function RemoveExistingAgentIfRequired
     }
 }
 
-function ConfigureAgentIfRequired 
+function ConfigureAgentIfRequired
 {
     if($Enable_AgentConfigurationRequired ) 
     {   
         Register-Agent $config
     }
-    else 
+    else
     {
         Write-Log "Skipping agent configuration. Agent is already configured with given set of parameters"
         Add-HandlerSubStatus $RM_Extension_Status.SkippingAgentConfiguration.Code $RM_Extension_Status.SkippingAgentConfiguration.Message -operationName $RM_Extension_Status.SkippingAgentConfiguration.operationName

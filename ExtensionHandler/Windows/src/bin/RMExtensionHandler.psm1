@@ -190,7 +190,7 @@ function Register-Agent {
         Write-Log "Done configuring Deployment agent"
 
         Add-HandlerSubStatus $RM_Extension_Status.ConfiguredDeploymentAgent.Code $RM_Extension_Status.ConfiguredDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguredDeploymentAgent.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success $IncludeWarningStatus
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success -IncludeWarningStatus $IncludeWarningStatus
     }
     catch 
     {
@@ -218,12 +218,10 @@ function Remove-Agent {
         Write-Log "Remove-Agent command started"
         try{
             Invoke-RemoveAgentScript $config
-            Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
-            Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
         }
         catch{
             if(!($ignoreUnconfigurationFailure) -and ($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder)){
-                $IncludeWarningStatus = $true
+                $script:IncludeWarningStatus = $true
                 [string]$timeSinceEpoch = Get-TimeSinceEpoch
                 $oldWorkingFolderName = $config.AgentWorkingFolder + $timeSinceEpoch
                 $agentSettingPath = Join-Path $config.AgentWorkingFolder $agentSetting
@@ -240,6 +238,8 @@ function Remove-Agent {
                 throw $_
             }
         }
+        Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
+        Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success -IncludeWarningStatus $IncludeWarningStatus
     }
     catch 
     {
@@ -276,7 +276,7 @@ function Add-AgentTags {
         }
         
         Add-HandlerSubStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -operationName $RM_Extension_Status.AgentTagsAdded.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success $IncludeWarningStatus
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success -IncludeWarningStatus $IncludeWarningStatus
     }
     catch 
     {

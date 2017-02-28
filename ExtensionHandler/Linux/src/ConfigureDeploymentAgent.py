@@ -34,7 +34,7 @@ def get_agent_setting(working_folder, key):
   global setting_params
   agent_setting_file_path = os.path.join(working_folder, Constants.agent_setting)
   if(setting_params == {}):
-    write_add_tags_log('\t\t Agent setting path : {0}'.format(agent_setting_file_path))
+    write_log('\t\t Agent setting path : {0}'.format(agent_setting_file_path))
     setting_params = json.load(codecs.open(agent_setting_file_path, 'r', 'utf-8-sig'))
   return setting_params[key]
 

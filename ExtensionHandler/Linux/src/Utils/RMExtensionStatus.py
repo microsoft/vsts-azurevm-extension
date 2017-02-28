@@ -146,7 +146,7 @@ rm_extension_status = {
   # ArgumentError indicates a problem in the input provided by the user. The message for the error is provided by the specific exception
   #
   'ArgumentError' : 1100,
-  'AgentUnConfigureFailWarning' : 'There are some warnings in the agent installation. Check "Detailed Status" for more details.'
+  'AgentUnConfigureFailWarning' : 'There are some warnings in uninstalling the already existing agent. Check \"Detailed Status\" for more details.'
 }
 
 

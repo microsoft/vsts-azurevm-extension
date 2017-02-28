@@ -166,7 +166,7 @@ $global:RM_Extension_Status = @{
     # ArgumentError indicates a problem in the user input. The message for the error is provided by the specific exception
     #
     ArgumentError = 1100 
-    AgentUnConfigureFailWarning = 'There are some warnings in the agent installation. Check "Detailed Status" for more details.'
+    AgentUnConfigureFailWarning = 'There are some warnings in uninstalling the already existing agent. Check "Detailed Status" for more details.'
 }
 
 #endregion

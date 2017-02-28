@@ -479,7 +479,7 @@ function Set-HandlerStatus
     )
 
     if($IncludeWarningStatus){
-        $Message = $Message + $RM_Extension_Status.AgentUnConfigureFailWarning
+        $Message = $Message + '. ' + $RM_Extension_Status.AgentUnConfigureFailWarning
     }
 
     $statusFile = '{0}\{1}.status' -f (Get-HandlerEnvironment).statusFolder, (Get-HandlerExecutionSequenceNumber)

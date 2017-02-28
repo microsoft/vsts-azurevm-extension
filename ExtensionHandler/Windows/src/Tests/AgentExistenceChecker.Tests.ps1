@@ -22,28 +22,28 @@ Describe "Agent ExistenceChecker Tests" {
     
     Context "Test-AgentSettingsAreSame should work fine" {
         
-        $agentSettings =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Mg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/",  "workFolder": "_work",  "projectName": "testProj",  "machineGroupName": "my-mggrp1" }' | ConvertFrom-Json        
+        $agentSettings =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Mg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/testColl",  "workFolder": "_work",  "projectName": "testProj",  "machineGroupName": "my-mggrp1" }' | ConvertFrom-Json        
         
         Mock GetAgentSettingFilePath { return "$currentScriptPath\..\bin\AgentExistenceChecker.ps1"}
         Mock Get-AgentSettings { return $agentSettings }
         Mock GetMachineGroupNameFromAgentSetting { return $($agentSettings.machineGroupName) }
         
         It "should return true if given agent settings are same as existing agent running with" {
-            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs" -collection "" -projectName "testProj" -machineGroupName "my-mggrp1" -patToken "test-PAT"
+            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs/testColl" -collection "" -projectName "testProj" -machineGroupName "my-mggrp1" -patToken "test-PAT"
             $ret | Should be "$true"
 
-            Assert-MockCalled GetMachineGroupNameFromAgentSetting -Times 1 -ParameterFilter { $tfsUrl.EndsWith("/tfs") }             
+            Assert-MockCalled GetMachineGroupNameFromAgentSetting -Times 1 -ParameterFilter { $tfsUrl.EndsWith("/tfs/testColl") }             
         }
 
         It "should return false if given agent settings are not same as existing agent running with ( project name different )" {
-            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs" -collection "testColl" -projectName "testProjDifferentOne" -machineGroupName "my-mggrp1" -patToken "test-PAT"
+            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs/testColl" -collection "testColl" -projectName "testProjDifferentOne" -machineGroupName "my-mggrp1" -patToken "test-PAT"
             $ret | Should be "$false"
 
             Assert-MockCalled GetMachineGroupNameFromAgentSetting -Times 1 -ParameterFilter { $tfsUrl.EndsWith("/tfs/testColl") }                                 
         }
         
         It "should return false if given agent settings are not same as existing agent running with ( machine group name different )" {
-            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs" -collection "testColl" -projectName "testProj" -machineGroupName "my-mggrp1-different" -patToken "test-PAT"
+            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs/testColl" -collection "testColl" -projectName "testProj" -machineGroupName "my-mggrp1-different" -patToken "test-PAT"
             $ret | Should be "$false"                 
         }
         

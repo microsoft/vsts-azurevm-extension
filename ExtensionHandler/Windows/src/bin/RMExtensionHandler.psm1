@@ -208,9 +208,7 @@ function Remove-Agent {
     [CmdletBinding()]
     param(
     [Parameter(Mandatory=$true, Position=0)]
-    [hashtable] $config,
-    [Parameter(Mandatory=$false, Position=1)]
-    [boolean] $ignoreUnconfigurationFailure = $false
+    [hashtable] $config
     )
     try 
     {
@@ -218,9 +216,10 @@ function Remove-Agent {
         Write-Log "Remove-Agent command started"
         try{
             Invoke-RemoveAgentScript $config
+            Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
         }
         catch{
-            if(!($ignoreUnconfigurationFailure) -and ($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder)){
+            if(($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder)){
                 $script:IncludeWarningStatus = $true
                 [string]$timeSinceEpoch = Get-TimeSinceEpoch
                 $oldWorkingFolderName = $config.AgentWorkingFolder + $timeSinceEpoch
@@ -232,13 +231,12 @@ function Remove-Agent {
                 Rename-Item $config.AgentWorkingFolder $oldWorkingFolderName
                 Create-AgentWorkingFolder
                 $message = ($RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Message -f $agentName)
-                Add-HandlerSubStatus $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Code $message -operationName $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.operationName
+                Add-HandlerSubStatus $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Code $message -operationName $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.operationName -SubStatus 'warning'
             }
             else{
                 throw $_
             }
         }
-        Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
         Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success -IncludeWarningStatus $IncludeWarningStatus
     }
     catch 

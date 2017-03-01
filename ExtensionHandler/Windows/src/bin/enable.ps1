@@ -49,7 +49,7 @@ function RemoveExistingAgentIfRequired
     if( $Enable_ConfiguredAgentExists -and $Enable_AgentConfigurationRequired)
     {   
         Write-Log "Remove existing configured agent"
-        Remove-Agent $config $false
+        Remove-Agent $config
         
         #Execution has reached till here means that either the agent was removed successfully, or we renamed the agent folder successfully. 
         $script:Enable_ConfiguredAgentExists = $false

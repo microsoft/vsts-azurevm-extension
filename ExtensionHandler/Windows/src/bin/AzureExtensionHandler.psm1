@@ -5,6 +5,7 @@
 #>
 
 $ErrorActionPreference = 'stop'
+$global:IncludeWarningStatus = $false
 Set-StrictMode -Version latest
 
 if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot is not defined in 2.0
@@ -472,10 +473,7 @@ function Set-HandlerStatus
 
         [Parameter()]
         [ValidateSet('transitioning', 'error', 'success', 'warning')]
-        [string] $Status = 'transitioning',
-
-        [Parameter(Mandatory=$false,Position=4)]
-        [boolean] $IncludeWarningStatus = $false
+        [string] $Status = 'transitioning'
     )
 
     if($IncludeWarningStatus){

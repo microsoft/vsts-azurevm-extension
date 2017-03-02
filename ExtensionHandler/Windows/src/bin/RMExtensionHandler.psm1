@@ -4,7 +4,6 @@
 #>
 
 $ErrorActionPreference = 'stop'
-$IncludeWarningStatus = $false
 
 Set-StrictMode -Version latest
 
@@ -190,7 +189,7 @@ function Register-Agent {
         Write-Log "Done configuring Deployment agent"
 
         Add-HandlerSubStatus $RM_Extension_Status.ConfiguredDeploymentAgent.Code $RM_Extension_Status.ConfiguredDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguredDeploymentAgent.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success -IncludeWarningStatus $IncludeWarningStatus
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
     }
     catch 
     {
@@ -220,7 +219,7 @@ function Remove-Agent {
         }
         catch{
             if(($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder)){
-                $script:IncludeWarningStatus = $true
+                $global:IncludeWarningStatus = $true
                 [string]$timeSinceEpoch = Get-TimeSinceEpoch
                 $oldWorkingFolderName = $config.AgentWorkingFolder + $timeSinceEpoch
                 $agentSettingPath = Join-Path $config.AgentWorkingFolder $agentSetting
@@ -237,7 +236,7 @@ function Remove-Agent {
                 throw $_
             }
         }
-        Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success -IncludeWarningStatus $IncludeWarningStatus
+        Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
     }
     catch 
     {
@@ -274,7 +273,7 @@ function Add-AgentTags {
         }
         
         Add-HandlerSubStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -operationName $RM_Extension_Status.AgentTagsAdded.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success -IncludeWarningStatus $IncludeWarningStatus
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success 
     }
     catch 
     {

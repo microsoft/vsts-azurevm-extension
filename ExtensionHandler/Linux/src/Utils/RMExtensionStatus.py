@@ -88,7 +88,7 @@ rm_extension_status = {
   },
   'RemovedAgent' : {
     'Code' : 18,
-    'Message' : 'Uninstalled extension. However, Team services agent would continue to be registered with VSTS and will keep running.',
+    'Message' : 'Removed deployment agent successfully from machine group.',
     'operationName' : 'Uninstall'
   },
   'CheckingAgentReConfigurationRequired' : {
@@ -110,6 +110,16 @@ rm_extension_status = {
     'Code' : 23,
     'Message' : 'Successfully added the tags to deployment agent.',
     'operationName' : 'Agent tags'
+  },
+  'AddingAgentTags' : {
+    'Code' : 24,
+    'Message' : 'Adding agent tags.',
+    'operationName' : 'Add agent tags'
+  },
+  'UnConfiguringDeploymentAgentFailed' : {
+    'Code' : 25,
+    'Message' : '[WARNING] The deployment agent {0} could not be uninstalled. Ensure to remove it manually from its machine group in VSTS',
+    'operationName' : 'Unconfigure existing agent'
   },
   #
   # Warnings
@@ -135,7 +145,8 @@ rm_extension_status = {
   #
   # ArgumentError indicates a problem in the input provided by the user. The message for the error is provided by the specific exception
   #
-  'ArgumentError' : 1100 
+  'ArgumentError' : 1100,
+  'AgentUnConfigureFailWarning' : 'There are some warnings in uninstalling the already existing agent. Check \"Detailed Status\" for more details.'
 }
 
 

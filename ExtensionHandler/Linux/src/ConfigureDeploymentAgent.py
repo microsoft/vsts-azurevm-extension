@@ -10,6 +10,7 @@ import httplib
 agent_listener_path = ''
 agent_service_path = ''
 log_function = None
+setting_params = {}
 
 def write_configuration_log(log_message):
   global log_function
@@ -28,6 +29,14 @@ def write_add_tags_log(log_message):
   log = '[AddTags]: {0}'.format(log_message)
   if(log_function is not None):
     log_function(log)
+
+def get_agent_setting(working_folder, key):
+  global setting_params
+  agent_setting_file_path = os.path.join(working_folder, Constants.agent_setting)
+  if(setting_params == {}):
+    write_log('\t\t Agent setting path : {0}'.format(agent_setting_file_path))
+    setting_params = json.load(codecs.open(agent_setting_file_path, 'r', 'utf-8-sig'))
+  return setting_params[key]
 
 def test_configured_agent_exists_internal(working_folder, log_func):
   global log_function
@@ -74,7 +83,8 @@ def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_gr
     raise Exception('Unable to fetch the machine group information from VSTS server.')
   
 
-def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, pat_token):
+def get_machine_group_name_from_setting(vsts_url, project_name, pat_token):
+  global setting_params
   machine_group_id = ''
   try:
     machine_group_id = str(setting_params['machineGroupId'])
@@ -88,21 +98,18 @@ def get_machine_group_name_from_setting(setting_params, vsts_url, project_name, 
   return setting_params['machineGroupName']
 
 def test_agent_configuration_required_internal(vsts_url, virtual_application, pat_token, machine_group_name, project_name, working_folder, log_func):
-  global log_function
+  global log_function, setting_params
   log_function = log_func
   try:
     write_log('AgentReConfigurationRequired check started.')
-    agent_setting = Constants.agent_setting
-    agent_setting_file =  os.path.join(working_folder, agent_setting)
-    setting_params = json.load(codecs.open(agent_setting_file, 'r', 'utf-8-sig'))
-    existing_vsts_url = setting_params['serverUrl']
+    existing_vsts_url = get_agent_setting(working_folder, 'serverUrl')
     existing_vsts_url = existing_vsts_url.strip('/')
     existing_machine_group_name = ''
+    existing_project_name = setting_params['projectName']
     try:
-      existing_machine_group_name = get_machine_group_name_from_setting(setting_params, vsts_url, project_name, pat_token)
+      existing_machine_group_name = get_machine_group_name_from_setting(existing_vsts_url, existing_project_name, pat_token)
     except Exception as e:
       write_log('\t\t\t Unable to get the machine group name - {0}'.format(e.message))
-    existing_project_name = setting_params['projectName']
     vsts_url_for_configuration = (vsts_url + '/' + virtual_application).strip('/')
     write_log('\t\t\t Agent configured with \t\t\t\t Agent needs to be configured with')
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_vsts_url, vsts_url_for_configuration))
@@ -138,7 +145,7 @@ def agent_listener_exists(working_folder):
 
 def remove_existing_agent_internal(pat_token, working_folder, log_func):
   try:
-    global agent_listener_path, agent_service_path, log_function
+    global agent_listener_path, agent_service_path, log_function, setting_params
     log_function = log_func
     get_agent_listener_path(working_folder)
     get_agent_service_path(working_folder) 
@@ -165,7 +172,9 @@ def remove_existing_agent_internal(pat_token, working_folder, log_func):
     write_configuration_log('stdout : {0}'.format(std_out))
     write_configuration_log('srderr : {0}'.format(std_err))
     if(not (return_code == 0)):
-      raise Exception('Agent removal failed with error : {0}'.format(std_err))
+      e = Exception('Agent removal failed with error : {0}'.format(std_err))
+      setattr(e, 'Reason', 'UnConfigFailed')
+      raise e
   except Exception as e:
     write_configuration_log(e.message)
     raise e
@@ -230,7 +239,7 @@ def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent
   else:
     raise Exception('Tags could not be added. Unable to fetch the existing tags.')
   apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, json.dumps(tags, ensure_ascii = False))
- 
+
 def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, tags_string, log_func):
   global log_function
   log_function = log_func
@@ -240,8 +249,7 @@ def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, t
     write_add_tags_log('\t\t Agent setting path : {0}'.format(agent_setting_file_path))
     if(not(os.path.isfile(agent_setting_file_path))):
       raise Exception('Unable to find the .agent file {0}. Ensure that the agent is configured before adding tags.'.format(agent_setting_file_path))
-    setting_params = json.load(codecs.open(agent_setting_file_path, 'r', 'utf-8-sig'))
-    agent_id = setting_params['agentId']
+    agent_id = get_agent_setting(working_folder, 'agentId')
     machine_group_id = ''
     try:
       #Back compat

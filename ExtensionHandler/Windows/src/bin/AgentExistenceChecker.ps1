@@ -82,7 +82,7 @@ function Test-AgentSettingsAreSame
                 $url = -join($tfsUrl, '/', $collection)
             }
 
-            $machineGroupNameAsPerSetting = GetMachineGroupNameFromAgentSetting -agentSetting $agentSetting -tfsUrl $url -projectName $($agentSetting.projectName) -patToken $patToken -logFunction $logFunction
+            $machineGroupNameAsPerSetting = GetMachineGroupNameFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentTfsUrl -projectName $($agentSetting.projectName) -patToken $patToken -logFunction $logFunction
         }
         catch
         {

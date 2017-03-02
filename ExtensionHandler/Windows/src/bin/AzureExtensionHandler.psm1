@@ -5,6 +5,7 @@
 #>
 
 $ErrorActionPreference = 'stop'
+$global:IncludeWarningStatus = $false
 Set-StrictMode -Version latest
 
 if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot is not defined in 2.0
@@ -474,6 +475,10 @@ function Set-HandlerStatus
         [ValidateSet('transitioning', 'error', 'success', 'warning')]
         [string] $Status = 'transitioning'
     )
+
+    if($IncludeWarningStatus){
+        $Message = $Message + '. ' + $RM_Extension_Status.AgentUnConfigureFailWarning
+    }
 
     $statusFile = '{0}\{1}.status' -f (Get-HandlerEnvironment).statusFolder, (Get-HandlerExecutionSequenceNumber)
 

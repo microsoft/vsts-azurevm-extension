@@ -11,6 +11,7 @@ import Constants
 import DownloadDeploymentAgent
 import ConfigureDeploymentAgent
 import json
+import time
 
 configured_agent_exists = False
 agent_configuration_required = True
@@ -215,6 +216,14 @@ def format_tags_input(tags_input):
       ret_val.append(x)
   return ret_val
 
+def create_agent_working_folder():
+  agent_working_folder = '{0}/VSTSAgent'.format('')
+  handler_utility.log('Working folder for VSTS agent : {0}'.format(agent_working_folder))
+  if(not os.path.isdir(agent_working_folder)):
+    handler_utility.log('Working folder does not exist. Creating it...')
+    os.makedirs(agent_working_folder, 0700)
+  return agent_working_folder
+
 def get_configutation_from_settings():
   try:
     format_string = 'https://{0}.visualstudio.com'
@@ -264,11 +273,7 @@ def get_configutation_from_settings():
       tags_input = public_settings['Tags']
     handler_utility.log('Tags : {0}'.format(tags_input))
     tags = format_tags_input(tags_input)
-    agent_working_folder = '{0}/VSTSAgent'.format('')
-    handler_utility.log('Working folder for VSTS agent : {0}'.format(agent_working_folder))
-    if(not os.path.isdir(agent_working_folder)):
-      handler_utility.log('Working folder does not exist. Creating it...')
-      os.makedirs(agent_working_folder, 0700)
+    agent_working_folder = create_agent_working_folder()
     handler_utility.log('Done reading config settings from file...')
     ss_code = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['Message']
@@ -333,7 +338,7 @@ def execute_agent_pre_check():
   configured_agent_exists = test_configured_agent_exists()
   if(configured_agent_exists == True):
     agent_configuration_required = test_agent_configuration_required(config)
-
+  
 def get_agent():
   global config
   try:
@@ -367,18 +372,11 @@ def download_agent_if_required():
 def register_agent():
   global config, configured_agent_exists
   try:
-    if(configured_agent_exists == True):
-      ss_code = RMExtensionStatus.rm_extension_status['RemovingAndConfiguringDeploymentAgent']['Code']
-      sub_status_message = RMExtensionStatus.rm_extension_status['RemovingAndConfiguringDeploymentAgent']['Message']
-      operation_name = RMExtensionStatus.rm_extension_status['RemovingAndConfiguringDeploymentAgent']['operationName']
-      handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-      handler_utility.log('Removing existing agent and configuring again...')
-    else:
-      ss_code = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['Code']
-      sub_status_message = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['Message']
-      operation_name = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName']
-      handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-      handler_utility.log('Configuring Deployment agent...')
+    ss_code = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['Code']
+    sub_status_message = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['Message']
+    operation_name = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName']
+    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    handler_utility.log('Configuring Deployment agent...')
     vsts_url = config['VSTSUrl']
     if(is_on_prem):
       vsts_url = vsts_url + '/' + config['VirtualApplication']
@@ -398,11 +396,36 @@ def register_agent():
 def remove_existing_agent(config):
   try:
     handler_utility.log('Agent removal started')
-    ConfigureDeploymentAgent.remove_existing_agent_internal(config['PATToken'], config['AgentWorkingFolder'], handler_utility.log)
-    ss_code = RMExtensionStatus.rm_extension_status['RemovedAgent']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['RemovedAgent']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['RemovedAgent']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    try:
+      ConfigureDeploymentAgent.remove_existing_agent_internal(config['PATToken'], config['AgentWorkingFolder'], handler_utility.log)
+      ss_code = RMExtensionStatus.rm_extension_status['RemovedAgent']['Code']
+      sub_status_message = RMExtensionStatus.rm_extension_status['RemovedAgent']['Message']
+      operation_name = RMExtensionStatus.rm_extension_status['RemovedAgent']['operationName']
+      handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    except Exception as e:
+      if(('Reason' in dir(e) and getattr(e, 'Reason') == 'UnConfigFailed') and (os.access(config['AgentWorkingFolder'], os.F_OK))):
+        Util.include_warning_status = True
+        cur_time = '%.6f'%(time.time())
+        old_agent_folder_name = config['AgentWorkingFolder'] + cur_time
+        handler_utility.log('Failed to unconfigure the VSTS agent. Renaming the agent directory to {0}.'.format(old_agent_folder_name))
+        agent_name = ConfigureDeploymentAgent.get_agent_setting(config['AgentWorkingFolder'], 'agentName')
+        ConfigureDeploymentAgent.setting_params = {}
+        handler_utility.log('Please delete the agent {0} manually from the machine group.'.format(agent_name))
+        rename_agent_folder_proc = subprocess.Popen('mv {0} {1}'.format(config['AgentWorkingFolder'], old_agent_folder_name).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        std_out, std_err = rename_agent_folder_proc.communicate()
+        return_code = rename_agent_folder_proc.returncode
+        handler_utility.log('Renaming agent directory process exit code : {0}'.format(return_code))
+        handler_utility.log('stdout : {0}'.format(std_out))
+        handler_utility.log('srderr : {0}'.format(std_err))
+        if(not (return_code == 0)):
+          raise Exception('Renaming of agent directory failed with error : {0}'.format(std_err))
+        create_agent_working_folder()
+        ss_code = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['Code']
+        sub_status_message = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['Message'].format(agent_name)
+        operation_name = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['operationName']
+        handler_utility.set_handler_status(ss_code = ss_code, sub_status = 'warning', sub_status_message = sub_status_message, operation_name = operation_name)
+      else:
+        raise e
     code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
     message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']
     handler_utility.set_handler_status(code = code, status = 'success', message = message)
@@ -415,6 +438,8 @@ def remove_existing_agent_if_required():
   if((configured_agent_exists == True) and (agent_configuration_required == True)):
     handler_utility.log('Remove existing configured agent')
     remove_existing_agent(config)
+    #Execution has reached till here means that either the agent was removed successfully, or we renamed the agent folder successfully. 
+    configured_agent_exists = False
 
 def configure_agent_if_required():
   if(agent_configuration_required):
@@ -424,9 +449,15 @@ def configure_agent_if_required():
     sub_status_message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-
+    code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
+    message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
+    handler_utility.set_handler_status(code = code, status = 'success', message = message) 
 
 def add_agent_tags():
+  ss_code = RMExtensionStatus.rm_extension_status['AddingAgentTags']['Code']
+  sub_status_message = RMExtensionStatus.rm_extension_status['AddingAgentTags']['Message']
+  operation_name = RMExtensionStatus.rm_extension_status['AddingAgentTags']['operationName']
+  handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   if(config['Tags'] !=None and len(config['Tags']) > 0):
     handler_utility.log('Adding tags to configured agent - {0}'.format(str(config['Tags'])))
     try:
@@ -451,8 +482,8 @@ def enable():
   start_rm_extension_handler(input_operation)
   config = get_configutation_from_settings()
   execute_agent_pre_check()
-  download_agent_if_required()
   remove_existing_agent_if_required()
+  download_agent_if_required()
   configure_agent_if_required()
   add_agent_tags()
   set_last_sequence_number()
@@ -464,8 +495,6 @@ def disable():
   agent_exists = ConfigureDeploymentAgent.test_configured_agent_exists_internal(working_folder, handler_utility.log)
   handler_utility.log('Disable command is no-op for agent')
   handler_utility.log('Creating a markup file...')
-  operation = 'disable'
-  handler_utility.do_parse_context(operation)
   set_extension_disabled_markup()
   ss_code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
   sub_status_message = RMExtensionStatus.rm_extension_status['Disabled']['Message']

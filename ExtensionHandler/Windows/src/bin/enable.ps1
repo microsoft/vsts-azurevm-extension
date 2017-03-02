@@ -25,7 +25,6 @@ function ExecuteAgentPreCheck([ref]$configuredAgentExists, [ref]$agentConfigurat
 {
 
     $configuredAgentExists.value  = Test-AgentAlreadyExists $config
-
     if($configuredAgentExists.value)
     {   
         $agentConfigurationRequired.value = Test-AgentReconfigurationRequired $config
@@ -50,13 +49,16 @@ function RemoveExistingAgentIfRequired
     if( $Enable_ConfiguredAgentExists -and $Enable_AgentConfigurationRequired)
     {   
         Write-Log "Remove existing configured agent"
-        Remove-Agent $config  
+        Remove-Agent $config
+        
+        #Execution has reached till here means that either the agent was removed successfully, or we renamed the agent folder successfully. 
+        $script:Enable_ConfiguredAgentExists = $false
     }
 }
 
 function ConfigureAgentIfRequired
 {
-    if($Enable_AgentConfigurationRequired )
+    if($Enable_AgentConfigurationRequired ) 
     {   
         Register-Agent $config
     }
@@ -73,9 +75,9 @@ $config = Get-ConfigurationFromSettings
 
 ExecuteAgentPreCheck ([ref]$Enable_ConfiguredAgentExists) ([ref]$Enable_AgentConfigurationRequired)
 
-DownloadAgentIfRequired
-
 RemoveExistingAgentIfRequired
+
+DownloadAgentIfRequired
 
 ConfigureAgentIfRequired
 

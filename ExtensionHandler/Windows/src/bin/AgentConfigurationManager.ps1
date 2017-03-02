@@ -76,10 +76,12 @@ function RemoveExistingAgent
     
     WriteConfigurationLog "$stdout"
     WriteConfigurationLog "$stderr"
-    
+
     if($removeAgentProcess.ExitCode -ne 0 )
     {
-        throw "Agent removal failed with error - $stderr"
+        $exception = New-Object System.Exception("Agent removal failed with error - $stderr")
+        $exception.Data["Reason"] = "UnConfigFailed"
+        throw $exception
     }
 }
 

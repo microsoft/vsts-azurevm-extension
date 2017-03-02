@@ -4,6 +4,7 @@
 #>
 
 $ErrorActionPreference = 'stop'
+
 Set-StrictMode -Version latest
 
 if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot is not defined in 2.0
@@ -208,13 +209,33 @@ function Remove-Agent {
     [Parameter(Mandatory=$true, Position=0)]
     [hashtable] $config
     )
-
     try 
     {
+        . $PSScriptRoot\Constants.ps1
         Write-Log "Remove-Agent command started"
-        Invoke-RemoveAgentScript $config
-
-        Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
+        try{
+            Invoke-RemoveAgentScript $config
+            Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
+        }
+        catch{
+            if(($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder)){
+                $global:IncludeWarningStatus = $true
+                [string]$timeSinceEpoch = Get-TimeSinceEpoch
+                $oldWorkingFolderName = $config.AgentWorkingFolder + $timeSinceEpoch
+                $agentSettingPath = Join-Path $config.AgentWorkingFolder $agentSetting
+                $agentSettings = Get-Content -Path $agentSettingPath | Out-String | ConvertFrom-Json
+                $agentName = $($agentSettings.agentName)
+                Write-Log ("Renaming agent folder to {0}" -f $oldWorkingFolderName)
+                Write-Log ("Please delete the agent {0} manually from the machine group." -f $agentName)
+                Rename-Item $config.AgentWorkingFolder $oldWorkingFolderName
+                Create-AgentWorkingFolder
+                $message = ($RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Message -f $agentName)
+                Add-HandlerSubStatus $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Code $message -operationName $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.operationName -SubStatus 'warning'
+            }
+            else{
+                throw $_
+            }
+        }
         Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
     }
     catch 
@@ -223,6 +244,7 @@ function Remove-Agent {
         Exit-WithCode0
     } 
 }
+
 
 <#
 .Synopsis
@@ -251,7 +273,7 @@ function Add-AgentTags {
         }
         
         Add-HandlerSubStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -operationName $RM_Extension_Status.AgentTagsAdded.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success 
     }
     catch 
     {
@@ -381,13 +403,7 @@ function Get-ConfigurationFromSettings {
             $tags = @(Format-TagsInput $tagsInput)
         }
 
-        $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
-        Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
-        if(!(Test-Path $agentWorkingFolder))
-        {
-            Write-Log "Working folder does not exist. Creating it..."
-            New-Item -ItemType Directory $agentWorkingFolder > $null
-        }
+        $agentWorkingFolder = Create-AgentWorkingFolder
 
         Write-Log "Done reading config settings from file..."
         Add-HandlerSubStatus $RM_Extension_Status.SuccessfullyReadSettings.Code $RM_Extension_Status.SuccessfullyReadSettings.Message -operationName $RM_Extension_Status.SuccessfullyReadSettings.operationName
@@ -410,6 +426,21 @@ function Get-ConfigurationFromSettings {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ReadingSettings.operationName
         Exit-WithCode0
     } 
+}
+
+
+function Create-AgentWorkingFolder {
+    [CmdletBinding()]
+    param()
+
+    $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
+    Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
+    if(!(Test-Path $agentWorkingFolder))
+    {
+        Write-Log "Working folder does not exist. Creating it..."
+        New-Item -ItemType Directory $agentWorkingFolder > $null
+    }
+    return $agentWorkingFolder
 }
 
 function Exit-WithCode0 {
@@ -579,4 +610,6 @@ Export-ModuleMember `
         Register-Agent, `
         Get-AccountUrl, `
         Get-CollectionUrl, `
-        Add-AgentTags
+        Create-AgentWorkingFolder, `
+        Add-AgentTags, `
+        Invoke-RemoveAgentScript

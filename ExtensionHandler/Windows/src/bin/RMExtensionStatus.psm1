@@ -134,6 +134,11 @@ $global:RM_Extension_Status = @{
         Message = 'Adding agent tags'
         operationName = 'Add agent tags'
     }
+    UnConfiguringDeploymentAgentFailed = @{
+        Code = 25
+        Message = '[WARNING] The deployment agent {0} could not be uninstalled. Ensure to remove it manually from its machine group in VSTS'
+        operationName = 'Unconfigure existing agent'
+    }
 
     #
     # Warnings
@@ -161,6 +166,7 @@ $global:RM_Extension_Status = @{
     # ArgumentError indicates a problem in the user input. The message for the error is provided by the specific exception
     #
     ArgumentError = 1100 
+    AgentUnConfigureFailWarning = 'There are some warnings in uninstalling the already existing agent. Check "Detailed Status" for more details.'
 }
 
 #endregion

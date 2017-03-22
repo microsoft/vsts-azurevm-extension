@@ -261,7 +261,7 @@ def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, t
       elif(setting_params.has_key('machineGroupId')):
         machine_group_id = setting_params['machineGroupId']
       else:
-        machine_group_name = setting_params['machineGroupName']
+        machine_group_name = ''
         method = httplib.HTTPSConnection
         if(vsts_url.startswith('http://')):
           vsts_url = vsts_url[7:]

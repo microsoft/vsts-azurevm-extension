@@ -69,9 +69,19 @@ Describe "Agent ExistenceChecker Tests" {
             Assert-MockCalled InvokeRestURlToGetMachineGroupName -Times 0
         }
         
-        $agentSettings =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Mg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/",  "workFolder": "_work",  "projectName": "testProj",  "machineGroupID": 7 }' | ConvertFrom-Json
+        $agentSettings =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Mg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/",  "workFolder": "_work",  "projectName": "testProj",  "machineGroupId": 7 }' | ConvertFrom-Json
         
         It "should return correct machine group name in case machine group Id is saved with agent setting file" {
+            $ret = GetMachineGroupNameFromAgentSetting -agentSetting $agentSettings -tfsUrl "http://mylocaltfs:8080/tfs" -projectName "testProj" -patToken "test-PAT"
+            $ret | Should be "machine-GroupName"     
+            
+            Assert-MockCalled ContructRESTCallUrl -Times 1
+            Assert-MockCalled InvokeRestURlToGetMachineGroupName -Times 1
+        }
+        
+        $agentSettings =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Mg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/",  "workFolder": "_work",  "projectName": "testProj",  "deploymentGroupID": 7 }' | ConvertFrom-Json
+        
+        It "should return correct machine group name in case deployment group Id is saved with agent setting file" {
             $ret = GetMachineGroupNameFromAgentSetting -agentSetting $agentSettings -tfsUrl "http://mylocaltfs:8080/tfs" -projectName "testProj" -patToken "test-PAT"
             $ret | Should be "machine-GroupName"     
             

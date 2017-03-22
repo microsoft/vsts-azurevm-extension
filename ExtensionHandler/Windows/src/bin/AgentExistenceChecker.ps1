@@ -137,7 +137,12 @@ function GetMachineGroupNameFromAgentSetting
     ## try catch is required only for to support the back-compat scenario where machineGroupId may not be saved with agent settings
     try
     {
-        $machineGroupId = $agentSetting.MachineGroupId
+        $machineGroupId = $($agentSettings.deploymentGroupId)
+        ## Back-compat for MG to DG rename.
+        if([string]::IsNullOrEmpty($machineGroupId))
+        {
+            $machineGroupId = $($agentSettings.machineGroupId)
+        }        
         WriteLog "`t`t` Machine group id -  $machineGroupId" -logFunction $logFunction
     }catch{}    
     

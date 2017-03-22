@@ -65,13 +65,17 @@ try
     
     $agentId = $($agentSettings.agentId)
     $machineGroupId = ""
-    ## try catch is only for back-compat, old execution may not have machineGroupId saved in agent setting
+    
     try
     {
-        $machineGroupId = $($agentSettings.machineGroupId)
+        $machineGroupId = $($agentSettings.deploymentGroupId)
+        ## Back-compat for MG to DG rename.
+        if([string]::IsNullOrEmpty($machineGroupId))
+        {
+            $machineGroupId = $($agentSettings.machineGroupId)
+        }
     }
-    catch{  }
-    
+    catch{  }    
     
     if([string]::IsNullOrEmpty($machineGroupId) -or [string]::IsNullOrEmpty($agentId))
     {

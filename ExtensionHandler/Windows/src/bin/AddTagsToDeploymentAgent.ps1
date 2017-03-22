@@ -64,18 +64,22 @@ try
     $agentSettings = Get-Content -Path $agentSettingPath | Out-String | ConvertFrom-Json
     
     $agentId = $($agentSettings.agentId)
-    $machineGroupId = ""
-    
+    $machineGroupId = ""    
     try
     {
         $machineGroupId = $($agentSettings.deploymentGroupId)
-        ## Back-compat for MG to DG rename.
-        if([string]::IsNullOrEmpty($machineGroupId))
-        {
-            $machineGroupId = $($agentSettings.machineGroupId)
-        }
+        WriteLog "`t`t` Machine group id -  $machineGroupId" -logFunction $logFunction
     }
-    catch{  }    
+    catch{}
+    ## Back-compat for MG to DG rename.
+    if([string]::IsNullOrEmpty($machineGroupId)) 
+    {
+        try
+        {   
+            $machineGroupId = $($agentSettings.machineGroupId)
+            WriteLog "`t`t` Machine group id -  $machineGroupId" -logFunction $logFunction
+        }catch{}    
+    }    
     
     if([string]::IsNullOrEmpty($machineGroupId) -or [string]::IsNullOrEmpty($agentId))
     {

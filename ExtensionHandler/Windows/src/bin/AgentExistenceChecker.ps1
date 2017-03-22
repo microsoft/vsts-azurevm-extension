@@ -81,7 +81,8 @@ function Test-AgentSettingsAreSame
             {
                 $url = -join($tfsUrl, '/', $collection)
             }
-
+            
+            WriteLog "`t`tCall GetMachineGroupNameFromAgentSetting" $logFunction
             $machineGroupNameAsPerSetting = GetMachineGroupNameFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentTfsUrl -projectName $($agentSetting.projectName) -patToken $patToken -logFunction $logFunction
         }
         catch
@@ -133,13 +134,22 @@ function GetMachineGroupNameFromAgentSetting
     [scriptblock]$logFunction
     )
     
-    $machineGroupId = ""
-    ## try catch is required only for to support the back-compat scenario where machineGroupId may not be saved with agent settings
+    $machineGroupId = ""    
     try
     {
-        $machineGroupId = $agentSetting.MachineGroupId
+        $machineGroupId = $($agentSetting.deploymentGroupId)
         WriteLog "`t`t` Machine group id -  $machineGroupId" -logFunction $logFunction
-    }catch{}    
+    }
+    catch{}
+    ## Back-compat for MG to DG rename.
+    if([string]::IsNullOrEmpty($machineGroupId)) 
+    {
+        try
+        {   
+            $machineGroupId = $($agentSetting.machineGroupId)
+            WriteLog "`t`t` Machine group id -  $machineGroupId" -logFunction $logFunction
+        }catch{}    
+    }
     
     if(![string]::IsNullOrEmpty($machineGroupId))
     {
@@ -148,7 +158,7 @@ function GetMachineGroupNameFromAgentSetting
         return (InvokeRestURlToGetMachineGroupName -restCallUrl $restCallUrl -patToken $patToken -logFunction $logFunction)
     }
     
-    return $($agentSetting.machineGroupName)
+    return ""
 }
 
 function ContructRESTCallUrl

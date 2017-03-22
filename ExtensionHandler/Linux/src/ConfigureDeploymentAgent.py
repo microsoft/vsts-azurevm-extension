@@ -87,7 +87,10 @@ def get_machine_group_name_from_setting(vsts_url, project_name, pat_token):
   global setting_params
   machine_group_id = ''
   try:
-    machine_group_id = str(setting_params['machineGroupId'])
+    if(setting_params.has_key('deploymentGroupId')):
+      machine_group_id = str(setting_params['deploymentGroupId'])
+    else:
+      machine_group_id = str(setting_params['machineGroupId'])
     write_log('\t\t Machine group id - {0}'.format(machine_group_id))
   except Exception as e:
     pass
@@ -253,10 +256,12 @@ def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, t
     machine_group_id = ''
     try:
       #Back compat
-      if(setting_params.has_key('machineGroupId')):
+      if(setting_params.has_key('deploymentGroupId')):
+        machine_group_id = setting_params['deploymentGroupId']
+      elif(setting_params.has_key('machineGroupId')):
         machine_group_id = setting_params['machineGroupId']
       else:
-        machine_group_name = setting_params['machineGroupName']
+        machine_group_name = ''
         method = httplib.HTTPSConnection
         if(vsts_url.startswith('http://')):
           vsts_url = vsts_url[7:]

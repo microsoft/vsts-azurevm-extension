@@ -64,14 +64,22 @@ try
     $agentSettings = Get-Content -Path $agentSettingPath | Out-String | ConvertFrom-Json
     
     $agentId = $($agentSettings.agentId)
-    $machineGroupId = ""
-    ## try catch is only for back-compat, old execution may not have machineGroupId saved in agent setting
+    $machineGroupId = ""    
     try
     {
-        $machineGroupId = $($agentSettings.machineGroupId)
+        $machineGroupId = $($agentSettings.deploymentGroupId)
+        WriteLog "`t`t` Machine group id -  $machineGroupId" -logFunction $logFunction
     }
-    catch{  }
-    
+    catch{}
+    ## Back-compat for MG to DG rename.
+    if([string]::IsNullOrEmpty($machineGroupId)) 
+    {
+        try
+        {   
+            $machineGroupId = $($agentSettings.machineGroupId)
+            WriteLog "`t`t` Machine group id -  $machineGroupId" -logFunction $logFunction
+        }catch{}    
+    }    
     
     if([string]::IsNullOrEmpty($machineGroupId) -or [string]::IsNullOrEmpty($agentId))
     {

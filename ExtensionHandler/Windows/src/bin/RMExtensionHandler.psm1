@@ -61,7 +61,7 @@ function Start-RMExtensionHandler {
             Write-Log "Current seq number: $sequenceNumber, last seq number: $lastSequenceNumber"
             Add-HandlerSubStatus $RM_Extension_Status.SkippedInstallation.Code $RM_Extension_Status.SkippedInstallation.Message -operationName $RM_Extension_Status.SkippedInstallation.operationName
             
-            Exit-WithCode0
+            Exit-WithCode1
         }  
 
         Clear-StatusFile
@@ -76,7 +76,7 @@ function Start-RMExtensionHandler {
     catch 
     {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.Initializing.operationName
-        Exit-WithCode0
+        Exit-WithCode1
     }
 }
 
@@ -105,7 +105,7 @@ function Test-AgentAlreadyExists {
     catch 
     {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
-        Exit-WithCode0
+        Exit-WithCode1
     } 
 }
 
@@ -134,7 +134,7 @@ function Test-AgentReconfigurationRequired {
     catch 
     {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
-        Exit-WithCode0
+        Exit-WithCode1
     } 
 }
 
@@ -163,7 +163,7 @@ function Get-Agent {
     catch 
     {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.DownloadingDeploymentAgent.operationName
-        Exit-WithCode0
+        Exit-WithCode1
     } 
 }
 
@@ -194,7 +194,7 @@ function Register-Agent {
     catch 
     {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
-        Exit-WithCode0
+        Exit-WithCode1
     } 
 }
 
@@ -241,7 +241,7 @@ function Remove-Agent {
     catch 
     {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.Uninstalling.operationName
-        Exit-WithCode0
+        Exit-WithCode1
     } 
 }
 
@@ -278,7 +278,7 @@ function Add-AgentTags {
     catch 
     {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.AgentTagsAdded.operationName
-        Exit-WithCode0
+        Exit-WithCode1
     } 
 }
 
@@ -424,7 +424,7 @@ function Get-ConfigurationFromSettings {
     catch 
     {
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ReadingSettings.operationName
-        Exit-WithCode0
+        Exit-WithCode1
     } 
 }
 
@@ -443,8 +443,8 @@ function Create-AgentWorkingFolder {
     return $agentWorkingFolder
 }
 
-function Exit-WithCode0 {
-    exit 0
+function Exit-WithCode1 {
+    exit 1
 }
 
 function Format-TagsInput {

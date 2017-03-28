@@ -45,12 +45,12 @@ Describe "Start RM extension tests" {
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Write-Log {}
-        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {} 
+        Mock -ModuleName RMExtensionHandler Exit-WithCode1 {} 
         
         Start-RMExtensionHandler
 
         It "should call clean up functions" {
-            Assert-MockCalled -ModuleName RMExtensionHandler Exit-WithCode0 -Times 1
+            Assert-MockCalled -ModuleName RMExtensionHandler Exit-WithCode1 -Times 1
         }
 
         It "should set handler status as Initilized" {
@@ -70,12 +70,12 @@ Describe "Start RM extension tests" {
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Write-Log {}
-        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {} 
+        Mock -ModuleName RMExtensionHandler Exit-WithCode1 {} 
         
         Start-RMExtensionHandler
 
         It "should call clean up functions" {
-            Assert-MockCalled -ModuleName RMExtensionHandler Exit-WithCode0 -Times 0
+            Assert-MockCalled -ModuleName RMExtensionHandler Exit-WithCode1 -Times 0
         }
 
         It "should set handler status as Initilized" {
@@ -93,7 +93,7 @@ Describe "Download agent tests" {
         Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Invoke-GetAgentScript { throw New-Object System.Exception("some error")}
-        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {}
+        Mock -ModuleName RMExtensionHandler Exit-WithCode1 {}
 
         Get-Agent @{}
 
@@ -126,7 +126,7 @@ Describe "Pre-check agent tests" {
         Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Test-AgentAlreadyExistsInternal { throw New-Object System.Exception("some error")}
-        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {}
+        Mock -ModuleName RMExtensionHandler Exit-WithCode1 {}
 
         Test-AgentAlreadyExists @{}
 
@@ -159,7 +159,7 @@ Describe "configure agent tests" {
         Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Invoke-ConfigureAgentScript { throw New-Object System.Exception("some error")}
-        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {}
+        Mock -ModuleName RMExtensionHandler Exit-WithCode1 {}
 
         Register-Agent @{}
 
@@ -328,7 +328,7 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler VeriftInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {}        
+        Mock -ModuleName RMExtensionHandler Exit-WithCode1 {}        
 
         It "should set proper status" {
             Get-ConfigurationFromSettings        
@@ -483,7 +483,7 @@ Describe "AgentReconfigurationRequired tests" {
         Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Test-AgentReConfigurationRequiredInternal { throw New-Object System.Exception("some error")}
-        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {}
+        Mock -ModuleName RMExtensionHandler Exit-WithCode1 {}
 
         Test-AgentReconfigurationRequired @{}
 

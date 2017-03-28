@@ -495,6 +495,7 @@ function Set-HandlerStatus
 
     $statusObject = @(
         @{  
+            SequenceNumber = Get-HandlerExecutionSequenceNumber
             status = @{ 
                 formattedMessage = @{
                     lang = 'en-US'
@@ -502,7 +503,6 @@ function Set-HandlerStatus
                 }
                 status = $Status
                 code = $Code
-                configurationAppliedTime = $timestampUTC
                 substatus = $subStatusList
             }
             version = '1.0'
@@ -821,7 +821,8 @@ if ($PSVersionTable.PSVersion.Major -eq 2)
     .Synopsis
         Takes a hashtable, array, date, number, or string, serializes it to JSON and writes it to the given file
     #>
-    function Set-JsonContent { 
+    funct
+    ion Set-JsonContent { 
         param(
             [Parameter(Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)]
             [string]
@@ -881,7 +882,7 @@ else
             $Path
         )
             
-        $object = Get-Content $Path -Encoding UTF8 | Out-String | ConvertFrom-Json | ConvertTo-Hashtable
+        $object = Get-Content $Path | Out-String | ConvertFrom-Json | ConvertTo-Hashtable
 
         if ($null -eq $object)
         {
@@ -917,7 +918,7 @@ else
             $Force
         )
             
-        ConvertTo-Json -Depth 16 $Value | Set-Content -Encoding UTF8 -Path $Path -Force:$Force.IsPresent
+        ConvertTo-Json -Depth 16 $Value -Compress | Set-Content -Path $Path -Force:$Force.IsPresent
     }
 
     <#

@@ -14,7 +14,7 @@
     "TeamProject": {
       "type": "string"
     },
-    "MachineGroup": {
+    "DeploymentGroup": {
       "type": "string"
     },
     "AgentName": {
@@ -43,7 +43,7 @@
         "settings": {
           "VSTSAccountName": "[parameters('VSTSAccountName')]",
           "TeamProject": "[parameters('TeamProject')]",
-          "MachineGroup": "[parameters('MachineGroup')]",
+          "DeploymentGroup": "[parameters('DeploymentGroup')]",
           "AgentName": "[parameters('AgentName')]",
           "Tags": "[parameters('Tags')]"
         },

@@ -18,16 +18,16 @@
         "name": "TeamProject",
         "type": "Microsoft.Common.TextBox",
         "label": "Team Project",
-        "toolTip": "Specify the Team Project which has the machine group defined in it",
+        "toolTip": "Specify the Team Project which has the deployment group defined in it",
         "constraints": {
           "required": true
         }
       },
       {
-        "name": "MachineGroup",
+        "name": "DeploymentGroup",
         "type": "Microsoft.Common.TextBox",
-        "label": "Machine Group",
-        "toolTip": "Specify the Machine Group against which deployment agent will be registered",
+        "label": "Deployment Group",
+        "toolTip": "Specify the Deployment Group against which deployment agent will be registered",
         "constraints": {
           "required": true
         }
@@ -70,7 +70,7 @@
       "location": "[location()]",
       "VSTSAccountName": "[elements('VSTSAccountName')]",
       "TeamProject": "[elements('TeamProject')]",
-      "MachineGroup": "[elements('MachineGroup')]",
+      "DeploymentGroup": "[elements('DeploymentGroup')]",
       "AgentName": "[elements('AgentName')]",
       "PATToken": "[elements('PATToken')]",
       "Tags": "[elements('Tags')]"      

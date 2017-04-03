@@ -82,6 +82,9 @@ def remove_extension_disabled_markup():
 def exit_with_code_zero():
   sys.exit(0)
 
+def exit_with_code_one():
+  sys.exit(1)
+
 def check_python_version():
   version_info = sys.version_info
   major = version_info[0]
@@ -131,14 +134,14 @@ def start_rm_extension_handler(operation):
     handler_utility.clear_status_file()
     code = RMExtensionStatus.rm_extension_status['Installing']['Code']
     message = RMExtensionStatus.rm_extension_status['Installing']['Message']
-    handler_utility.set_handler_status(code = code, message = message)
+    handler_utility.set_handler_status(operation = operation, code = code, message = message)
     ss_code = RMExtensionStatus.rm_extension_status['Initialized']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['Initialized']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['Initialized']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
-    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'])
-    exit_with_code_zero()
+    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'], operation)
+    exit_with_code_one()
 
 def get_platform_value():
   info = platform.linux_distribution()
@@ -224,7 +227,7 @@ def create_agent_working_folder():
     os.makedirs(agent_working_folder, 0700)
   return agent_working_folder
 
-def get_configutation_from_settings():
+def get_configutation_from_settings(operation):
   try:
     format_string = 'https://{0}.visualstudio.com'
     public_settings = handler_utility.get_public_settings()
@@ -293,10 +296,10 @@ def get_configutation_from_settings():
           }
     return ret_val
   except Exception as e:
-    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'])
-    exit_with_code_zero()
+    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], operation)
+    exit_with_code_one()
 
-def test_configured_agent_exists():
+def test_configured_agent_exists(operation):
   global configured_agent_exists, config
   try:
     ss_code = RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['Code']
@@ -312,8 +315,8 @@ def test_configured_agent_exists():
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     return agent_exists
   except Exception as e:
-    handler_utility.set_handler_error_status(e,RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName'])
-    exit_with_code_zero()
+    handler_utility.set_handler_error_status(e,RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName'], operation)
+    exit_with_code_one()
 
 def test_agent_configuration_required(config):
   try:
@@ -330,12 +333,12 @@ def test_agent_configuration_required(config):
     handler_utility.log('Done pre-checking for agent re-configuration, AgentReconfigurationRequired : {0}'.format(config_required))
     return config_required
   except Exception as e:
-    handler_utility.set_handler_error_status(e,RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['operationName'])
-    exit_with_code_zero()
+    handler_utility.set_handler_error_status(e,RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['operationName'], 'Enable')
+    exit_with_code_one()
 
 def execute_agent_pre_check():
   global config, configured_agent_exists, agent_configuration_required
-  configured_agent_exists = test_configured_agent_exists()
+  configured_agent_exists = test_configured_agent_exists('Enable')
   if(configured_agent_exists == True):
     agent_configuration_required = test_agent_configuration_required(config)
   
@@ -354,8 +357,8 @@ def get_agent():
     operation_name = RMExtensionStatus.rm_extension_status['DownloadedDeploymentAgent']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
-    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['DownloadingDeploymentAgent']['operationName'])
-    exit_with_code_zero()
+    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['DownloadingDeploymentAgent']['operationName'], 'Enable')
+    exit_with_code_one()
 
 def download_agent_if_required():
   global configured_agent_exists
@@ -388,12 +391,12 @@ def register_agent():
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     code = RMExtensionStatus.rm_extension_status['Installed']['Code']
     message = RMExtensionStatus.rm_extension_status['Installed']['Message']
-    handler_utility.set_handler_status(code = code, status = 'success', message = message)
+    handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
   except Exception as e:
-    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName'])
-    exit_with_code_zero()
+    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName'], 'Enable')
+    exit_with_code_one()
 
-def remove_existing_agent(config):
+def remove_existing_agent(config, operation):
   try:
     handler_utility.log('Agent removal started')
     try:
@@ -428,16 +431,16 @@ def remove_existing_agent(config):
         raise e
     code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
     message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']
-    handler_utility.set_handler_status(code = code, status = 'success', message = message)
+    handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)
   except Exception as e:
-    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Uninstalling']['operationName'])
-    exit_with_code_zero()
+    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Uninstalling']['operationName'], operation)
+    exit_with_code_one()
 
 def remove_existing_agent_if_required():
   global configured_agent_exists, agent_configuration_required, config
   if((configured_agent_exists == True) and (agent_configuration_required == True)):
     handler_utility.log('Remove existing configured agent')
-    remove_existing_agent(config)
+    remove_existing_agent(config, 'Enable')
     #Execution has reached till here means that either the agent was removed successfully, or we renamed the agent folder successfully. 
     configured_agent_exists = False
 
@@ -451,7 +454,7 @@ def configure_agent_if_required():
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
     message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
-    handler_utility.set_handler_status(code = code, status = 'success', message = message) 
+    handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message) 
 
 def add_agent_tags():
   ss_code = RMExtensionStatus.rm_extension_status['AddingAgentTags']['Code']
@@ -469,18 +472,18 @@ def add_agent_tags():
       handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
       code = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Code']
       message = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Message']
-      handler_utility.set_handler_status(code = code, status = 'success', message = message)
+      handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
     except Exception as e:
-      handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName'])
-      exit_with_code_zero()
+      handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName'], 'Enable')
+      exit_with_code_one()
   else:
     handler_utility.log('No tags provided for agent')
 
 def enable():
   global configured_agent_exists, agent_configuration_required, config
-  input_operation = 'enable'
+  input_operation = 'Enable'
   start_rm_extension_handler(input_operation)
-  config = get_configutation_from_settings()
+  config = get_configutation_from_settings(input_operation)
   execute_agent_pre_check()
   remove_existing_agent_if_required()
   download_agent_if_required()
@@ -502,20 +505,20 @@ def disable():
   handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
   message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
-  handler_utility.set_handler_status(code = code, status = 'success', message = message)
+  handler_utility.set_handler_status(operation = 'Disable', code = code, status = 'success', message = message)
 
 def uninstall():
   global configured_agent_exists, config
-  operation = 'uninstall'
-  config = get_configutation_from_settings()
-  configured_agent_exists = test_configured_agent_exists()
+  operation = 'Uninstall'
+  config = get_configutation_from_settings(operation)
+  configured_agent_exists = test_configured_agent_exists(operation)
   config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
   if(configured_agent_exists == True):
-    remove_existing_agent(config)
+    remove_existing_agent(config, operation)
   else:
     code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
     message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']
-    handler_utility.set_handler_status(code = code, status = 'success', message = message)
+    handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)
 
 def main():
   waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
@@ -531,15 +534,15 @@ def main():
       global root_dir
       root_dir = os.getcwd()
       if(sys.argv[1] == '-enable'):
-	enable()
+	      enable()
       elif(sys.argv[1] == '-disable'):
-	disable()
+	      disable()
       elif(sys.argv[1] == '-uninstall'):
-	uninstall()
+	      uninstall()
       exit_with_code_zero()
     except Exception as e:
       handler_utility.set_handler_error_status(e, 'Some error occured')
-      exit_with_code_zero()
+      exit_with_code_one()
 
 if(__name__ == '__main__'):
   main()

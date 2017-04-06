@@ -1,6 +1,6 @@
 {
     "VSTSAccountName": "https://testking123.visualstudio.com",
     "TeamProject": "AzureProj",
-    "MachineGroup": "biprasad",
+    "DeploymentGroup": "biprasad",
     "AgentName": "vm-ext-e2e-clsc-agent"
 }

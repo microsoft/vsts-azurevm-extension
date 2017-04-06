@@ -26,7 +26,7 @@ function ConfigureAgent
     [Parameter(Mandatory=$true)]
     [string]$projectName,
     [Parameter(Mandatory=$true)]
-    [string]$machineGroupName,
+    [string]$deploymentGroupName,
     [Parameter(Mandatory=$true)]
     [string]$agentName,
     [Parameter(Mandatory=$true)]
@@ -35,7 +35,7 @@ function ConfigureAgent
     
     $processStartInfo = GetProcessStartInfo
     $processStartInfo.FileName = $configCmdPath
-    $processStartInfo.Arguments = "$configCommonArgs --agent $agentName --url $tfsUrl --token $patToken --work $workingFolder --projectname $projectName --machinegroupname $machineGroupName"
+    $processStartInfo.Arguments = "$configCommonArgs --agent $agentName --url $tfsUrl --token $patToken --work $workingFolder --projectname $projectName --deploymentgroupname $deploymentGroupName"
     
     $configProcess = New-Object System.Diagnostics.Process
     $configProcess.StartInfo = $processStartInfo
@@ -95,14 +95,14 @@ function ApplyTagsToAgent
     [Parameter(Mandatory=$true)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$machineGroupId,    
+    [string]$deploymentGroupId,    
     [Parameter(Mandatory=$true)]
     [string]$agentId,
     [Parameter(Mandatory=$true)]
     [string]$tagsAsJsonString
     )
     
-    $restCallUrl = ( "{0}/{1}/_apis/distributedtask/machinegroups/{2}/Machines?api-version=3.1-preview" -f $tfsUrl, $projectName, $machineGroupId )
+    $restCallUrl = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Machines?api-version=3.2-preview" -f $tfsUrl, $projectName, $deploymentGroupId )
     
     WriteAddTagsLog "Url for adding tags - $restCallUrl"
     
@@ -135,25 +135,25 @@ function AddTagsToAgent
     [Parameter(Mandatory=$true)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$machineGroupId,    
+    [string]$deploymentGroupId,    
     [Parameter(Mandatory=$true)]
     [string]$agentId,
     [Parameter(Mandatory=$true)]
     [string]$tagsAsJsonString
     )
 
-    $restCallUrlToGetExistingTags = ( "{0}/{1}/_apis/distributedtask/machinegroups/{2}/Machines?api-version=3.1-preview" -f $tfsUrl, $projectName, $machineGroupId )
+    $restCallUrlToGetExistingTags = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Machines?api-version=3.2-preview" -f $tfsUrl, $projectName, $deploymentGroupId )
     
     WriteAddTagsLog "Url for adding getting existing tags if any - $restCallUrlToGetExistingTags"
 
     $headers = GetRESTCallHeader $patToken
     try
     {
-        $machineGroup = Invoke-RestMethod -Uri $($restCallUrlToGetExistingTags) -headers $headers -Method Get -ContentType "application/json"
+        $deploymentGroup = Invoke-RestMethod -Uri $($restCallUrlToGetExistingTags) -headers $headers -Method Get -ContentType "application/json"
         $existingTags = @()
-        for( $i = 0; $i -lt $machineGroup.count; $i++ )
+        for( $i = 0; $i -lt $deploymentGroup.count; $i++ )
         {
-            $eachMachine = $machineGroup.value[$i]
+            $eachMachine = $deploymentGroup.value[$i]
             if( ($eachMachine -ne $null) -and ($eachMachine.agent -ne $null) -and ($eachMachine.agent.id  -eq $agentId) -and ($eachMachine.PSObject.Properties.Match('tags').Count))
             {
                 $existingTags += $eachMachine.tags
@@ -189,7 +189,7 @@ function AddTagsToAgent
         throw "Tags could not be added. Unable to fetch the existing tags."
     }
     
-    ApplyTagsToAgent -tfsUrl $tfsUrl -projectName $projectName -patToken $patToken -machineGroupId $machineGroupId -agentId $agentId -tagsAsJsonString $newTagsJsonString
+    ApplyTagsToAgent -tfsUrl $tfsUrl -projectName $projectName -patToken $patToken -deploymentGroupId $deploymentGroupId -agentId $agentId -tagsAsJsonString $newTagsJsonString
 }
 
 function GetRESTCallHeader

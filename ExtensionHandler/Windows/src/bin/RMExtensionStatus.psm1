@@ -101,12 +101,12 @@ $global:RM_Extension_Status = @{
     }
     Uninstalling = @{
         Code = 17
-        Message = 'Uninstalling extension and removing the deployment agent from machine group' 
+        Message = 'Uninstalling extension and removing the deployment agent from deployment group' 
         operationName = 'Uninstall'
     }
     RemovedAgent = @{
         Code = 18
-        Message = 'Removed deployment agent successfully from machine group'
+        Message = 'Removed deployment agent successfully from deployment group'
         operationName = 'Uninstall'
     }
     CheckingAgentReConfigurationRequired = @{
@@ -136,7 +136,7 @@ $global:RM_Extension_Status = @{
     }
     UnConfiguringDeploymentAgentFailed = @{
         Code = 25
-        Message = '[WARNING] The deployment agent {0} could not be uninstalled. Ensure to remove it manually from its machine group in VSTS'
+        Message = '[WARNING] The deployment agent {0} could not be uninstalled. Ensure to remove it manually from its deployment group in VSTS'
         operationName = 'Unconfigure existing agent'
     }
 

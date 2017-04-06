@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$PATToken,
     [Parameter(Mandatory=$true)]
-    [string]$MachineGroup,
+    [string]$DeploymentGroup,
     [Parameter(Mandatory=$true)]
     [string]$WindowsAgentName,
     [Parameter(Mandatory=$true)]
@@ -19,7 +19,7 @@ function Confirm-AgentRegistered
         [Parameter(Mandatory=$true)]
         [string]$PATToken,
         [Parameter(Mandatory=$true)]
-        [string]$MachineGroup,
+        [string]$DeploymentGroup,
         [Parameter(Mandatory=$true)]
         [string]$AgentName
     )
@@ -28,7 +28,7 @@ function Confirm-AgentRegistered
     Write-Verbose -Verbose "Validating that agent $AgentName has been registered..."
     Write-Verbose -Verbose "Getting agent information from VSTS"
 
-    $agentInfo = Get-VSTSAgentInformation -vstsUrl "http://localhost:8080/tfs/defaultcollection" -teamProject $TeamProject -patToken $PATToken -machineGroup $MachineGroup -agentName $AgentName
+    $agentInfo = Get-VSTSAgentInformation -vstsUrl "http://localhost:8080/tfs/defaultcollection" -teamProject $TeamProject -patToken $PATToken -deploymentGroup $DeploymentGroup -agentName $AgentName
 
     if(($agentInfo.isAgentExists -eq $false) -or ($agentInfo.isAgentOnline -eq $false))
     {
@@ -44,5 +44,5 @@ function Confirm-AgentRegistered
 
 $AgentNames = @($WindowsAgentName, $LinuxAgentName)
 $AgentNames | % {
-    Confirm-AgentRegistered -TeamProject $TeamProject -PATToken $PATToken -MachineGroup $MachineGroup -AgentName $_
+    Confirm-AgentRegistered -TeamProject $TeamProject -PATToken $PATToken -DeploymentGroup $DeploymentGroup -AgentName $_
 }

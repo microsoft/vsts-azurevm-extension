@@ -2,7 +2,7 @@
 .Synopsis
     This script will disable RM extension. 
     
-    Currently, disable is no-op for team services agent. It will still keep running and will still be registered to machine group.
+    Currently, disable is no-op for team services agent. It will still keep running and will still be registered to deployment group.
     The purpose here is to just inform user about this.
 #>
 

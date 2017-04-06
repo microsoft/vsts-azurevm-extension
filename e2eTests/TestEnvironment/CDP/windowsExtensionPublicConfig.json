@@ -1,6 +1,6 @@
 {
     "VSTSAccountName": "https://10.1.0.4:4443/tfs/defaultcollection",
     "TeamProject": "test7",
-    "MachineGroup": "VMExtTestMG",
+    "DeploymentGroup": "VMExtTestDG",
     "AgentName": "vm-ext-cdp-win"
 }

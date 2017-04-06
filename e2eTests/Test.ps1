@@ -69,7 +69,7 @@ function Get-Config
     return @{
                 VSTSUrl            = $publicSettings.VSTSAccountName
                 TeamProject        = $publicSettings.TeamProject
-                MachineGroup       = $publicSettings.MachineGroup
+                DeploymentGroup       = $publicSettings.DeploymentGroup
                 AgentName          = $publicSettings.AgentName
                 PATToken           = $token
             }
@@ -127,7 +127,7 @@ Write-Host "Removing VM $vmName to ensure clean state for test"
 Remove-ExistingVM -resourceGroupName $resourceGroupName -vmName $vmName -storageAccountName $storageAccountName
 
 # Remove any old agent which is till registered
-$oldAgentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -machineGroup $config.MachineGroup -agentName $config.AgentName
+$oldAgentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
 if($oldAgentInfo.isAgentExists -eq $true)
 {
     Remove-VSTSAgent -vstsUrl $config.VSTSUrl -patToken $config.PATToken -poolId $oldAgentInfo.poolId -agentId $oldAgentInfo.agentId
@@ -149,7 +149,7 @@ Install-ExtensionOnVM -resourceGroupName $resourceGroupName -vmName $vmName -loc
 # Verify that agent is correctly configured against VSTS
 Write-Host "Validating that agent has been registered..."
 Write-Host "Getting agent information from VSTS"
-$agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -machineGroup $config.MachineGroup -agentName $config.AgentName
+$agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
 
 if(($agentInfo.isAgentExists -eq $false) -or ($agentInfo.isAgentOnline -eq $false))
 {

@@ -83,7 +83,7 @@
         "TeamProject": {
             "type": "string"
         },
-        "MachineGroup": {
+        "DeploymentGroup": {
             "type": "string"
         },
         "WindowsAgentName": {
@@ -181,7 +181,7 @@
                     "settings": {
                     "VSTSAccountName": "[parameters('VSTSAccountName')]",
                     "TeamProject": "[parameters('TeamProject')]",
-                    "MachineGroup": "[parameters('MachineGroup')]",
+                    "DeploymentGroup": "[parameters('DeploymentGroup')]",
                     "AgentName": "[parameters('WindowsAgentName')]",
                     "Tags": "[parameters('Tags')]"
                     },
@@ -264,7 +264,7 @@
                     "settings": {
                     "VSTSAccountName": "[parameters('VSTSAccountName')]",
                     "TeamProject": "[parameters('TeamProject')]",
-                    "MachineGroup": "[parameters('MachineGroup')]",
+                    "DeploymentGroup": "[parameters('DeploymentGroup')]",
                     "AgentName": "[parameters('LinuxAgentName')]",
                     "Tags": "[parameters('Tags')]"
                     },

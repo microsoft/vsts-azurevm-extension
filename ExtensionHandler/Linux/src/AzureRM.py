@@ -166,9 +166,9 @@ def check_account_name_prefix(account_name):
 
 def modify_paths(account_name_split):
   Constants.package_data_address_format = '/' + account_name_split['VirtualApplication'] + Constants.package_data_address_format
-  Constants.machine_group_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.machine_group_address_format
+  Constants.deployment_group_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.deployment_group_address_format
   Constants.machines_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.machines_address_format
-  Constants.machine_groups_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.machine_groups_address_format
+  Constants.deployment_groups_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.deployment_groups_address_format
 
 
 def parse_account_name(account_name): 
@@ -263,9 +263,12 @@ def get_configutation_from_settings():
     team_project_name = public_settings['TeamProject']
     handler_utility.verify_input_not_null('TeamProject', team_project_name)
     handler_utility.log('Team Project : {0}'.format(team_project_name))
-    machine_group_name = public_settings['MachineGroup']
-    handler_utility.verify_input_not_null('MachineGroup', machine_group_name)
-    handler_utility.log('Machine Group : {0}'.format(machine_group_name))
+    if(public_settings.has_key('DeploymentGroup')):
+      deployment_group_name = public_settings['DeploymentGroup']
+    elif(public_settings.has_key('MachineGroup')):
+      deployment_group_name = public_settings['MachineGroup']
+    handler_utility.verify_input_not_null('DeploymentGroup', deployment_group_name)
+    handler_utility.log('Deployment Group : {0}'.format(deployment_group_name))
     agent_name = public_settings['AgentName']
     handler_utility.log('Agent Name : {0}'.format(agent_name))
     tags_input = [] 
@@ -286,7 +289,7 @@ def get_configutation_from_settings():
              'PATToken':pat_token, 
              'Platform':platform_value, 
              'TeamProject':team_project_name, 
-             'MachineGroup':machine_group_name, 
+             'DeploymentGroup':deployment_group_name, 
              'AgentName':agent_name, 
              'Tags' : tags,
              'AgentWorkingFolder':agent_working_folder
@@ -322,7 +325,7 @@ def test_agent_configuration_required(config):
     operation_name = RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log('Invoking script to check existing agent settings with given configuration settings...')
-    config_required = ConfigureDeploymentAgent.test_agent_configuration_required_internal(config['VSTSUrl'], config['VirtualApplication'], config['PATToken'], config['MachineGroup'], config['TeamProject'], config['AgentWorkingFolder'], handler_utility.log)
+    config_required = ConfigureDeploymentAgent.test_agent_configuration_required_internal(config['VSTSUrl'], config['VirtualApplication'], config['PATToken'], config['DeploymentGroup'], config['TeamProject'], config['AgentWorkingFolder'], handler_utility.log)
     ss_code = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['operationName']
@@ -380,7 +383,7 @@ def register_agent():
     vsts_url = config['VSTSUrl']
     if(is_on_prem):
       vsts_url = vsts_url + '/' + config['VirtualApplication']
-    ConfigureDeploymentAgent.configure_agent(vsts_url, config['PATToken'], config['TeamProject'], config['MachineGroup'], config['AgentName'], config['AgentWorkingFolder'], configured_agent_exists, handler_utility.log)
+    ConfigureDeploymentAgent.configure_agent(vsts_url, config['PATToken'], config['TeamProject'], config['DeploymentGroup'], config['AgentName'], config['AgentWorkingFolder'], configured_agent_exists, handler_utility.log)
     handler_utility.log('Done configuring Deployment agent')
     ss_code = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Message']
@@ -410,7 +413,7 @@ def remove_existing_agent(config):
         handler_utility.log('Failed to unconfigure the VSTS agent. Renaming the agent directory to {0}.'.format(old_agent_folder_name))
         agent_name = ConfigureDeploymentAgent.get_agent_setting(config['AgentWorkingFolder'], 'agentName')
         ConfigureDeploymentAgent.setting_params = {}
-        handler_utility.log('Please delete the agent {0} manually from the machine group.'.format(agent_name))
+        handler_utility.log('Please delete the agent {0} manually from the deployment group.'.format(agent_name))
         rename_agent_folder_proc = subprocess.Popen('mv {0} {1}'.format(config['AgentWorkingFolder'], old_agent_folder_name).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         std_out, std_err = rename_agent_folder_proc.communicate()
         return_code = rename_agent_folder_proc.returncode
@@ -519,7 +522,7 @@ def uninstall():
 
 def main():
   waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
-  waagent.Log('VSTS machine group extension handler started.')
+  waagent.Log('VSTS deployment group extension handler started.')
   if(len(sys.argv) == 2):
     global handler_utility
     handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)

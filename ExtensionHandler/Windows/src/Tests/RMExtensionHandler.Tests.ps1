@@ -213,7 +213,7 @@ Describe "parse vsts account name settings tests" {
                 publicSettings =  @{ 
                         VSTSAccountName = "abc"
                         TeamProject = "project"
-                        MachineGroup = "group"
+                        DeploymentGroup = "group"
                         Tags = @()
                         AgentName = "name" 
                     };
@@ -247,7 +247,7 @@ Describe "parse vsts account name settings tests" {
                 publicSettings =  @{ 
                         VSTSAccountName = "https://abc.visualstudio.com"
                         TeamProject = "project"
-                        MachineGroup = "group"
+                        DeploymentGroup = "group"
                         Tags = @()
                         AgentName = "name" 
                     };
@@ -281,7 +281,7 @@ Describe "parse vsts account name settings tests" {
                 publicSettings =  @{ 
                         VSTSAccountName = "http://localhost:8080/tfs/defaultcollection"
                         TeamProject = "project"
-                        MachineGroup = "group"
+                        DeploymentGroup = "group"
                         Tags = @()
                         AgentName = "name" 
                     };
@@ -315,7 +315,7 @@ Describe "parse vsts account name settings tests" {
                 publicSettings =  @{ 
                         VSTSAccountName = "http://localhost:8080/tfs"
                         TeamProject = "project"
-                        MachineGroup = "group"
+                        DeploymentGroup = "group"
                         Tags = @()
                         AgentName = "name" 
                     };
@@ -349,7 +349,7 @@ Describe "parse tags settings tests" {
                 publicSettings =  @{ 
                         VSTSAccountName = "abc"
                         TeamProject = "project"
-                        MachineGroup = "group"
+                        DeploymentGroup = "group"
                         Tags = @("arrayValue1", "arrayValue2")
                         AgentName = "name" 
                     };
@@ -382,7 +382,7 @@ Describe "parse tags settings tests" {
                 publicSettings =  @{ 
                         VSTSAccountName = "abc"
                         TeamProject = "project"
-                        MachineGroup = "group"
+                        DeploymentGroup = "group"
                         Tags = @("bb", "dd", "bb", "aa")
                         AgentName = "name" 
                     };
@@ -415,7 +415,7 @@ Describe "parse tags settings tests" {
                 publicSettings =  @{ 
                         VSTSAccountName = "abc"
                         TeamProject = "project"
-                        MachineGroup = "group"
+                        DeploymentGroup = "group"
                         Tags = @{ 
                             tag1 = "hashValue1"
                             tag2 = "hashValue2" 
@@ -451,7 +451,7 @@ Describe "parse tags settings tests" {
                 publicSettings =  @{ 
                         VSTSAccountName = "abc"
                         TeamProject = "project"
-                        MachineGroup = "group"
+                        DeploymentGroup = "group"
                         Tags = "tag1,  ,  tag2 ,, tag3,"
                         AgentName = "name" 
                     };

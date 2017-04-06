@@ -4,28 +4,28 @@ function Get-VSTSAgentInformation
     [string]$vstsUrl,
     [string]$teamProject,
     [string]$patToken,
-    [string]$machineGroup,
+    [string]$deploymentGroup,
     [string]$agentName
     )
     
-    Write-Host "Looking for agent $agentName in vsts account $vstsUrl and machine group $machineGroup"
+    Write-Host "Looking for agent $agentName in vsts account $vstsUrl and deployment group $deploymentGroup"
     $base64AuthToken = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "", $patToken)))
     $authHeader = @{ Authorization = "Basic {0}" -f $base64AuthToken }
 
-    $uri = "{0}/{1}/_apis/distributedtask/machinegroups" -f $vstsUrl, $teamProject
-    $machineGroupsResponse = Invoke-RestMethod -Method GET -Uri $uri -Headers $authHeader
-    $machineGroups = $machineGroupsResponse.value
-    $machineGroups | % {
-        if($_.name -eq $machineGroup)
+    $uri = "{0}/{1}/_apis/distributedtask/deploymentgroups" -f $vstsUrl, $teamProject
+    $deploymentGroupsResponse = Invoke-RestMethod -Method GET -Uri $uri -Headers $authHeader
+    $deploymentGroups = $deploymentGroupsResponse.value
+    $deploymentGroups | % {
+        if($_.name -eq $deploymentGroup)
         {   
-            $machineGroupId = $_.id
+            $deploymentGroupId = $_.id
             return
         }
     }
 
-    Write-Host "Machine group Id: $machineGroupId"
+    Write-Host "Deployment group Id: $deploymentGroupId"
 
-    $uri = "{0}/{1}/_apis/distributedtask/machinegroups/{2}" -f $vstsUrl, $teamProject, $machineGroupId
+    $uri = "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}" -f $vstsUrl, $teamProject, $deploymentGroupId
     $agentsResponse = Invoke-RestMethod -Method GET -Uri $uri -Headers $authHeader
     $agents = $agentsResponse.machines
     $poolId = $agentsResponse.pool.id
@@ -52,7 +52,7 @@ function Get-VSTSAgentInformation
     return @{
         isAgentExists = $agentExists
         isAgentOnline = $agentOnline
-        machineGroupId = $machineGroupId
+        deploymentGroupId = $deploymentGroupId
         poolId = $poolId
         agentId = $agentId
     }

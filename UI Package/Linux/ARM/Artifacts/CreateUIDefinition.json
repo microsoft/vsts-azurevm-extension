@@ -36,7 +36,7 @@
         "name": "AgentName",
         "type": "Microsoft.Common.TextBox",
         "label": "Agent Name",
-        "toolTip": "(Optional) Specify a name for the agent. If not specified, VM name appended with \"-MG\" will be used",
+        "toolTip": "(Optional) Specify a name for the agent. If not specified, VM name appended with \"-DG\" will be used",
         "constraints": {
           "required": false
         }

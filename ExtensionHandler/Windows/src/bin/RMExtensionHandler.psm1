@@ -201,7 +201,7 @@ function Register-Agent {
 <#
 .Synopsis
    Unconfigures and removes Deployment agent. 
-   Currently, uninstall is no-op for agent. It will still keep running and will still be registered to machine group. The purpose here is to just inform user about this
+   Currently, uninstall is no-op for agent. It will still keep running and will still be registered to deployment group. The purpose here is to just inform user about this
 #>
 function Remove-Agent {
     [CmdletBinding()]
@@ -226,7 +226,7 @@ function Remove-Agent {
                 $agentSettings = Get-Content -Path $agentSettingPath | Out-String | ConvertFrom-Json
                 $agentName = $($agentSettings.agentName)
                 Write-Log ("Renaming agent folder to {0}" -f $oldWorkingFolderName)
-                Write-Log ("Please delete the agent {0} manually from the machine group." -f $agentName)
+                Write-Log ("Please delete the agent {0} manually from the deployment group." -f $agentName)
                 Rename-Item $config.AgentWorkingFolder $oldWorkingFolderName
                 Create-AgentWorkingFolder
                 $message = ($RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Message -f $agentName)
@@ -317,7 +317,7 @@ function Get-ConfigurationFromSettings {
         $vstsAccountName = $publicSettings['VSTSAccountName']
         $tfsVirtualApplication = ""
         $tfsCollection = ""
-        VeriftInputNotNull "VSTSAccountName" $vstsAccountName
+        VerifyInputNotNull "VSTSAccountName" $vstsAccountName
         $vstsAccountName = $vstsAccountName.TrimEnd('/')
         if((($vstsAccountName.ToLower().StartsWith("https://")) -or ($vstsAccountName.ToLower().StartsWith("http://"))))
         {
@@ -367,16 +367,20 @@ function Get-ConfigurationFromSettings {
         if(-not $patToken)
         {
             $patToken = $publicSettings['PATToken']
-            VeriftInputNotNull "PATToken" $patToken
+            VerifyInputNotNull "PATToken" $patToken
         }
 
         $teamProjectName = $publicSettings['TeamProject']
-        VeriftInputNotNull "TeamProject" $teamProjectName
+        VerifyInputNotNull "TeamProject" $teamProjectName
         Write-Log "Team Project: $teamProjectName"
 
-        $machineGroupName = $publicSettings['MachineGroup']
-        VeriftInputNotNull "MachineGroup" $machineGroupName
-        Write-Log "Machine Group: $machineGroupName"
+        $deploymentGroupName = $publicSettings['DeploymentGroup']
+        if(-not $deploymentGroupName)
+        {
+            $deploymentGroupName = $publicSettings['MachineGroup']
+        }
+        VerifyInputNotNull "DeploymentGroup" $deploymentGroupName
+        Write-Log "Deployment Group: $deploymentGroupName"
 
         $agentName = $publicSettings['AgentName']
         if(-not $agentName)
@@ -415,7 +419,7 @@ function Get-ConfigurationFromSettings {
             PATToken = $patToken
             Platform = $platform
             TeamProject        = $teamProjectName
-            MachineGroup       = $machineGroupName
+            DeploymentGroup    = $deploymentGroupName
             AgentName          = $agentName
             Tags               = $tags
             AgentWorkingFolder = $agentWorkingFolder
@@ -512,7 +516,7 @@ function Test-AgentReConfigurationRequiredInternal {
 
     . $PSScriptRoot\AgentExistenceChecker.ps1
     $url = Get-AccountUrl $config.VSTSUrl $config.TfsVirtualApplication    
-    $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $url -collection $config.TfsCollection -projectName $config.TeamProject -machineGroupName $config.MachineGroup -patToken $config.PATToken -logFunction $script:logger)
+    $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $url -collection $config.TfsCollection -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken -logFunction $script:logger)
     return $agentReConfigurationRequired
 }
 
@@ -523,7 +527,7 @@ function Invoke-ConfigureAgentScript {
     )
 
     $url = Get-AccountUrl $config.VSTSUrl $config.TfsVirtualApplication
-    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $url -patToken  $config.PATToken -projectName $config.TeamProject -machineGroupName $config.MachineGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $url -patToken  $config.PATToken -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
 }
 
 function Invoke-RemoveAgentScript {
@@ -545,7 +549,7 @@ function Invoke-AddTagsToAgentScript{
     . $PSScriptRoot\AddTagsToDeploymentAgent.ps1 -tfsUrl $url -projectName $config.TeamProject -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -tagsAsJsonString ( $config.Tags | ConvertTo-Json )  -logFunction $script:logger
 }
 
-function VeriftInputNotNull {
+function VerifyInputNotNull {
     [CmdletBinding()]
     param(
     [string] $inputKey,

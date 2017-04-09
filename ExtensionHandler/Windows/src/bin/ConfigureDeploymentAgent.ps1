@@ -6,7 +6,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$projectName,
     [Parameter(Mandatory=$true)]
-    [string]$machineGroupName,    
+    [string]$deploymentGroupName,    
     [Parameter(Mandatory=$true)]
     [string]$workingFolder,
     [string]$agentName,
@@ -66,13 +66,13 @@ try
     
     if([string]::IsNullOrEmpty($agentName))
     {
-        $agentName = $env:COMPUTERNAME + "-MG"
+        $agentName = $env:COMPUTERNAME + "-DG"
         WriteConfigurationLog "Agent name not provided, agent name will be set as $agentName"
     }
     
     WriteConfigurationLog "Configure agent"
     
-    ConfigureAgent -tfsUrl $tfsUrl -patToken $patToken -workingFolder $defaultAgentWorkingFolder -projectName $projectName -machineGroupName $machineGroupName -agentName $agentName -configCmdPath $(GetConfigCmdPath)
+    ConfigureAgent -tfsUrl $tfsUrl -patToken $patToken -workingFolder $defaultAgentWorkingFolder -projectName $projectName -deploymentGroupName $deploymentGroupName -agentName $agentName -configCmdPath $(GetConfigCmdPath)
     
     return $returnSuccess 
 }

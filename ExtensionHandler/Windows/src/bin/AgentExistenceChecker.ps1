@@ -48,7 +48,7 @@ function Test-AgentSettingsAreSame
         [Parameter(Mandatory=$true)]
         [string]$projectName,
         [Parameter(Mandatory=$true)]
-        [string]$machineGroupName,
+        [string]$deploymentGroupName,
         [Parameter(Mandatory=$true)]
         [string]$patToken,
         [scriptblock]$logFunction
@@ -72,7 +72,7 @@ function Test-AgentSettingsAreSame
         $tfsUrl = $tfsUrl.TrimEnd('/')
         $agentTfsUrl = $agentSetting.serverUrl.TrimEnd('/')
         
-        $machineGroupNameAsPerSetting = ""
+        $deploymentGroupNameAsPerSetting = ""
         
         try
         {
@@ -82,20 +82,20 @@ function Test-AgentSettingsAreSame
                 $url = -join($tfsUrl, '/', $collection)
             }
             
-            WriteLog "`t`tCall GetMachineGroupNameFromAgentSetting" $logFunction
-            $machineGroupNameAsPerSetting = GetMachineGroupNameFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentTfsUrl -projectName $($agentSetting.projectName) -patToken $patToken -logFunction $logFunction
+            WriteLog "`t`tCall GetDeploymentGroupNameFromAgentSetting" $logFunction
+            $deploymentGroupNameAsPerSetting = GetDeploymentGroupNameFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentTfsUrl -projectName $($agentSetting.projectName) -patToken $patToken -logFunction $logFunction
         }
         catch
         {
             $errorMsg = $_.Exception.Message.ToString()
-            WriteLog "`t`t`t Unable to get the machine group name - $errorMsg" $logFunction
+            WriteLog "`t`t`t Unable to get the deployment group name - $errorMsg" $logFunction
         }
         
         WriteLog "`t`t`t Agent Configured With `t`t`t`t`t Agent Need To Be Configured With" $logFunction
         WriteLog "`t`t`t $agentTfsUrl `t`t`t`t`t $tfsUrl" $logFunction
         WriteLog "`t`t`t $($agentSetting.projectName) `t`t`t`t`t $projectName" $logFunction
-        WriteLog "`t`t`t $machineGroupNameAsPerSetting `t`t`t`t`t $machineGroupName" $logFunction
-        if( ([string]::Compare($tfsUrl, $agentTfsUrl, $True) -eq 0) -and ([string]::Compare($projectName, $($agentSetting.projectName), $True) -eq 0) -and ([string]::Compare($machineGroupName, $machineGroupNameAsPerSetting, $True) -eq 0) )
+        WriteLog "`t`t`t $deploymentGroupNameAsPerSetting `t`t`t`t`t $deploymentGroupName" $logFunction
+        if( ([string]::Compare($tfsUrl, $agentTfsUrl, $True) -eq 0) -and ([string]::Compare($projectName, $($agentSetting.projectName), $True) -eq 0) -and ([string]::Compare($deploymentGroupName, $deploymentGroupNameAsPerSetting, $True) -eq 0) )
         {         
             WriteLog "`t`t`t Test-AgentSettingsAreSame Return : true" $logFunction        
             return $true
@@ -120,7 +120,7 @@ function Get-AgentSettings
     return ( Get-Content -Path $agentSettingFile | Out-String | ConvertFrom-Json)
 }
 
-function GetMachineGroupNameFromAgentSetting
+function GetDeploymentGroupNameFromAgentSetting
 {
     param(
     [Parameter(Mandatory=$true)]
@@ -134,28 +134,28 @@ function GetMachineGroupNameFromAgentSetting
     [scriptblock]$logFunction
     )
     
-    $machineGroupId = ""    
+    $deploymenteGroupId = ""    
     try
     {
-        $machineGroupId = $($agentSetting.deploymentGroupId)
-        WriteLog "`t`t` Machine group id -  $machineGroupId" -logFunction $logFunction
+        $deploymentGroupId = $($agentSetting.deploymentGroupId)
+        WriteLog "`t`t` Deployment group id -  $deploymentGroupId" -logFunction $logFunction
     }
     catch{}
     ## Back-compat for MG to DG rename.
-    if([string]::IsNullOrEmpty($machineGroupId)) 
+    if([string]::IsNullOrEmpty($deploymentGroupId)) 
     {
         try
         {   
-            $machineGroupId = $($agentSetting.machineGroupId)
-            WriteLog "`t`t` Machine group id -  $machineGroupId" -logFunction $logFunction
+            $deploymentGroupId = $($agentSetting.machineGroupId)
+            WriteLog "`t`t` Machine group id -  $deploymentGroupId" -logFunction $logFunction
         }catch{}    
     }
     
-    if(![string]::IsNullOrEmpty($machineGroupId))
+    if(![string]::IsNullOrEmpty($deploymentGroupId))
     {
-        $restCallUrl = ContructRESTCallUrl -tfsUrl $tfsUrl -projectName $projectName -machineGroupId $machineGroupId -logFunction $logFunction
+        $restCallUrl = ContructRESTCallUrl -tfsUrl $tfsUrl -projectName $projectName -deploymentGroupId $deploymentGroupId -logFunction $logFunction
         
-        return (InvokeRestURlToGetMachineGroupName -restCallUrl $restCallUrl -patToken $patToken -logFunction $logFunction)
+        return (InvokeRestURlToGetDeploymentGroupName -restCallUrl $restCallUrl -patToken $patToken -logFunction $logFunction)
     }
     
     return ""
@@ -169,18 +169,18 @@ function ContructRESTCallUrl
     [Parameter(Mandatory=$true)]
     [string]$projectName,
     [Parameter(Mandatory=$true)]
-    [string]$machineGroupId,
+    [string]$deploymentGroupId,
     [scriptblock]$logFunction
     )
 
-    $restCallUrl = $tfsUrl + ("/{0}/_apis/distributedtask/machinegroups/{1}" -f $projectName, $machineGroupId)
+    $restCallUrl = $tfsUrl + ("/{0}/_apis/distributedtask/deploymentgroups/{1}" -f $projectName, $deploymentGroupId)
     
     WriteLog "`t`t REST call Url -  $restCallUrl" $logFunction
     
     return $restCallUrl
  }
  
- function InvokeRestURlToGetMachineGroupName
+ function InvokeRestURlToGetDeploymentGroupName
  {
     Param(
     [Parameter(Mandatory=$true)]
@@ -197,11 +197,11 @@ function ContructRESTCallUrl
     $basicAuth = [System.Convert]::ToBase64String($basicAuth)
     $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
     
-    WriteLog "`t`t Invoke-rest call for machine group name" $logFunction
+    WriteLog "`t`t Invoke-rest call for deployment group name" $logFunction
     try
     {
         $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
-        WriteLog "`t`t Machine Group Details : $response" $logFunction
+        WriteLog "`t`t Deployment Group Details : $response" $logFunction
         if($response.PSObject.Properties.name -contains "name")
         {
             return $response.Name
@@ -213,7 +213,7 @@ function ContructRESTCallUrl
     }
     catch
     {
-        throw "Unable to fetch the machine group information from VSTS server."
+        throw "Unable to fetch the deployment group information from VSTS server."
     }
  }
  

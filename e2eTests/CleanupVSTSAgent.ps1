@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$PATToken,
     [Parameter(Mandatory=$true)]
-    [string]$MachineGroup,
+    [string]$DeploymentGroup,
     [Parameter(Mandatory=$true)]
     [string]$AgentName
     )
@@ -13,7 +13,7 @@ param(
 $VSTSUrl = "http://localhost:8080/tfs/defaultcollection"
 
 # Remove any old agent which is till registered
-$oldAgentInfo = Get-VSTSAgentInformation -vstsUrl $VSTSUrl -teamProject $TeamProject -patToken $PATToken -machineGroup $MachineGroup -agentName $AgentName
+$oldAgentInfo = Get-VSTSAgentInformation -vstsUrl $VSTSUrl -teamProject $TeamProject -patToken $PATToken -deploymentGroup $DeploymentGroup -agentName $AgentName
 if($oldAgentInfo.isAgentExists -eq $true)
 {
     Remove-VSTSAgent -vstsUrl $VSTSUrl -patToken $PATToken -poolId $oldAgentInfo.poolId -agentId $oldAgentInfo.agentId

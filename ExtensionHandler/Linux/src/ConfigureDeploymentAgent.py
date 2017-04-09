@@ -53,11 +53,11 @@ def test_configured_agent_exists_internal(working_folder, log_func):
     write_log(e.message)
     raise e
 
-def construct_machine_group_name_address(project_name, machine_group_id):
-  machine_group_name_address = Constants.machine_group_address_format.format(project_name, machine_group_id)
-  return machine_group_name_address
+def construct_deployment_group_name_address(project_name, deployment_group_id):
+  deployment_group_name_address = Constants.deployment_group_address_format.format(project_name, deployment_group_id)
+  return deployment_group_name_address
 
-def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_group_name_address):
+def invoke_url_for_deployment_group_name(vsts_url, user_name, pat_token, deployment_group_name_address):
   write_log('\t\t Form header for making http call')
   method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):
@@ -70,55 +70,55 @@ def invoke_url_for_machine_group_name(vsts_url, user_name, pat_token, machine_gr
   headers = {
               'Authorization' : 'Basic {0}'.format(basic_auth)
             }
-  write_add_tags_log('\t\t Making HTTP request for machine group name')
+  write_add_tags_log('\t\t Making HTTP request for deployment group name')
   conn = method(vsts_url)
-  conn.request('GET', machine_group_name_address, headers = headers)
+  conn.request('GET', deployment_group_name_address, headers = headers)
   response = conn.getresponse()
   if(response.status == 200):
     val = json.loads(response.read())
-    write_log('\t\t Machine group details : {0}'.format(val))
-    machine_group_name = val['name']
-    return machine_group_name
+    write_log('\t\t Deployment group details : {0}'.format(val))
+    deployment_group_name = val['name']
+    return deployment_group_name
   else:
-    raise Exception('Unable to fetch the machine group information from VSTS server.')
+    raise Exception('Unable to fetch the deployment group information from VSTS server.')
   
 
-def get_machine_group_name_from_setting(vsts_url, project_name, pat_token):
+def get_deployment_group_name_from_setting(vsts_url, project_name, pat_token):
   global setting_params
-  machine_group_id = ''
+  deployment_group_id = ''
   try:
     if(setting_params.has_key('deploymentGroupId')):
-      machine_group_id = str(setting_params['deploymentGroupId'])
+      deployment_group_id = str(setting_params['deploymentGroupId'])
     else:
-      machine_group_id = str(setting_params['machineGroupId'])
-    write_log('\t\t Machine group id - {0}'.format(machine_group_id))
+      deployment_group_id = str(setting_params['machineGroupId'])
+    write_log('\t\t Deployment group id - {0}'.format(deployment_group_id))
   except Exception as e:
     pass
-  if(machine_group_id != ''):
-    machine_group_name_address = construct_machine_group_name_address(project_name, machine_group_id)
-    machine_group_name = invoke_url_for_machine_group_name(vsts_url, '', pat_token, machine_group_name_address)
-    return machine_group_name
-  return setting_params['machineGroupName']
+  if(deployment_group_id != ''):
+    deployment_group_name_address = construct_deploymente_group_name_address(project_name, deployment_group_id)
+    deployment_group_name = invoke_url_for_deployment_group_name(vsts_url, '', pat_token, deployment_group_name_address)
+    return deployment_group_name
+  return ''
 
-def test_agent_configuration_required_internal(vsts_url, virtual_application, pat_token, machine_group_name, project_name, working_folder, log_func):
+def test_agent_configuration_required_internal(vsts_url, virtual_application, pat_token, deployment_group_name, project_name, working_folder, log_func):
   global log_function, setting_params
   log_function = log_func
   try:
     write_log('AgentReConfigurationRequired check started.')
     existing_vsts_url = get_agent_setting(working_folder, 'serverUrl')
     existing_vsts_url = existing_vsts_url.strip('/')
-    existing_machine_group_name = ''
+    existing_deployment_group_name = ''
     existing_project_name = setting_params['projectName']
     try:
-      existing_machine_group_name = get_machine_group_name_from_setting(existing_vsts_url, existing_project_name, pat_token)
+      existing_deployment_group_name = get_deployment_group_name_from_setting(existing_vsts_url, existing_project_name, pat_token)
     except Exception as e:
-      write_log('\t\t\t Unable to get the machine group name - {0}'.format(e.message))
+      write_log('\t\t\t Unable to get the deployment group name - {0}'.format(e.message))
     vsts_url_for_configuration = (vsts_url + '/' + virtual_application).strip('/')
     write_log('\t\t\t Agent configured with \t\t\t\t Agent needs to be configured with')
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_vsts_url, vsts_url_for_configuration))
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_project_name, project_name))
-    write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_machine_group_name, machine_group_name))
-    if(existing_vsts_url == vsts_url_for_configuration and existing_machine_group_name == machine_group_name and existing_project_name == project_name):
+    write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_deployment_group_name, deployment_group_name))
+    if(existing_vsts_url == vsts_url_for_configuration and existing_deployment_group_name == deployment_group_name and existing_project_name == project_name):
       write_log('\t\t\t test_agent_configuration_required : False') 
       return False
     else:
@@ -182,7 +182,7 @@ def remove_existing_agent_internal(pat_token, working_folder, log_func):
     write_configuration_log(e.message)
     raise e
 
-def apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
+def apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string):
   method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):
     vsts_url = vsts_url[7:]
@@ -195,7 +195,7 @@ def apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, age
               'Authorization' : 'Basic {0}'.format(basic_auth),
               'Content-Type' : 'application/json'
             }
-  tags_address = Constants.machines_address_format.format(project_name, machine_group_id, Constants.tags_api_version)
+  tags_address = Constants.machines_address_format.format(project_name, deployment_group_id, Constants.tags_api_version)
   request_body = json.dumps([{'tags' : json.loads(tags_string), 'agent' : {'id' : agent_id}}])
   write_add_tags_log('Add tags request body : {0}'.format(request_body))
   conn = method(vsts_url)
@@ -207,7 +207,7 @@ def apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, age
     raise Exception('Tags could not be added. Please make sure that you enter correct details.')
 
 
-def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string):
+def add_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string):
   method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):
     vsts_url = vsts_url[7:]
@@ -219,7 +219,7 @@ def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent
   headers = {
               'Authorization' : 'Basic {0}'.format(basic_auth)
             }
-  tags_address = Constants.machines_address_format.format(project_name, machine_group_id, Constants.tags_api_version)
+  tags_address = Constants.machines_address_format.format(project_name, deployment_group_id, Constants.tags_api_version)
   conn = method(vsts_url)
   conn.request('GET', tags_address, headers = headers)
   response = conn.getresponse()
@@ -241,7 +241,7 @@ def add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent
     tags = existing_tags
   else:
     raise Exception('Tags could not be added. Unable to fetch the existing tags.')
-  apply_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, json.dumps(tags, ensure_ascii = False))
+  apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, agent_id, json.dumps(tags, ensure_ascii = False))
 
 def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, tags_string, log_func):
   global log_function
@@ -253,50 +253,24 @@ def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, t
     if(not(os.path.isfile(agent_setting_file_path))):
       raise Exception('Unable to find the .agent file {0}. Ensure that the agent is configured before adding tags.'.format(agent_setting_file_path))
     agent_id = get_agent_setting(working_folder, 'agentId')
-    machine_group_id = ''
+    deployment_group_id = ''
     try:
       #Back compat
       if(setting_params.has_key('deploymentGroupId')):
-        machine_group_id = setting_params['deploymentGroupId']
+        deployment_group_id = setting_params['deploymentGroupId']
       elif(setting_params.has_key('machineGroupId')):
-        machine_group_id = setting_params['machineGroupId']
-      else:
-        machine_group_name = ''
-        method = httplib.HTTPSConnection
-        if(vsts_url.startswith('http://')):
-          vsts_url = vsts_url[7:]
-          method = httplib.HTTPConnection
-        elif(vsts_url.startswith('https://')):
-          vsts_url = vsts_url[8:]
-        basic_auth = '{0}:{1}'.format('', pat_token)
-        basic_auth = base64.b64encode(basic_auth)
-        headers = {
-          'Authorization' : 'Basic {0}'.format(basic_auth)
-        }
-        machine_groups_address = Constants.machine_groups_address_format.format(project_name)
-        conn = method(vsts_url)
-        conn.request('GET', machine_groups_address, headers = headers)
-        response = conn.getresponse()
-        if(response.status == 200):
-          val = {}
-          response_string = response.read()
-          val = json.loads(response_string)
-          for i in range(0, val['count']):
-            each_machine_group = val['value'][i]
-            if(each_machine_group != None and each_machine_group['name'] == machine_group_name):
-              machine_group_id = each_machine_group['id']
-              break
+        deployment_group_id = setting_params['machineGroupId']
     except Exception as e:
       pass
-    if(agent_id == '' or machine_group_id == ''):
-      raise Exception('Unable to get the machine group id or agent id. Ensure that the agent is configured before adding tags.'.format(working_folder))
-    add_tags_to_agent(vsts_url, pat_token, project_name, machine_group_id, agent_id, tags_string)
+    if(agent_id == '' or deployment_group_id == ''):
+      raise Exception('Unable to get the deployment group id or agent id. Ensure that the agent is configured before adding tags.'.format(working_folder))
+    add_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string)
     return Constants.return_success 
   except Exception as e:
     write_add_tags_log(e.message)
     raise e
 
-def configure_agent_internal(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder):
+def configure_agent_internal(vsts_url, pat_token, project_name, deployment_group_name, agent_name, working_folder):
   global agent_listener_path, agent_service_path
   get_agent_listener_path(working_folder)
   get_agent_service_path(working_folder)
@@ -332,7 +306,7 @@ def configure_agent_internal(vsts_url, pat_token, project_name, machine_group_na
   
 
 
-def configure_agent(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder, agent_exists, log_func):
+def configure_agent(vsts_url, pat_token, project_name, deployment_group_name, agent_name, working_folder, agent_exists, log_func):
   global agent_listener_path
   global log_function
   log_function = log_func
@@ -340,10 +314,10 @@ def configure_agent(vsts_url, pat_token, project_name, machine_group_name, agent
     if(not agent_listener_exists(working_folder)):
       raise Exception('Unable to find the agent listener, ensure to download the agent before configuring.')
     if(agent_name is None or agent_name == ''):
-      agent_name = platform.node() + '-MG'
+      agent_name = platform.node() + '-DG'
       write_configuration_log('Agent name not provided, agent name will be set as ' + agent_name)
     write_configuration_log('Configuring agent')
-    configure_agent_internal(vsts_url, pat_token, project_name, machine_group_name, agent_name, working_folder)
+    configure_agent_internal(vsts_url, pat_token, project_name, deployment_group_name, agent_name, working_folder)
     return Constants.return_success
   except Exception as e:
     write_configuration_log(e.message)

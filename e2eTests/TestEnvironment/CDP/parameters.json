@@ -74,7 +74,7 @@
         "TeamProject": {
             "value": ""
         },
-        "MachineGroup": {
+        "DeploymentGroup": {
             "value": ""
         },
         "WindowsAgentName": {

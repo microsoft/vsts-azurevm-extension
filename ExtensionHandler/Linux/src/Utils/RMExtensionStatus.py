@@ -88,7 +88,7 @@ rm_extension_status = {
   },
   'RemovedAgent' : {
     'Code' : 18,
-    'Message' : 'Removed deployment agent successfully from machine group.',
+    'Message' : 'Removed deployment agent successfully from deployment group.',
     'operationName' : 'Uninstall'
   },
   'CheckingAgentReConfigurationRequired' : {
@@ -118,7 +118,7 @@ rm_extension_status = {
   },
   'UnConfiguringDeploymentAgentFailed' : {
     'Code' : 25,
-    'Message' : '[WARNING] The deployment agent {0} could not be uninstalled. Ensure to remove it manually from its machine group in VSTS',
+    'Message' : '[WARNING] The deployment agent {0} could not be uninstalled. Ensure to remove it manually from its deployment group in VSTS',
     'operationName' : 'Unconfigure existing agent'
   },
   #

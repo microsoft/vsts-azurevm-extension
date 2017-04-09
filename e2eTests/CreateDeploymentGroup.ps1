@@ -4,16 +4,16 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$PATToken,
     [Parameter(Mandatory=$true)]
-    [string]$MachineGroup
+    [string]$DeploymentGroup
 )
 
-$uri = "http://localhost:8080/tfs/defaultcollection/{0}/_apis/distributedtask/MachineGroups?api-version=3.1-preview.1" -f $TeamProject
+$uri = "http://localhost:8080/tfs/defaultcollection/{0}/_apis/distributedtask/DeploymentGroups?api-version=3.2-preview.1" -f $TeamProject
 
-$machineGroupParam = @{
-    name = $MachineGroup;
+$deploymentGroupParam = @{
+    name = $DeploymentGroup;
 }
 
-$body = $machineGroupParam | ConvertTo-Json
+$body = $deploymentGroupParam | ConvertTo-Json
 $body
 
 $base64AuthToken = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "", $PATToken)))

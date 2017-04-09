@@ -64,29 +64,29 @@ try
     $agentSettings = Get-Content -Path $agentSettingPath | Out-String | ConvertFrom-Json
     
     $agentId = $($agentSettings.agentId)
-    $machineGroupId = ""    
+    $deploymentGroupId = ""    
     try
     {
-        $machineGroupId = $($agentSettings.deploymentGroupId)
-        WriteLog "`t`t` Machine group id -  $machineGroupId" -logFunction $logFunction
+        $deploymentGroupId = $($agentSettings.deploymentGroupId)
+        WriteLog "`t`t` Deployment group id -  $deploymentGroupId" -logFunction $logFunction
     }
     catch{}
     ## Back-compat for MG to DG rename.
-    if([string]::IsNullOrEmpty($machineGroupId)) 
+    if([string]::IsNullOrEmpty($deploymentGroupId)) 
     {
         try
         {   
-            $machineGroupId = $($agentSettings.machineGroupId)
-            WriteLog "`t`t` Machine group id -  $machineGroupId" -logFunction $logFunction
+            $deploymentGroupId = $($agentSettings.machineGroupId)
+            WriteLog "`t`t` Deployment group id -  $deploymentGroupId" -logFunction $logFunction
         }catch{}    
     }    
     
-    if([string]::IsNullOrEmpty($machineGroupId) -or [string]::IsNullOrEmpty($agentId))
+    if([string]::IsNullOrEmpty($deploymentGroupId) -or [string]::IsNullOrEmpty($agentId))
     {
-        throw "Unable to get the machine group id or agent id. Ensure that the agent is configured before addding tags."
+        throw "Unable to get the deployment group id or agent id. Ensure that the agent is configured before addding tags."
     }
     
-    AddTagsToAgent -tfsUrl $tfsUrl -projectName $projectName -patToken $patToken -machineGroupId $machineGroupId -agentId $agentId -tagsAsJsonString $tagsAsJsonString
+    AddTagsToAgent -tfsUrl $tfsUrl -projectName $projectName -patToken $patToken -deploymentGroupId $deploymentGroupId -agentId $agentId -tagsAsJsonString $tagsAsJsonString
     
     return $returnSuccess 
 }

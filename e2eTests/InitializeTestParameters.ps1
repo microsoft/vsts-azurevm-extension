@@ -15,7 +15,7 @@ function Get-Config
     return @{
                 VSTSUrl            = $publicSettings.VSTSAccountName
                 TeamProject        = $publicSettings.TeamProject
-                MachineGroup       = $publicSettings.MachineGroup
+                DeploymentGroup    = $publicSettings.DeploymentGroup
                 AgentName          = $publicSettings.AgentName
             }
 }
@@ -56,7 +56,7 @@ Set-ReleaseVariable "linuxExtensionPublisher" $($inputs.linuxExtensionPublisher)
 $config = Get-Config -extensionPublicSettingsFile $windowsExtensionPublicSettingsFile
 Set-ReleaseVariable "VSTSAccountName" $($config.VSTSUrl)
 Set-ReleaseVariable "TeamProject" $($config.TeamProject)
-Set-ReleaseVariable "MachineGroup" $($config.MachineGroup)
+Set-ReleaseVariable "DeploymentGroup" $($config.DeploymentGroup)
 Set-ReleaseVariable "WindowsAgentName" $($config.AgentName)
 $config = Get-Config -extensionPublicSettingsFile $linuxExtensionPublicSettingsFile
 Set-ReleaseVariable "LinuxAgentName" $($config.AgentName)

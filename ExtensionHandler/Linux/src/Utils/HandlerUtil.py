@@ -348,7 +348,7 @@ class HandlerUtility:
         self.log("Clearing status file " + status_file)
         open(status_file, 'w').close()
 
-    def set_handler_status(self, code=None, message=None, status = 'transitioning', operation_name = None, sub_status = 'success', ss_code = None, sub_status_message = None):
+    def set_handler_status(self, operation = '', code=None, message=None, status = 'transitioning', operation_name = None, sub_status = 'success', ss_code = None, sub_status_message = None):
         global include_warning_status
         status_file = '{0}/{1}.status'.format(self._context._status_dir, self._context._seq_no)
         #handlerUtility.log("Setting handler status to '{0}' ({1})".format(status, message))
@@ -367,6 +367,7 @@ class HandlerUtility:
                 self.log("Setting handler status to '{0}'".format(status))
                 status_object['status']['status'] = status
                 self.log("Setting handler code to '{0}'".format(code))
+                status_object['status']['operation'] = operation
                 status_object['status']['code'] = code
                 status_object['timestampUTC'] = timestamp_utc
                 status_object['status']['configurationAppliedTime'] = timestamp_utc
@@ -383,7 +384,7 @@ class HandlerUtility:
                         'lang' : 'en-US'
                     },
                     'name' : self._context._name,
-                    'operation' : '',
+                    'operation' : operation,
                     'status' : status,
                     'code' : code,
                     'substatus' : [],
@@ -398,7 +399,7 @@ class HandlerUtility:
         new_contents = json.dumps(status_list)
         waagent.SetFileContents(status_file, new_contents)
  
-    def set_handler_error_status(self, e, operation_name):
+    def set_handler_error_status(self, e, operation_name, operation = ''):
         self.log(getattr(e,'message'))
         if('ErrorId' in dir(e) and getattr(e,'ErrorId') == RMExtensionStatus.rm_terminating_error_id):
             error_code = getattr(e,'Code')
@@ -413,8 +414,8 @@ class HandlerUtility:
         else:
             error_status_message = 'The Extension failed to execute: {0}'.format(e.message)
             error_sub_status_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(e.message, self._context._log_dir)
-        self.set_handler_status(code = error_code, message = error_status_message, status = 'error')
-        self.set_handler_status(ss_code = error_code, sub_status_message = error_sub_status_message, sub_status = 'error', operation_name = operation_name)
+        self.set_handler_status(operation = operation, code = error_code, message = error_status_message, status = 'error')
+        self.set_handler_status(operation = operation, ss_code = error_code, sub_status_message = error_sub_status_message, sub_status = 'error', operation_name = operation_name)
 
     def get_os_version(self):
         value = platform.uname()[4]

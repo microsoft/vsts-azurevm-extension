@@ -223,7 +223,7 @@ Describe "parse vsts account name settings tests" {
             }
             return $inputSettings }
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
-        Mock -ModuleName RMExtensionHandler VeriftInputNotNull {}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
 
@@ -257,7 +257,7 @@ Describe "parse vsts account name settings tests" {
             }
             return $inputSettings }
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
-        Mock -ModuleName RMExtensionHandler VeriftInputNotNull {}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
 
@@ -291,7 +291,7 @@ Describe "parse vsts account name settings tests" {
             }
             return $inputSettings }
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
-        Mock -ModuleName RMExtensionHandler VeriftInputNotNull {}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
 
@@ -325,7 +325,7 @@ Describe "parse vsts account name settings tests" {
             }
             return $inputSettings }
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
-        Mock -ModuleName RMExtensionHandler VeriftInputNotNull {}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
         Mock -ModuleName RMExtensionHandler Exit-WithCode1 {}        
@@ -359,7 +359,7 @@ Describe "parse tags settings tests" {
             }
             return $inputSettings }
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
-        Mock -ModuleName RMExtensionHandler VeriftInputNotNull {}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
 
         $settings = Get-ConfigurationFromSettings
@@ -392,7 +392,7 @@ Describe "parse tags settings tests" {
             }
             return $inputSettings }
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
-        Mock -ModuleName RMExtensionHandler VeriftInputNotNull {}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
 
         $settings = Get-ConfigurationFromSettings
@@ -428,7 +428,7 @@ Describe "parse tags settings tests" {
             }
             return $inputSettings }
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
-        Mock -ModuleName RMExtensionHandler VeriftInputNotNull {}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
 
         $settings = Get-ConfigurationFromSettings
@@ -461,7 +461,7 @@ Describe "parse tags settings tests" {
             }
             return $inputSettings }
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
-        Mock -ModuleName RMExtensionHandler VeriftInputNotNull {}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
 
         $settings = Get-ConfigurationFromSettings

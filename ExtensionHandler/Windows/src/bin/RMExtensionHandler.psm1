@@ -317,7 +317,7 @@ function Get-ConfigurationFromSettings {
         $vstsAccountName = $publicSettings['VSTSAccountName']
         $tfsVirtualApplication = ""
         $tfsCollection = ""
-        VeriftInputNotNull "VSTSAccountName" $vstsAccountName
+        VerifyInputNotNull "VSTSAccountName" $vstsAccountName
         $vstsAccountName = $vstsAccountName.TrimEnd('/')
         if((($vstsAccountName.ToLower().StartsWith("https://")) -or ($vstsAccountName.ToLower().StartsWith("http://"))))
         {
@@ -367,11 +367,11 @@ function Get-ConfigurationFromSettings {
         if(-not $patToken)
         {
             $patToken = $publicSettings['PATToken']
-            VeriftInputNotNull "PATToken" $patToken
+            VerifyInputNotNull "PATToken" $patToken
         }
 
         $teamProjectName = $publicSettings['TeamProject']
-        VeriftInputNotNull "TeamProject" $teamProjectName
+        VerifyInputNotNull "TeamProject" $teamProjectName
         Write-Log "Team Project: $teamProjectName"
 
         $deploymentGroupName = $publicSettings['DeploymentGroup']
@@ -379,7 +379,7 @@ function Get-ConfigurationFromSettings {
         {
             $deploymentGroupName = $publicSettings['MachineGroup']
         }
-        VeriftInputNotNull "DeploymentGroup" $deploymentGroupName
+        VerifyInputNotNull "DeploymentGroup" $deploymentGroupName
         Write-Log "Deployment Group: $deploymentGroupName"
 
         $agentName = $publicSettings['AgentName']
@@ -419,7 +419,7 @@ function Get-ConfigurationFromSettings {
             PATToken = $patToken
             Platform = $platform
             TeamProject        = $teamProjectName
-            DeploymentGroup       = $deploymentGroupName
+            DeploymentGroup    = $deploymentGroupName
             AgentName          = $agentName
             Tags               = $tags
             AgentWorkingFolder = $agentWorkingFolder
@@ -549,7 +549,7 @@ function Invoke-AddTagsToAgentScript{
     . $PSScriptRoot\AddTagsToDeploymentAgent.ps1 -tfsUrl $url -projectName $config.TeamProject -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -tagsAsJsonString ( $config.Tags | ConvertTo-Json )  -logFunction $script:logger
 }
 
-function VeriftInputNotNull {
+function VerifyInputNotNull {
     [CmdletBinding()]
     param(
     [string] $inputKey,

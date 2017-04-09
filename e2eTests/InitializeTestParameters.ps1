@@ -15,7 +15,7 @@ function Get-Config
     return @{
                 VSTSUrl            = $publicSettings.VSTSAccountName
                 TeamProject        = $publicSettings.TeamProject
-                DeploymentGroup       = $publicSettings.DeploymentGroup
+                DeploymentGroup    = $publicSettings.DeploymentGroup
                 AgentName          = $publicSettings.AgentName
             }
 }

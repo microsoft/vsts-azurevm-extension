@@ -7,7 +7,7 @@ param(
     [string]$DeploymentGroup
 )
 
-$uri = "https://testking123.visualstudio.com/{0}/_apis/distributedtask/DeploymentGroups?api-version=3.2-preview.1" -f $TeamProject
+$uri = "http://localhost:8080/tfs/defaultcollection/{0}/_apis/distributedtask/DeploymentGroups?api-version=3.2-preview.1" -f $TeamProject
 
 $deploymentGroupParam = @{
     name = $DeploymentGroup;

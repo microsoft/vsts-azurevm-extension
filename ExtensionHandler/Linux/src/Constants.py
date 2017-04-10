@@ -3,7 +3,7 @@ markup_file_format = '{0}/EXTENSIONDISABLED'
 last_seq_num_file = 'LASTSEQNUM'
 download_api_version = '3.0-preview.2'
 
-tags_api_version = '3.2-preview'
+tags_api_version = '3.2-preview.1'
 agent_target_name = 'agent.tar.gz'
 agent_listener = 'bin/Agent.Listener'
 agent_service = 'svc.sh'

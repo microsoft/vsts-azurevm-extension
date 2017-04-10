@@ -415,7 +415,6 @@ def remove_existing_agent(config, operation):
         old_agent_folder_name = config['AgentWorkingFolder'] + cur_time
         handler_utility.log('Failed to unconfigure the VSTS agent. Renaming the agent directory to {0}.'.format(old_agent_folder_name))
         agent_name = ConfigureDeploymentAgent.get_agent_setting(config['AgentWorkingFolder'], 'agentName')
-        ConfigureDeploymentAgent.setting_params = {}
         handler_utility.log('Please delete the agent {0} manually from the deployment group.'.format(agent_name))
         rename_agent_folder_proc = subprocess.Popen('mv {0} {1}'.format(config['AgentWorkingFolder'], old_agent_folder_name).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         std_out, std_err = rename_agent_folder_proc.communicate()
@@ -432,6 +431,7 @@ def remove_existing_agent(config, operation):
         handler_utility.set_handler_status(ss_code = ss_code, sub_status = 'warning', sub_status_message = sub_status_message, operation_name = operation_name)
       else:
         raise e
+    ConfigureDeploymentAgent.setting_params = {}
     code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
     message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']
     handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)

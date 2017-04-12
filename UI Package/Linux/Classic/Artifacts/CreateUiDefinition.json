@@ -45,7 +45,7 @@
         "name": "PATToken",
         "type": "Microsoft.Common.PasswordBox",
         "label": {
-          "password": "PAT Token"
+          "password": "Personal Access Token"
         },
         "toolTip": "Enter the Personal Access Token which would be used to authenticate against Team Services account to download and configure agent",
         "constraints": {

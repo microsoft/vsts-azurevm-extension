@@ -7,7 +7,7 @@
         "name": "VSTSAccountName",
         "type": "Microsoft.Common.TextBox",
         "label": "Team Services Account Name",
-        "toolTip": "Specify the Team Services account to use. Example: If yout account URL is https://contoso.visualstudio.com, just specify \"contoso\"",
+        "toolTip": "Specify the Team Services account to use. Example: If your account URL is https://contoso.visualstudio.com, just specify \"contoso\"",
         "constraints": {
           "required": true,
           "regex": "^(?!.*(https:\\/\\/|visualstudio\\.com)).*$",
@@ -47,7 +47,7 @@
         "label": {
           "password": "Personal Access Token"
         },
-        "toolTip": "Enter the Personal Access Token which would be used to authenticate against Team Services account to download and configure agent",
+        "toolTip": "Enter the [Personal Access Token](https://go.microsoft.com/fwlink/?linkid=844181) which would be used to authenticate against Team Services account to download and configure agent",
         "constraints": {
           "required": true
         },

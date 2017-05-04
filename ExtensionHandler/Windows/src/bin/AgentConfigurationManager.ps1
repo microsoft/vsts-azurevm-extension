@@ -164,6 +164,11 @@ function AddTagsToAgent
                 break
             }
         }
+
+        if($machineId -eq "-1")
+        {
+            throw "Tags could not be added. Unable to fetch details for machine agent."
+        }
         
         $tags = @()
         [Array]$newTags =  ConvertFrom-Json $tagsAsJsonString

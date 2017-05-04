@@ -88,6 +88,12 @@ function Test-AgentSettingsAreSame
             $errorMsg = $_.Exception.Message.ToString()
             WriteLog "`t`t`t Unable to get the deployment group data - $errorMsg" $logFunction
         }
+
+        if(!$deploymentGroupDataAsPerSetting)
+        {
+            WriteLog "`t`t`t Test-AgentSettingsAreSame Return : false (Unable to get the deployment group data from existing agent settings)" $logFunction
+            return $false;
+        }
         
         WriteLog "`t`t`t Agent Configured With `t`t`t`t`t Agent Need To Be Configured With" $logFunction
         WriteLog "`t`t`t $agentTfsUrl `t`t`t`t`t $tfsUrl" $logFunction
@@ -177,7 +183,7 @@ function GetDeploymentGroupDataFromAgentSetting
         return (InvokeRestURlToGetDeploymentGroupData -restCallUrl $restCallUrl -patToken $patToken -logFunction $logFunction)
     }
     
-    return ""
+    return $null
 }
 
 function ContructRESTCallUrl

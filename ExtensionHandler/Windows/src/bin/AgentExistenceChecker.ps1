@@ -82,20 +82,22 @@ function Test-AgentSettingsAreSame
                 $url = -join($tfsUrl, '/', $collection)
             }
             
-            WriteLog "`t`tCall GetDeploymentGroupNameFromAgentSetting" $logFunction
-            $deploymentGroupNameAsPerSetting = GetDeploymentGroupNameFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentTfsUrl -projectName $($agentSetting.projectName) -patToken $patToken -logFunction $logFunction
+            WriteLog "`t`tCall GetDeploymentGroupDataFromAgentSetting" $logFunction
+			 
+			
+            $deploymentGroupDataAsPerSetting = GetDeploymentGroupDataFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentTfsUrl -patToken $patToken -logFunction $logFunction
         }
         catch
         {
             $errorMsg = $_.Exception.Message.ToString()
-            WriteLog "`t`t`t Unable to get the deployment group name - $errorMsg" $logFunction
+            WriteLog "`t`t`t Unable to get the deployment group data - $errorMsg" $logFunction
         }
         
         WriteLog "`t`t`t Agent Configured With `t`t`t`t`t Agent Need To Be Configured With" $logFunction
         WriteLog "`t`t`t $agentTfsUrl `t`t`t`t`t $tfsUrl" $logFunction
-        WriteLog "`t`t`t $($agentSetting.projectName) `t`t`t`t`t $projectName" $logFunction
-        WriteLog "`t`t`t $deploymentGroupNameAsPerSetting `t`t`t`t`t $deploymentGroupName" $logFunction
-        if( ([string]::Compare($tfsUrl, $agentTfsUrl, $True) -eq 0) -and ([string]::Compare($projectName, $($agentSetting.projectName), $True) -eq 0) -and ([string]::Compare($deploymentGroupName, $deploymentGroupNameAsPerSetting, $True) -eq 0) )
+        WriteLog "`t`t`t $($deploymentGroupDataAsPerSetting.project.name) `t`t`t`t`t $projectName" $logFunction
+        WriteLog "`t`t`t $($deploymentGroupDataAsPerSetting.name) `t`t`t`t`t $deploymentGroupName" $logFunction
+        if( ([string]::Compare($tfsUrl, $agentTfsUrl, $True) -eq 0) -and ([string]::Compare($projectName, $($deploymentGroupDataAsPerSetting.project.name), $True) -eq 0) -and ([string]::Compare($deploymentGroupName, $($deploymentGroupDataAsPerSetting.name), $True) -eq 0) )
         {         
             WriteLog "`t`t`t Test-AgentSettingsAreSame Return : true" $logFunction        
             return $true
@@ -120,21 +122,21 @@ function Get-AgentSettings
     return ( Get-Content -Path $agentSettingFile | Out-String | ConvertFrom-Json)
 }
 
-function GetDeploymentGroupNameFromAgentSetting
+function GetDeploymentGroupDataFromAgentSetting
 {
     param(
     [Parameter(Mandatory=$true)]
     [object]$agentSetting,
     [Parameter(Mandatory=$true)]
-    [string]$tfsUrl,
-    [Parameter(Mandatory=$true)]
-    [string]$projectName,
+    [string]$tfsUrl,    
     [Parameter(Mandatory=$true)]
     [string]$patToken,
     [scriptblock]$logFunction
     )
     
     $deploymenteGroupId = ""    
+	$projectId = ""
+	
     try
     {
         $deploymentGroupId = $($agentSetting.deploymentGroupId)
@@ -151,11 +153,29 @@ function GetDeploymentGroupNameFromAgentSetting
         }catch{}    
     }
     
-    if(![string]::IsNullOrEmpty($deploymentGroupId))
+	try
     {
-        $restCallUrl = ContructRESTCallUrl -tfsUrl $tfsUrl -projectName $projectName -deploymentGroupId $deploymentGroupId -logFunction $logFunction
+        $projectId = $($agentSetting.projectId)
+        WriteLog "`t`t` Deployment group projectId -  $projectId" -logFunction $logFunction
+    }
+    catch{}
+	## Back-compat for ProjectName to ProjectId.
+    if([string]::IsNullOrEmpty($projectId)) 
+    {
+		WriteLog "`t`t` Project Id is not available in agent settings file, try to read the project name." -logFunction $logFunction
+        try
+        {   
+            $projectId = $($agentSetting.projectName)
+            WriteLog "`t`t` Deployment group projectName -  $projectId" -logFunction $logFunction
+        }catch{}    
+    }
+	
+	
+    if(![string]::IsNullOrEmpty($deploymentGroupId) -and ![string]::IsNullOrEmpty($projectId))
+    {
+        $restCallUrl = ContructRESTCallUrl -tfsUrl $tfsUrl -projectName $projectId -deploymentGroupId $deploymentGroupId -logFunction $logFunction
         
-        return (InvokeRestURlToGetDeploymentGroupName -restCallUrl $restCallUrl -patToken $patToken -logFunction $logFunction)
+        return (InvokeRestURlToGetDeploymentGroupData -restCallUrl $restCallUrl -patToken $patToken -logFunction $logFunction)
     }
     
     return ""
@@ -180,7 +200,7 @@ function ContructRESTCallUrl
     return $restCallUrl
  }
  
- function InvokeRestURlToGetDeploymentGroupName
+ function InvokeRestURlToGetDeploymentGroupData
  {
     Param(
     [Parameter(Mandatory=$true)]
@@ -204,7 +224,7 @@ function ContructRESTCallUrl
         WriteLog "`t`t Deployment Group Details : $response" $logFunction
         if($response.PSObject.Properties.name -contains "name")
         {
-            return $response.Name
+            return $response
         }
         else
         {

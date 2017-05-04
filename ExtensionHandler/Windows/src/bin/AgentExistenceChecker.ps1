@@ -163,7 +163,11 @@ function GetDeploymentGroupDataFromAgentSetting
         {   
             $projectId = $($agentSetting.projectName)
             WriteLog "`t`t` Deployment group projectName -  $projectId" -logFunction $logFunction
-        }catch{}
+        }
+        catch
+        {
+            WriteLog "`t`t` Unable to gee the peoject id/name for deployment group" -logFunction $logFunction
+        }
     }
 
     if(![string]::IsNullOrEmpty($deploymentGroupId) -and ![string]::IsNullOrEmpty($projectId))

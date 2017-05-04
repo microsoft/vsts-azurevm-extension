@@ -157,12 +157,21 @@ function AddTagsToAgent
         for( $i = 0; $i -lt $deploymentGroup.count; $i++ )
         {
             $eachMachine = $deploymentGroup.value[$i]
-            if( ($eachMachine -ne $null) -and ($eachMachine.agent -ne $null) -and ($eachMachine.agent.id  -eq $agentId) -and ($eachMachine.PSObject.Properties.Match('tags').Count))
+            if( ($eachMachine -ne $null) -and ($eachMachine.agent -ne $null) -and ($eachMachine.agent.id  -eq $agentId))
             {
-                $existingTags += $eachMachine.tags
+                if($eachMachine.PSObject.Properties.Match('tags').Count)
+                {
+                    $existingTags += $eachMachine.tags
+                }
                 $machineId = $eachMachine.id
                 break
             }
+        }
+
+        if($machineId -eq "-1")
+        {
+            WriteAddTagsLog "Tags could not be added. Unable to get the machine id"
+            throw "Tags could not be added. Unable to get the machine id"
         }
 
         $tags = @()
@@ -190,7 +199,7 @@ function AddTagsToAgent
     }
     catch
     {
-        throw "Tags could not be added. Unable to fetch the existing tags."
+        throw "Tags could not be added. Unable to fetch the existing tags or deployment group details like machine id"
     }
 
     WriteAddTagsLog "Updating the tags for agent machine - $machineId"

@@ -72,8 +72,6 @@ function Test-AgentSettingsAreSame
         $tfsUrl = $tfsUrl.TrimEnd('/')
         $agentTfsUrl = $agentSetting.serverUrl.TrimEnd('/')
         
-        $deploymentGroupNameAsPerSetting = ""
-        
         try
         {
             $url = $tfsUrl
@@ -83,8 +81,6 @@ function Test-AgentSettingsAreSame
             }
             
             WriteLog "`t`tCall GetDeploymentGroupDataFromAgentSetting" $logFunction
-			 
-			
             $deploymentGroupDataAsPerSetting = GetDeploymentGroupDataFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentTfsUrl -patToken $patToken -logFunction $logFunction
         }
         catch
@@ -134,9 +130,9 @@ function GetDeploymentGroupDataFromAgentSetting
     [scriptblock]$logFunction
     )
     
-    $deploymenteGroupId = ""    
-	$projectId = ""
-	
+    $deploymenteGroupId = ""
+    $projectId = ""
+
     try
     {
         $deploymentGroupId = $($agentSetting.deploymentGroupId)
@@ -153,24 +149,23 @@ function GetDeploymentGroupDataFromAgentSetting
         }catch{}    
     }
     
-	try
+    try
     {
         $projectId = $($agentSetting.projectId)
         WriteLog "`t`t` Deployment group projectId -  $projectId" -logFunction $logFunction
     }
     catch{}
-	## Back-compat for ProjectName to ProjectId.
+    ## Back-compat for ProjectName to ProjectId.
     if([string]::IsNullOrEmpty($projectId)) 
     {
-		WriteLog "`t`t` Project Id is not available in agent settings file, try to read the project name." -logFunction $logFunction
+        WriteLog "`t`t` Project Id is not available in agent settings file, try to read the project name." -logFunction $logFunction
         try
         {   
             $projectId = $($agentSetting.projectName)
             WriteLog "`t`t` Deployment group projectName -  $projectId" -logFunction $logFunction
-        }catch{}    
+        }catch{}
     }
-	
-	
+
     if(![string]::IsNullOrEmpty($deploymentGroupId) -and ![string]::IsNullOrEmpty($projectId))
     {
         $restCallUrl = ContructRESTCallUrl -tfsUrl $tfsUrl -projectName $projectId -deploymentGroupId $deploymentGroupId -logFunction $logFunction

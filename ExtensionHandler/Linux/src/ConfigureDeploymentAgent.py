@@ -122,6 +122,9 @@ def test_agent_configuration_required_internal(vsts_url, virtual_application, pa
       existing_deployment_group_data = get_deployment_group_data_from_setting(existing_vsts_url, pat_token)
     except Exception as e:
       write_log('\t\t\t Unable to get the deployment group data - {0}'.format(e.message))
+    if(existing_deployment_group_data == None):
+      write_log("\t\t\t agent configuration required Return : True (Unable to get the deployment group data from existing agent settings)")
+      return True
     vsts_url_for_configuration = (vsts_url + '/' + virtual_application).strip('/')
     write_log('\t\t\t Agent configured with \t\t\t\t Agent needs to be configured with')
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_vsts_url, vsts_url_for_configuration))
@@ -241,17 +244,20 @@ def add_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, ag
     for i in range(0, val['count']):
       each_machine = val['value'][i]
       if(each_machine != None and each_machine.has_key('agent') and each_machine['agent']['id'] == agent_id):
+        machine_id = each_machine['id']
         if(each_machine.has_key('tags')):
           existing_tags = each_machine['tags']
-          machine_id = each_machine['id']
-          break
+        break
     tags = json.loads(tags_string)
     for x in tags:
       if(x.lower() not in map(lambda x:x.lower(), existing_tags)):
         existing_tags.append(x)
     tags = existing_tags
   else:
-    raise Exception('Tags could not be added. Unable to fetch the existing tags.')
+    raise Exception('Tags could not be added. Unable to fetch the existing tags or deployment group details.')
+  if(machine_id == '-1'):
+    msg = 'Tags could not be added. Unable to get the machine id'
+    raise Exception(msg)
   write_add_tags_log('Updating the tags for agent machine - {0}'.format(machine_id))
   apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, agent_id, json.dumps(tags, ensure_ascii = False), json.dumps(machine_id))
 

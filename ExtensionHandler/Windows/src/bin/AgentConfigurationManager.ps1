@@ -99,6 +99,8 @@ function ApplyTagsToAgent
     [Parameter(Mandatory=$true)]
     [string]$agentId,
     [Parameter(Mandatory=$true)]
+    [string]$machineId,
+    [Parameter(Mandatory=$true)]
     [string]$tagsAsJsonString
     )
     
@@ -108,7 +110,7 @@ function ApplyTagsToAgent
     
     $headers = GetRESTCallHeader $patToken
     
-    $requestBody = "[{'tags':" + $tagsAsJsonString + ",'agent':{'id':" + $agentId + "}}]"
+    $requestBody = "[{'id':" + $machineId + ",'tags':" + $tagsAsJsonString + ",'agent':{'id':" + $agentId + "}}]"
     
     WriteAddTagsLog "Add tags request body - $requestBody"
     try
@@ -151,16 +153,21 @@ function AddTagsToAgent
     {
         $deploymentGroup = Invoke-RestMethod -Uri $($restCallUrlToGetExistingTags) -headers $headers -Method Get -ContentType "application/json"
         $existingTags = @()
+        $machineId = "-1";
         for( $i = 0; $i -lt $deploymentGroup.count; $i++ )
         {
             $eachMachine = $deploymentGroup.value[$i]
-            if( ($eachMachine -ne $null) -and ($eachMachine.agent -ne $null) -and ($eachMachine.agent.id  -eq $agentId) -and ($eachMachine.PSObject.Properties.Match('tags').Count))
+            if( ($eachMachine -ne $null) -and ($eachMachine.agent -ne $null) -and ($eachMachine.agent.id  -eq $agentId))
             {
-                $existingTags += $eachMachine.tags
+                if($eachMachine.PSObject.Properties.Match('tags').Count)
+                {
+                    $existingTags += $eachMachine.tags
+                }
+                $machineId = $eachMachine.id
                 break
             }
         }
-        
+
         $tags = @()
         [Array]$newTags =  ConvertFrom-Json $tagsAsJsonString
 
@@ -186,10 +193,17 @@ function AddTagsToAgent
     }
     catch
     {
-        throw "Tags could not be added. Unable to fetch the existing tags."
+        throw "Tags could not be added. Unable to fetch the existing tags or deployment group details"
     }
-    
-    ApplyTagsToAgent -tfsUrl $tfsUrl -projectName $projectName -patToken $patToken -deploymentGroupId $deploymentGroupId -agentId $agentId -tagsAsJsonString $newTagsJsonString
+
+    if($machineId -eq "-1")
+    {
+        WriteAddTagsLog "Tags could not be added. Unable to get the machine id"
+        throw "Tags could not be added. Unable to get the machine id"
+    }
+
+    WriteAddTagsLog "Updating the tags for agent machine - $machineId"
+    ApplyTagsToAgent -tfsUrl $tfsUrl -projectName $projectName -patToken $patToken -deploymentGroupId $deploymentGroupId -agentId $agentId -machineId $machineId -tagsAsJsonString $newTagsJsonString
 }
 
 function GetRESTCallHeader

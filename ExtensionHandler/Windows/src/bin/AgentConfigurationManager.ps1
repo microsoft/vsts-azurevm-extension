@@ -168,12 +168,6 @@ function AddTagsToAgent
             }
         }
 
-        if($machineId -eq "-1")
-        {
-            WriteAddTagsLog "Tags could not be added. Unable to get the machine id"
-            throw "Tags could not be added. Unable to get the machine id"
-        }
-
         $tags = @()
         [Array]$newTags =  ConvertFrom-Json $tagsAsJsonString
 
@@ -199,7 +193,13 @@ function AddTagsToAgent
     }
     catch
     {
-        throw "Tags could not be added. Unable to fetch the existing tags or deployment group details like machine id"
+        throw "Tags could not be added. Unable to fetch the existing tags or deployment group details"
+    }
+
+    if($machineId -eq "-1")
+    {
+        WriteAddTagsLog "Tags could not be added. Unable to get the machine id"
+        throw "Tags could not be added. Unable to get the machine id"
     }
 
     WriteAddTagsLog "Updating the tags for agent machine - $machineId"

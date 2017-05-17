@@ -45,12 +45,12 @@ Describe "Start RM extension tests" {
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Write-Log {}
-        Mock -ModuleName RMExtensionHandler Exit-WithCode1 {} 
+        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {} 
         
         Start-RMExtensionHandler
 
         It "should call clean up functions" {
-            Assert-MockCalled -ModuleName RMExtensionHandler Exit-WithCode1 -Times 1
+            Assert-MockCalled -ModuleName RMExtensionHandler Exit-WithCode0 -Times 1
         }
 
         It "should set handler status as Initilized" {
@@ -70,12 +70,12 @@ Describe "Start RM extension tests" {
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Write-Log {}
-        Mock -ModuleName RMExtensionHandler Exit-WithCode1 {} 
+        Mock -ModuleName RMExtensionHandler Exit-WithCode0 {} 
         
         Start-RMExtensionHandler
 
         It "should call clean up functions" {
-            Assert-MockCalled -ModuleName RMExtensionHandler Exit-WithCode1 -Times 0
+            Assert-MockCalled -ModuleName RMExtensionHandler Exit-WithCode0 -Times 0
         }
 
         It "should set handler status as Initilized" {

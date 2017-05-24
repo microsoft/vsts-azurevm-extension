@@ -61,7 +61,7 @@ function Start-RMExtensionHandler {
             Write-Log "Current seq number: $sequenceNumber, last seq number: $lastSequenceNumber"
             Add-HandlerSubStatus $RM_Extension_Status.SkippedInstallation.Code $RM_Extension_Status.SkippedInstallation.Message -operationName $RM_Extension_Status.SkippedInstallation.operationName
             
-            Exit-WithCode1
+            Exit-WithCode0
         }  
 
         Clear-StatusFile
@@ -449,6 +449,10 @@ function Create-AgentWorkingFolder {
 
 function Exit-WithCode1 {
     exit 1
+}
+
+function Exit-WithCode0 {
+    exit 0
 }
 
 function Format-TagsInput {

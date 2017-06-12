@@ -75,11 +75,7 @@ function Start-RMExtensionHandler {
     }
     catch 
     {
-        Write-Log $_.Exception $true
-        $step = $RM_Extension_Status.Initializing.operationName
-        Write-Log "Error occured during $step" $true
-        Set-HandlerErrorStatus $_ -operationName $step
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.Initializing.operationName
     }
 }
 
@@ -107,11 +103,7 @@ function Test-AgentAlreadyExists {
     }
     catch 
     {
-        Write-Log $_.Exception $true
-        $step = $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
-        Write-Log "Error occured during $step"
-        Set-HandlerErrorStatus $_ -operationName $step
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
     } 
 }
 
@@ -139,11 +131,7 @@ function Test-AgentReconfigurationRequired {
     }
     catch 
     {
-        Write-Log $_.Exception $true
-        $step = $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
-        Write-Log "Error occured during $step"
-        Set-HandlerErrorStatus $_ -operationName $step
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
     } 
 }
 
@@ -171,11 +159,7 @@ function Get-Agent {
     }
     catch 
     {
-        Write-Log $_.Exception $true
-        $step = $RM_Extension_Status.DownloadingDeploymentAgent.operationName
-        Write-Log "Error occured during $step"
-        Set-HandlerErrorStatus $_ -operationName $step
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.DownloadingDeploymentAgent.operationName
     } 
 }
 
@@ -205,11 +189,7 @@ function Register-Agent {
     }
     catch 
     {
-        Write-Log $_.Exception $true
-        $step = $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
-        Write-Log "Error occured during $step"
-        Set-HandlerErrorStatus $_ -operationName $step
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
     } 
 }
 
@@ -255,11 +235,7 @@ function Remove-Agent {
     }
     catch 
     {
-        Write-Log $_.Exception $true
-        $step = $RM_Extension_Status.Uninstalling.operationName
-        Write-Log "Error occured during $step"
-        Set-HandlerErrorStatus $_ -operationName $step
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.Uninstalling.operationName
     } 
 }
 
@@ -295,11 +271,7 @@ function Add-AgentTags {
     }
     catch 
     {
-        Write-Log $_.Exception $true
-        $step = $RM_Extension_Status.AgentTagsAdded.operationName
-        Write-Log "Error occured during $step"
-        Set-HandlerErrorStatus $_ -operationName $step
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.AgentTagsAdded.operationName
     } 
 }
 
@@ -448,14 +420,23 @@ function Get-ConfigurationFromSettings {
     }
     catch 
     {
-        Write-Log $_.Exception $true
-        $steo = $RM_Extension_Status.ReadingSettings.operationName
-        Write-Log "Error occured during $step"
-        Set-HandlerErrorStatus $_ -operationName $step
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ReadingSettings.operationName
     } 
 }
 
+function Set-ErrorStatusAndErrorExit {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [System.Management.Automation.ErrorRecord] $exception,
+
+    [Parameter(Mandatory=$true, Position=1)]
+    [string] $operationName
+    )
+
+    Set-HandlerErrorStatus $exception -operationName $operationName
+    Exit-WithCode1
+}
 
 function Create-AgentWorkingFolder {
     [CmdletBinding()]

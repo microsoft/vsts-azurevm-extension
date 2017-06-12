@@ -227,6 +227,16 @@ function Set-HandlerErrorStatus
         [string] $operationName
     )
     
+    # Log to command execution log file.
+    [string]$exceptionMessage = $ErrorRecord.Exception
+    # For unhandled exceptions that we might have missed to catch and specify error message.
+    if($exceptionMessage.Length -gt 300)
+    {
+        $exceptionMessage = $exceptionMessage.Substring(0,300)
+    }
+    Write-Log $exceptionMessage $true
+    Write-Log "Error occured during $operationName" $true
+
     #
     # First try to log the error, but if that fails revert to a simple Write-Error (if we are within the
     # VM Agent process the agent will capture stderr and log it; if we are within the extension's async

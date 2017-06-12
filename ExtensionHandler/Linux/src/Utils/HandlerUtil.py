@@ -404,7 +404,13 @@ class HandlerUtility:
         waagent.SetFileContents(status_file, new_contents)
  
     def set_handler_error_status(self, e, operation_name, operation = ''):
-        self.error(getattr(e,'message'))
+        # Log to command execution log file.
+        error_message = getattr(e,'message')
+        # For unhandled exceptions that we might have missed to catch and specify error message.
+        if(len(error_message) > 300):
+            error_message = error_message[:300]
+        self.error(error_message)
+        self.error('Error occured during {0}'.format(operation_name))
         if('ErrorId' in dir(e) and getattr(e,'ErrorId') == RMExtensionStatus.rm_terminating_error_id):
             error_code = getattr(e,'Code')
         else:

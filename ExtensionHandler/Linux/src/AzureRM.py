@@ -93,8 +93,8 @@ def set_error_status_and_error_exit(e, operation_name, operation):
   # For unhandled exceptions that we might have missed to catch and specify error message.
   if(len(error_message) > 200):
     error_message = error_message[:200]
-  handler_utility.error(error_message)
   handler_utility.error('Error occured during {0}'.format(operation_name))
+  handler_utility.error(error_message)
   exit_with_code_one()
 
 def check_python_version():

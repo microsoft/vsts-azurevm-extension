@@ -234,8 +234,8 @@ function Set-HandlerErrorStatus
     {
         $exceptionMessage = $exceptionMessage.Substring(0,300)
     }
-    Write-Log $exceptionMessage $true
     Write-Log "Error occured during $operationName" $true
+    Write-Log $exceptionMessage $true
 
     #
     # First try to log the error, but if that fails revert to a simple Write-Error (if we are within the

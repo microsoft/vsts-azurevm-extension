@@ -25,12 +25,18 @@ function Write-Log
         [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
         [AllowEmptyString()]
         [string]
-        $Message
+        $Message,
+
+        [Parameter(Mandatory=$false, Position=1, ValueFromPipeline=$true)]
+        [bool]
+        $IsError=$false
     )
 
     $formattedMessage = '[{0:s}] {1}' -f (Get-Date), $Message
 
-    Write-Verbose -Verbose "${formattedMessage}`r`n"
+    if($IsError) {
+        Write-Verbose -Verbose "${formattedMessage}`r`n"
+    }
 
     foreach ($replicator in $script:logReplicators.Values) {
         if ($replicator) {

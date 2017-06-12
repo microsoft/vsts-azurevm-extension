@@ -75,8 +75,7 @@ function Start-RMExtensionHandler {
     }
     catch 
     {
-        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.Initializing.operationName
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.Initializing.operationName
     }
 }
 
@@ -104,8 +103,7 @@ function Test-AgentAlreadyExists {
     }
     catch 
     {
-        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
     } 
 }
 
@@ -133,8 +131,7 @@ function Test-AgentReconfigurationRequired {
     }
     catch 
     {
-        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
     } 
 }
 
@@ -162,8 +159,7 @@ function Get-Agent {
     }
     catch 
     {
-        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.DownloadingDeploymentAgent.operationName
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.DownloadingDeploymentAgent.operationName
     } 
 }
 
@@ -193,8 +189,7 @@ function Register-Agent {
     }
     catch 
     {
-        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
     } 
 }
 
@@ -240,8 +235,7 @@ function Remove-Agent {
     }
     catch 
     {
-        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.Uninstalling.operationName
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.Uninstalling.operationName
     } 
 }
 
@@ -277,8 +271,7 @@ function Add-AgentTags {
     }
     catch 
     {
-        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.AgentTagsAdded.operationName
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.AgentTagsAdded.operationName
     } 
 }
 
@@ -427,11 +420,23 @@ function Get-ConfigurationFromSettings {
     }
     catch 
     {
-        Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ReadingSettings.operationName
-        Exit-WithCode1
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ReadingSettings.operationName
     } 
 }
 
+function Set-ErrorStatusAndErrorExit {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [System.Management.Automation.ErrorRecord] $exception,
+
+    [Parameter(Mandatory=$true, Position=1)]
+    [string] $operationName
+    )
+
+    Set-HandlerErrorStatus $exception -operationName $operationName
+    Exit-WithCode1
+}
 
 function Create-AgentWorkingFolder {
     [CmdletBinding()]

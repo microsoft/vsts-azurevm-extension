@@ -213,6 +213,7 @@ class HandlerUtility:
         self._context._config_dir=handler_env['handlerEnvironment']['configFolder']
 	self._context._log_dir= handler_env['handlerEnvironment']['logFolder']
         self._context._log_file= os.path.join(handler_env['handlerEnvironment']['logFolder'],'extension.log')
+        self._context._command_execution_log_file= os.path.join(handler_env['handlerEnvironment']['logFolder'],'CommandExecution.log')
         self._change_log_file()
         self._context._status_dir=handler_env['handlerEnvironment']['statusFolder']
         self._context._heartbeat_file=handler_env['handlerEnvironment']['heartbeatFile']
@@ -236,6 +237,9 @@ class HandlerUtility:
         self._context._config = self._parse_config(ctxt)
         return self._context
 
+    def _set_log_file_to_command_execution_log(self):
+        self._context._log_file = self._context._command_execution_log_file
+        self._change_log_file()
 
     def _change_log_file(self):
         self.log("Change log file to " + self._context._log_file)
@@ -400,13 +404,14 @@ class HandlerUtility:
         waagent.SetFileContents(status_file, new_contents)
  
     def set_handler_error_status(self, e, operation_name, operation = ''):
-        self.log(getattr(e,'message'))
+        error_message = getattr(e,'message')
+        self.error(error_message)
         if('ErrorId' in dir(e) and getattr(e,'ErrorId') == RMExtensionStatus.rm_terminating_error_id):
             error_code = getattr(e,'Code')
         else:
             error_code = RMExtensionStatus.rm_extension_status['GenericError']
         if(error_code == RMExtensionStatus.rm_extension_status['InstallError']):
-            error_status_message = 'The Extension failed to install: {0}'.format(e.message)
+            error_status_message = 'The Extension failed to install: {0}'.format(error_message)
             error_sub_status_message = 'The Extension failed to install: {0} More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.'.format(e.message, self._context._log_dir)
         elif(error_code == RMExtensionStatus.rm_extension_status['ArgumentError']):
             error_status_message = 'Incorrect VSTS account credentials'

@@ -407,8 +407,8 @@ class HandlerUtility:
         # Log to command execution log file.
         error_message = getattr(e,'message')
         # For unhandled exceptions that we might have missed to catch and specify error message.
-        if(len(error_message) > 300):
-            error_message = error_message[:300]
+        if(len(error_message) > 200):
+            error_message = error_message[:200]
         self.error(error_message)
         self.error('Error occured during {0}'.format(operation_name))
         if('ErrorId' in dir(e) and getattr(e,'ErrorId') == RMExtensionStatus.rm_terminating_error_id):
@@ -416,7 +416,7 @@ class HandlerUtility:
         else:
             error_code = RMExtensionStatus.rm_extension_status['GenericError']
         if(error_code == RMExtensionStatus.rm_extension_status['InstallError']):
-            error_status_message = 'The Extension failed to install: {0}'.format(e.message)
+            error_status_message = 'The Extension failed to install: {0}'.format(error_message)
             error_sub_status_message = 'The Extension failed to install: {0} More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.'.format(e.message, self._context._log_dir)
         elif(error_code == RMExtensionStatus.rm_extension_status['ArgumentError']):
             error_status_message = 'Incorrect VSTS account credentials'

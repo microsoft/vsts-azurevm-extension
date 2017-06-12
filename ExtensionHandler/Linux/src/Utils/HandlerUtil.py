@@ -418,7 +418,6 @@ class HandlerUtility:
         else:
             error_status_message = 'The Extension failed to execute: {0}'.format(e.message)
             error_sub_status_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(e.message, self._context._log_dir)
-        self.error(error_status_message)
         self.set_handler_status(operation = operation, code = error_code, message = error_status_message, status = 'error')
         self.set_handler_status(operation = operation, ss_code = error_code, sub_status_message = error_sub_status_message, sub_status = 'error', operation_name = operation_name)
 

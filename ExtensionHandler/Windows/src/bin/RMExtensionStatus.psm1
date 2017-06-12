@@ -243,8 +243,8 @@ function Set-HandlerErrorStatus
     }
 
     try {
-        Write-Log $shortMessage $true
-        Write-Log $longMessage $true
+        Write-Log $shortMessage
+        Write-Log $longMessage
     }
     catch {
         Write-Error $shortMessage

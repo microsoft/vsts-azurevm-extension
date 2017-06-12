@@ -141,7 +141,9 @@ def start_rm_extension_handler(operation):
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
     handler_utility._set_log_file_to_command_execution_log()
-    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'], operation)
+    step = RMExtensionStatus.rm_extension_status['Initializing']['operationName']
+    handler_utility.log('Error occured during {0}'.format(step))
+    handler_utility.set_handler_error_status(e, step, operation)
     exit_with_code_one()
 
 def get_platform_value():
@@ -301,7 +303,9 @@ def get_configutation_from_settings(operation):
     return ret_val
   except Exception as e:
     handler_utility._set_log_file_to_command_execution_log()
-    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], operation)
+    step = RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName']
+    handler_utility.log('Error occured during {0}'.format(step))
+    handler_utility.set_handler_error_status(e, step, operation)
     exit_with_code_one()
 
 def test_configured_agent_exists(operation):
@@ -321,7 +325,9 @@ def test_configured_agent_exists(operation):
     return agent_exists
   except Exception as e:
     handler_utility._set_log_file_to_command_execution_log()
-    handler_utility.set_handler_error_status(e,RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName'], operation)
+    step = RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName']
+    handler_utility.log('Error occured during {0}'.format(step))
+    handler_utility.set_handler_error_status(e, step, operation)
     exit_with_code_one()
 
 def test_agent_configuration_required(config):
@@ -340,7 +346,9 @@ def test_agent_configuration_required(config):
     return config_required
   except Exception as e:
     handler_utility._set_log_file_to_command_execution_log()
-    handler_utility.set_handler_error_status(e,RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['operationName'], 'Enable')
+    step = RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['operationName']
+    handler_utility.log('Error occured during {0}'.format(step))
+    handler_utility.set_handler_error_status(e, step, 'Enable')
     exit_with_code_one()
 
 def execute_agent_pre_check():
@@ -365,7 +373,9 @@ def get_agent():
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
     handler_utility._set_log_file_to_command_execution_log()
-    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['DownloadingDeploymentAgent']['operationName'], 'Enable')
+    step = RMExtensionStatus.rm_extension_status['DownloadingDeploymentAgent']['operationName']
+    handler_utility.log('Error occured during {0}'.format(step))
+    handler_utility.set_handler_error_status(e, step, 'Enable')
     exit_with_code_one()
 
 def download_agent_if_required():
@@ -402,7 +412,9 @@ def register_agent():
     handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
   except Exception as e:
     handler_utility._set_log_file_to_command_execution_log()
-    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName'], 'Enable')
+    step = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName']
+    handler_utility.log('Error occured during {0}'.format(step))
+    handler_utility.set_handler_error_status(e, step, 'Enable')
     exit_with_code_one()
 
 def remove_existing_agent(config, operation):
@@ -443,7 +455,9 @@ def remove_existing_agent(config, operation):
     handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)
   except Exception as e:
     handler_utility._set_log_file_to_command_execution_log()
-    handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Uninstalling']['operationName'], operation)
+    step = RMExtensionStatus.rm_extension_status['Uninstalling']['operationName']
+    handler_utility.log('Error occured during {0}'.format(step))
+    handler_utility.set_handler_error_status(e, step, operation)
     exit_with_code_one()
 
 def remove_existing_agent_if_required():
@@ -485,7 +499,9 @@ def add_agent_tags():
       handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
     except Exception as e:
       handler_utility._set_log_file_to_command_execution_log()
-      handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName'], 'Enable')
+      step = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName']
+      handler_utility.log('Error occured during {0}'.format(step))
+      handler_utility.set_handler_error_status(e, step, 'Enable')
       exit_with_code_one()
   else:
     handler_utility.log('No tags provided for agent')
@@ -553,6 +569,7 @@ def main():
       exit_with_code_zero()
     except Exception as e:
       handler_utility._set_log_file_to_command_execution_log()
+      handler_utility.log('Error occured in main')
       handler_utility.set_handler_error_status(e, 'Some error occured')
       exit_with_code_one()
 

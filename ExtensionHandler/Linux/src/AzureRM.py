@@ -140,6 +140,7 @@ def start_rm_extension_handler(operation):
     operation_name = RMExtensionStatus.rm_extension_status['Initialized']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
+    handler_utility._set_log_file_to_command_execution_log()
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'], operation)
     exit_with_code_one()
 
@@ -299,6 +300,7 @@ def get_configutation_from_settings(operation):
           }
     return ret_val
   except Exception as e:
+    handler_utility._set_log_file_to_command_execution_log()
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], operation)
     exit_with_code_one()
 
@@ -318,6 +320,7 @@ def test_configured_agent_exists(operation):
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     return agent_exists
   except Exception as e:
+    handler_utility._set_log_file_to_command_execution_log()
     handler_utility.set_handler_error_status(e,RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName'], operation)
     exit_with_code_one()
 
@@ -336,6 +339,7 @@ def test_agent_configuration_required(config):
     handler_utility.log('Done pre-checking for agent re-configuration, AgentReconfigurationRequired : {0}'.format(config_required))
     return config_required
   except Exception as e:
+    handler_utility._set_log_file_to_command_execution_log()
     handler_utility.set_handler_error_status(e,RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['operationName'], 'Enable')
     exit_with_code_one()
 
@@ -360,6 +364,7 @@ def get_agent():
     operation_name = RMExtensionStatus.rm_extension_status['DownloadedDeploymentAgent']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
+    handler_utility._set_log_file_to_command_execution_log()
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['DownloadingDeploymentAgent']['operationName'], 'Enable')
     exit_with_code_one()
 
@@ -396,6 +401,7 @@ def register_agent():
     message = RMExtensionStatus.rm_extension_status['Installed']['Message']
     handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
   except Exception as e:
+    handler_utility._set_log_file_to_command_execution_log()
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName'], 'Enable')
     exit_with_code_one()
 
@@ -436,6 +442,7 @@ def remove_existing_agent(config, operation):
     message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']
     handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)
   except Exception as e:
+    handler_utility._set_log_file_to_command_execution_log()
     handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['Uninstalling']['operationName'], operation)
     exit_with_code_one()
 
@@ -477,6 +484,7 @@ def add_agent_tags():
       message = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Message']
       handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
     except Exception as e:
+      handler_utility._set_log_file_to_command_execution_log()
       handler_utility.set_handler_error_status(e, RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName'], 'Enable')
       exit_with_code_one()
   else:
@@ -544,6 +552,7 @@ def main():
 	      uninstall()
       exit_with_code_zero()
     except Exception as e:
+      handler_utility._set_log_file_to_command_execution_log()
       handler_utility.set_handler_error_status(e, 'Some error occured')
       exit_with_code_one()
 

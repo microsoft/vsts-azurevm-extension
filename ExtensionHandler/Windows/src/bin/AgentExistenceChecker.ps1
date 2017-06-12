@@ -71,7 +71,7 @@ function Test-AgentSettingsAreSame
         
         $tfsUrl = $tfsUrl.TrimEnd('/')
         $agentTfsUrl = $agentSetting.serverUrl.TrimEnd('/')
-        
+        $deploymentGroupDataAsPerSetting = $null
         try
         {
             $url = $tfsUrl

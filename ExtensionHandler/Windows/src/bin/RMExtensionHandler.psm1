@@ -75,6 +75,7 @@ function Start-RMExtensionHandler {
     }
     catch 
     {
+        Write-Log $_.Exception $true
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.Initializing.operationName
         Exit-WithCode1
     }
@@ -104,6 +105,7 @@ function Test-AgentAlreadyExists {
     }
     catch 
     {
+        Write-Log $_.Exception $true
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
         Exit-WithCode1
     } 
@@ -133,6 +135,7 @@ function Test-AgentReconfigurationRequired {
     }
     catch 
     {
+        Write-Log $_.Exception $true
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
         Exit-WithCode1
     } 
@@ -162,6 +165,7 @@ function Get-Agent {
     }
     catch 
     {
+        Write-Log $_.Exception $true
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.DownloadingDeploymentAgent.operationName
         Exit-WithCode1
     } 
@@ -193,6 +197,7 @@ function Register-Agent {
     }
     catch 
     {
+        Write-Log $_.Exception $true
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
         Exit-WithCode1
     } 
@@ -240,6 +245,7 @@ function Remove-Agent {
     }
     catch 
     {
+        Write-Log $_.Exception $true
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.Uninstalling.operationName
         Exit-WithCode1
     } 
@@ -277,6 +283,7 @@ function Add-AgentTags {
     }
     catch 
     {
+        Write-Log $_.Exception $true
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.AgentTagsAdded.operationName
         Exit-WithCode1
     } 
@@ -427,6 +434,7 @@ function Get-ConfigurationFromSettings {
     }
     catch 
     {
+        Write-Log $_.Exception $true
         Set-HandlerErrorStatus $_ -operationName $RM_Extension_Status.ReadingSettings.operationName
         Exit-WithCode1
     } 

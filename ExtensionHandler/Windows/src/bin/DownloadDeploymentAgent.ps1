@@ -144,7 +144,7 @@ function WriteDownloadLog
     catch
     {
         $sourceZipFileItem = Get-Item -Path $sourceZipFile
-        Remove-Item "$target\*" -Exclude $sourceZipFileItem.Name
+        Remove-Item "$target\*" -Recurse -Exclude $sourceZipFileItem.Name
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         [System.IO.Compression.ZipFile]::ExtractToDirectory($sourceZipFile, $target)
     }

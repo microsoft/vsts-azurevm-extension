@@ -134,12 +134,21 @@ function WriteDownloadLog
     [string]$target
     )
     
-    $fileInfo = Get-Item -Path $sourceZipFile
-	$appName = New-Object -ComObject Shell.Application
-	$zipName = $appName.NameSpace($fileInfo.FullName)
-	$dstFolder = $appName.NameSpace($target)
-
-    $dstFolder.Copyhere($zipName.Items(), 1044)
+    try
+    {
+        $fileInfo = Get-Item -Path $sourceZipFile
+        $appName = New-Object -ComObject Shell.Application
+        $zipName = $appName.NameSpace($fileInfo.FullName)
+        $dstFolder = $appName.NameSpace($target)
+        $dstFolder.Copyhere($zipName.Items(), 1044)
+    }
+    catch
+    {
+        $sourceZipFileItem = Get-Item -Path $sourceZipFile
+        Remove-Item "$target\*" -Recurse -Exclude $sourceZipFileItem.Name
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($sourceZipFile, $target)
+    }
 
     WriteDownloadLog "`t`t $sourceZipFile is extracted to $target"    
  }

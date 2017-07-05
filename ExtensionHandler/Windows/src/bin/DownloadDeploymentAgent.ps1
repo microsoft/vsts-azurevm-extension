@@ -140,6 +140,7 @@ function WriteDownloadLog
         $appName = New-Object -ComObject Shell.Application
         $zipName = $appName.NameSpace($fileInfo.FullName)
         $dstFolder = $appName.NameSpace($target)
+        $dstFolder.Copyhere($zipName.Items(), 1044)
     }
     catch
     {
@@ -148,8 +149,6 @@ function WriteDownloadLog
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         [System.IO.Compression.ZipFile]::ExtractToDirectory($sourceZipFile, $target)
     }
-
-    $dstFolder.Copyhere($zipName.Items(), 1044)
 
     WriteDownloadLog "`t`t $sourceZipFile is extracted to $target"    
  }

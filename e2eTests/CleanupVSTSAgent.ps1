@@ -16,5 +16,5 @@ $VSTSUrl = "http://localhost:8080/tfs/defaultcollection"
 $oldAgentInfo = Get-VSTSAgentInformation -vstsUrl $VSTSUrl -teamProject $TeamProject -patToken $PATToken -deploymentGroup $DeploymentGroup -agentName $AgentName
 if($oldAgentInfo.isAgentExists -eq $true)
 {
-    Remove-VSTSAgent -vstsUrl $VSTSUrl -patToken $PATToken -poolId $oldAgentInfo.poolId -agentId $oldAgentInfo.agentId
+    Remove-VSTSAgent -vstsUrl $VSTSUrl -patToken $PATToken -poolId $oldAgentInfo.poolId -agentId $oldAgentInfo.agentId -deploymentGroupId $oldAgentInfo.deploymentGroupId
 }

@@ -62,14 +62,15 @@ function Remove-VSTSAgent
 {
     param(
     [string]$vstsUrl,
+    [string]$teamProject,
     [string]$patToken,
-    [string]$poolId,
+    [string]$deploymentGroupId,
     [string]$agentId
     )
 
     Write-Host "Removing agent with id $agentId from vsts account $vstsUrl"
     $base64AuthToken = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "", $patToken)))
     $authHeader = @{ Authorization = "Basic {0}" -f $base64AuthToken }
-    $uri = "{0}/_apis/distributedtask/pools/{1}/agents/{2}?api-version=3.0" -f $vstsUrl, $poolId, $agentId
+    $uri = "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/machines/{3}?api-version=3.0" -f $vstsUrl, $teamProject, $deploymentGroupId, $agentId
     Invoke-RestMethod -Method DELETE -Uri $uri -Headers $authHeader
 }

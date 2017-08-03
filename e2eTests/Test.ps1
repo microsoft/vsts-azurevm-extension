@@ -130,7 +130,7 @@ Remove-ExistingVM -resourceGroupName $resourceGroupName -vmName $vmName -storage
 $oldAgentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
 if($oldAgentInfo.isAgentExists -eq $true)
 {
-    Remove-VSTSAgent -vstsUrl $config.VSTSUrl -patToken $config.PATToken -poolId $oldAgentInfo.poolId -agentId $oldAgentInfo.agentId
+    Remove-VSTSAgent -vstsUrl $config.VSTSUrl -patToken $config.PATToken -poolId $oldAgentInfo.poolId -agentId $oldAgentInfo.agentId -deploymentGroupId $oldAgentInfo.deploymentGroupId
 }
 
 #####
@@ -174,7 +174,7 @@ Remove-ExistingVM -resourceGroupName $resourceGroupName -vmName $vmName -storage
 # Remove agent from pool if needed
 if($agentInfo.isAgentExists -eq $true)
 {
-    Remove-VSTSAgent -vstsUrl $config.VSTSUrl -patToken $config.PATToken -poolId $agentInfo.poolId -agentId $agentInfo.agentId
+    Remove-VSTSAgent -vstsUrl $config.VSTSUrl -patToken $config.PATToken -poolId $agentInfo.poolId -agentId $agentInfo.agentId -deploymentGroupId $agentInfo.deploymentGroupId
 }
 
 # Delete protected settings file

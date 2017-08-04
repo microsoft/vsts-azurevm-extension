@@ -130,7 +130,7 @@ Remove-ExistingVM -resourceGroupName $resourceGroupName -vmName $vmName -storage
 $oldAgentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
 if($oldAgentInfo.isAgentExists -eq $true)
 {
-    Remove-VSTSAgent -vstsUrl $config.VSTSUrl -patToken $config.PATToken -poolId $oldAgentInfo.poolId -agentId $oldAgentInfo.agentId
+    Remove-VSTSAgent -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroupId $oldAgentInfo.deploymentGroupId -agentId $oldAgentInfo.agentId
 }
 
 #####
@@ -171,10 +171,12 @@ Remove-AzureRmVMExtension -ResourceGroupName $resourceGroupName -VMName $vmName 
 # Delete VM and vhd
 Remove-ExistingVM -resourceGroupName $resourceGroupName -vmName $vmName -storageAccountName $storageAccountName
 
+$agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
+
 # Remove agent from pool if needed
 if($agentInfo.isAgentExists -eq $true)
 {
-    Remove-VSTSAgent -vstsUrl $config.VSTSUrl -patToken $config.PATToken -poolId $agentInfo.poolId -agentId $agentInfo.agentId
+    Remove-VSTSAgent -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroupId $agentInfo.deploymentGroupId -agentId $agentInfo.agentId
 }
 
 # Delete protected settings file

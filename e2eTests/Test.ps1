@@ -171,10 +171,10 @@ Remove-AzureRmVMExtension -ResourceGroupName $resourceGroupName -VMName $vmName 
 # Delete VM and vhd
 Remove-ExistingVM -resourceGroupName $resourceGroupName -vmName $vmName -storageAccountName $storageAccountName
 
-$agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
+#$agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
 
 # Remove agent from pool if needed
-if($agentInfo.isAgentExists -eq $false)
+if($agentInfo.isAgentExists -eq $true)
 {
     Remove-VSTSAgent -vstsUrl $config.VSTSUrl -patToken $config.PATToken -poolId $agentInfo.poolId -agentId $agentInfo.agentId -deploymentGroupId $agentInfo.deploymentGroupId
 }

@@ -174,7 +174,7 @@ Remove-ExistingVM -resourceGroupName $resourceGroupName -vmName $vmName -storage
 $agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
 
 # Remove agent from pool if needed
-if($agentInfo.isAgentExists -eq $true)
+if($agentInfo.isAgentExists -eq $false)
 {
     Remove-VSTSAgent -vstsUrl $config.VSTSUrl -patToken $config.PATToken -poolId $agentInfo.poolId -agentId $agentInfo.agentId -deploymentGroupId $agentInfo.deploymentGroupId
 }

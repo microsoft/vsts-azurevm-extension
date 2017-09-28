@@ -5,6 +5,7 @@ import tarfile
 import json
 import Constants
 import os
+import urllib2
 
 log_function = None
 
@@ -40,6 +41,7 @@ def get_agent_package_data(vsts_url, package_data_address, user_name, pat_token)
               'Authorization' : 'Basic {0}'.format(basic_auth)
             }
   write_download_log('\t\t Making HTTP request for package data')
+  package_data_address = urllib2.quote(package_data_address)
   conn = method(vsts_url)
   conn.request('GET', package_data_address, headers = headers)
   response = conn.getresponse()

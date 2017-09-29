@@ -6,7 +6,7 @@ import Constants
 import codecs
 import base64
 import httplib
-import urllib2
+from urllib2 import quote
 
 agent_listener_path = ''
 agent_service_path = ''
@@ -72,7 +72,6 @@ def invoke_url_for_deployment_group_data(vsts_url, user_name, pat_token, deploym
               'Authorization' : 'Basic {0}'.format(basic_auth)
             }
   write_add_tags_log('\t\t Making HTTP request for deployment group data')
-  deployment_group_data_address = urllib2.quote(deployment_group_data_address)
   conn = method(vsts_url)
   conn.request('GET', deployment_group_data_address, headers = headers)
   response = conn.getresponse()
@@ -104,7 +103,7 @@ def get_deployment_group_data_from_setting(vsts_url, pat_token):
     else:
       write_log('\t\t Project Id is not available in agent settings file, trying to read the project name.')
       if(setting_params.has_key('projectName')):
-        project_id = str(setting_params['projectName'])
+        project_id = quote(str(setting_params['projectName']))
         write_log('\t\t Deployment group projectName - {0}'.format(project_id))
     if(project_id != ''):
       deployment_group_data_address = construct_deployment_group_data_address(project_id, deployment_group_id)
@@ -162,7 +161,7 @@ def agent_listener_exists(working_folder):
 def get_command_args(arg_names, arg_values):
   command_args = []
   for arg_name, arg_value in zip(arg_names, arg_values):
-    command_args += [' {0}'.format(arg_name), ' "{0}"'.format(arg_value)]
+    command_args += ['{0}'.format(arg_name), '{0}'.format(arg_value)]
   return command_args
 
 
@@ -216,10 +215,9 @@ def apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, 
               'Authorization' : 'Basic {0}'.format(basic_auth),
               'Content-Type' : 'application/json'
             }
-  tags_address = Constants.machines_address_format.format(project_name, deployment_group_id, Constants.tags_api_version)
+  tags_address = Constants.machines_address_format.format(quote(project_name), deployment_group_id, Constants.tags_api_version)
   request_body = json.dumps([{'id' : json.loads(machine_id), 'tags' : json.loads(tags_string), 'agent' : {'id' : agent_id}}])
   write_add_tags_log('Add tags request body : {0}'.format(request_body))
-  tags_address = urllib2.quote(tags_address)
   conn = method(vsts_url)
   conn.request('PATCH', tags_address, headers = headers, body = request_body)
   response = conn.getresponse()
@@ -241,8 +239,7 @@ def add_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, ag
   headers = {
               'Authorization' : 'Basic {0}'.format(basic_auth)
             }
-  tags_address = Constants.machines_address_format.format(project_name, deployment_group_id, Constants.tags_api_version)
-  tags_address = urllib2.quote(tags_address)
+  tags_address = Constants.machines_address_format.format(quote(project_name), deployment_group_id, Constants.tags_api_version)
   conn = method(vsts_url)
   conn.request('GET', tags_address, headers = headers)
   response = conn.getresponse()

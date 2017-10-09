@@ -27,7 +27,7 @@ $script:logger = {
 
 <#
 .Synopsis
-   Initializes RM extension handler. 
+   Initializes RM extension handler.
     - Clears status file, handler cache and handler status message
     - defines log file to be used for diagnostic logging
     - sets up proper status and sub-status
@@ -38,10 +38,10 @@ function Start-RMExtensionHandler {
     [CmdletBinding()]
     param()
 
-    try 
+    try
     {
         Initialize-ExtensionLogFile
-        
+
         $psVersion = $PSVersionTable.PSVersion.Major
         if(!($psVersion -ge 3))
         {
@@ -60,12 +60,12 @@ function Start-RMExtensionHandler {
             Write-Log $RM_Extension_Status.SkippedInstallation.Message
             Write-Log "Current seq number: $sequenceNumber, last seq number: $lastSequenceNumber"
             Add-HandlerSubStatus $RM_Extension_Status.SkippedInstallation.Code $RM_Extension_Status.SkippedInstallation.Message -operationName $RM_Extension_Status.SkippedInstallation.operationName
-            
+
             Exit-WithCode0
-        }  
+        }
 
         Clear-StatusFile
-        Clear-HandlerCache 
+        Clear-HandlerCache
         Clear-HandlerSubStatusMessage
 
         Write-Log "Sequence Number: $sequenceNumber"
@@ -73,7 +73,7 @@ function Start-RMExtensionHandler {
         Set-HandlerStatus $RM_Extension_Status.Installing.Code $RM_Extension_Status.Installing.Message
         Add-HandlerSubStatus $RM_Extension_Status.Initialized.Code $RM_Extension_Status.Initialized.Message -operationName $RM_Extension_Status.Initialized.operationName
     }
-    catch 
+    catch
     {
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.Initializing.operationName
     }
@@ -90,7 +90,7 @@ function Test-AgentAlreadyExists {
     [hashtable] $config
     )
 
-    try 
+    try
     {
         Add-HandlerSubStatus $RM_Extension_Status.PreCheckingDeploymentAgent.Code $RM_Extension_Status.PreCheckingDeploymentAgent.Message -operationName $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
         Write-Log "Invoking script to pre-check agent configuration..."
@@ -101,10 +101,10 @@ function Test-AgentAlreadyExists {
         Add-HandlerSubStatus $RM_Extension_Status.PreCheckedDeploymentAgent.Code $RM_Extension_Status.PreCheckedDeploymentAgent.Message -operationName $RM_Extension_Status.PreCheckedDeploymentAgent.operationName
         $agentAlreadyExists
     }
-    catch 
+    catch
     {
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
-    } 
+    }
 }
 
 <#
@@ -118,7 +118,7 @@ function Test-AgentReconfigurationRequired {
     [hashtable] $config
     )
 
-    try 
+    try
     {
         Add-HandlerSubStatus $RM_Extension_Status.CheckingAgentReConfigurationRequired.Code $RM_Extension_Status.CheckingAgentReConfigurationRequired.Message -operationName $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
         Write-Log "Invoking script to check existing agent settings with given configuration settings..."
@@ -129,10 +129,10 @@ function Test-AgentReconfigurationRequired {
         Add-HandlerSubStatus $RM_Extension_Status.AgentReConfigurationRequiredChecked.Code $RM_Extension_Status.AgentReConfigurationRequiredChecked.Message -operationName $RM_Extension_Status.AgentReConfigurationRequiredChecked.operationName
         $agentReConfigurationRequired
     }
-    catch 
+    catch
     {
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
-    } 
+    }
 }
 
 <#
@@ -147,7 +147,7 @@ function Get-Agent {
     [hashtable] $config
     )
 
-    try 
+    try
     {
         Add-HandlerSubStatus $RM_Extension_Status.DownloadingDeploymentAgent.Code $RM_Extension_Status.DownloadingDeploymentAgent.Message -operationName $RM_Extension_Status.DownloadingDeploymentAgent.operationName
         Write-Log "Invoking script to download Deployment agent package..."
@@ -157,15 +157,15 @@ function Get-Agent {
         Write-Log "Done downloading Deployment agent package..."
         Add-HandlerSubStatus $RM_Extension_Status.DownloadedDeploymentAgent.Code $RM_Extension_Status.DownloadedDeploymentAgent.Message -operationName $RM_Extension_Status.DownloadedDeploymentAgent.operationName
     }
-    catch 
+    catch
     {
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.DownloadingDeploymentAgent.operationName
-    } 
+    }
 }
 
 <#
 .Synopsis
-   Configures and starts Deployment agent. 
+   Configures and starts Deployment agent.
    Invokes a cmd script to configure and start agent. Provides a working directory for this script to use.
 #>
 function Register-Agent {
@@ -175,7 +175,7 @@ function Register-Agent {
     [hashtable] $config
     )
 
-    try 
+    try
     {
         Add-HandlerSubStatus $RM_Extension_Status.ConfiguringDeploymentAgent.Code $RM_Extension_Status.ConfiguringDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
         Write-Log "Configuring Deployment agent..."
@@ -187,15 +187,15 @@ function Register-Agent {
         Add-HandlerSubStatus $RM_Extension_Status.ConfiguredDeploymentAgent.Code $RM_Extension_Status.ConfiguredDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguredDeploymentAgent.operationName
         Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
     }
-    catch 
+    catch
     {
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
-    } 
+    }
 }
 
 <#
 .Synopsis
-   Unconfigures and removes Deployment agent. 
+   Unconfigures and removes Deployment agent.
    Currently, uninstall is no-op for agent. It will still keep running and will still be registered to deployment group. The purpose here is to just inform user about this
 #>
 function Remove-Agent {
@@ -204,7 +204,7 @@ function Remove-Agent {
     [Parameter(Mandatory=$true, Position=0)]
     [hashtable] $config
     )
-    try 
+    try
     {
         . $PSScriptRoot\Constants.ps1
         Write-Log "Remove-Agent command started"
@@ -233,16 +233,16 @@ function Remove-Agent {
         }
         Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
     }
-    catch 
+    catch
     {
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.Uninstalling.operationName
-    } 
+    }
 }
 
 
 <#
 .Synopsis
-   Adds the tag to configured agent. 
+   Adds the tag to configured agent.
 #>
 function Add-AgentTags {
     [CmdletBinding()]
@@ -251,12 +251,12 @@ function Add-AgentTags {
     [hashtable] $config
     )
 
-    try 
+    try
     {
         Add-HandlerSubStatus $RM_Extension_Status.AddingAgentTags.Code $RM_Extension_Status.AddingAgentTags.Message -operationName $RM_Extension_Status.AddingAgentTags.operationName
-     
+
         Write-Log "Add-AgentTags command started"
-    
+
         if( ( $config.Tags -ne $null ) -and ( $config.Tags.Count  -gt 0 ) )
         {
             Invoke-AddTagsToAgentScript $config
@@ -265,14 +265,14 @@ function Add-AgentTags {
         {
             Write-Log "No tags provided for agent"
         }
-        
+
         Add-HandlerSubStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -operationName $RM_Extension_Status.AgentTagsAdded.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success 
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
     }
-    catch 
+    catch
     {
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.AgentTagsAdded.operationName
-    } 
+    }
 }
 
 <#
@@ -289,10 +289,10 @@ function Get-ConfigurationFromSettings {
 
         #Retrieve settings from file
         $settings = Get-HandlerSettings
-    
+
         $publicSettings = $settings['publicSettings']
         $protectedSettings = $settings['protectedSettings']
-        if (-not $publicSettings) 
+        if (-not $publicSettings)
         {
             $publicSettings = @{}
         }
@@ -319,18 +319,18 @@ function Get-ConfigurationFromSettings {
             if($parts.Count -gt 1)
             {
                 $protocolHeader = $parts[0] + "://"
-                $urlWithoutProtocol = $parts[1].trim()                      
+                $urlWithoutProtocol = $parts[1].trim()
             }
-            else 
+            else
             {
                 $protocolHeader = ""
-                $urlWithoutProtocol = $parts[0].trim()                        
+                $urlWithoutProtocol = $parts[0].trim()
             }
 
             $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
 
             $vstsUrl = -join($protocolHeader, $subparts[0].trim())
-            
+
             # This is for the on-prem tfs scenario where url is supposed to be of format http(s)://<server-name>/<application>/<collection>
             if($subparts.Count -eq 3)
             {
@@ -339,9 +339,9 @@ function Get-ConfigurationFromSettings {
             }
 
             if(($subparts.Count -gt 1) -and ($subparts.Count -ne 3))
-            {   
+            {
                 $message = "Account url should either be of format https://<account>.visualstudio.com (for hosted) or of format http(s)://<server>/<application>/<collection>(for on-prem)"
-                throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message    
+                throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message
             }
         }
         else
@@ -418,10 +418,10 @@ function Get-ConfigurationFromSettings {
             AgentWorkingFolder = $agentWorkingFolder
         }
     }
-    catch 
+    catch
     {
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ReadingSettings.operationName
-    } 
+    }
 }
 
 function Set-ErrorStatusAndErrorExit {
@@ -482,14 +482,14 @@ function Format-TagsInput {
     {
         $tags = $tagsInput.Split(',', [System.StringSplitOptions]::RemoveEmptyEntries).trim()
     }
-    else 
+    else
     {
         $message = "Tags input should either be a string, or an array of strings, or an object containing key-value pairs"
-        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message    
+        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message
     }
 
     $uniqueTags = $tags | Sort-Object -Unique | Where { -not [string]::IsNullOrWhiteSpace($_) }
-    
+
     return $uniqueTags
 }
 
@@ -524,7 +524,7 @@ function Test-AgentReConfigurationRequiredInternal {
     )
 
     . $PSScriptRoot\AgentExistenceChecker.ps1
-    $url = Get-AccountUrl $config.VSTSUrl $config.TfsVirtualApplication    
+    $url = Get-AccountUrl $config.VSTSUrl $config.TfsVirtualApplication
     $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $url -collection $config.TfsCollection -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken -logFunction $script:logger)
     return $agentReConfigurationRequired
 }
@@ -568,7 +568,7 @@ function VerifyInputNotNull {
     if(-not $inputValue)
         {
             $message = "$inputKey should be specified"
-            throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message 
+            throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message
         }
 }
 
@@ -578,11 +578,11 @@ function Get-AccountUrl
     param(
     [string] $baseUrl,
     [string] $virtualApplication
-    )   
+    )
 
     $url = $baseUrl
 
-    if($virtualApplication) 
+    if($virtualApplication)
     {
         $url = -join($url, '/', $virtualApplication)
     }
@@ -597,7 +597,7 @@ function Get-CollectionUrl
     [string] $baseUrl,
     [string] $virtualApplication,
     [string] $collection
-    )   
+    )
 
     $url = Get-AccountUrl $baseUrl $virtualApplication
 

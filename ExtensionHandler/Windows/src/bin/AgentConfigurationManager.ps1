@@ -32,11 +32,11 @@ function ConfigureAgent
     [Parameter(Mandatory=$true)]
     [string]$configCmdPath
     )
-    
+
     $processStartInfo = GetProcessStartInfo
     $processStartInfo.FileName = $configCmdPath
-    $processStartInfo.Arguments = "$configCommonArgs --agent $agentName --url $tfsUrl --token $patToken --work $workingFolder --projectname $projectName --deploymentgroupname $deploymentGroupName"
-    
+    $processStartInfo.Arguments = CreateConfigCmdArgs -tfsUrl $tfsUrl -patToken $patToken -workingFolder $workingFolder -projectName $projectName -deploymentGroupName $deploymentGroupName -agentName $agentName
+
     $configProcess = New-Object System.Diagnostics.Process
     $configProcess.StartInfo = $processStartInfo
     $configProcess.Start() | Out-Null
@@ -44,14 +44,14 @@ function ConfigureAgent
     $stdout = $configProcess.StandardOutput.ReadToEnd()
     $stderr = $configProcess.StandardError.ReadToEnd()
     WriteConfigurationLog "ConfigProcess exit code: " + $configProcess.ExitCode
-    
+
     WriteConfigurationLog "$stdout"
     WriteConfigurationLog "$stderr"
-    
+
     if($configProcess.ExitCode -ne 0 )
     {
         throw "Agent Configuration failed with error - $stderr"
-    }    
+    }
 }
 
 function RemoveExistingAgent
@@ -60,9 +60,9 @@ function RemoveExistingAgent
     [Parameter(Mandatory=$true)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$configCmdPath    
+    [string]$configCmdPath
     )
-    
+
     $processStartInfo = GetProcessStartInfo
     $processStartInfo.FileName = $configCmdPath
     $processStartInfo.Arguments = "$removeAgentArgs --token $patToken"
@@ -73,7 +73,7 @@ function RemoveExistingAgent
     $stdout = $removeAgentProcess.StandardOutput.ReadToEnd()
     $stderr = $removeAgentProcess.StandardError.ReadToEnd()
     WriteConfigurationLog "RemoveAgentProcess exit code: " + $removeAgentProcess.ExitCode
-    
+
     WriteConfigurationLog "$stdout"
     WriteConfigurationLog "$stderr"
 
@@ -95,7 +95,7 @@ function ApplyTagsToAgent
     [Parameter(Mandatory=$true)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$deploymentGroupId,    
+    [string]$deploymentGroupId,
     [Parameter(Mandatory=$true)]
     [string]$agentId,
     [Parameter(Mandatory=$true)]
@@ -103,15 +103,15 @@ function ApplyTagsToAgent
     [Parameter(Mandatory=$true)]
     [string]$tagsAsJsonString
     )
-    
+
     $restCallUrl = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Machines?api-version=3.2-preview" -f $tfsUrl, $projectName, $deploymentGroupId )
-    
+
     WriteAddTagsLog "Url for adding tags - $restCallUrl"
-    
+
     $headers = GetRESTCallHeader $patToken
-    
+
     $requestBody = "[{'id':" + $machineId + ",'tags':" + $tagsAsJsonString + ",'agent':{'id':" + $agentId + "}}]"
-    
+
     WriteAddTagsLog "Add tags request body - $requestBody"
     try
     {
@@ -137,7 +137,7 @@ function AddTagsToAgent
     [Parameter(Mandatory=$true)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$deploymentGroupId,    
+    [string]$deploymentGroupId,
     [Parameter(Mandatory=$true)]
     [string]$agentId,
     [Parameter(Mandatory=$true)]
@@ -145,7 +145,7 @@ function AddTagsToAgent
     )
 
     $restCallUrlToGetExistingTags = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Machines?api-version=3.2-preview" -f $tfsUrl, $projectName, $deploymentGroupId )
-    
+
     WriteAddTagsLog "Url for adding getting existing tags if any - $restCallUrlToGetExistingTags"
 
     $headers = GetRESTCallHeader $patToken
@@ -172,11 +172,11 @@ function AddTagsToAgent
         [Array]$newTags =  ConvertFrom-Json $tagsAsJsonString
 
         if($existingTags.count -gt 0)
-        {    
+        {
             $tags = $existingTags    ## Append new tags to existing tags, this will ensure existing tags are not modified due to case change
             WriteAddTagsLog "Found existing tags for agent - $existingTags"
-        
-            foreach( $newTag in $newTags) 
+
+            foreach( $newTag in $newTags)
             {
                 if(!($tags -iContains $newTag))
                 {
@@ -188,7 +188,7 @@ function AddTagsToAgent
         {
             $tags = $newTags
         }
-    
+
         $newTagsJsonString = ConvertTo-Json $tags
     }
     catch
@@ -210,13 +210,33 @@ function GetRESTCallHeader
 {
     param(
     [Parameter(Mandatory=$true)]
-    [string]$patToken    
+    [string]$patToken
     )
-    
+
     $basicAuth = ("{0}:{1}" -f '', $patToken)
     $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
     $basicAuth = [System.Convert]::ToBase64String($basicAuth)
     $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
-    
+
     return $headers
+}
+
+function CreateConfigCmdArgs
+{
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$tfsUrl,
+        [Parameter(Mandatory=$true)]
+        [string]$patToken,
+        [Parameter(Mandatory=$true)]
+        [string]$workingFolder,
+        [Parameter(Mandatory=$true)]
+        [string]$projectName,
+        [Parameter(Mandatory=$true)]
+        [string]$deploymentGroupName,
+        [Parameter(Mandatory=$true)]
+        [string]$agentName
+    )
+
+    return "$configCommonArgs --agent `"$agentName`" --url `"$tfsUrl`" --token $patToken --work `"$workingFolder`" --projectname `"$projectName`" --deploymentgroupname `"$deploymentGroupName`""
 }

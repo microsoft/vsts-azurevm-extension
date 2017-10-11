@@ -226,7 +226,7 @@ function ContructRESTCallUrl
     try
     {
         $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
-        WriteLog "`t`t Deployment Group Details : $response" $logFunction
+        WriteLog "`t`t Deployment Group Details fetched successfully" $logFunction
         if($response.PSObject.Properties.name -contains "name")
         {
             return $response

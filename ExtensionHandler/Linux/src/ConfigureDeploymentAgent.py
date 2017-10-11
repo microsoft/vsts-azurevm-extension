@@ -65,6 +65,7 @@ def invoke_url_for_deployment_group_data(vsts_url, user_name, pat_token, deploym
     method = httplib.HTTPConnection
   elif(vsts_url.startswith('https://')):
     vsts_url = vsts_url[8:]
+  vsts_url = filter(lambda x: x!='', vsts_url.split('/'))[0]
   basic_auth = '{0}:{1}'.format(user_name, pat_token)
   basic_auth = base64.b64encode(basic_auth)
   headers = {
@@ -76,7 +77,7 @@ def invoke_url_for_deployment_group_data(vsts_url, user_name, pat_token, deploym
   response = conn.getresponse()
   if(response.status == 200):
     val = json.loads(response.read())
-    write_log('\t\t Deployment group details : {0}'.format(val))
+    write_log('\t\t Deployment group details fetched successfully')
     return val
   else:
     raise Exception('Unable to fetch the deployment group information from VSTS server.')

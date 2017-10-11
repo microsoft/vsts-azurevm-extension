@@ -307,12 +307,12 @@ function Get-ConfigurationFromSettings {
         $platform = "win7-x64"
         Write-Log "Platform: $platform"
 
-        $vstsAccountName = $publicSettings['VSTSAccountName']
+        $vstsAccountName = $publicSettings['VSTSAccountName'].ToLower()
         $tfsVirtualApplication = ""
         $tfsCollection = ""
         VerifyInputNotNull "VSTSAccountName" $vstsAccountName
         $vstsAccountName = $vstsAccountName.TrimEnd('/')
-        if((($vstsAccountName.ToLower().StartsWith("https://")) -or ($vstsAccountName.ToLower().StartsWith("http://"))))
+        if((($vstsAccountName.StartsWith("https://")) -or ($vstsAccountName.StartsWith("http://"))))
         {
             $parts = $vstsAccountName.Split(@('://'), [System.StringSplitOptions]::RemoveEmptyEntries)
 
@@ -330,18 +330,20 @@ function Get-ConfigurationFromSettings {
             $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
 
             $vstsUrl = -join($protocolHeader, $subparts[0].trim())
-            
-            # This is for the on-prem tfs scenario where url is supposed to be of format http(s)://<server-name>/<application>/<collection>
-            if($subparts.Count -eq 3)
-            {
-                $tfsVirtualApplication = $subparts[1]
-                $tfsCollection = $subparts[2].trim()
-            }
-
-            if(($subparts.Count -gt 1) -and ($subparts.Count -ne 3))
-            {   
-                $message = "Account url should either be of format https://<account>.visualstudio.com (for hosted) or of format http(s)://<server>/<application>/<collection>(for on-prem)"
-                throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message    
+            if(!$vstsUrl.EndsWith("visualstudio.com")){
+                # This is for the on-prem tfs scenario where url is supposed to be of format http(s)://<server-name>/<application>/<collection>
+                if($subparts.Count -ge 2)
+                {
+                    $tfsVirtualApplication = $subparts[1]
+                    if($subparts.Count -gt 2){
+                        $tfsCollection = $subparts[2].trim()
+                    }
+                }
+                else
+                {   
+                    $message = "Invalid value for VSTS account name. It should be just the account name, eg: contoso in case of https://contoso.visualstudio.com (for hosted), or of the format http(s)://<server>/<application>/<collection>(for on-prem)"
+                    throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message    
+                }
             }
         }
         else

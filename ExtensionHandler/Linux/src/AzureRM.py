@@ -187,25 +187,27 @@ def modify_paths(account_name_split):
 
 def parse_account_name(account_name): 
   global is_on_prem, prefix
-  base_url = ''
+  account_name = account_name.lower()
+  base_url = account_name
   virtual_application = ''
   collection = ''
   if(check_account_name_prefix(account_name)):
     account_name = account_name[7:]
   account_name = account_name.strip('/')
-  if(account_name.find('/') > -1):
+  account_name_split = filter(lambda x: x!='', account_name.split('/'))
+  if(account_name_split[0].endswith('visualstudio.com')):
+    base_url = 'https://' + account_name[:(account_name_split[0].find('visualstudio.com') + 16)]
+  else:
     is_on_prem = True
-    account_name_split = filter(lambda x: x!='', account_name.split('/'))
-    if(len(account_name_split) == 3):
+    if(len(account_name_split) >= 2):
       base_url = prefix + account_name_split[0]
       virtual_application = account_name_split[1]
-      collection = account_name_split[2]
-    elif(len(account_name_split) != 1):
-      code = RMExtensionStatus.rm_extension_status['ArgumentError']
-      message = 'Account url should either be of format https://<account>.visualstudio.com (for hosted) or of format http(s)://<server>/<application>/<collection>(for on-prem)'
-      raise RMExtensionStatus.new_handler_terminating_error(code, message)
+      if(len(account_name_split) > 2):
+        collection = account_name_split[2]
     else:
-      base_url = prefix + account_name_split[0]
+      code = RMExtensionStatus.rm_extension_status['ArgumentError']
+      message = 'Invalid value for VSTS account name. It should be just the account name, eg: contoso in case of https://contoso.visualstudio.com (for hosted), or of the format http(s)://<server>/<application>/<collection>(for on-prem)'
+      raise RMExtensionStatus.new_handler_terminating_error(code, message)
   return {
          'VSTSUrl':base_url,
          'VirtualApplication':virtual_application,
@@ -263,17 +265,15 @@ def get_configutation_from_settings(operation):
     if(check_account_name_prefix(vsts_account_name)):
       if(is_on_prem):
         modify_paths(account_name_split)
-      else:
-        vsts_url = vsts_account_name
     else:
       vsts_url = format_string.format(vsts_account_name)
     handler_utility.log('VSTS service URL : {0}'.format(vsts_url))
     pat_token = ''
     if(protected_settings.has_key('PATToken')):
       pat_token = protected_settings['PATToken']
-    if(pat_token == ''):
+    if((pat_token == '') and (public_settings.has_key('PATToken'))):
       pat_token = public_settings['PATToken']
-      handler_utility.verify_input_not_null('PATToken', pat_token)
+    handler_utility.verify_input_not_null('PATToken', pat_token)
     team_project_name = public_settings['TeamProject']
     handler_utility.verify_input_not_null('TeamProject', team_project_name)
     handler_utility.log('Team Project : {0}'.format(team_project_name))

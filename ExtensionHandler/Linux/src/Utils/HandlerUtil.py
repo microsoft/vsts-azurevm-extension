@@ -142,6 +142,13 @@ class HandlerUtility:
     def error(self, message):
         self._error(self._get_log_prefix() + message)
 
+    def remove_protected_settings_and_write_to_config_file(self):
+        content = ctxt=waagent.GetFileContents(self._context._settings_file)
+        config_to_write = json.loads(content)
+        config_to_write['runtimeSettings'][0]['handlerSettings']['protectedSettings'] = ''
+        content_to_write = json.dumps(config_to_write)
+        waagent.SetFileContents(self._context._settings_file, content_to_write)
+
     def _parse_config(self, ctxt):
         config = None
         try:
@@ -156,6 +163,7 @@ class HandlerUtility:
             if handlerSettings.has_key('protectedSettings') and \
                     handlerSettings.has_key("protectedSettingsCertThumbprint") and \
                     handlerSettings['protectedSettings'] is not None and \
+                    handlerSettings['protectedSettings'] != '' and \
                     handlerSettings["protectedSettingsCertThumbprint"] is not None:
                 protectedSettings = handlerSettings['protectedSettings']
                 thumb=handlerSettings['protectedSettingsCertThumbprint']
@@ -232,9 +240,9 @@ class HandlerUtility:
             error_msg = 'Unable to read ' + self._context._settings_file + '. '
             self.error(error_msg)
             return None
-
-        self.log("JSON config: " + ctxt)
         self._context._config = self._parse_config(ctxt)
+        self.log("JSON config read successfully")
+        self.remove_protected_settings_and_write_to_config_file()
         return self._context
 
     def _set_log_file_to_command_execution_log(self):
@@ -430,7 +438,7 @@ class HandlerUtility:
     #def new_handler_terminating_error():
 
     def verify_input_not_null(self, input_key, input_value = None):
-        if(input_value == None):
+        if((input_value == None) or (input_value == '')):
             message ='{0} should be specified'.format(input_key) 
             excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['ArgumentError'], message)
             raise excep

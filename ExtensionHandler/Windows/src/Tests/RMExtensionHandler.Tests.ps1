@@ -270,6 +270,40 @@ Describe "parse vsts account name settings tests" {
         }
     }
 
+    Context "Should handle hosted url with collection" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "https://abc.visualstudio.com/DefaultCollection/"
+                        TeamProject = "project"
+                        DeploymentGroup = "group"
+                        Tags = @()
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                }
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Format-TagsInput {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+
+        $settings = Get-ConfigurationFromSettings
+
+        It "should set proper status" {
+            $settings.VSTSUrl | Should Be "https://abc.visualstudio.com"
+            $settings.TfsVirtualApplication | Should Be ""
+            $settings.TfsCollection | Should Be ""            
+        }
+    }
+
     Context "Should handle on-prem url" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
@@ -304,6 +338,74 @@ Describe "parse vsts account name settings tests" {
         }
     }
 
+    Context "Should handle on-prem url without collection" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "http://localhost:8080///tfs//"
+                        TeamProject = "project"
+                        DeploymentGroup = "group"
+                        Tags = @()
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                }
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Format-TagsInput {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+
+        $settings = Get-ConfigurationFromSettings
+
+        It "should set proper status" {
+            $settings.VSTSUrl | Should Be "http://localhost:8080"
+            $settings.TfsVirtualApplication | Should Be "tfs"
+            $settings.TfsCollection | Should Be ""            
+        }
+    }
+
+    Context "Should handle on-prem url with additional components" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "http://localhost:8080///tfs/defaultcollection/a/b//c/d//"
+                        TeamProject = "project"
+                        DeploymentGroup = "group"
+                        Tags = @()
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                }
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Format-TagsInput {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+
+        $settings = Get-ConfigurationFromSettings
+
+        It "should set proper status" {
+            $settings.VSTSUrl | Should Be "http://localhost:8080"
+            $settings.TfsVirtualApplication | Should Be "tfs"
+            $settings.TfsCollection | Should Be "defaultcollection"            
+        }
+    }
+
     Context "Should throw error if url is not well formed" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
@@ -313,7 +415,7 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
-                        VSTSAccountName = "http://localhost:8080/tfs"
+                        VSTSAccountName = "http://localhost:8080/"
                         TeamProject = "project"
                         DeploymentGroup = "group"
                         Tags = @()
@@ -332,7 +434,7 @@ Describe "parse vsts account name settings tests" {
 
         It "should set proper status" {
             Get-ConfigurationFromSettings        
-            Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1  -ParameterFilter { $ErrorRecord.Exception.Message -eq "Account url should either be of format https://<account>.visualstudio.com (for hosted) or of format http(s)://<server>/<application>/<collection>(for on-prem)"}
+            Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1  -ParameterFilter { $ErrorRecord.Exception.Message -eq "Invalid value for VSTS account name. It should be just the account name, eg: contoso in case of https://contoso.visualstudio.com (for hosted), or of the format http(s)://<server>/<application>/<collection>(for on-prem)"}
         }
     }
 }

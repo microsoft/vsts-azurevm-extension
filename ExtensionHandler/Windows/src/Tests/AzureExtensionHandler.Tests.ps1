@@ -86,7 +86,8 @@ Describe "Handler settings tests" {
 			                                    `"publicSettings`": { `
 				                                    `"VSTSAccountName`": `"mseng`", `
 				                                    `"Pool`": `"biprasad`" `
-			                                    } `
+			                                    } ,`
+                                                `"protectedSettings`": `"`"`
 		                                    } `
 	                                    }] `
                                       }" 

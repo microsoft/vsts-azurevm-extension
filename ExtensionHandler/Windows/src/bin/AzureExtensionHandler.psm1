@@ -209,6 +209,14 @@ function Get-HandlerExecutionSequenceNumber
     $script:handlerCache.getHandlerExecutionSequenceNumber
 }
 
+function RemoveProtectedSettingsAndWriteToConfigFile
+{
+    param()
+    $handlerSettings = (Get-JsonContent $handlerSettingsFile)
+    $handlerSettings.runtimeSettings[0].handlerSettings['protectedSettings'] = ''
+    Set-JsonContent -Path $handlerSettingsFile -Value $handlerSettings -Force
+}
+
 <#
 .Synopsis
    Returns the settings provided by the user
@@ -262,6 +270,7 @@ function Get-HandlerSettings
         #
         if ($settings.protectedSettings)
         {
+            RemoveProtectedSettingsAndWriteToConfigFile
             $protectedSettings = $settings.protectedSettings
 
             Write-Log "Found protected settings on Azure VM. Decrypting with certificate."
@@ -821,8 +830,7 @@ if ($PSVersionTable.PSVersion.Major -eq 2)
     .Synopsis
         Takes a hashtable, array, date, number, or string, serializes it to JSON and writes it to the given file
     #>
-    funct
-    ion Set-JsonContent { 
+    function Set-JsonContent { 
         param(
             [Parameter(Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)]
             [string]

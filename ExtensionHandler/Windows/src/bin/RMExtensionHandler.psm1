@@ -289,7 +289,8 @@ function Get-ConfigurationFromSettings {
 
         #Retrieve settings from file
         $settings = Get-HandlerSettings
-    
+        Remove-ProtectedSettingsFromConfigFile
+
         $publicSettings = $settings['publicSettings']
         $protectedSettings = $settings['protectedSettings']
         if (-not $publicSettings) 

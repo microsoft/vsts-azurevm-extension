@@ -191,13 +191,14 @@ def parse_account_name(account_name):
   base_url = account_name
   virtual_application = ''
   collection = ''
-  if(check_account_name_prefix(account_name)):
+  account_name_has_prefix = check_account_name_prefix(account_name)
+  if(account_name_has_prefix):
     account_name = account_name[7:]
   account_name = account_name.strip('/')
   account_name_split = filter(lambda x: x!='', account_name.split('/'))
   if(account_name_split[0].endswith('visualstudio.com')):
     base_url = 'https://' + account_name[:(account_name_split[0].find('visualstudio.com') + 16)]
-  else:
+  elif(account_name_has_prefix):
     is_on_prem = True
     if(len(account_name_split) >= 2):
       base_url = prefix + account_name_split[0]

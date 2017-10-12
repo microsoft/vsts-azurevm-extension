@@ -209,7 +209,7 @@ function Get-HandlerExecutionSequenceNumber
     $script:handlerCache.getHandlerExecutionSequenceNumber
 }
 
-function RemoveProtectedSettingsAndWriteToConfigFile
+function Remove-ProtectedSettingsFromConfigFile
 {
     param()
     $handlerSettings = (Get-JsonContent $handlerSettingsFile)
@@ -270,7 +270,6 @@ function Get-HandlerSettings
         #
         if ($settings.protectedSettings)
         {
-            RemoveProtectedSettingsAndWriteToConfigFile
             $protectedSettings = $settings.protectedSettings
 
             Write-Log "Found protected settings on Azure VM. Decrypting with certificate."
@@ -983,5 +982,6 @@ Export-ModuleMember `
         Get-LastSequenceNumber, `
         Set-ExtensionDisabledMarkup, `
         Remove-ExtensionDisabledMarkup, `
+        Remove-ProtectedSettingsFromConfigFile, `
         Test-ExtensionDisabledMarkup, `
         Set-JsonContent

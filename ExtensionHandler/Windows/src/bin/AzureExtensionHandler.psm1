@@ -270,6 +270,7 @@ function Get-HandlerSettings
         #
         if ($settings.protectedSettings)
         {
+            Remove-ProtectedSettingsFromConfigFile
             $protectedSettings = $settings.protectedSettings
 
             Write-Log "Found protected settings on Azure VM. Decrypting with certificate."
@@ -982,6 +983,5 @@ Export-ModuleMember `
         Get-LastSequenceNumber, `
         Set-ExtensionDisabledMarkup, `
         Remove-ExtensionDisabledMarkup, `
-        Remove-ProtectedSettingsFromConfigFile, `
         Test-ExtensionDisabledMarkup, `
         Set-JsonContent

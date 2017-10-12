@@ -74,14 +74,14 @@ function Test-AgentSettingsAreSame
         $deploymentGroupDataAsPerSetting = $null
         try
         {
-            $url = $tfsUrl
+            $url = $agentTfsUrl
             if($collection)
             {
                 $url = -join($tfsUrl, '/', $collection)
             }
             
             WriteLog "`t`tCall GetDeploymentGroupDataFromAgentSetting" $logFunction
-            $deploymentGroupDataAsPerSetting = GetDeploymentGroupDataFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentTfsUrl -patToken $patToken -logFunction $logFunction
+            $deploymentGroupDataAsPerSetting = GetDeploymentGroupDataFromAgentSetting -agentSetting $agentSetting -tfsUrl $url -patToken $patToken -logFunction $logFunction
         }
         catch
         {

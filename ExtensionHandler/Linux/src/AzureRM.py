@@ -197,7 +197,7 @@ def parse_account_name(account_name):
   account_name = account_name.strip('/')
   account_name_split = filter(lambda x: x!='', account_name.split('/'))
   if(account_name_split[0].endswith('visualstudio.com')):
-    base_url = 'https://' + account_name[:(account_name_split[0].find('visualstudio.com') + 16)]
+    base_url = 'https://' + account_name_split[0]
   elif(account_name_has_prefix):
     is_on_prem = True
     if(len(account_name_split) >= 2):
@@ -274,7 +274,6 @@ def get_configutation_from_settings(operation):
       pat_token = protected_settings['PATToken']
     if((pat_token == '') and (public_settings.has_key('PATToken'))):
       pat_token = public_settings['PATToken']
-    handler_utility.verify_input_not_null('PATToken', pat_token)
     team_project_name = public_settings['TeamProject']
     handler_utility.verify_input_not_null('TeamProject', team_project_name)
     handler_utility.log('Team Project : {0}'.format(team_project_name))

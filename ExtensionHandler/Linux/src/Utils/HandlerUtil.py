@@ -142,8 +142,8 @@ class HandlerUtility:
     def error(self, message):
         self._error(self._get_log_prefix() + message)
 
-    def remove_protected_settings_and_write_to_config_file(self):
-        content = ctxt=waagent.GetFileContents(self._context._settings_file)
+    def remove_protected_settings_from_config_file(self):
+        content = waagent.GetFileContents(self._context._settings_file)
         config_to_write = json.loads(content)
         config_to_write['runtimeSettings'][0]['handlerSettings']['protectedSettings'] = ''
         content_to_write = json.dumps(config_to_write)

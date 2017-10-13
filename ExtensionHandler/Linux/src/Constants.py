@@ -20,16 +20,6 @@ remove_agent_command = '{0} remove --unattended'
 
 configure_agent_command = '{0} configure --unattended --acceptteeeula --deploymentgroup'
 
-agent_command_arguments = {
-                            'url' : '--url',
-                            'auth' : '--auth',
-                            'token' : '--token',
-                            'agent' : '--agent',
-                            'work' : '--work',
-                            'projectname' : '--projectname',
-                            'deploymentgroupname' : '--deploymentgroupname'
-                          }
-
 service_install_command = '{0} install root'
 service_start_command = '{0} start'
 service_stop_command = '{0} stop'

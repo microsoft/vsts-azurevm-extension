@@ -158,13 +158,6 @@ def agent_listener_exists(working_folder):
   write_configuration_log('\t\t Agent listener file exists : {0}'.format(agent_listener_exists))
   return agent_listener_exists
 
-def get_command_args(arg_names, arg_values):
-  command_args = []
-  for arg_name, arg_value in zip(arg_names, arg_values):
-    command_args += ['{0}'.format(arg_name), '{0}'.format(arg_value)]
-  return command_args
-
-
 def remove_existing_agent_internal(pat_token, working_folder, log_func):
   try:
     global agent_listener_path, agent_service_path, log_function, setting_params
@@ -187,7 +180,8 @@ def remove_existing_agent_internal(pat_token, working_folder, log_func):
     write_configuration_log('srderr : {0}'.format(std_err))
     if(not (return_code == 0)):
       raise Exception('Service uninstall failed with error : {0}'.format(std_err))
-    remove_command_args = get_command_args([Constants.agent_command_arguments[i] for i in['auth', 'token']], ['PAT', pat_token])
+    remove_command_args = ['--auth', 'PAT',
+                           '--token', pat_token]
     remove_agent_proc = subprocess.Popen(Constants.remove_agent_command.format(agent_listener_path).split(' ') + remove_command_args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
     std_out, std_err = remove_agent_proc.communicate()
     return_code = remove_agent_proc.returncode
@@ -300,8 +294,13 @@ def configure_agent_internal(vsts_url, pat_token, project_name, deployment_group
   global agent_listener_path, agent_service_path
   get_agent_listener_path(working_folder)
   get_agent_service_path(working_folder)
-  configure_command_args = get_command_args([Constants.agent_command_arguments[i] for i in['url', 'auth', 'token', 'agent', 'work', 'projectname', 'deploymentgroupname']], 
-                                            [vsts_url, 'PAT', pat_token, agent_name, Constants.default_agent_work_dir, project_name, deployment_group_name])
+  configure_command_args = ['--url', vsts_url,
+                            '--auth', 'PAT',
+                            '--token', pat_token,
+                            '--agent', agent_name,
+                            '--work', Constants.default_agent_work_dir,
+                            '--projectname', project_name,
+                            '--deploymentgroupname', deployment_group_name]
   config_agent_proc = subprocess.Popen(Constants.configure_agent_command.format(agent_listener_path).split(' ') + configure_command_args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   std_out, std_err = config_agent_proc.communicate()
   return_code = config_agent_proc.returncode

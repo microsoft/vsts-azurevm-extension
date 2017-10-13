@@ -16,8 +16,9 @@ agent_download_required_var_name = 'download_agent_targz'
 return_success = 0
 platform_format = '{0}.{1}.{2}-{3}'
 
-remove_agent_command = '{0} remove --unattended --auth PAT --token {1}'
-configure_agent_command = '{0} configure --unattended --acceptteeeula --url {1} --auth PAT --token {2} --agent {3} --work {4} --projectname {5} --deploymentgroup --deploymentgroupname {6}'
+remove_agent_command = '{0} remove --unattended'
+
+configure_agent_command = '{0} configure --unattended --acceptteeeula --deploymentgroup'
 
 service_install_command = '{0} install root'
 service_start_command = '{0} start'

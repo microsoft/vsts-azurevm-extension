@@ -362,7 +362,6 @@ function Get-ConfigurationFromSettings {
         if(-not $patToken)
         {
             $patToken = $publicSettings['PATToken']
-            VerifyInputNotNull "PATToken" $patToken
         }
 
         $teamProjectName = $publicSettings['TeamProject']

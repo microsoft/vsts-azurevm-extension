@@ -6,7 +6,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [string]$tfsUrl,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
     [string]$platform,
@@ -58,7 +58,7 @@ function WriteDownloadLog
     [Parameter(Mandatory=$true)]
     [string]$restCallUrl,   
     [string]$userName,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken
     )
     
@@ -90,7 +90,7 @@ function WriteDownloadLog
     [Parameter(Mandatory=$true)]
     [string]$platform,    
     [string]$userName,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken    
     )
 

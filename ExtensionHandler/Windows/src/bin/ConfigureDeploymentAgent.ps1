@@ -3,7 +3,7 @@ param(
     [string]$tfsUrl,
     [Parameter(Mandatory=$false)]
     [bool]$isOnPrem = $false,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
     [string]$projectName,

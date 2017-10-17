@@ -22,33 +22,38 @@ Describe "Agent ExistenceChecker Tests" {
     
     Context "Test-AgentSettingsAreSame should work fine" {
         
-        $agentSettings =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Dg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/testColl",  "workFolder": "_work",  "projectName": "testProj",  "deploymentGroupId": 1 }' | ConvertFrom-Json        
+        $agentSettings =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Dg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs",  "collectionName": "testColl", "workFolder": "_work",  "projectName": "testProj",  "deploymentGroupId": 1 }' | ConvertFrom-Json        
         
         Mock GetAgentSettingFilePath { return "$currentScriptPath\..\bin\AgentExistenceChecker.ps1"}
         Mock Get-AgentSettings { return $agentSettings }
         Mock GetDeploymentGroupDataFromAgentSetting { return ('{ "machines":[{"tags":["t1","tag1","zxfzxcz"],"id":5022},{"tags":["t1"],"id":5023}],"machineCount":2,"id":2934,"project":{"id":"b924d689-3eae-4116-8443-9a17392d8544","name":"testProj"},"name":"my-dggrp1","pool":{"id":352,"scope":"0efb4611-d565-4cd1-9a64-7d6cb6d7d5f0","name":"01c05ec2-bde8-48e8-a3ad-7838e92d3455","isHosted":false,"poolType":"deployment"} }' | ConvertFrom-Json ) }
         
         It "should return true if given agent settings are same as existing agent running with" {
-            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs/testColl" -collection "" -projectName "testProj" -deploymentGroupName "my-dggrp1" -patToken "test-PAT"
+            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs/testColl" -isOnPrem $true -projectName "testProj" -deploymentGroupName "my-dggrp1" -patToken "test-PAT"
             $ret | Should be "$true"
 
             Assert-MockCalled GetDeploymentGroupDataFromAgentSetting -Times 1 -ParameterFilter { $tfsUrl.EndsWith("/tfs/testColl") }             
         }
 
         It "should return false if given agent settings are not same as existing agent running with ( project name different )" {
-            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs/testColl" -collection "testColl" -projectName "testProjDifferentOne" -deploymentGroupName "my-dggrp1" -patToken "test-PAT"
+            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs/testColl" -isOnPrem $true -projectName "testProjDifferentOne" -deploymentGroupName "my-dggrp1" -patToken "test-PAT"
             $ret | Should be "$false"
 
             Assert-MockCalled GetDeploymentGroupDataFromAgentSetting -Times 1 -ParameterFilter { $tfsUrl.EndsWith("/tfs/testColl") }                                 
         }
         
         It "should return false if given agent settings are not same as existing agent running with ( deployment group name different )" {
-            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs/testColl" -collection "testColl" -projectName "testProj" -deploymentGroupName "my-dggrp1-different" -patToken "test-PAT"
+            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs/testColl" -isOnPrem $true -projectName "testProj" -deploymentGroupName "my-dggrp1-different" -patToken "test-PAT"
             $ret | Should be "$false"                 
         }
         
          It "should return false if given agent settings are not same as existing agent running with ( tfs url different )" {
-            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfsdifferentone:8080/tfs" -collection "testColl" -projectName "testProj" -deploymentGroupName "my-dggrp1" -patToken "test-PAT"
+            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfsdifferentone:8080/tfs/testColl" -isOnPrem $true -projectName "testProj" -deploymentGroupName "my-dggrp1" -patToken "test-PAT"
+            $ret | Should be "$false"                 
+        }
+
+        It "should return false if given agent settings are not same as existing agent running with ( tfs different collection)" {
+            $ret = Test-AgentSettingsAreSame -workingFolder "c:\test" -tfsUrl "http://mylocaltfs:8080/tfs/testDifferentColl" -isOnPrem $true -projectName "testProj" -deploymentGroupName "my-dggrp1" -patToken "test-PAT"
             $ret | Should be "$false"                 
         }
     }

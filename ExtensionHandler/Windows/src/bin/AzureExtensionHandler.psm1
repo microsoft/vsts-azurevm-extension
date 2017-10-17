@@ -213,7 +213,7 @@ function Remove-ProtectedSettingsFromConfigFile
 {
     param()
     $handlerSettings = (Get-JsonContent $handlerSettingsFile)
-    $handlerSettings.runtimeSettings[0].handlerSettings['protectedSettings'] = ''
+    $handlerSettings.runtimeSettings[0].handlerSettings["protectedSettings"] = ""
     Set-JsonContent -Path $handlerSettingsFile -Value $handlerSettings -Force
 }
 

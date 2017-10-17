@@ -21,7 +21,7 @@ function ConfigureAgent
     [string]$tfsUrl,
     [Parameter(Mandatory=$false)]
     [bool]$isOnPrem = $false,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
     [string]$workingFolder,
@@ -62,7 +62,7 @@ function ConfigureAgent
 function RemoveExistingAgent
 {
     param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
     [string]$configCmdPath    
@@ -97,7 +97,7 @@ function ApplyTagsToAgent
     [string]$tfsUrl,
     [Parameter(Mandatory=$true)]
     [string]$projectName,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
     [string]$deploymentGroupId,    
@@ -139,7 +139,7 @@ function AddTagsToAgent
     [string]$tfsUrl,
     [Parameter(Mandatory=$true)]
     [string]$projectName,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
     [string]$deploymentGroupId,    
@@ -214,7 +214,7 @@ function AddTagsToAgent
 function GetRESTCallHeader
 {
     param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken    
     )
     

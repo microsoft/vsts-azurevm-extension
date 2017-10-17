@@ -142,12 +142,6 @@ class HandlerUtility:
     def error(self, message):
         self._error(self._get_log_prefix() + message)
 
-    def get_host_and_address(full_vsts_url, package_data_address):
-        if(full_vsts_url.__class__.__name__ == 'list' and len(full_vsts_url) == 3):
-            address = '/' + full_vsts_url[1] + '/' + full_vsts_url[2] + '/' + package_data_address
-            return full_vsts_url[0], address
-        raise 'VSTS url is invalid'
-
     def remove_protected_settings_from_config_file(self):
         content = waagent.GetFileContents(self._context._settings_file)
         config_to_write = json.loads(content)
@@ -248,7 +242,7 @@ class HandlerUtility:
             return None
         self._context._config = self._parse_config(ctxt)
         self.log("JSON config read successfully")
-        self.remove_protected_settings_and_write_to_config_file()
+        self.remove_protected_settings_from_config_file()
         return self._context
 
     def _set_log_file_to_command_execution_log(self):

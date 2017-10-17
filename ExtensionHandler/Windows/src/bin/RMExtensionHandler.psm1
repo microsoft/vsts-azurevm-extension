@@ -524,8 +524,8 @@ function Test-AgentReConfigurationRequiredInternal {
     [hashtable] $config
     )
 
-    $url = Get-AccountUrl $config.VSTSUrl  
-    $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -isOnPrem $config["IsOnPrem"] -collection $config.TfsCollection -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken -logFunction $script:logger)
+    . $PSScriptRoot\AgentExistenceChecker.ps1
+    $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -isOnPrem $config["IsOnPrem"] -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken -logFunction $script:logger)
     return $agentReConfigurationRequired
 }
 

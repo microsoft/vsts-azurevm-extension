@@ -5,7 +5,6 @@ import tarfile
 import json
 import Constants
 import os
-import Utils.HandlerUtil as Util
 
 log_function = None
 
@@ -23,7 +22,12 @@ def empty_dir(dir_name):
 
 def get_agent_package_data(full_vsts_url, package_data_address, user_name, pat_token):
   write_download_log('\t\t Forming the header for making HTTP request call')
-  vsts_url, package_data_address = Util.get_host_and_address(full_vsts_url, package_data_address)
+  vsts_url = ''
+  if(full_vsts_url.__class__.__name__ == 'list' and len(full_vsts_url) == 3):
+    address = '/' + full_vsts_url[1] + '/' + full_vsts_url[2] + package_data_address
+    vsts_url = full_vsts_url[0]
+  else:
+    raise Exception('VSTS url is invalid')
   method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):
     vsts_url = vsts_url[7:]
@@ -46,7 +50,7 @@ def get_agent_package_data(full_vsts_url, package_data_address, user_name, pat_t
     raise Exception('Error while downloading VSTS extension. Please make sure that you enter the correct VSTS account name and PAT token.')
 
 def get_agent_download_url(full_vsts_url, platform, user_name, pat_token):
-  package_data_address = '_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}'.format(platform, Constants.download_api_version)
+  package_data_address = '/_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}'.format(platform, Constants.download_api_version)
   write_download_log('\t\t Package data address' + package_data_address)
   write_download_log('\t\tFetching Agent PackageData using {0}'.format(package_data_address))
   package_data = get_agent_package_data(full_vsts_url, package_data_address, user_name, pat_token)

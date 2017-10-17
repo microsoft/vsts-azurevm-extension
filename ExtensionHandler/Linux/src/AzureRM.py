@@ -169,8 +169,8 @@ def get_account_name_prefix(account_name):
   account_name_lower = account_name.lower()
   if(account_name_lower.startswith('http://')):
     return 'http://'
-  if(account_name_lower.startswith('https://')):
-    prefix = 'https://'
+  elif(account_name_lower.startswith('https://')):
+    return 'https://'
   return '' 
 
 def parse_account_name(account_name): 
@@ -252,12 +252,13 @@ def get_configutation_from_settings(operation):
     account_name_parse_result = parse_account_name(vsts_account_name)
     vsts_url = account_name_parse_result['VSTSUrl']
     virtual_application = account_name_parse_result['VirtualApplication']
+    collection = account_name_parse_result['Collection']
     is_on_prem = account_name_parse_result['IsOnPrem']
-    if(get_account_name_prefix(vsts_account_name) == ''):
+    if(get_account_name_prefix(vsts_url) == ''):
       vsts_url = format_string.format(vsts_account_name)
     handler_utility.log('VSTS service URL : {0}'.format(vsts_url))
     pat_token = ''
-    if(protected_settings.has_key('PATToken')):
+    if((protected_settings.__class__.__name__ == 'str') and protected_settings.has_key('PATToken')):
       pat_token = protected_settings['PATToken']
     if((pat_token == '') and (public_settings.has_key('PATToken'))):
       pat_token = public_settings['PATToken']

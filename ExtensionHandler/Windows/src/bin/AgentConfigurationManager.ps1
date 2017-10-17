@@ -19,6 +19,8 @@ function ConfigureAgent
     param(
     [Parameter(Mandatory=$true)]
     [string]$tfsUrl,
+    [Parameter(Mandatory=$false)]
+    [bool]$isOnPrem = $false,
     [Parameter(Mandatory=$true)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
@@ -35,6 +37,9 @@ function ConfigureAgent
     
     $processStartInfo = GetProcessStartInfo
     $processStartInfo.FileName = $configCmdPath
+    if($isOnPrem){
+        $tfsUrl = $tfsUrl.Substring(0,$tfsUrl.LastIndexOf('/'))
+    }
     $processStartInfo.Arguments = "$configCommonArgs --agent $agentName --url $tfsUrl --token $patToken --work $workingFolder --projectname $projectName --deploymentgroupname $deploymentGroupName"
     
     $configProcess = New-Object System.Diagnostics.Process

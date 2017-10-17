@@ -142,6 +142,10 @@ rm_extension_status = {
     'Code' : 1004,
     'Message' : 'Linux distribution {0} {1} not supported.'
   },
+  'InvalidAccountName' : {
+    'Code' : 1005,
+    'Message' : 'Invalid value for VSTS account name. It should be just the account name, eg: contoso in case of https://contoso.visualstudio.com(for hosted), or of the format http(s)://<server>/<application>/<collection>(for on-prem)'
+  }
   #
   # ArgumentError indicates a problem in the input provided by the user. The message for the error is provided by the specific exception
   #

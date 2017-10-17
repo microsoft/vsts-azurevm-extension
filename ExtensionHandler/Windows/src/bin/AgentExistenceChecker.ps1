@@ -42,6 +42,8 @@ function Test-AgentSettingsAreSame
         [string]$workingFolder,
         [Parameter(Mandatory=$true)]
         [string]$tfsUrl,
+        [Parameter(Mandatory=$false)]
+        [bool]$isOnPrem = $false,
         [Parameter(Mandatory=$true)]
         [AllowEmptyString()]
         [string]$collection,
@@ -72,16 +74,18 @@ function Test-AgentSettingsAreSame
         $tfsUrl = $tfsUrl.TrimEnd('/')
         $agentTfsUrl = $agentSetting.serverUrl.TrimEnd('/')
         $deploymentGroupDataAsPerSetting = $null
+        $agentCollection = ""
         try
         {
-            $url = $agentTfsUrl
-            if($collection)
+            $sgentUrl = $agentTfsUrl
+            $agentCollection = if($agentSetting.collectionName){$agentSetting.collectionName}
+            if($collectionName)
             {
-                $url = -join($tfsUrl, '/', $collection)
+                $sgentUrl = -join($tfsUrl, '/', $agentCollection)
             }
             
             WriteLog "`t`tCall GetDeploymentGroupDataFromAgentSetting" $logFunction
-            $deploymentGroupDataAsPerSetting = GetDeploymentGroupDataFromAgentSetting -agentSetting $agentSetting -tfsUrl $url -patToken $patToken -logFunction $logFunction
+            $deploymentGroupDataAsPerSetting = GetDeploymentGroupDataFromAgentSetting -agentSetting $agentSetting -tfsUrl $sgentUrl -patToken $patToken -logFunction $logFunction
         }
         catch
         {
@@ -101,10 +105,20 @@ function Test-AgentSettingsAreSame
         WriteLog "`t`t`t $($deploymentGroupDataAsPerSetting.name) `t`t`t`t`t $deploymentGroupName" $logFunction
         if( ([string]::Compare($tfsUrl, $agentTfsUrl, $True) -eq 0) -and ([string]::Compare($projectName, $($deploymentGroupDataAsPerSetting.project.name), $True) -eq 0) -and ([string]::Compare($deploymentGroupName, $($deploymentGroupDataAsPerSetting.name), $True) -eq 0) )
         {         
-            WriteLog "`t`t`t Test-AgentSettingsAreSame Return : true" $logFunction        
-            return $true
+            if($isOnPrem){
+                $tfsUrlSplit = $tfsUrl.Split("/")
+                $collection = $tfsUrlSplit[$tfsUrlSplit.Count - 1]
+                WriteLog "`t`t`t $agentCollection `t`t`t`t`t $collection" $logFunction
+                if([string]::Compare($collection, $agentCollection, $True) -eq 0){
+                    WriteLog "`t`t`t Test-AgentSettingsAreSame Return : true" $logFunction        
+                    return $true
+                }
+            }
+            else{
+                WriteLog "`t`t`t Test-AgentSettingsAreSame Return : true" $logFunction        
+                return $true
+            }
         }
-        
         WriteLog "`t`t`t Test-AgentSettingsAreSame Return : false" $logFunction        
         return $false
     }

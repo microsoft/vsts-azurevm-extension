@@ -2,8 +2,6 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$tfsUrl,
     [Parameter(Mandatory=$false)]
-    [bool]$isOnPrem = $false,
-    [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
     [string]$projectName,
@@ -74,7 +72,7 @@ try
     
     WriteConfigurationLog "Configure agent"
     
-    ConfigureAgent -tfsUrl $tfsUrl -isOnPrem $isOnPrem -patToken $patToken -workingFolder $defaultAgentWorkingFolder -projectName $projectName -deploymentGroupName $deploymentGroupName -agentName $agentName -configCmdPath $(GetConfigCmdPath)
+    ConfigureAgent -tfsUrl $tfsUrl -patToken $patToken -workingFolder $defaultAgentWorkingFolder -projectName $projectName -deploymentGroupName $deploymentGroupName -agentName $agentName -configCmdPath $(GetConfigCmdPath)
     
     return $returnSuccess 
 }

@@ -7,17 +7,12 @@ import codecs
 import base64
 import httplib
 from urllib2 import quote
+from HandlerUtil import get_host_and_addr
 
 agent_listener_path = ''
 agent_service_path = ''
 log_function = None
 setting_params = {}
-
-def get_host_and_address(full_vsts_url, package_data_address):
-  if(full_vsts_url.__class__.__name__ == 'list' and len(full_vsts_url) == 3):
-    address = '/' + full_vsts_url[1] + '/' + full_vsts_url[2] + package_data_address
-    return full_vsts_url[0], address
-  raise Exception('VSTS url is invalid')
 
 def write_configuration_log(log_message):
   global log_function
@@ -59,9 +54,9 @@ def test_configured_agent_exists_internal(working_folder, log_func):
     write_log(e.message)
     raise e
 
-def invoke_url_for_deployment_group_data(full_vsts_url, user_name, pat_token, deployment_group_data_address):
+def invoke_url_for_deployment_group_data(account_info, user_name, pat_token, deployment_group_data_address):
   write_log('\t\t Form header for making http call')
-  vsts_url, deployment_group_data_address = get_host_and_address(full_vsts_url, deployment_group_data_address)
+  vsts_url, deployment_group_data_address = get_host_and_address(account_info, deployment_group_data_address)
   method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):
     vsts_url = vsts_url[7:]
@@ -86,7 +81,7 @@ def invoke_url_for_deployment_group_data(full_vsts_url, user_name, pat_token, de
     raise Exception('Unable to fetch the deployment group information from VSTS server.')
   
 
-def get_deployment_group_data_from_setting(full_vsts_url, pat_token):
+def get_deployment_group_data_from_setting(account_info, pat_token):
   global setting_params
   deployment_group_id = ''
   project_id = ''
@@ -110,42 +105,42 @@ def get_deployment_group_data_from_setting(full_vsts_url, pat_token):
         write_log('\t\t Deployment group projectName - {0}'.format(project_id))
     if(project_id != ''):
       deployment_group_data_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}'.format(project_id, deployment_group_id)
-      deployment_group_data = invoke_url_for_deployment_group_data(full_vsts_url, '', pat_token, deployment_group_data_address)
+      deployment_group_data = invoke_url_for_deployment_group_data(account_info, '', pat_token, deployment_group_data_address)
       return deployment_group_data
   return {}
 
-def test_agent_configuration_required_internal(full_vsts_url, is_on_prem, pat_token, deployment_group_name, project_name, working_folder, log_func):
+def test_agent_configuration_required_internal(account_info, pat_token, deployment_group_name, project_name, working_folder, log_func):
   global log_function, setting_params
   log_function = log_func
   try:
     write_log('AgentReConfigurationRequired check started.')
     existing_vsts_url = get_agent_setting(working_folder, 'serverUrl')
     existing_vsts_url = existing_vsts_url.strip('/')
-    existing_full_vsts_url = (existing_vsts_url[7:] if(existing_vsts_url.startswith('http://')) else existing_vsts_url[8:]).split('/')
+    existing_account_info = (existing_vsts_url[7:] if(existing_vsts_url.startswith('http://')) else existing_vsts_url[8:]).split('/')
     if(get_agent_setting(working_folder, 'collectionName') == ''):
-      existing_full_vsts_url += ['', '']
+      existing_account_info += ['', '']
     else:
-      existing_full_vsts_url += get_agent_setting(working_folder, 'collectionName')
+      existing_account_info += get_agent_setting(working_folder, 'collectionName')
     existing_deployment_group_data = None
     try:
-      existing_deployment_group_data = get_deployment_group_data_from_setting(existing_full_vsts_url, pat_token)
+      existing_deployment_group_data = get_deployment_group_data_from_setting(existing_account_info, pat_token)
     except Exception as e:
       write_log('\t\t\t Unable to get the deployment group data - {0}'.format(e.message))
     if(existing_deployment_group_data == None or existing_deployment_group_data == {}):
       write_log("\t\t\t agent configuration required Return : True (Unable to get the deployment group data from existing agent settings)")
       return True
-    vsts_url_for_configuration = (full_vsts_url[0] + '/' + full_vsts_url[1]).strip('/')
+    vsts_url_for_configuration = (account_info[0] + '/' + account_info[1]).strip('/')
     write_log('\t\t\t Agent configured with \t\t\t\t Agent needs to be configured with')
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_vsts_url, vsts_url_for_configuration))
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_deployment_group_data['project']['name'], project_name))
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_deployment_group_data['name'], deployment_group_name))
-    if(is_on_prem):
-      write_log('\t\t\t {0} \t\t\t\t {1}'.format(et_agent_setting(working_folder, 'collectionName'), full_vsts_url[2]))
+    if(Constants.is_on_prem):
+      write_log('\t\t\t {0} \t\t\t\t {1}'.format(et_agent_setting(working_folder, 'collectionName'), account_info[2]))
     if(existing_vsts_url.lower() == vsts_url_for_configuration.lower() and \
            existing_deployment_group_data['name'].lower() == deployment_group_name.lower() and \
            existing_deployment_group_data['project']['name'].lower() == project_name.lower()):
-      if(is_on_prem):
-        if(get_agent_setting(working_folder, 'collectionName').lower() == full_vsts_url[2].lower()):
+      if(Constants.is_on_prem):
+        if(get_agent_setting(working_folder, 'collectionName').lower() == account_info[2].lower()):
           write_log('\t\t\t test_agent_configuration_required : False') 
           return False
       else:
@@ -212,9 +207,9 @@ def remove_existing_agent_internal(pat_token, working_folder, log_func):
     write_configuration_log(e.message)
     raise e
 
-def apply_tags_to_agent(full_vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string, machine_id):
+def apply_tags_to_agent(account_info, pat_token, project_name, deployment_group_id, agent_id, tags_string, machine_id):
   tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Machines?api-version={2}'.format(quote(project_name), deployment_group_id, Constants.tags_api_version)
-  vsts_url, tags_address = get_host_and_address(full_vsts_url,  tags_address)
+  vsts_url, tags_address = get_host_and_address(account_info,  tags_address)
   method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):
     vsts_url = vsts_url[7:]
@@ -238,9 +233,9 @@ def apply_tags_to_agent(full_vsts_url, pat_token, project_name, deployment_group
     raise Exception('Tags could not be added. Please make sure that you enter correct details.')
 
 
-def add_tags_to_agent(full_vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string):
+def add_tags_to_agent(account_info, pat_token, project_name, deployment_group_id, agent_id, tags_string):
   tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Machines?api-version={2}'.format(quote(project_name), deployment_group_id, Constants.tags_api_version)
-  vsts_url, tags_address = get_host_and_address(full_vsts_url, tags_address)
+  vsts_url, tags_address = get_host_and_address(account_info, tags_address)
   method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):
     vsts_url = vsts_url[7:]
@@ -279,9 +274,9 @@ def add_tags_to_agent(full_vsts_url, pat_token, project_name, deployment_group_i
     msg = 'Tags could not be added. Unable to get the machine id'
     raise Exception(msg)
   write_add_tags_log('Updating the tags for agent machine - {0}'.format(machine_id))
-  apply_tags_to_agent(full_vsts_url, pat_token, project_name, deployment_group_id, agent_id, json.dumps(tags, ensure_ascii = False), json.dumps(machine_id))
+  apply_tags_to_agent(account_info, pat_token, project_name, deployment_group_id, agent_id, json.dumps(tags, ensure_ascii = False), json.dumps(machine_id))
 
-def add_agent_tags_internal(full_vsts_url, project_name, pat_token, working_folder, tags_string, log_func):
+def add_agent_tags_internal(account_info, project_name, pat_token, working_folder, tags_string, log_func):
   global log_function
   log_function = log_func
   try:
@@ -302,18 +297,18 @@ def add_agent_tags_internal(full_vsts_url, project_name, pat_token, working_fold
       pass
     if(agent_id == '' or deployment_group_id == ''):
       raise Exception('Unable to get the deployment group id or agent id. Ensure that the agent is configured before adding tags.'.format(working_folder))
-    add_tags_to_agent(full_vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string)
+    add_tags_to_agent(account_info, pat_token, project_name, deployment_group_id, agent_id, tags_string)
     return Constants.return_success 
   except Exception as e:
     write_add_tags_log(e.message)
     raise e
 
-def configure_agent_internal(full_vsts_url, is_on_prem, pat_token, project_name, deployment_group_name, agent_name, working_folder):
+def configure_agent_internal(account_info, pat_token, project_name, deployment_group_name, agent_name, working_folder):
   global agent_listener_path, agent_service_path
   get_agent_listener_path(working_folder)
   get_agent_service_path(working_folder)
-  get_host_and_address(full_vsts_url, '')
-  vsts_url = (full_vsts_url[0] + '/' + full_vsts_url[1]) if (is_on_prem) else full_vsts_url[0]
+  get_host_and_address(account_info, '')
+  vsts_url = (account_info[0] + '/' + account_info[1]) if (Constants.is_on_prem) else account_info[0]
   configure_command_args = ['--url', vsts_url,
                             '--auth', 'PAT',
                             '--token', pat_token,
@@ -321,8 +316,8 @@ def configure_agent_internal(full_vsts_url, is_on_prem, pat_token, project_name,
                             '--work', Constants.default_agent_work_dir,
                             '--projectname', project_name,
                             '--deploymentgroupname', deployment_group_name]
-  if(is_on_prem):
-    configure_command_args += ['--collectionname', full_vsts_url[2]]
+  if(Constants.is_on_prem):
+    configure_command_args += ['--collectionname', account_info[2]]
   config_agent_proc = subprocess.Popen('{0} configure --unattended --acceptteeeula --deploymentgroup --replace'.format(agent_listener_path).split(' ') + configure_command_args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   std_out, std_err = config_agent_proc.communicate()
   return_code = config_agent_proc.returncode
@@ -354,7 +349,7 @@ def configure_agent_internal(full_vsts_url, is_on_prem, pat_token, project_name,
   
 
 
-def configure_agent(full_vsts_url, is_on_prem, pat_token, project_name, deployment_group_name, agent_name, working_folder, agent_exists, log_func):
+def configure_agent(account_info, pat_token, project_name, deployment_group_name, agent_name, working_folder, agent_exists, log_func):
   global agent_listener_path
   global log_function
   log_function = log_func
@@ -365,7 +360,7 @@ def configure_agent(full_vsts_url, is_on_prem, pat_token, project_name, deployme
       agent_name = platform.node() + '-DG'
       write_configuration_log('Agent name not provided, agent name will be set as ' + agent_name)
     write_configuration_log('Configuring agent')
-    configure_agent_internal(full_vsts_url, is_on_prem, pat_token, project_name, deployment_group_name, agent_name, working_folder)
+    configure_agent_internal(account_info, pat_token, project_name, deployment_group_name, agent_name, working_folder)
     return Constants.return_success
   except Exception as e:
     write_configuration_log(e.message)

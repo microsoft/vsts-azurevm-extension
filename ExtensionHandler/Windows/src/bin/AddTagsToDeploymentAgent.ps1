@@ -1,9 +1,9 @@
 param(
     [Parameter(Mandatory=$true)]
     [string]$tfsUrl,
-    [Parameter(Mandatory=$true)]
-    [string]$patToken,
     [Parameter(Mandatory=$false)]
+    [string]$patToken,
+    [Parameter(Mandatory=$true)]
     [string]$projectName,
     [Parameter(Mandatory=$true)]
     [string]$workingFolder, 

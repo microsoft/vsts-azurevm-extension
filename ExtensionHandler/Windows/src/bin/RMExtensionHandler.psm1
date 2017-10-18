@@ -310,10 +310,10 @@ function Get-ConfigurationFromSettings {
         $vstsAccountName = $publicSettings['VSTSAccountName'].ToLower()
         $tfsVirtualApplication = ""
         $tfsCollection = ""
-        $isOnPrem = $false
+        $global:isOnPrem = $false
         VerifyInputNotNull "VSTSAccountName" $vstsAccountName
         $vstsAccountName = $vstsAccountName.TrimEnd('/')
-        if((($vstsAccountName.StartsWith("https://")) -or ($vstsAccountName.StartsWith("http://"))))
+        if(($vstsAccountName.StartsWith("https://")) -or ($vstsAccountName.StartsWith("http://")))
         {
             $parts = $vstsAccountName.Split(@('://'), [System.StringSplitOptions]::RemoveEmptyEntries)
 
@@ -333,14 +333,15 @@ function Get-ConfigurationFromSettings {
             $vstsUrl = -join($protocolHeader, $subparts[0].trim())
             if(!$vstsUrl.EndsWith("visualstudio.com")){
                 # This is for the on-prem tfs scenario where url is supposed to be of format http(s)://<server-name>/<application>/<collection>
-                $isOnPrem = $true
+                $global:isOnPrem = $true
                 if($subparts.Count -ge 2)
                 {
-                    $tfsVirtualApplication = $subparts[1]
+                    $tfsVirtualApplication = $subparts[1].trim()
                     $tfsCollection = 'DefaultCollection'
                     if($subparts.Count -gt 2){
                         $tfsCollection = $subparts[2].trim()
                     }
+                    $vstsUrl = "$vstsUrl/$tfsVirtualApplication/$tfsCollection"
                 }
                 else
                 {   
@@ -409,8 +410,7 @@ function Get-ConfigurationFromSettings {
         Add-HandlerSubStatus $RM_Extension_Status.SuccessfullyReadSettings.Code $RM_Extension_Status.SuccessfullyReadSettings.Message -operationName $RM_Extension_Status.SuccessfullyReadSettings.operationName
 
         return @{
-            VSTSUrl  = if($isOnPrem) {"$vstsUrl/$tfsVirtualApplication/$tfsCollection"} else {$vstsUrl}
-            IsOnPrem = $isOnPrem
+            VSTSUrl  = $vstsUrl
             PATToken = $patToken
             Platform = $platform
             TeamProject        = $teamProjectName
@@ -525,7 +525,7 @@ function Test-AgentReConfigurationRequiredInternal {
     )
 
     . $PSScriptRoot\AgentExistenceChecker.ps1
-    $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -isOnPrem $config["IsOnPrem"] -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken -logFunction $script:logger)
+    $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken -logFunction $script:logger)
     return $agentReConfigurationRequired
 }
 
@@ -535,7 +535,7 @@ function Invoke-ConfigureAgentScript {
     [hashtable] $config
     )
 
-    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -isOnPrem $config["IsOnPrem"] -patToken  $config.PATToken -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
 }
 
 function Invoke-RemoveAgentScript {

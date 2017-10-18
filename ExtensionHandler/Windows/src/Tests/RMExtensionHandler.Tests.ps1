@@ -422,7 +422,7 @@ Describe "parse vsts account name settings tests" {
 
         It "should set proper status" {
             Get-ConfigurationFromSettings        
-            Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1  -ParameterFilter { $Code -eq $RM_Extension_Status.InvalidAccountName.Code}
+            Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1  -ParameterFilter { $ErrorRecord.Exception.Message -eq "Invalid value for VSTS account name. It should be just the account name, eg: contoso in case of https://contoso.visualstudio.com(for hosted), or of the format http(s)://<server>/<application>/<collection>(for on-prem)"}
         }
     }
 }

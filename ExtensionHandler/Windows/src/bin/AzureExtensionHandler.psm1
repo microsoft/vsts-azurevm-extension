@@ -214,7 +214,13 @@ function Remove-ProtectedSettingsFromConfigFile
     param()
     $handlerSettings = (Get-JsonContent $handlerSettingsFile)
     $handlerSettings.runtimeSettings[0].handlerSettings["protectedSettings"] = ""
-    Set-JsonContent -Path $handlerSettingsFile -Value $handlerSettings -Force
+    try
+    {
+        Set-JsonContent -Path $handlerSettingsFile -Value $handlerSettings -Force
+    }
+    catch{
+        Write-Log "[Warning]: could not delete the PAT from the settings file. More details : $_"
+    }
 }
 
 <#

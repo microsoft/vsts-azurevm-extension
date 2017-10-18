@@ -42,8 +42,6 @@ function Test-AgentSettingsAreSame
         [string]$workingFolder,
         [Parameter(Mandatory=$true)]
         [string]$tfsUrl,
-        [Parameter(Mandatory=$false)]
-        [bool]$isOnPrem = $false,
         [Parameter(Mandatory=$true)]
         [string]$projectName,
         [Parameter(Mandatory=$true)]

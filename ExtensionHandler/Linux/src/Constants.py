@@ -18,3 +18,4 @@ red_hat_distr_name = 'Red Hat Enterprise Linux Server'
 ubuntu_distr_name = 'Ubuntu'
 
 default_agent_work_dir = '_work'
+is_on_prem = False

@@ -446,9 +446,4 @@ class HandlerUtility:
             excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['ArgumentError'], message)
             raise excep
 
-def get_host_and_address(account_info, package_data_address):
-    if(account_info.__class__.__name__ == 'list' and len(account_info) == 3):
-        address = '/' + account_info[1] + '/' + account_info[2] + package_data_address
-        return faccount_info[0], address
-    raise Exception('VSTS url is invalid')
 

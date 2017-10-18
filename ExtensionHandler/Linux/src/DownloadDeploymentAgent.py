@@ -5,7 +5,6 @@ import tarfile
 import json
 import Constants
 import os
-from HandlerUtil import get_host_and_addr
 
 log_function = None
 
@@ -21,9 +20,15 @@ def empty_dir(dir_name):
     for dirname in dirnames:
       os.rmdir(os.path.join(dirpath, dirname))
 
+def get_host_and_address(account_info, package_data_address):
+  if(account_info.__class__.__name__ == 'list' and len(account_info) == 3):
+    address = '/' + account_info[1] + '/' + account_info[2] + package_data_address
+    return account_info[0], address
+  raise Exception('VSTS url is invalid')
+
 def get_agent_package_data(account_info, package_data_address, user_name, pat_token):
   write_download_log('\t\t Forming the header for making HTTP request call')
-  vsts_url, package_data_address = get_host_and_addr(account_info, package_data_address)
+  vsts_url, package_data_address = get_host_and_address(account_info, package_data_address)
   method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):
     vsts_url = vsts_url[7:]

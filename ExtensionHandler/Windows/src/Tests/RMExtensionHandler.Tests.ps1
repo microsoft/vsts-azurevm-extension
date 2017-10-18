@@ -249,9 +249,7 @@ Describe "parse vsts account name settings tests" {
                         Tags = @()
                         AgentName = "name" 
                     };
-                protectedSettings = @{
-                        PATToken = "hash"
-                }
+                protectedSettings = ""
             }
             return $inputSettings }
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
@@ -262,7 +260,8 @@ Describe "parse vsts account name settings tests" {
         $settings = Get-ConfigurationFromSettings
 
         It "should set proper status" {
-            $settings.VSTSUrl | Should Be "https://abc.visualstudio.com"     
+            $settings.VSTSUrl | Should Be "https://abc.visualstudio.com"
+            $settings.PATToken | Should Be ""     
         }
     }
 

@@ -35,6 +35,7 @@ function ConfigureAgent
     
     $processStartInfo = GetProcessStartInfo
     $processStartInfo.FileName = $configCmdPath
+    $url = $tfsUrl
     if($global:isOnPrem){
         $url = $tfsUrl.Substring(0,$tfsUrl.LastIndexOf('/'))
     }

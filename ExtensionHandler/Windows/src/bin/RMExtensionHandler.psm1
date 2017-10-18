@@ -356,7 +356,7 @@ function Get-ConfigurationFromSettings {
 
         Write-Log "VSTS service URL: $vstsUrl"
 
-        $patToken = $null
+        $patToken = ""
         if($protectedSettings.Contains('PATToken'))
         {
             $patToken = $protectedSettings['PATToken']
@@ -365,6 +365,10 @@ function Get-ConfigurationFromSettings {
         if(-not $patToken)
         {
             $patToken = $publicSettings['PATToken']
+        }
+        if(-not $patToken)
+        {
+            $patToken = ""
         }
 
         $teamProjectName = $publicSettings['TeamProject']

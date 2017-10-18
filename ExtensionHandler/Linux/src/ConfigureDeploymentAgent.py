@@ -7,7 +7,6 @@ import codecs
 import base64
 import httplib
 from urllib2 import quote
-from HandlerUtil import get_host_and_addr
 
 agent_listener_path = ''
 agent_service_path = ''
@@ -38,6 +37,12 @@ def get_agent_setting(working_folder, key):
   if(setting_params == {}):
     setting_params = json.load(codecs.open(agent_setting_file_path, 'r', 'utf-8-sig'))
   return setting_params[key] if(setting_params.has_key(key)) else ''
+
+def get_host_and_address(account_info, package_data_address):
+  if(account_info.__class__.__name__ == 'list' and len(account_info) == 3):
+    address = '/' + account_info[1] + '/' + account_info[2] + package_data_address
+    return account_info[0], address
+  raise Exception('VSTS url is invalid')
 
 def test_configured_agent_exists_internal(working_folder, log_func):
   global log_function
@@ -120,7 +125,7 @@ def test_agent_configuration_required_internal(account_info, pat_token, deployme
     if(get_agent_setting(working_folder, 'collectionName') == ''):
       existing_account_info += ['', '']
     else:
-      existing_account_info += get_agent_setting(working_folder, 'collectionName')
+      existing_account_info += [get_agent_setting(working_folder, 'collectionName')]
     existing_deployment_group_data = None
     try:
       existing_deployment_group_data = get_deployment_group_data_from_setting(existing_account_info, pat_token)
@@ -135,7 +140,7 @@ def test_agent_configuration_required_internal(account_info, pat_token, deployme
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_deployment_group_data['project']['name'], project_name))
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_deployment_group_data['name'], deployment_group_name))
     if(Constants.is_on_prem):
-      write_log('\t\t\t {0} \t\t\t\t {1}'.format(et_agent_setting(working_folder, 'collectionName'), account_info[2]))
+      write_log('\t\t\t {0} \t\t\t\t {1}'.format(get_agent_setting(working_folder, 'collectionName'), account_info[2]))
     if(existing_vsts_url.lower() == vsts_url_for_configuration.lower() and \
            existing_deployment_group_data['name'].lower() == deployment_group_name.lower() and \
            existing_deployment_group_data['project']['name'].lower() == project_name.lower()):

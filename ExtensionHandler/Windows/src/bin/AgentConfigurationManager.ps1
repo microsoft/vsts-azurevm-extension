@@ -42,7 +42,7 @@ function ConfigureAgent
     $processStartInfo.Arguments = "$configCommonArgs --agent $agentName --url $url --token $patToken --work $workingFolder --projectname $projectName --deploymentgroupname $deploymentGroupName"
     if($global:isOnPrem){
         $collectionName = $tfsUrl.Substring($tfsUrl.LastIndexOf('/')+1, $tfsUrl.Length-$tfsUrl.LastIndexOf('/')-1)
-        $processStartInfo.Arguments += "--collectionName $collectionName"
+        $processStartInfo.Arguments += " --collectionName $collectionName"
     }
     
     $configProcess = New-Object System.Diagnostics.Process

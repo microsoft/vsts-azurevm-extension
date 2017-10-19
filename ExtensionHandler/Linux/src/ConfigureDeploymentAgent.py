@@ -68,7 +68,6 @@ def invoke_url_for_deployment_group_data(account_info, user_name, pat_token, dep
     method = httplib.HTTPConnection
   elif(vsts_url.startswith('https://')):
     vsts_url = vsts_url[8:]
-  vsts_url = filter(lambda x: x!='', vsts_url.split('/'))[0]
   basic_auth = '{0}:{1}'.format(user_name, pat_token)
   basic_auth = base64.b64encode(basic_auth)
   headers = {

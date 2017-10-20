@@ -19,7 +19,7 @@ function ConfigureAgent
     param(
     [Parameter(Mandatory=$true)]
     [string]$tfsUrl,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
     [string]$workingFolder,
@@ -35,8 +35,15 @@ function ConfigureAgent
 
     $processStartInfo = GetProcessStartInfo
     $processStartInfo.FileName = $configCmdPath
+    $url = $tfsUrl
+    if($global:isOnPrem){
+        $url = $tfsUrl.Substring(0,$tfsUrl.LastIndexOf('/'))
+    }
     $processStartInfo.Arguments = CreateConfigCmdArgs -tfsUrl $tfsUrl -patToken $patToken -workingFolder $workingFolder -projectName $projectName -deploymentGroupName $deploymentGroupName -agentName $agentName
-
+    if($global:isOnPrem){
+        $collectionName = $tfsUrl.Substring($tfsUrl.LastIndexOf('/')+1, $tfsUrl.Length-$tfsUrl.LastIndexOf('/')-1)
+        $processStartInfo.Arguments += " --collectionName $collectionName"
+    }
     $configProcess = New-Object System.Diagnostics.Process
     $configProcess.StartInfo = $processStartInfo
     $configProcess.Start() | Out-Null
@@ -57,7 +64,7 @@ function ConfigureAgent
 function RemoveExistingAgent
 {
     param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
     [string]$configCmdPath
@@ -92,7 +99,7 @@ function ApplyTagsToAgent
     [string]$tfsUrl,
     [Parameter(Mandatory=$true)]
     [string]$projectName,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
     [string]$deploymentGroupId,
@@ -134,7 +141,7 @@ function AddTagsToAgent
     [string]$tfsUrl,
     [Parameter(Mandatory=$true)]
     [string]$projectName,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
     [string]$deploymentGroupId,
@@ -209,7 +216,7 @@ function AddTagsToAgent
 function GetRESTCallHeader
 {
     param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken
     )
 
@@ -226,7 +233,7 @@ function CreateConfigCmdArgs
     param(
         [Parameter(Mandatory=$true)]
         [string]$tfsUrl,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$false)]
         [string]$patToken,
         [Parameter(Mandatory=$true)]
         [string]$workingFolder,

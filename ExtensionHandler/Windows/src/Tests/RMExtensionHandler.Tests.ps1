@@ -230,9 +230,7 @@ Describe "parse vsts account name settings tests" {
         $settings = Get-ConfigurationFromSettings
 
         It "should set proper status" {
-            $settings.VSTSUrl | Should Be "https://abc.visualstudio.com"
-            $settings.TfsVirtualApplication | Should Be ""
-            $settings.TfsCollection | Should Be ""   
+            $settings.VSTSUrl | Should Be "https://abc.visualstudio.com" 
         }
     }
 
@@ -251,6 +249,37 @@ Describe "parse vsts account name settings tests" {
                         Tags = @()
                         AgentName = "name" 
                     };
+                protectedSettings = ""
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Format-TagsInput {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+
+        $settings = Get-ConfigurationFromSettings
+
+        It "should set proper status" {
+            $settings.VSTSUrl | Should Be "https://abc.visualstudio.com"
+            $settings.PATToken | Should Be ""     
+        }
+    }
+
+    Context "Should handle hosted url with collection" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "https://abc.visualstudio.com/DefaultCollection/"
+                        TeamProject = "project"
+                        DeploymentGroup = "group"
+                        Tags = @()
+                        AgentName = "name" 
+                    };
                 protectedSettings = @{
                         PATToken = "hash"
                 }
@@ -264,9 +293,7 @@ Describe "parse vsts account name settings tests" {
         $settings = Get-ConfigurationFromSettings
 
         It "should set proper status" {
-            $settings.VSTSUrl | Should Be "https://abc.visualstudio.com"
-            $settings.TfsVirtualApplication | Should Be ""
-            $settings.TfsCollection | Should Be ""            
+            $settings.VSTSUrl | Should Be "https://abc.visualstudio.com"       
         }
     }
 
@@ -298,9 +325,71 @@ Describe "parse vsts account name settings tests" {
         $settings = Get-ConfigurationFromSettings
 
         It "should set proper status" {
-            $settings.VSTSUrl | Should Be "http://localhost:8080"
-            $settings.TfsVirtualApplication | Should Be "tfs"
-            $settings.TfsCollection | Should Be "defaultcollection"            
+            $settings.VSTSUrl | Should Be "http://localhost:8080/tfs/defaultcollection"            
+        }
+    }
+
+    Context "Should handle on-prem url without collection" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "http://localhost:8080///tfs//"
+                        TeamProject = "project"
+                        DeploymentGroup = "group"
+                        Tags = @()
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                }
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Format-TagsInput {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+
+        $settings = Get-ConfigurationFromSettings
+
+        It "should set proper status" {
+            $settings.VSTSUrl | Should Be "http://localhost:8080/tfs/DefaultCollection"       
+        }
+    }
+
+    Context "Should handle on-prem url with additional components" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "http://localhost:8080///tfs/defaultcollection/a/b//c/d//"
+                        TeamProject = "project"
+                        DeploymentGroup = "group"
+                        Tags = @()
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                }
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Format-TagsInput {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+
+        $settings = Get-ConfigurationFromSettings
+
+        It "should set proper status" {
+            $settings.VSTSUrl | Should Be "http://localhost:8080/tfs/defaultcollection"       
         }
     }
 
@@ -313,7 +402,7 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
-                        VSTSAccountName = "http://localhost:8080/tfs"
+                        VSTSAccountName = "http://localhost:8080/"
                         TeamProject = "project"
                         DeploymentGroup = "group"
                         Tags = @()
@@ -332,7 +421,7 @@ Describe "parse vsts account name settings tests" {
 
         It "should set proper status" {
             Get-ConfigurationFromSettings        
-            Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1  -ParameterFilter { $ErrorRecord.Exception.Message -eq "Account url should either be of format https://<account>.visualstudio.com (for hosted) or of format http(s)://<server>/<application>/<collection>(for on-prem)"}
+            Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1  -ParameterFilter { $ErrorRecord.Exception.Message -eq "Invalid value for VSTS account name. It should be just the account name, eg: contoso in case of https://contoso.visualstudio.com(for hosted), or of the format http(s)://<server>/<application>/<collection>(for on-prem)"}
         }
     }
 }
@@ -504,57 +593,6 @@ Describe "AgentReconfigurationRequired tests" {
 
         It "should call clean up functions" {
             Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.CheckingAgentReConfigurationRequired.Code}
-        }
-    }
-}
-
-Describe "Get-AccountUrl tests" {
-
-    Context "Should handle empty virtual application" {
-
-        $url = Get-AccountUrl -baseUrl "https://abc.visualstudio.com" -virtualApplication ""
-
-        It "should add virtual application to url" {
-            $url | Should Be "https://abc.visualstudio.com"
-        }
-    }
-
-    Context "Should handle non-empty virtual application" {
-
-        $url = Get-AccountUrl -baseUrl "http://localhost:8080" -virtualApplication "tfs"
-
-        It "should add virtual application to url" {
-            $url | Should Be "http://localhost:8080/tfs"
-        }
-    }
-}
-
-Describe "Get-CollectionUrl tests" {
-
-    Context "Should handle empty virtual application and collection" {
-
-        $url = Get-CollectionUrl -baseUrl "https://abc.visualstudio.com" -virtualApplication "" -collection ""
-
-        It "should add virtual application to url" {
-            $url | Should Be "https://abc.visualstudio.com"
-        }
-    }
-
-    Context "Should handle non-empty virtual application" {
-
-        $url = Get-CollectionUrl -baseUrl "http://localhost:8080" -virtualApplication "tfs"
-
-        It "should add virtual application to url" {
-            $url | Should Be "http://localhost:8080/tfs"
-        }
-    }
-
-    Context "Should handle non-empty virtual application and collection" {
-
-        $url = Get-CollectionUrl -baseUrl "http://localhost:8080" -virtualApplication "tfs" -collection "defaultcollection"
-
-        It "should add virtual application to url" {
-            $url | Should Be "http://localhost:8080/tfs/defaultcollection"
         }
     }
 }

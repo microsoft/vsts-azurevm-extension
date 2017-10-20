@@ -27,7 +27,7 @@ function Remove-ExistingVM
 
     # Delete VM's vhd blob as creating VM again will require blob to be removed first
     $storageKey = Get-AzureRmStorageAccountKey -ResourceGroupName $resourceGroupName -Name $storageAccountName
-    $storageCtx = New-AzureStorageContext $storageAccountName -StorageAccountKey $storageKey[0].Value
+    $storageCtx = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageKey[0].Value
     Get-AzureStorageBlob -Container vhds -Context $storageCtx | Remove-AzureStorageBlob
 }
 

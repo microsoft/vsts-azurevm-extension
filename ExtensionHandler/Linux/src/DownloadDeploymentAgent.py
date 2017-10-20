@@ -20,14 +20,15 @@ def empty_dir(dir_name):
     for dirname in dirnames:
       os.rmdir(os.path.join(dirpath, dirname))
 
+def get_host_and_address(account_info, package_data_address):
+  if(account_info.__class__.__name__ == 'list' and len(account_info) == 3):
+    address = '/' + account_info[1] + '/' + account_info[2] + package_data_address
+    return account_info[0], address
+  raise Exception('VSTS url is invalid')
 
-def construct_package_data_address(vsts_url, platform):
-  package_data_address = Constants.package_data_address_format.format(platform, Constants.download_api_version)
-  write_download_log('\t\t Package data address' + package_data_address)
-  return package_data_address
-
-def get_agent_package_data(vsts_url, package_data_address, user_name, pat_token):
+def get_agent_package_data(account_info, package_data_address, user_name, pat_token):
   write_download_log('\t\t Forming the header for making HTTP request call')
+  vsts_url, package_data_address = get_host_and_address(account_info, package_data_address)
   method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):
     vsts_url = vsts_url[7:]
@@ -49,10 +50,11 @@ def get_agent_package_data(vsts_url, package_data_address, user_name, pat_token)
   else:
     raise Exception('Error while downloading VSTS extension. Please make sure that you enter the correct VSTS account name and PAT token.')
 
-def get_agent_download_url(vsts_url, platform, user_name, pat_token):
-  package_data_address = construct_package_data_address(vsts_url, platform)
+def get_agent_download_url(account_info, platform, user_name, pat_token):
+  package_data_address = '/_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}'.format(platform, Constants.download_api_version)
+  write_download_log('\t\t Package data address' + package_data_address)
   write_download_log('\t\tFetching Agent PackageData using {0}'.format(package_data_address))
-  package_data = get_agent_package_data(vsts_url, package_data_address, user_name, pat_token)
+  package_data = get_agent_package_data(account_info, package_data_address, user_name, pat_token)
   write_download_log('Deployment Agent download url - {0}'.format(package_data))
   return package_data
 
@@ -72,14 +74,14 @@ def extract_target(target_file, target):
   tf = tarfile.open(target_file, 'r:gz')
   tf.extractall(target)
 
-def download_deployment_agent(vsts_url, user_name, pat_token, platform, working_folder, log_func):
+def download_deployment_agent(account_info, user_name, pat_token, platform, working_folder, log_func):
   global log_function
   log_function = log_func
   if(user_name is None or user_name == ''):
     user_name = ' '
     write_download_log('No user name provided.')
   write_download_log('Getting the url for downloading the agent')
-  agent_download_url = get_agent_download_url(vsts_url, platform, user_name, pat_token)
+  agent_download_url = get_agent_download_url(account_info, platform, user_name, pat_token)
   write_download_log('url for downloading the agent is {0}'.format(agent_download_url))
   write_download_log('Getting the target tar gz file path')
   agent_target_file_path = get_agent_target_path(working_folder, Constants.agent_target_name)

@@ -18,7 +18,6 @@ agent_configuration_required = True
 config = {}
 root_dir = ''
 markup_file_format = '{0}/EXTENSIONDISABLED'
-is_on_prem = False
 collection = ''
 
 def get_last_sequence_number_file_path():
@@ -163,49 +162,41 @@ def get_platform_value():
     os_distr_name = 'ubuntu'
   version_no = info[1].split('.')[0]
   sub_version = info[1].split('.')[1]
-  platform_value = Constants.platform_format.format(os_distr_name, version_no, sub_version, 'x64')
+  platform_value = '{0}.{1}.{2}-{3}'.format(os_distr_name, version_no, sub_version, 'x64')
   return platform_value
 
-def check_account_name_prefix(account_name):
-  global prefix
-  prefix_1 = 'http://'
-  prefix_2 = 'https://'
+def get_account_name_prefix(account_name):
   account_name_lower = account_name.lower()
-  ans = (account_name_lower.startswith(prefix_1) or account_name_lower.startswith(prefix_2))
-  if(account_name_lower.startswith(prefix_1)):
-    prefix = prefix_1
-  if(account_name_lower.startswith(prefix_2)):
-    prefix = prefix_2
-  return ans 
-
-def modify_paths(account_name_split):
-  Constants.package_data_address_format = '/' + account_name_split['VirtualApplication'] + Constants.package_data_address_format
-  Constants.deployment_group_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.deployment_group_address_format
-  Constants.machines_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.machines_address_format
-  Constants.deployment_groups_address_format = '/' + account_name_split['VirtualApplication'] + '/' + account_name_split['Collection'] + Constants.deployment_groups_address_format
-
+  if(account_name_lower.startswith('http://')):
+    return 'http://'
+  elif(account_name_lower.startswith('https://')):
+    return 'https://'
+  return '' 
 
 def parse_account_name(account_name): 
-  global is_on_prem, prefix
-  base_url = ''
+  account_name = account_name.lower()
+  base_url = account_name
   virtual_application = ''
   collection = ''
-  if(check_account_name_prefix(account_name)):
+  account_name_prefix = get_account_name_prefix(account_name)
+  if(account_name_prefix != ''):
     account_name = account_name[7:]
   account_name = account_name.strip('/')
-  if(account_name.find('/') > -1):
-    is_on_prem = True
-    account_name_split = filter(lambda x: x!='', account_name.split('/'))
-    if(len(account_name_split) == 3):
-      base_url = prefix + account_name_split[0]
+  account_name_split = filter(lambda x: x!='', account_name.split('/'))
+  if(account_name_split[0].endswith('visualstudio.com')):
+    base_url = 'https://' + account_name_split[0]
+  elif(account_name_prefix != ''):
+    Constants.is_on_prem = True
+    if(len(account_name_split) >= 2):
+      base_url = account_name_prefix + account_name_split[0]
       virtual_application = account_name_split[1]
-      collection = account_name_split[2]
-    elif(len(account_name_split) != 1):
-      code = RMExtensionStatus.rm_extension_status['ArgumentError']
-      message = 'Account url should either be of format https://<account>.visualstudio.com (for hosted) or of format http(s)://<server>/<application>/<collection>(for on-prem)'
-      raise RMExtensionStatus.new_handler_terminating_error(code, message)
+      collection = 'DefaultCollection'
+      if(len(account_name_split) > 2):
+        collection = account_name_split[2]
     else:
-      base_url = prefix + account_name_split[0]
+      code = RMExtensionStatus.rm_extension_status['InvalidAccountName']['Code']
+      message = RMExtensionStatus.rm_extension_status['InvalidAccountName']['Message']
+      raise RMExtensionStatus.new_handler_terminating_error(code, message)
   return {
          'VSTSUrl':base_url,
          'VirtualApplication':virtual_application,
@@ -256,24 +247,18 @@ def get_configutation_from_settings(operation):
     handler_utility.log('Platform: {0}'.format(platform_value))
     vsts_account_name = public_settings['VSTSAccountName'].strip('/')
     handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
-    account_name_split = parse_account_name(vsts_account_name)
-    vsts_url = account_name_split['VSTSUrl']
-    virtual_application = account_name_split['VirtualApplication']
-    collection = account_name_split['Collection']
-    if(check_account_name_prefix(vsts_account_name)):
-      if(is_on_prem):
-        modify_paths(account_name_split)
-      else:
-        vsts_url = vsts_account_name
-    else:
+    account_info = parse_account_name(vsts_account_name)
+    vsts_url = account_info['VSTSUrl']
+    virtual_application = account_info['VirtualApplication']
+    collection = account_info['Collection']
+    if(get_account_name_prefix(vsts_url) == ''):
       vsts_url = format_string.format(vsts_account_name)
     handler_utility.log('VSTS service URL : {0}'.format(vsts_url))
     pat_token = ''
-    if(protected_settings.has_key('PATToken')):
+    if((protected_settings.__class__.__name__ == 'dict') and protected_settings.has_key('PATToken')):
       pat_token = protected_settings['PATToken']
-    if(pat_token == ''):
+    if((pat_token == '') and (public_settings.has_key('PATToken'))):
       pat_token = public_settings['PATToken']
-      handler_utility.verify_input_not_null('PATToken', pat_token)
     team_project_name = public_settings['TeamProject']
     handler_utility.verify_input_not_null('TeamProject', team_project_name)
     handler_utility.log('Team Project : {0}'.format(team_project_name))
@@ -297,9 +282,7 @@ def get_configutation_from_settings(operation):
     operation_name = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     ret_val = {
-             'VSTSUrl':vsts_url,
-             'VirtualApplication':virtual_application,
-             'Collection':collection,
+             'VSTSUrl':[vsts_url, virtual_application, collection],
              'PATToken':pat_token, 
              'Platform':platform_value, 
              'TeamProject':team_project_name, 
@@ -330,14 +313,16 @@ def test_configured_agent_exists(operation):
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName'], operation, 3)
 
-def test_agent_configuration_required(config):
+def test_agent_configuration_required():
+  global config
   try:
     ss_code = RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log('Invoking script to check existing agent settings with given configuration settings...')
-    config_required = ConfigureDeploymentAgent.test_agent_configuration_required_internal(config['VSTSUrl'], config['VirtualApplication'], config['PATToken'], config['DeploymentGroup'], config['TeamProject'], config['AgentWorkingFolder'], handler_utility.log)
+    config_required = ConfigureDeploymentAgent.test_agent_configuration_required_internal(config['VSTSUrl'], config['PATToken'], \
+                      config['DeploymentGroup'], config['TeamProject'], config['AgentWorkingFolder'], handler_utility.log)
     ss_code = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['operationName']
@@ -351,7 +336,7 @@ def execute_agent_pre_check():
   global config, configured_agent_exists, agent_configuration_required
   configured_agent_exists = test_configured_agent_exists('Enable')
   if(configured_agent_exists == True):
-    agent_configuration_required = test_agent_configuration_required(config)
+    agent_configuration_required = test_agent_configuration_required()
   
 def get_agent():
   global config
@@ -361,7 +346,8 @@ def get_agent():
     operation_name = RMExtensionStatus.rm_extension_status['DownloadingDeploymentAgent']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log('Invoking function to download Deployment agent package...')
-    DownloadDeploymentAgent.download_deployment_agent(config['VSTSUrl'], '', config['PATToken'], config['Platform'], config['AgentWorkingFolder'], handler_utility.log)
+    DownloadDeploymentAgent.download_deployment_agent(config['VSTSUrl'], '', config['PATToken'], config['Platform'], \
+    config['AgentWorkingFolder'], handler_utility.log)
     handler_utility.log('Done downloading Deployment agent package...')
     ss_code = RMExtensionStatus.rm_extension_status['DownloadedDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['DownloadedDeploymentAgent']['Message']
@@ -390,10 +376,8 @@ def register_agent():
     operation_name = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log('Configuring Deployment agent...')
-    vsts_url = config['VSTSUrl']
-    if(is_on_prem):
-      vsts_url = vsts_url + '/' + config['VirtualApplication']
-    ConfigureDeploymentAgent.configure_agent(vsts_url, config['PATToken'], config['TeamProject'], config['DeploymentGroup'], config['AgentName'], config['AgentWorkingFolder'], configured_agent_exists, handler_utility.log)
+    ConfigureDeploymentAgent.configure_agent(config['VSTSUrl'], config['PATToken'], config['TeamProject'], \
+    config['DeploymentGroup'], config['AgentName'], config['AgentWorkingFolder'], configured_agent_exists, handler_utility.log)
     handler_utility.log('Done configuring Deployment agent')
     ss_code = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Message']
@@ -405,7 +389,8 @@ def register_agent():
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName'], 'Enable', 6)
 
-def remove_existing_agent(config, operation):
+def remove_existing_agent(operation):
+  global config
   try:
     handler_utility.log('Agent removal started')
     try:
@@ -448,7 +433,7 @@ def remove_existing_agent_if_required():
   global configured_agent_exists, agent_configuration_required, config
   if((configured_agent_exists == True) and (agent_configuration_required == True)):
     handler_utility.log('Remove existing configured agent')
-    remove_existing_agent(config, 'Enable')
+    remove_existing_agent('Enable')
     #Execution has reached till here means that either the agent was removed successfully, or we renamed the agent folder successfully. 
     configured_agent_exists = False
 
@@ -473,7 +458,8 @@ def add_agent_tags():
     handler_utility.log('Adding tags to configured agent - {0}'.format(str(config['Tags'])))
     try:
       tags_string = json.dumps(config['Tags'], ensure_ascii = False)
-      ConfigureDeploymentAgent.add_agent_tags_internal(config['VSTSUrl'], config['TeamProject'], config['PATToken'], config['AgentWorkingFolder'], tags_string, handler_utility.log)
+      ConfigureDeploymentAgent.add_agent_tags_internal(config['VSTSUrl'], config['TeamProject'], \
+      config['PATToken'], config['AgentWorkingFolder'], tags_string, handler_utility.log)
       ss_code = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Code']
       sub_status_message = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Message']
       operation_name = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName']
@@ -521,7 +507,7 @@ def uninstall():
   configured_agent_exists = test_configured_agent_exists(operation)
   config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
   if(configured_agent_exists == True):
-    remove_existing_agent(config, operation)
+    remove_existing_agent(operation)
   else:
     code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
     message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']

@@ -78,6 +78,7 @@ Describe "Handler settings tests" {
 
             return ,$mockHandlerEnvironmentData
         }
+        Mock -ModuleName AzureExtensionHandler Remove-ProtectedSettingsFromConfigFile {}
 
         $testPath1 = "TestDrive:\\1.settings"
         Set-Content $testPath1 -value "{ `
@@ -86,7 +87,8 @@ Describe "Handler settings tests" {
 			                                    `"publicSettings`": { `
 				                                    `"VSTSAccountName`": `"mseng`", `
 				                                    `"Pool`": `"biprasad`" `
-			                                    } `
+			                                    } ,`
+                                                `"protectedSettings`": `"`"`
 		                                    } `
 	                                    }] `
                                       }" 
@@ -96,6 +98,7 @@ Describe "Handler settings tests" {
         It "should return correct public settings" {
             $settings.publicSettings.VSTSAccountName | Should Be "mseng"
             $settings.publicSettings.Pool | Should Be "biprasad"
+            Assert-MockCalled -ModuleName AzureExtensionHandler Remove-ProtectedSettingsFromConfigFile -Times 0
         }
     }
 }

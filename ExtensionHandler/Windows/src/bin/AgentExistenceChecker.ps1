@@ -43,13 +43,10 @@ function Test-AgentSettingsAreSame
         [Parameter(Mandatory=$true)]
         [string]$tfsUrl,
         [Parameter(Mandatory=$true)]
-        [AllowEmptyString()]
-        [string]$collection,
-        [Parameter(Mandatory=$true)]
         [string]$projectName,
         [Parameter(Mandatory=$true)]
         [string]$deploymentGroupName,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$false)]
         [string]$patToken,
         [scriptblock]$logFunction
     )
@@ -72,16 +69,18 @@ function Test-AgentSettingsAreSame
         $tfsUrl = $tfsUrl.TrimEnd('/')
         $agentTfsUrl = $agentSetting.serverUrl.TrimEnd('/')
         $deploymentGroupDataAsPerSetting = $null
+        $agentCollection = ""
         try
         {
-            $url = $tfsUrl
-            if($collection)
+            $agentUrl = $agentTfsUrl
+            $agentCollection = if($agentSetting.collectionName){$agentSetting.collectionName}
+            if($agentCollection)
             {
-                $url = -join($tfsUrl, '/', $collection)
+                $agentUrl = -join($agentUrl, '/', $agentCollection)
             }
             
             WriteLog "`t`tCall GetDeploymentGroupDataFromAgentSetting" $logFunction
-            $deploymentGroupDataAsPerSetting = GetDeploymentGroupDataFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentTfsUrl -patToken $patToken -logFunction $logFunction
+            $deploymentGroupDataAsPerSetting = GetDeploymentGroupDataFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentUrl -patToken $patToken -logFunction $logFunction
         }
         catch
         {
@@ -96,15 +95,14 @@ function Test-AgentSettingsAreSame
         }
         
         WriteLog "`t`t`t Agent Configured With `t`t`t`t`t Agent Need To Be Configured With" $logFunction
-        WriteLog "`t`t`t $agentTfsUrl `t`t`t`t`t $tfsUrl" $logFunction
+        WriteLog "`t`t`t $agentUrl `t`t`t`t`t $tfsUrl" $logFunction
         WriteLog "`t`t`t $($deploymentGroupDataAsPerSetting.project.name) `t`t`t`t`t $projectName" $logFunction
         WriteLog "`t`t`t $($deploymentGroupDataAsPerSetting.name) `t`t`t`t`t $deploymentGroupName" $logFunction
-        if( ([string]::Compare($tfsUrl, $agentTfsUrl, $True) -eq 0) -and ([string]::Compare($projectName, $($deploymentGroupDataAsPerSetting.project.name), $True) -eq 0) -and ([string]::Compare($deploymentGroupName, $($deploymentGroupDataAsPerSetting.name), $True) -eq 0) )
-        {         
+        if( ([string]::Compare($tfsUrl, $agentUrl, $True) -eq 0) -and ([string]::Compare($projectName, $($deploymentGroupDataAsPerSetting.project.name), $True) -eq 0) -and ([string]::Compare($deploymentGroupName, $($deploymentGroupDataAsPerSetting.name), $True) -eq 0) )
+        {
             WriteLog "`t`t`t Test-AgentSettingsAreSame Return : true" $logFunction        
             return $true
         }
-        
         WriteLog "`t`t`t Test-AgentSettingsAreSame Return : false" $logFunction        
         return $false
     }
@@ -131,7 +129,7 @@ function GetDeploymentGroupDataFromAgentSetting
     [object]$agentSetting,
     [Parameter(Mandatory=$true)]
     [string]$tfsUrl,    
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken,
     [scriptblock]$logFunction
     )
@@ -210,7 +208,7 @@ function ContructRESTCallUrl
     Param(
     [Parameter(Mandatory=$true)]
     [string]$restCallUrl,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken,
     [scriptblock]$logFunction
     )
@@ -226,7 +224,7 @@ function ContructRESTCallUrl
     try
     {
         $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
-        WriteLog "`t`t Deployment Group Details : $response" $logFunction
+        WriteLog "`t`t Deployment Group Details fetched successfully" $logFunction
         if($response.PSObject.Properties.name -contains "name")
         {
             return $response

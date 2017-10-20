@@ -22,7 +22,7 @@ param(
 )
 
 $key = Get-AzureStorageKey -StorageAccountName $storageAccountName
-$ctx = New-AzureStorageContext $storageAccountName -StorageAccountKey $key.Primary
+$ctx = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $key.Primary
 
 $startTime = (Get-Date).AddDays(-2)
 $endTime = $startTime.AddDays(4)

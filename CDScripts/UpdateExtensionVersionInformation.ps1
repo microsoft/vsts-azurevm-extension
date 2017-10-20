@@ -38,7 +38,7 @@ $currentVersionLocalFile = "$artifactsDir\latestVersion.txt"
 Write-Host "Using local file $currentVersionLocalFile to store new version for uploading purpose"
 
 $key = Get-AzureRmStorageAccountKey -ResourceGroupName $storageResourceGroup -Name $storageResourceGroup
-$ctx = New-AzureStorageContext $storageResourceGroup -StorageAccountKey $key[0].Value
+$ctx = New-AzureStorageContext -StorageAccountName $storageResourceGroup -StorageAccountKey $key[0].Value
 
 $oldVersionLocalFile = "$artifactsDir\oldVersion.txt"
 Write-Host "Using local file $oldVersionLocalFile for downloading old version information"

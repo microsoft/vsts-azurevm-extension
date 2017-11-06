@@ -71,6 +71,6 @@ function Remove-VSTSAgent
     Write-Host "Removing agent with id $agentId from vsts account $vstsUrl"
     $base64AuthToken = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "", $patToken)))
     $authHeader = @{ Authorization = "Basic {0}" -f $base64AuthToken }
-    $uri = "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/machines/{3}?api-version=4.0" -f $vstsUrl, $teamProject, $deploymentGroupId, $agentId
+    $uri = "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/machines/{3}?api-version=3.2-preview.1" -f $vstsUrl, $teamProject, $deploymentGroupId, $agentId
     Invoke-RestMethod -Method DELETE -Uri $uri -Headers $authHeader
 }

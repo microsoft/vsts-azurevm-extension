@@ -37,6 +37,7 @@ if($env:SYSTEM_ARTIFACTSDIRECTORY -and $env:BUILD_DEFINITIONNAME)
     $definitionFile = Join-Path $artifactsDir $relativeExtensionDefinitionPath
 }
 
+Get-AzureSubscription
 $key = Get-AzureStorageKey -StorageAccountName $storageAccountName
 $ctx = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $key.Primary
 

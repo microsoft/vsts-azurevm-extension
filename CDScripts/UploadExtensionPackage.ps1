@@ -37,8 +37,10 @@ if($env:SYSTEM_ARTIFACTSDIRECTORY -and $env:BUILD_DEFINITIONNAME)
     $definitionFile = Join-Path $artifactsDir $relativeExtensionDefinitionPath
 }
 
-$key = Get-AzureStorageKey -StorageAccountName $storageAccountName
-$ctx = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $key.Primary
+$subscription = Get-AzureSubscription -Current -ExtendedDetails
+$uri = "https://management.core.windows.net/$($subscription.SubscriptionId)/services/storageservices/vstsvmextensiontest/keys"
+$result = Invoke-RestMethod -Method GET -Uri $uri -Certificate $subscription.Certificate -Headers @{'x-ms-version'='2014-08-01'} -ContentType application/xml
+$ctx = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $result.StorageService.StorageServiceKeys.Primary
 
 Write-Host "Uploading extension package $packagePath to azure storage account $storageAccountName container $storageContainerName blob $storageBlobName"
 Set-AzureStorageBlobContent -Container $storageContainerName -File $packagePath -Blob $storageBlobName -Context $ctx -Force

@@ -39,6 +39,7 @@ if($env:SYSTEM_ARTIFACTSDIRECTORY -and $env:BUILD_DEFINITIONNAME)
 
 Get-AzureSubscription
 $key = Get-AzureStorageKey -StorageAccountName $storageAccountName
+$key = Get-AzureStorageKey -StorageAccountName $storageAccountName
 $ctx = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $key.Primary
 
 Write-Host "Uploading extension package $packagePath to azure storage account $storageAccountName container $storageContainerName blob $storageBlobName"

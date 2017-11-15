@@ -81,6 +81,7 @@ function WriteDownloadLog
         else
         {
             # Back compat for legacy package key
+            WriteDownloadLog "`t`t Get Agent PackageData using $legacyRestCallUrl"
             $response = Invoke-RestMethod -Uri $($legacyRestCallUrl) -headers $headers -Method Get -ContentType "application/json"
             WriteDownloadLog "`t`t Agent PackageData : $response"
             return $response.Value[0]

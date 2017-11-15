@@ -111,7 +111,7 @@ function ApplyTagsToAgent
     [string]$tagsAsJsonString
     )
 
-    $restCallUrl = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Machines?api-version=3.2-preview" -f $tfsUrl, $projectName, $deploymentGroupId )
+    $restCallUrl = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets?api-version={3}" -f $tfsUrl, $projectName, $deploymentGroupId, $targetsAPIVersion)
 
     WriteAddTagsLog "Url for adding tags - $restCallUrl"
 
@@ -151,7 +151,7 @@ function AddTagsToAgent
     [string]$tagsAsJsonString
     )
 
-    $restCallUrlToGetExistingTags = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Machines?api-version=3.2-preview" -f $tfsUrl, $projectName, $deploymentGroupId )
+    $restCallUrlToGetExistingTags = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets?api-version={3}" -f $tfsUrl, $projectName, $deploymentGroupId, $targetsAPIVersion)
 
     WriteAddTagsLog "Url for adding getting existing tags if any - $restCallUrlToGetExistingTags"
 

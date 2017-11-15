@@ -304,7 +304,7 @@ function Get-ConfigurationFromSettings {
             throw New-HandlerTerminatingError $RM_Extension_Status.ArchitectureNotSupported.Code -Message $RM_Extension_Status.ArchitectureNotSupported.Message
         }
 
-        $platform = "win7-x64"
+        $platform = "win-x64"
         Write-Log "Platform: $platform"
 
         $vstsAccountName = $publicSettings['VSTSAccountName'].ToLower()

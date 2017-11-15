@@ -111,12 +111,14 @@ def install_dependencies():
   linux_distr = platform.linux_distribution()
   distr_name = linux_distr[0]
   version = linux_distr[1]
+  major_version = version.split('.')[0]
+  minor_version = version.split('.')[1]
   if(distr_name == Constants.red_hat_distr_name):
-    if(version == '7.2'):
+    if((int(major_version) > 7) or ((int(major_version) == 7) and (int(minor_version) >= 2))):
       linux_version_valid = True
       install_command += ['/bin/yum', '-yq', 'install', 'libunwind.x86_64', 'icu']
   elif(distr_name == Constants.ubuntu_distr_name):
-    if(version == '16.04'):
+    if((int(major_version) > 16) or ((int(major_version) == 16) and (int(minor_version) >= 4))):
       linux_version_valid = True
       update_package_list_command = ['/usr/bin/apt-get', 'update', '-yq']
       proc = subprocess.Popen(update_package_list_command, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
@@ -152,18 +154,6 @@ def start_rm_extension_handler(operation):
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'], operation, 1)
-
-def get_platform_value():
-  info = platform.linux_distribution()
-  os_distr_name = info[0]
-  if(os_distr_name == Constants.red_hat_distr_name):
-    os_distr_name = 'rhel'
-  elif(os_distr_name == Constants.ubuntu_distr_name):
-    os_distr_name = 'ubuntu'
-  version_no = info[1].split('.')[0]
-  sub_version = info[1].split('.')[1]
-  platform_value = '{0}.{1}.{2}-{3}'.format(os_distr_name, version_no, sub_version, 'x64')
-  return platform_value
 
 def get_account_name_prefix(account_name):
   account_name_lower = account_name.lower()
@@ -243,7 +233,7 @@ def get_configutation_from_settings(operation):
       code = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Code']
       RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Message']
       raise new_handler_terminating_error(code, message)
-    platform_value = get_platform_value()
+    platform_value = Constants.platform_key
     handler_utility.log('Platform: {0}'.format(platform_value))
     vsts_account_name = public_settings['VSTSAccountName'].strip('/')
     handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)

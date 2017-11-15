@@ -26,7 +26,19 @@ def get_host_and_address(account_info, package_data_address):
     return account_info[0], address
   raise Exception('VSTS url is invalid')
 
-def get_agent_package_data(account_info, package_data_address, user_name, pat_token):
+def get_platform_key_old():
+  info = platform.linux_distribution()
+  os_distr_name = info[0]
+  if(os_distr_name == Constants.red_hat_distr_name):
+    os_distr_name = 'rhel'
+  elif(os_distr_name == Constants.ubuntu_distr_name):
+    os_distr_name = 'ubuntu'
+  version_no = info[1].split('.')[0]
+  sub_version = info[1].split('.')[1]
+  platform_key_old = '{0}.{1}.{2}-{3}'.format(os_distr_name, version_no, sub_version, 'x64')
+  return platform_key_old
+
+def get_agent_package_data(account_info, package_data_address, package_data_address_old, user_name, pat_token):
   write_download_log('\t\t Forming the header for making HTTP request call')
   vsts_url, package_data_address = get_host_and_address(account_info, package_data_address)
   method = httplib.HTTPSConnection
@@ -46,15 +58,28 @@ def get_agent_package_data(account_info, package_data_address, user_name, pat_to
   response = conn.getresponse()
   if(response.status == 200):
     val = json.loads(response.read())
-    return val['value'][0]['downloadUrl']
-  else:
-    raise Exception('Error while downloading VSTS extension. Please make sure that you enter the correct VSTS account name and PAT token.')
+    if(len(val['value']) > 0):
+      return val['value'][0]['downloadUrl']
+    else:
+      # Back compat for package addresses
+      write_download_log('\t\t Making HTTP request for old package data')
+      vsts_url, package_data_address = get_host_and_address(account_info, package_data_address_old)
+      conn = method(vsts_url)
+      conn.request('GET', package_data_address, headers = headers)
+      response = conn.getresponse()
+      if(response.status == 200):
+        val = json.loads(response.read())
+        return val['value'][0]['downloadUrl']
+  raise Exception('Error while downloading VSTS extension. Please make sure that you enter the correct VSTS account name and PAT token.')
 
 def get_agent_download_url(account_info, platform, user_name, pat_token):
-  package_data_address = '/_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}'.format(platform, Constants.download_api_version)
+  package_data_address_format = '/_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}'
+  package_data_address = package_data_address_format.format(platform, Constants.download_api_version)
+  platform_key_old = get_platform_key_old()
+  package_data_address_old = package_data_address_format.format(platform_key_old, Constants.download_api_version)
   write_download_log('\t\t Package data address' + package_data_address)
   write_download_log('\t\tFetching Agent PackageData using {0}'.format(package_data_address))
-  package_data = get_agent_package_data(account_info, package_data_address, user_name, pat_token)
+  package_data = get_agent_package_data(account_info, package_data_address, package_data_address_old, user_name, pat_token)
   write_download_log('Deployment Agent download url - {0}'.format(package_data))
   return package_data
 

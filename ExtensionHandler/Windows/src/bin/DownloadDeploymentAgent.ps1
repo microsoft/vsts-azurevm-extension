@@ -56,7 +56,9 @@ function WriteDownloadLog
  {
     Param(
     [Parameter(Mandatory=$true)]
-    [string]$restCallUrl,   
+    [string]$restCallUrl,
+    [Parameter(Mandatory=$true)]
+    [string]$restCallUrlOld,   
     [string]$userName,
     [Parameter(Mandatory=$false)]
     [string]$patToken
@@ -74,7 +76,15 @@ function WriteDownloadLog
     {
         $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
         WriteDownloadLog "`t`t Agent PackageData : $response"
-        return $response.Value[0]
+        if($response.Value.Count -gt 0){
+            return $response.Value[0]
+        }
+        else{
+            # Back compat for old package key
+            $response = Invoke-RestMethod -Uri $($restCallUrlOld) -headers $headers -Method Get -ContentType "application/json"
+            WriteDownloadLog "`t`t Agent PackageData : $response"
+            return $response.Value[0]
+        }
     }
     catch
     {
@@ -95,9 +105,10 @@ function WriteDownloadLog
     )
 
     [string]$restCallUrl = ContructPackageDataRESTCallUrl -tfsUrl $tfsUrl -platform $platform
+    [string]$restCallUrlOld = ContructPackageDataRESTCallUrl -tfsUrl $tfsUrl -platform $platformKeyOld
     
     WriteDownloadLog "`t`t Get Agent PackageData using $restCallUrl"  
-    $packageData = GetAgentPackageData -restCallUrl $restCallUrl -userName $userName -patToken $patToken
+    $packageData = GetAgentPackageData -restCallUrl $restCallUrl -restCallUrlOld $restCallUrlOld -userName $userName -patToken $patToken
 
     WriteDownloadLog "Deployment Agent download url - $($packageData.downloadUrl)"
     

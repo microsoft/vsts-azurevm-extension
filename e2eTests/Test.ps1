@@ -130,6 +130,7 @@ Write-Host "Creating VM $vmName"
 Create-VM -resourceGroupName $resourceGroupName -templateFile $templateFile -templateParameterFile $templateParameterFile -vmPasswordString $vmPassword
 ####
 
+# Run twice. First configure and then reconfigure 
 @($extensionPublicSettingsFile, $extensionReconfigurationPublicSettingsFile) | foreach {
     # get config settings
     $config = Get-Config -extensionPublicSettingsFile $_ -extensionProtectedSettingsFile $extensionProtectedSettingsFile -personalAccessToken $personalAccessToken
@@ -179,12 +180,16 @@ Remove-AzureRmVMExtension -ResourceGroupName $resourceGroupName -VMName $vmName 
 # Delete VM and vhd
 Remove-ExistingVM -resourceGroupName $resourceGroupName -vmName $vmName -storageAccountName $storageAccountName
 
-$agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
+# Cleanup both agents if required pool if needed
+@($extensionPublicSettingsFile, $extensionReconfigurationPublicSettingsFile) | foreach {
+    # get config settings
+    $config = Get-Config -extensionPublicSettingsFile $_ -extensionProtectedSettingsFile $extensionProtectedSettingsFile -personalAccessToken $personalAccessToken
+    $agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
 
-# Remove agent from pool if needed
-if($agentInfo.isAgentExists -eq $true)
-{
-    Remove-VSTSAgent -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroupId $agentInfo.deploymentGroupId -agentId $agentInfo.agentId
+    # Remove agent from pool if needed
+    if($agentInfo.isAgentExists -eq $true) {
+        Remove-VSTSAgent -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroupId $agentInfo.deploymentGroupId -agentId $agentInfo.agentId
+    }
 }
 
 # Delete protected settings file

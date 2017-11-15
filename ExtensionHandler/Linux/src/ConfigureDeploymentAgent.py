@@ -212,7 +212,7 @@ def remove_existing_agent_internal(pat_token, working_folder, log_func):
     raise e
 
 def apply_tags_to_agent(account_info, pat_token, project_name, deployment_group_id, agent_id, tags_string, machine_id):
-  tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Machines?api-version={2}'.format(quote(project_name), deployment_group_id, Constants.tags_api_version)
+  tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets?api-version={2}'.format(quote(project_name), deployment_group_id, Constants.targets_api_version)
   vsts_url, tags_address = get_host_and_address(account_info,  tags_address)
   method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):
@@ -238,7 +238,7 @@ def apply_tags_to_agent(account_info, pat_token, project_name, deployment_group_
 
 
 def add_tags_to_agent(account_info, pat_token, project_name, deployment_group_id, agent_id, tags_string):
-  tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Machines?api-version={2}'.format(quote(project_name), deployment_group_id, Constants.tags_api_version)
+  tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets?api-version={2}'.format(quote(project_name), deployment_group_id, Constants.targets_api_version)
   vsts_url, tags_address = get_host_and_address(account_info, tags_address)
   method = httplib.HTTPSConnection
   if(vsts_url.startswith('http://')):

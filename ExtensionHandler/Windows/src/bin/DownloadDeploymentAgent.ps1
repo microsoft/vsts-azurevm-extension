@@ -9,8 +9,6 @@ param(
     [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$platform,
-    [Parameter(Mandatory=$true)]
     [string]$workingFolder,
     [string]$userName,
     [scriptblock]$logFunction
@@ -56,7 +54,9 @@ function WriteDownloadLog
  {
     Param(
     [Parameter(Mandatory=$true)]
-    [string]$restCallUrl,   
+    [string]$restCallUrl,
+    [Parameter(Mandatory=$true)]
+    [string]$legacyRestCallUrl,   
     [string]$userName,
     [Parameter(Mandatory=$false)]
     [string]$patToken
@@ -74,7 +74,18 @@ function WriteDownloadLog
     {
         $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
         WriteDownloadLog "`t`t Agent PackageData : $response"
-        return $response.Value[0]
+        if($response.Value.Count -gt 0)
+        {
+            return $response.Value[0]
+        }
+        else
+        {
+            # Back compat for legacy package key
+            WriteDownloadLog "`t`t Get Agent PackageData using $legacyRestCallUrl"
+            $response = Invoke-RestMethod -Uri $($legacyRestCallUrl) -headers $headers -Method Get -ContentType "application/json"
+            WriteDownloadLog "`t`t Agent PackageData : $response"
+            return $response.Value[0]
+        }
     }
     catch
     {
@@ -86,18 +97,17 @@ function WriteDownloadLog
  {
     Param(
     [Parameter(Mandatory=$true)]
-    [string]$tfsUrl,
-    [Parameter(Mandatory=$true)]
-    [string]$platform,    
+    [string]$tfsUrl,   
     [string]$userName,
     [Parameter(Mandatory=$false)]
     [string]$patToken    
     )
 
     [string]$restCallUrl = ContructPackageDataRESTCallUrl -tfsUrl $tfsUrl -platform $platform
+    [string]$legacyRestCallUrl = ContructPackageDataRESTCallUrl -tfsUrl $tfsUrl -platform $legacyPlatformKey
     
     WriteDownloadLog "`t`t Get Agent PackageData using $restCallUrl"  
-    $packageData = GetAgentPackageData -restCallUrl $restCallUrl -userName $userName -patToken $patToken
+    $packageData = GetAgentPackageData -restCallUrl $restCallUrl -legacyRestCallUrl $legacyRestCallUrl -userName $userName -patToken $patToken
 
     WriteDownloadLog "Deployment Agent download url - $($packageData.downloadUrl)"
     
@@ -198,7 +208,7 @@ try
      
      WriteDownloadLog "Get the url for downloading the agent"
      
-     $agentDownloadUrl = GetAgentDownloadUrl -tfsUrl $tfsUrl -platform $platform -userName $userName -patToken $patToken
+     $agentDownloadUrl = GetAgentDownloadUrl -tfsUrl $tfsUrl -userName $userName -patToken $patToken
 
      WriteDownloadLog "Get the target zip file path"
      

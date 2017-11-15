@@ -108,6 +108,7 @@ $storageAccountName = $inputs.storageAccountName
 $templateFile = Join-Path $currentScriptPath $inputs.templateFile
 $templateParameterFile = Join-Path $currentScriptPath $inputs.templateParameterFile
 $extensionPublicSettingsFile = Join-Path $currentScriptPath $inputs.extensionPublicSettingsFile
+$extensionReconfigurationPublicSettingsFile = Join-Path $currentScriptPath $inputs.extensionPublicSettingsFile
 $extensionProtectedSettingsFile = Join-Path $currentScriptPath $inputs.extensionProtectedSettingsFile
 
 # Only keep major and minor version for extension
@@ -117,48 +118,56 @@ $extensionVersion = "{0}.{1}" -f $parts[0], $parts[1]
 #create protected settings file with pat token
 @{ PATToken = $personalAccessToken } | ConvertTo-Json | Set-Content -Path $extensionProtectedSettingsFile -Force
 
-# get config settings
-$config = Get-Config -extensionPublicSettingsFile $extensionPublicSettingsFile -extensionProtectedSettingsFile $extensionProtectedSettingsFile -personalAccessToken $personalAccessToken
-
 #####
 # Pre-cleanup
 #####
 Write-Host "Removing VM $vmName to ensure clean state for test"
 Remove-ExistingVM -resourceGroupName $resourceGroupName -vmName $vmName -storageAccountName $storageAccountName
 
-# Remove any old agent which is till registered
-$oldAgentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
-if($oldAgentInfo.isAgentExists -eq $true)
-{
-    Remove-VSTSAgent -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroupId $oldAgentInfo.deploymentGroupId -agentId $oldAgentInfo.agentId
-}
-
-#####
-# Run scenario
-#####
+####
+# Create VM
 Write-Host "Creating VM $vmName"
 Create-VM -resourceGroupName $resourceGroupName -templateFile $templateFile -templateParameterFile $templateParameterFile -vmPasswordString $vmPassword
+####
 
-Write-Host "Installing extension $extension version $extensionVersion on VM $vmName"
-Install-ExtensionOnVM -resourceGroupName $resourceGroupName -vmName $vmName -location $location -publisher $publisher -extension $extension -extensionVersion $extensionVersion -extensionPublicSettingsFile $extensionPublicSettingsFile -extensionProtectedSettingsFile $extensionProtectedSettingsFile
+# Run twice. First configure and then reconfigure 
+@($extensionPublicSettingsFile, $extensionReconfigurationPublicSettingsFile) | foreach {
+    # get config settings
+    $config = Get-Config -extensionPublicSettingsFile $_ -extensionProtectedSettingsFile $extensionProtectedSettingsFile -personalAccessToken $personalAccessToken
 
-#####
-# Validation
-#####
+    ####
+    # Remove any old agent which is till registered
+    ####
+    $oldAgentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
+    if($oldAgentInfo.isAgentExists -eq $true) {
+        Remove-VSTSAgent -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroupId $oldAgentInfo.deploymentGroupId -agentId $oldAgentInfo.agentId
+    }
 
-# Verify that agent is correctly configured against VSTS
-Write-Host "Validating that agent has been registered..."
-Write-Host "Getting agent information from VSTS"
-$agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
+    #####
+    # Run scenario
+    #####
 
-if(($agentInfo.isAgentExists -eq $false) -or ($agentInfo.isAgentOnline -eq $false))
-{
-    Write-Error "Agent has not been registered with VSTS!!"
+    Write-Host "Installing extension $extension version $extensionVersion on VM $vmName"
+    Install-ExtensionOnVM -resourceGroupName $resourceGroupName -vmName $vmName -location $location -publisher $publisher -extension $extension -extensionVersion $extensionVersion -extensionPublicSettingsFile $_ -extensionProtectedSettingsFile $extensionProtectedSettingsFile
+
+    #####
+    # Validation
+    #####
+
+    # Verify that agent is correctly configured against VSTS
+    Write-Host "Validating that agent has been registered..."
+    Write-Host "Getting agent information from VSTS"
+    $agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
+
+    if(($agentInfo.isAgentExists -eq $false) -or ($agentInfo.isAgentOnline -eq $false)) {
+        Write-Error "Agent has not been registered with VSTS!!"
+    }
+    else {
+        Write-Host "Agent has been successfully registered with VSTS!!"
+    }    
 }
-else
-{
-    Write-Host "Agent has been successfully registered with VSTS!!"
-}
+
+
 
 #####
 # Clean-up
@@ -171,12 +180,16 @@ Remove-AzureRmVMExtension -ResourceGroupName $resourceGroupName -VMName $vmName 
 # Delete VM and vhd
 Remove-ExistingVM -resourceGroupName $resourceGroupName -vmName $vmName -storageAccountName $storageAccountName
 
-$agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
+# Cleanup both agents if required pool if needed
+@($extensionPublicSettingsFile, $extensionReconfigurationPublicSettingsFile) | foreach {
+    # get config settings
+    $config = Get-Config -extensionPublicSettingsFile $_ -extensionProtectedSettingsFile $extensionProtectedSettingsFile -personalAccessToken $personalAccessToken
+    $agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName
 
-# Remove agent from pool if needed
-if($agentInfo.isAgentExists -eq $true)
-{
-    Remove-VSTSAgent -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroupId $agentInfo.deploymentGroupId -agentId $agentInfo.agentId
+    # Remove agent from pool if needed
+    if($agentInfo.isAgentExists -eq $true) {
+        Remove-VSTSAgent -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroupId $agentInfo.deploymentGroupId -agentId $agentInfo.agentId
+    }
 }
 
 # Delete protected settings file

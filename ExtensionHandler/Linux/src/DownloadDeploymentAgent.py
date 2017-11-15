@@ -5,6 +5,7 @@ import tarfile
 import json
 import Constants
 import os
+import platform
 
 log_function = None
 
@@ -62,8 +63,9 @@ def get_agent_package_data(account_info, package_data_address, package_data_addr
       return val['value'][0]['downloadUrl']
     else:
       # Back compat for package addresses
+      write_download_log('\t\tFetching Agent PackageData using {0}'.format(package_data_address_old))
       write_download_log('\t\t Making HTTP request for old package data')
-      vsts_url, package_data_address = get_host_and_address(account_info, package_data_address_old)
+      dummy, package_data_address = get_host_and_address(account_info, package_data_address_old)
       conn = method(vsts_url)
       conn.request('GET', package_data_address, headers = headers)
       response = conn.getresponse()

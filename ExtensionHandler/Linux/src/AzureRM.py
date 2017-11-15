@@ -6,7 +6,6 @@ import Utils.HandlerUtil as Util
 import Utils.RMExtensionStatus as RMExtensionStatus
 import os
 import subprocess
-import platform
 import Constants
 import DownloadDeploymentAgent
 import ConfigureDeploymentAgent

@@ -73,7 +73,7 @@ function Test-AgentSettingsAreSame
         try
         {
             $agentUrl = $agentTfsUrl
-            $agentCollection = if($agentSetting.collectionName){$agentSetting.collectionName}
+            $agentCollection = if([bool]($agentSetting.PSObject.Properties.name -match "collectionName")){$agentSetting.collectionName}
             if($agentCollection)
             {
                 $agentUrl = -join($agentUrl, '/', $agentCollection)

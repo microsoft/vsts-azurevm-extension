@@ -304,9 +304,6 @@ function Get-ConfigurationFromSettings {
             throw New-HandlerTerminatingError $RM_Extension_Status.ArchitectureNotSupported.Code -Message $RM_Extension_Status.ArchitectureNotSupported.Message
         }
 
-        $platform = "win-x64"
-        Write-Log "Platform: $platform"
-
         $vstsAccountName = $publicSettings['VSTSAccountName'].ToLower()
         $tfsVirtualApplication = ""
         $tfsCollection = ""
@@ -416,7 +413,6 @@ function Get-ConfigurationFromSettings {
         return @{
             VSTSUrl  = $vstsUrl
             PATToken = $patToken
-            Platform = $platform
             TeamProject        = $teamProjectName
             DeploymentGroup    = $deploymentGroupName
             AgentName          = $agentName
@@ -506,7 +502,7 @@ function Invoke-GetAgentScript {
     [hashtable] $config
     )
 
-    . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -platform $config.Platform -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
 }
 
 function Test-AgentAlreadyExistsInternal {

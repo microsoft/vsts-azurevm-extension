@@ -7,7 +7,8 @@ $configCmd = "config.cmd"
 $configCommonArgs = "--deploymentgroup --runasservice --unattended --replace --auth PAT "
 $removeAgentArgs = " remove --unattended --auth PAT "
 $defaultAgentWorkingFolder = "_work"
-$platformKeyOld = "win7-x64"
+$legacyPlatformKey = "win7-x64"
+$platform = "win-x64"
 
 ## PS Version
 $minPSVersionSupported = 3

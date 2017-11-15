@@ -6,5 +6,6 @@
   "templateFile": "linux_template.json",
   "templateParameterFile": "linux_parameters.json",
   "extensionPublicSettingsFile": "publicConfig.json",
+  "extensionPublicSettingsFileReconfigure": "publicConfigReconfigure.json",
   "extensionProtectedSettingsFile": "_protectedConfig.json"
 }

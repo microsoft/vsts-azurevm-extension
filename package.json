@@ -14,8 +14,5 @@
     "gulp-util": "^3.0.7",
     "gulp-zip": "^3.2.0",
     "minimist": "^1.2.0"
-  },
-  "dependencies": {
-    "graceful-fs": "^4.1.11"
   }
 }

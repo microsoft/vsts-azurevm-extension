@@ -38,7 +38,7 @@ if($env:SYSTEM_ARTIFACTSDIRECTORY -and $env:BUILD_DEFINITIONNAME)
 }
 
 $subscription = Get-AzureSubscription -Current -ExtendedDetails
-$uri = "https://management.core.windows.net/$($subscription.SubscriptionId)/services/storageservices/vstsvmextensiontest/keys"
+$uri = "https://management.core.windows.net/$($subscription.SubscriptionId)/services/storageservices/$storageAccountName/keys"
 $result = Invoke-RestMethod -Method GET -Uri $uri -Certificate $subscription.Certificate -Headers @{'x-ms-version'='2014-08-01'} -ContentType application/xml
 $ctx = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $result.StorageService.StorageServiceKeys.Primary
 

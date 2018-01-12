@@ -26,7 +26,7 @@
             "label": "Azure Classic Subscription",
             "defaultValue": "",
             "required": true,
-            "helpMarkDown": "Select an endpoint for an Azure Classic subscription."
+            "helpMarkDown": "Select a classic endpoint for an Azure subscription."
         },
         {
             "name": "Action",

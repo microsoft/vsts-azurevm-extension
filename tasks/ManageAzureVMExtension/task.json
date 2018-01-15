@@ -1,0 +1,128 @@
+{
+    "id": "821af6f3-3341-4104-99ed-1f524fc2f50c",
+    "name": "ManageAzureVMExtension",
+    "friendlyName": "Manage VM extensions in Azure Platform Image Repository",
+    "description": "Manage VM extensions in Azure Platform Image Repository",
+    "helpMarkDown": "[More Information](https://aka.ms/manageazurevmextensionreadme)",
+    "category": "Deploy",
+    "visibility": [
+        "Build",
+        "Release"
+    ],
+    "author": "Microsoft Corporation",
+    "version": {
+        "Major": 1,
+        "Minor": 0,
+        "Patch": 0
+    },
+    "demands": [],
+    "minimumAgentVersion": "2.120.1",
+    "groups": [
+    ],
+    "inputs": [
+        {
+            "name": "ConnectedServiceName",
+            "type": "connectedService:Azure",
+            "label": "Azure Classic Subscription",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Select a classic endpoint for an Azure subscription."
+        },
+        {
+            "name": "Action",
+            "type": "pickList",
+            "label": "Action",
+            "defaultValue": "Upload",
+            "options": {
+                "Upload": "Upload extension to Azure PIR",
+                "Delete": "Delete extension from Azure PIR"
+            },
+            "required": true,
+            "helpMarkDown": "Choose the action."
+        },
+        {
+            "name": "StorageAccount",
+            "type": "pickList",
+            "label": "Storage Account",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Specify a storage account. If the account does not exixt, it will be created.",
+            "properties": {
+                "EditableOptions": "True"
+            },
+            "visibleRule": "Action = Upload"
+        },
+        {
+            "name": "ContainerName",
+            "type": "string",
+            "label": "Container Name",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Name of the storage container. If the container does not exixt, it will be created.",
+            "visibleRule": "Action = Upload",
+            "properties": {
+                "EditableOptions": "True"
+            }
+        },
+        {
+            "name": "ExtensionDefinitionFile",
+            "type": "filePath",
+            "label": "Extension Definition File",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Path of the extension definition file.",
+            "visibleRule": "Action = Upload"
+        },
+        {
+            "name": "ExtensionName",
+            "type": "string",
+            "label": "Extension Name",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Name of the extension to delete.",
+            "properties": {
+                "EditableOptions": "True"
+            },
+            "visibleRule": "Action = Delete"
+        },
+        {
+            "name": "Publisher",
+            "type": "string",
+            "label": "Extension Publisher",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Publisher name of the extension to delete.",
+            "properties": {
+                "EditableOptions": "True"
+            },
+            "visibleRule": "Action = Delete"
+        },
+        {
+            "name": "Vesion",
+            "type": "string",
+            "label": "Extension Version",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Version of the extension to delete.",
+            "properties": {
+                "EditableOptions": "True"
+            },
+            "visibleRule": "Action = Delete"
+        }
+    ],
+    "dataSourceBindings": [
+        {
+            "target": "StorageAccount",
+            "endpointId": "$(ConnectedServiceName)",
+            "dataSourceName": "AzureStorageServiceNames"
+        }
+    ],
+    "instanceNameFormat": "Manage VM extension : $(Action)",
+    "execution": {
+        "Node": {
+            "target": "main.js"
+        }
+    },
+    "messages": {
+    }
+}

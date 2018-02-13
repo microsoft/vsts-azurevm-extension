@@ -1,0 +1,131 @@
+{
+  "id": "821af6f3-3341-4104-99ed-1f524fc2f50c",
+  "name": "VMExtensionInAzurePIR",
+  "friendlyName": "ms-resource:loc.friendlyName",
+  "description": "ms-resource:loc.description",
+  "helpMarkDown": "ms-resource:loc.helpMarkDown",
+  "category": "Deploy",
+  "visibility": [
+    "Build",
+    "Release"
+  ],
+  "author": "Microsoft Corporation",
+  "version": {
+    "Major": 1,
+    "Minor": 0,
+    "Patch": 0
+  },
+  "demands": [],
+  "minimumAgentVersion": "2.120.1",
+  "groups": [],
+  "inputs": [
+    {
+      "name": "ConnectedServiceName",
+      "type": "connectedService:Azure",
+      "label": "ms-resource:loc.input.label.ConnectedServiceName",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "ms-resource:loc.input.help.ConnectedServiceName"
+    },
+    {
+      "name": "Action",
+      "type": "pickList",
+      "label": "ms-resource:loc.input.label.Action",
+      "defaultValue": "Upload",
+      "options": {
+        "Upload": "Upload extension to Azure PIR",
+        "Delete": "Delete extension from Azure PIR"
+      },
+      "required": true,
+      "helpMarkDown": "ms-resource:loc.input.help.Action"
+    },
+    {
+      "name": "StorageAccountName",
+      "type": "pickList",
+      "label": "ms-resource:loc.input.label.StorageAccountName",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "ms-resource:loc.input.help.StorageAccountName",
+      "properties": {
+        "EditableOptions": "True"
+      },
+      "visibleRule": "Action = Upload"
+    },
+    {
+      "name": "ContainerName",
+      "type": "string",
+      "label": "ms-resource:loc.input.label.ContainerName",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "ms-resource:loc.input.help.ContainerName",
+      "visibleRule": "Action = Upload"
+    },
+    {
+      "name": "StorageBlobName",
+      "type": "string",
+      "label": "ms-resource:loc.input.label.StorageBlobName",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "ms-resource:loc.input.help.StorageBlobName",
+      "visibleRule": "Action = Upload"
+    },
+    {
+      "name": "ExtensionPackage",
+      "type": "filePath",
+      "label": "ms-resource:loc.input.label.ExtensionPackage",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "ms-resource:loc.input.help.ExtensionPackage",
+      "visibleRule": "Action = Upload"
+    },
+    {
+      "name": "ExtensionDefinitionFile",
+      "type": "filePath",
+      "label": "ms-resource:loc.input.label.ExtensionDefinitionFile",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "ms-resource:loc.input.help.ExtensionDefinitionFile",
+      "visibleRule": "Action = Upload"
+    },
+    {
+      "name": "ExtensionName",
+      "type": "string",
+      "label": "ms-resource:loc.input.label.ExtensionName",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "ms-resource:loc.input.help.ExtensionName"
+    },
+    {
+      "name": "Publisher",
+      "type": "string",
+      "label": "ms-resource:loc.input.label.Publisher",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "ms-resource:loc.input.help.Publisher"
+    },
+    {
+      "name": "Vesion",
+      "type": "string",
+      "label": "ms-resource:loc.input.label.Vesion",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "ms-resource:loc.input.help.Vesion"
+    }
+  ],
+  "dataSourceBindings": [
+    {
+      "target": "StorageAccount",
+      "endpointId": "$(ConnectedServiceName)",
+      "dataSourceName": "AzureStorageAccountRMandClassic"
+    }
+  ],
+  "instanceNameFormat": "ms-resource:loc.instanceNameFormat",
+  "execution": {
+    "PowerShell3": {
+      "target": "VMExtensionInAzurePIR.ps1"
+    }
+  },
+  "messages": {
+    "VMExtPIR_ConstructorFailed": "ms-resource:loc.messages.VMExtPIR_ConstructorFailed"
+  }
+}

@@ -1,0 +1,34 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "PowerShell Launch (VMExtensionInAzurePIR.ps1)",
+            "script": "${workspaceRoot}/VMExtensionInAzurePIR.ps1",
+            "args": ["-ConnectedServiceName \"{\"parameters\":{\"certificate\":\"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\"},\"scheme\":\"Certificate\"}\" -Action \"Upload\" -StorageAccountName \"vstsvmextensiontest\" -ContainerName \"agentextension\" -StorageBlobName \"vstsagentextension.zip\" -ExtensionPackage \"C:\\Users\\tedeshpa\\work\\vsts-azurevm-extension\\master\\vsts-azurevm-extension\\_build\\ExtensionHandler\\Windows\\RMExtension.zip\" -ExtensionDefinitionFile \"C:\\Users\\tedeshpa\\work\\vsts-azurevm-extension\\master\\vsts-azurevm-extension\\_build\\ExtensionHandler\\Windows\\ExtensionDefinition_Test.xml\" -ExtensionName \"TeamServiceAgent\" -Publisher \"Test3.Microsoft.VisualStudio.Services\" -Vesion \"1.30.0.0\""],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "PowerShell Launch (current file)",
+            "script": "${file}",
+            "args": [],
+            "cwd": "${file}"
+        },
+        {
+            "type": "PowerShell",
+            "request": "attach",
+            "name": "PowerShell Attach to Host Process",
+            "processId": "${command.PickPSHostProcess}",
+            "runspaceId": 1
+        },
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "PowerShell Interactive Session",
+            "cwd": "${workspaceRoot}"
+        }
+    ]
+}

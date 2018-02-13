@@ -1,0 +1,134 @@
+{
+    "id": "821af6f3-3341-4104-99ed-1f524fc2f50c",
+    "name": "ManageAzureVMExtension",
+    "friendlyName": "Manage VM extensions in Azure Platform Image Repository",
+    "description": "Manage VM extensions in Azure Platform Image Repository",
+    "helpMarkDown": "[More Information](https://aka.ms/azurevmextensionpirreadme)",
+    "category": "Deploy",
+    "visibility": [
+        "Build",
+        "Release"
+    ],
+    "author": "Microsoft Corporation",
+    "version": {
+        "Major": 1,
+        "Minor": 0,
+        "Patch": 0
+    },
+    "demands": [],
+    "minimumAgentVersion": "2.120.1",
+    "groups": [
+    ],
+    "inputs": [
+        {
+            "name": "ConnectedServiceName",
+            "type": "connectedService:Azure",
+            "label": "Azure Classic Subscription",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Select the Azure Classic subscription."
+        },
+        {
+            "name": "Action",
+            "type": "pickList",
+            "label": "Action",
+            "defaultValue": "Upload",
+            "options": {
+                "Upload": "Upload extension to Azure PIR",
+                "Delete": "Delete extension from Azure PIR"
+            },
+            "required": true,
+            "helpMarkDown": "Choose the action."
+        },
+        {
+            "name": "StorageAccountName",
+            "type": "pickList",
+            "label": "Storage Account",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Specify a storage account. If the account does not exixt, it will be created.",
+            "properties": {
+                "EditableOptions": "True"
+            },
+            "visibleRule": "Action = Upload"
+        },
+        {
+            "name": "ContainerName",
+            "type": "string",
+            "label": "Container Name",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Name of the Container. If the container does not exixt, it will be created.",
+            "visibleRule": "Action = Upload"
+        },
+        {
+            "name": "StorageBlobName",
+            "type": "string",
+            "label": "Storage Blob Name",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Name of the Storage Blob to upload.",
+            "visibleRule": "Action = Upload"
+        },
+        {
+            "name": "ExtensionPackage",
+            "type": "filePath",
+            "label": "Extension package file",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "The package file for the extension to be created/updated.",
+            "visibleRule": "Action = Upload"
+        },
+        {
+            "name": "ExtensionDefinitionFile",
+            "type": "filePath",
+            "label": "Extension Definition File",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Path of the extension definition file.",
+            "visibleRule": "Action = Upload"
+        },
+        {
+            "name": "ExtensionName",
+            "type": "string",
+            "label": "Extension Name",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Name of the extension to delete.",
+            "visibleRule": "Action = Delete"
+        },
+        {
+            "name": "Publisher",
+            "type": "string",
+            "label": "Extension Publisher",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Publisher of the extension to delete.",
+            "visibleRule": "Action = Delete"
+        },
+        {
+            "name": "Vesion",
+            "type": "string",
+            "label": "Extension Version",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Version of the extension to delete.",
+            "visibleRule": "Action = Delete"
+        }
+    ],
+    "dataSourceBindings": [
+        {
+            "target": "StorageAccountName",
+            "endpointId": "$(ConnectedServiceName)",
+            "dataSourceName": "AzureStorageAccountRMandClassic"
+        }
+    ],
+    "instanceNameFormat": "Manage VM extension : $(Action)",
+    "execution": {
+        "PowerShell3": {
+            "target": "VMExtensionInAzurePIR.ps1"
+        }
+    },
+    "messages": {
+    }
+}

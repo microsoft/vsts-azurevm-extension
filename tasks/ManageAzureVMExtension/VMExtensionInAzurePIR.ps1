@@ -34,7 +34,7 @@ function Get-ServiceEndpointDetails {
     return $endpoint
 }
 
-function Get-ExtensionDefinitionXML {
+function Update-MediaLink {
     param([string][Parameter(Mandatory = $true)]$extensionDefinitionFilePath,
         [string][Parameter(Mandatory = $true)]$mediaLink)
 
@@ -94,7 +94,7 @@ function Upload-ExtensionPackageToAzurePIR {
 
     # read extension definition
     $mediaLink = "https://{0}.blob.core.windows.net/{1}/{2}" -f $storageAccountName, $containerName, $storageBlobName
-    $bodyxml = Get-ExtensionDefinitionXML -extensionDefinitionFilePath $extensionDefinitionFilePath -mediaLink $mediaLink
+    $bodyxml = Update-MediaLink -extensionDefinitionFilePath $extensionDefinitionFilePath -mediaLink $mediaLink
     Write-Host "Body xml: $bodyxml"
     
     $extensionExistsInPIR = $false

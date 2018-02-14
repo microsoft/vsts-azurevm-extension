@@ -22,12 +22,38 @@ function Create-ClassicStorageAccount {
   </ExtendedProperties>
   <AccountType>Standard_LRS</AccountType>
             </CreateStorageServiceInput>'))
-    $result = Invoke-RestMethod -Method POST -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'; "Content-Type" = "application/xml"} -Body $bodyxml.OuterXml #-ContentType application/xml
+    Invoke-RestMethod -Method POST -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'; "Content-Type" = "application/xml"} -Body $bodyxml.OuterXml
     $getUri = "https://management.core.windows.net/$subscriptionId/services/storageservices/$storageAccountName"
-    Invoke-WithRetry -retryCommand { Invoke-RestMethod -Method GET -Uri $getUri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'}} -retryInterval 10 -maxRetries 20 -expectedErrorMessage "ResourceNotFound"
+    try {
+        Invoke-RestMethod -Method GET -Uri $getUri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'}
+    }
+    catch {
+        throw "Unexpected error occured while creating new storage account : $_"
+    }
 }
 
-function Get-ContainerDetails {
+function Ensure-StorageAccountExists {
+    param([string][Parameter(Mandatory = $true)]$subscriptionId,
+        [string][Parameter(Mandatory = $true)]$storageAccountName,
+        [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate)
+    
+    try {
+        $uri = "https://management.core.windows.net/$subscriptionId/services/storageservices/$storageAccountName"
+        $result = Invoke-RestMethod -Method GET -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'}
+    }
+    catch {
+        if ($_.ErrorDetails.Message.Contains("ResourceNotFound")) {
+            Create-ClassicStorageAccount -subscriptionId $subscriptionId -storageAccountName $storageAccountName -certificate $certificate
+        }
+        else {
+            throw "Unexpected error occured while fetching storage account details : $_"
+        }
+
+    }
+}
+
+
+function Ensure-ContainerExists {
     param([string][Parameter(Mandatory = $true)]$storageAccountName,
         [string][Parameter(Mandatory = $true)]$containerName,
         [string][Parameter(Mandatory = $true)]$storageAccountKey)
@@ -52,7 +78,17 @@ function Get-ContainerDetails {
     $signature = [System.Convert]::ToBase64String($hmac.ComputeHash($dataToMac))
     $headers.Add("Authorization", "SharedKey " + $storageAccountName + ":" + $signature);
     $str = $headers | Out-String
-    Invoke-RestMethod -Uri $Url -Method $method -headers $headers
+    try {
+        Invoke-RestMethod -Uri $Url -Method $method -headers $headers
+    }
+    catch {
+        if ($_.ErrorDetails.Message.Contains("ContainerNotFound")) {
+            Create-NewContainer -storageAccountName $storageAccountName -containerName $containerName -storageAccountKey $storageAccountKey
+        }
+        else {
+            throw "Unexpected error occured while fetching container details : $_"
+        }
+    }
 }
 
 function Create-NewContainer {
@@ -80,7 +116,12 @@ function Create-NewContainer {
     $signature = [System.Convert]::ToBase64String($hmac.ComputeHash($dataToMac))
     $headers.Add("Authorization", "SharedKey " + $storageAccountName + ":" + $signature);
     $str = $headers | Out-String
-    Invoke-RestMethod -Uri $Url -Method $method -headers $headers
+    try {
+        Invoke-RestMethod -Uri $Url -Method $method -headers $headers
+    }
+    catch {
+        "Some error occured while creating the container: $_"
+    }
 }
 
 function Set-StorageBlobContent {
@@ -116,5 +157,10 @@ function Set-StorageBlobContent {
     $signature = [System.Convert]::ToBase64String($hmac.ComputeHash($dataToMac))
     $headers.Add("Authorization", "SharedKey " + $storageAccountName + ":" + $signature)
     $str = $headers | Out-String
-    Invoke-RestMethod -Uri $Url -Method $method -headers $headers -Body $content
+    try {
+        Invoke-RestMethod -Uri $Url -Method $method -headers $headers -Body $content
+    }
+    catch {
+        "Some error occured while uploading the extension package to the storage blob: $_"
+    }
 }

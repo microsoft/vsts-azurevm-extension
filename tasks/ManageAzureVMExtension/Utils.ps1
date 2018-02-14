@@ -3,7 +3,7 @@ function Invoke-WithRetry {
         [ScriptBlock] $retryCommand,
         [int] $retryInterval = 120,
         [int] $maxRetries = 60,
-        [string] $expectedErrorMessage = "Conflict"
+        [string] $expectedErrorMessage = ""
     )
 
     $retryCount = 0
@@ -11,15 +11,15 @@ function Invoke-WithRetry {
 
     do {
         try {
-            & $retryCommand
+            $scriptOutput = & $retryCommand
             $isExecutedSuccessfully = $true
-            break
+            return $scriptOutput
         }
         catch {
             Write-Host "Exception code: $($_.Exception.Response.StatusCode.ToString())"
             Write-Host $_
 
-            if ($_.Exception.Response.StatusCode.ToString() -ne $expectedErrorMessage) {
+            if (($expectedErrorMessage -eq "") -or ($_.Exception.Response.StatusCode.ToString() -ne $expectedErrorMessage)) {
                 Write-Error "Failed with non-conflict error. No need to retry. Fail now."
                 exit
             }

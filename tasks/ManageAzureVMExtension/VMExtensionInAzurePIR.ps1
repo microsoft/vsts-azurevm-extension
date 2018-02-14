@@ -51,35 +51,16 @@ function Upload-ExtensionPackageToStorageBlob {
         [string][Parameter(Mandatory = $true)]$storageBlobName,
         [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate)
 
+    Ensure-StorageAccountExists -subscriptionId $subscriptionId -storageAccountName $storageAccountName -certificate $certificate
     try {
-        $uri = "https://management.core.windows.net/$subscriptionId/services/storageservices/$storageAccountName"
-        $result = Invoke-RestMethod -Method GET -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'}
+        $keysUri = "https://management.core.windows.net/$subscriptionId/services/storageservices/$storageAccountName/keys"
+        $keysResult = Invoke-RestMethod -Method GET -Uri $keysUri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'}
+        $storageAccountKey = $keysResult.StorageService.StorageServiceKeys.Primary
     }
     catch {
-        if ($_.ErrorDetails.Message.Contains("ResourceNotFound")) {
-            Create-ClassicStorageAccount -subscriptionId $subscriptionId -storageAccountName $storageAccountName -certificate $certificate
-        }
-        else {
-            throw $_
-        }
+        throw "Some error occured while fetching storage account keys : $_"
     }
-
-    $keysUri = "https://management.core.windows.net/$subscriptionId/services/storageservices/$storageAccountName/keys"
-    $keysResult = Invoke-RestMethod -Method GET -Uri $keysUri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'}
-    $storageAccountKey = $keysResult.StorageService.StorageServiceKeys.Primary
-    
-    try {
-        Get-ContainerDetails -storageAccountName $storageAccountName -containerName $containerName -storageAccountKey $storageAccountKey
-    }
-    catch {
-        if ($_.ErrorDetails.Message.Contains("ContainerNotFound")) {
-            Create-NewContainer -storageAccountName $storageAccountName -containerName $containerName -storageAccountKey $storageAccountKey
-        }
-        else {
-            throw $_
-        }
-    }
-    
+    Ensure-ContainerExists -storageAccountName $storageAccountName -containerName $containerName -storageAccountKey $storageAccountKey
     Set-StorageBlobContent -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -packagePath $packagePath -storageAccountKey $storageAccountKey
 }
 
@@ -107,16 +88,16 @@ function Upload-ExtensionPackageToAzurePIR {
     }
 }
 
-
 $serviceEndpointDetails = Get-ServiceEndpointDetails -connectedServiceName $connectedServiceName
-
 $bytes = [System.Convert]::FromBase64String($serviceEndpointDetails.Auth.parameters.certificate)
 $certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
 $certificate.Import($bytes, $null, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
 
 if ($action -eq "Upload") {
     Upload-ExtensionPackageToStorageBlob -subscriptionId $serviceEndpointDetails.Data.subscriptionId -storageAccountName $storageAccountName -containerName $containerName -packagePath $extensionPackagePath -storageBlobName $storageBlobName -certificate $certificate
+    Write-Host "Extension package uploaded successfully to storage the blob."
     Upload-ExtensionPackageToAzurePIR -subscriptionId $serviceEndpointDetails.Data.subscriptionId -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -extensionDefinitionFilePath $extensionDefinitionFilePath -certificate $certificate
+    Write-Host "Extension package uploaded successfully to Azure PIR."
 }
 elseif ($action -eq "Delete") {
     Delete-ExtensionPackageFromAzurePIR  -extensionName $extensionName -publisher $publisherName -versionToDelete $extensionVersion -certificate $certificate -subscriptionId $serviceEndpointDetails.Data.subscriptionId

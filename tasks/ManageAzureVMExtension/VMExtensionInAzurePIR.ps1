@@ -13,9 +13,9 @@ $containerName = Get-VstsInput -Name ContainerName
 $storageBlobName = Get-VstsInput -Name StorageBlobName
 $extensionPackagePath = Get-VstsInput -Name ExtensionPackage
 $extensionDefinitionFilePath = Get-VstsInput -Name ExtensionDefinitionFile
-$extensionName = Get-VstsInput -Name ExtensionName -Require
-$publisherName = Get-VstsInput -Name Publisher -Require
-$extensionVersion = Get-VstsInput -Name Version -Require
+$extensionName = Get-VstsInput -Name ExtensionName
+$publisherName = Get-VstsInput -Name Publisher
+$extensionVersion = Get-VstsInput -Name Version
 
 # Validate the extension definition file path does not contains new-lines. Otherwise, it will
 # break invoking the script via Invoke-Expression.
@@ -89,8 +89,7 @@ function Upload-ExtensionPackageToAzurePIR {
         [string][Parameter(Mandatory = $true)]$containerName,
         [string][Parameter(Mandatory = $true)]$storageBlobName,
         [string][Parameter(Mandatory = $true)]$extensionDefinitionFilePath,
-        [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate,
-        [string][Parameter(Mandatory = $true)]$extensionVersion)
+        [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate)
 
     # read extension definition
     $mediaLink = "https://{0}.blob.core.windows.net/{1}/{2}" -f $storageAccountName, $containerName, $storageBlobName
@@ -117,7 +116,7 @@ $certificate.Import($bytes, $null, [System.Security.Cryptography.X509Certificate
 
 if ($action -eq "Upload") {
     Upload-ExtensionPackageToStorageBlob -subscriptionId $serviceEndpointDetails.Data.subscriptionId -storageAccountName $storageAccountName -containerName $containerName -packagePath $extensionPackagePath -storageBlobName $storageBlobName -certificate $certificate
-    Upload-ExtensionPackageToAzurePIR -subscriptionId $serviceEndpointDetails.Data.subscriptionId -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -extensionDefinitionFilePath $extensionDefinitionFilePath -certificate $certificate -extensionVersion $extensionVersion
+    Upload-ExtensionPackageToAzurePIR -subscriptionId $serviceEndpointDetails.Data.subscriptionId -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -extensionDefinitionFilePath $extensionDefinitionFilePath -certificate $certificate
 }
 elseif ($action -eq "Delete") {
     Delete-ExtensionPackageFromAzurePIR  -extensionName $extensionName -publisher $publisherName -versionToDelete $extensionVersion -certificate $certificate -subscriptionId $serviceEndpointDetails.Data.subscriptionId

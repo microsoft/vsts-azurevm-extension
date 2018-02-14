@@ -1,7 +1,7 @@
 {
     "id": "821af6f3-3341-4104-99ed-1f524fc2f50c",
     "name": "ManageAzureVMExtension",
-    "friendlyName": "Manage VM extensions in Azure Platform Image Repository",
+    "friendlyName": "Manage VM extensions in Azure PIR",
     "description": "Manage VM extensions in Azure Platform Image Repository",
     "helpMarkDown": "[More Information](https://aka.ms/azurevmextensionpirreadme)",
     "category": "Deploy",
@@ -120,7 +120,7 @@
         {
             "target": "StorageAccountName",
             "endpointId": "$(ConnectedServiceName)",
-            "dataSourceName": "AzureStorageAccountRMandClassic"
+            "dataSourceName": "AzureStorageServiceNames"
         }
     ],
     "instanceNameFormat": "Manage VM extension : $(Action)",

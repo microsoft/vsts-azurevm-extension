@@ -16,16 +16,14 @@ function Invoke-WithRetry {
             return $scriptOutput
         }
         catch {
-            Write-Host "Exception code: $($_.Exception.Response.StatusCode.ToString())"
-            Write-Host $_
-
+            Write-Host (Get-VstsLocString -Key "VMExtPIR_ExceptionDetails" -ArgumentList $($_.Exception.Response.StatusCode.ToString()), $_)
             if (($expectedErrorMessage -eq "") -or ($_.Exception.Response.StatusCode.ToString() -ne $expectedErrorMessage)) {
-                Write-Error "Failed with non-conflict error. No need to retry. Fail now."
+                Write-Error (Get-VstsLocString -Key "VMExtPIR_NonConflictErrorFail")
                 exit
             }
         }
     
-        Write-Host "success: $isExecutedSuccessfully, retry count: $retryCount, max retries: $maxRetries. Will retry after $retryInterval seconds"
+        Write-Host (Get-VstsLocString -Key "VMExtPIR_ExecutionStats" -ArgumentList $isExecutedSuccessfully, $retryCount, $maxRetries, $retryInterval)
         $retryCount++
         Start-Sleep -s $retryInterval
 
@@ -33,7 +31,7 @@ function Invoke-WithRetry {
     While (($isExecutedSuccessfully -ne $true) -and ($retryCount -lt $maxRetries))
 
     if ($isExecutedSuccessfully -ne $true) {
-        Write-Error "Could not execute command successfully. Failing with timeout."
+        Write-Error (Get-VstsLocString -Key "VMExtPIR_FailWithTimeout")
         exit
     }
 }

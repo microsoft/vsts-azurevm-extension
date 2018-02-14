@@ -28,7 +28,7 @@ function Create-ClassicStorageAccount {
         Invoke-RestMethod -Method GET -Uri $getUri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'}
     }
     catch {
-        throw "Unexpected error occured while creating new storage account : $_"
+        throw (Get-VstsLocString -Key "VMExtPIR_StorageAccountCreationError" -ArgumentList $_)
     }
 }
 
@@ -46,7 +46,7 @@ function Ensure-StorageAccountExists {
             Create-ClassicStorageAccount -subscriptionId $subscriptionId -storageAccountName $storageAccountName -certificate $certificate
         }
         else {
-            throw "Unexpected error occured while fetching storage account details : $_"
+            throw (Get-VstsLocString -Key "VMExtPIR_StorageDetailsFetchError" -ArgumentList $_)
         }
 
     }
@@ -86,7 +86,7 @@ function Ensure-ContainerExists {
             Create-NewContainer -storageAccountName $storageAccountName -containerName $containerName -storageAccountKey $storageAccountKey
         }
         else {
-            throw "Unexpected error occured while fetching container details : $_"
+            throw (Get-VstsLocString -Key "VMExtPIR_ContainerDetailsFetchError" -ArgumentList $_)
         }
     }
 }
@@ -120,7 +120,7 @@ function Create-NewContainer {
         Invoke-RestMethod -Uri $Url -Method $method -headers $headers
     }
     catch {
-        "Some error occured while creating the container: $_"
+        throw (Get-VstsLocString -Key "VMExtPIR_ContainerCreationError" -ArgumentList $_)
     }
 }
 
@@ -161,6 +161,6 @@ function Set-StorageBlobContent {
         Invoke-RestMethod -Uri $Url -Method $method -headers $headers -Body $content
     }
     catch {
-        "Some error occured while uploading the extension package to the storage blob: $_"
+        throw (Get-VstsLocString -Key "VMExtPIR_BlobUploadError" -ArgumentList $_)
     }
 }

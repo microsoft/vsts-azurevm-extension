@@ -5,6 +5,8 @@ Import-VstsLocStrings "$PSScriptRoot\Task.json"
 . $PSScriptRoot/AzurePIROperations.ps1
 . $PSScriptRoot/Utils.ps1
 
+Import-VstsLocStrings -LiteralPath $PSScriptRoot/Task.json
+
 # Get inputs.
 $connectedServiceName = Get-VstsInput -Name ConnectedServiceName -Require
 $action = Get-VstsInput -Name Action -Require
@@ -58,7 +60,7 @@ function Upload-ExtensionPackageToStorageBlob {
         $storageAccountKey = $keysResult.StorageService.StorageServiceKeys.Primary
     }
     catch {
-        throw "Some error occured while fetching storage account keys : $_"
+        throw (Get-VstsLocString -Key "VMExtPIR_StorageAccountKeysFetchError" -ArgumentList $_)
     }
     Ensure-ContainerExists -storageAccountName $storageAccountName -containerName $containerName -storageAccountKey $storageAccountKey
     Set-StorageBlobContent -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -packagePath $packagePath -storageAccountKey $storageAccountKey
@@ -75,7 +77,7 @@ function Upload-ExtensionPackageToAzurePIR {
     # read extension definition
     $mediaLink = "https://{0}.blob.core.windows.net/{1}/{2}" -f $storageAccountName, $containerName, $storageBlobName
     $bodyxml = Update-MediaLink -extensionDefinitionFilePath $extensionDefinitionFilePath -mediaLink $mediaLink
-    Write-Host "Body xml: $bodyxml"
+    Write-Host (Get-VstsLocString -Key "VMExtPIR_BodyXml" -ArgumentList $bodyxml)
     
     $extensionExistsInPIR = $false
     $extensionExistsInPIR = Check-ExtensionExistsInAzurePIR -subscriptionId $subscriptionId -certificate $certificate -publisher $bodyxml.ExtensionImage.ProviderNameSpace -type $bodyxml.ExtensionImage.Type
@@ -95,15 +97,15 @@ $certificate.Import($bytes, $null, [System.Security.Cryptography.X509Certificate
 
 if ($action -eq "Upload") {
     Upload-ExtensionPackageToStorageBlob -subscriptionId $serviceEndpointDetails.Data.subscriptionId -storageAccountName $storageAccountName -containerName $containerName -packagePath $extensionPackagePath -storageBlobName $storageBlobName -certificate $certificate
-    Write-Host "Extension package uploaded successfully to storage the blob."
+    Write-Host (Get-VstsLocString -Key "VMExtPIR_BlobUploadSuccess")
     Upload-ExtensionPackageToAzurePIR -subscriptionId $serviceEndpointDetails.Data.subscriptionId -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -extensionDefinitionFilePath $extensionDefinitionFilePath -certificate $certificate
-    Write-Host "Extension package uploaded successfully to Azure PIR."
+    Write-Host (Get-VstsLocString -Key "VMExtPIR_PIRUploadSuccess")
 }
 elseif ($action -eq "Delete") {
     Delete-ExtensionPackageFromAzurePIR  -extensionName $extensionName -publisher $publisherName -versionToDelete $extensionVersion -certificate $certificate -subscriptionId $serviceEndpointDetails.Data.subscriptionId
 }
 else {
-    throw (Get-VstsLocString -Key InvalidAction -ArgumentList $)
+    throw (Get-VstsLocString -Key "VMExtPIR_InvalidAction" -ArgumentList $action)
 }
 
 

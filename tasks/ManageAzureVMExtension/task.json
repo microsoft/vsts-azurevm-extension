@@ -148,7 +148,7 @@
         "VMExtPIR_DeletingExtensionVersion": "Deleting extension version: {0}",
         "VMExtPIR_NothingToDelete": "No extension will be deleted",
         "VMExtPIR_UpdatingExtensionVersion": "Updating extension to version: {0}",
-        "VMExtPIR_NonConflictErrorFail": "Failed with non-conflict error. No need to retry. Fail now.",
+        "VMExtPIR_NonConflictErrorFail": "Failed with non-conflict error. No need to retry. Fail now. Details: {0}",
         "VMExtPIR_FailWithTimeout": "Could not execute command successfully. Failing with timeout.",
         "VMExtPIR_ExceptionDetails": "Exception code: {0}. Exception details: {1}",
         "VMExtPIR_ExecutionStats": "success: {0}}, retry count: {0}, max retries: {0}. Will retry after {0} seconds"

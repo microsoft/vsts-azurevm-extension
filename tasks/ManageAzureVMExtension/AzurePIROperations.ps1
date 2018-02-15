@@ -9,7 +9,7 @@ function Check-ExtensionExistsInAzurePIR {
 
     # invoke GET rest api to check whether the extension already exists
     try {
-        $publisherExtensions = Invoke-RestMethod -Method GET -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'}
+        $publisherExtensions = Invoke-RestMethod -Method GET -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion}
         $checkExtension = $publisherExtensions.ExtensionImages.ExtensionImage | Where-Object {($_.ProviderNameSpace -eq $publisher) -and ($_.Type -eq $type)}
     }
     catch {
@@ -28,7 +28,7 @@ function Create-ExtensionPackageInAzurePIR {
 
     try {
         # invoke POST rest api to create the extension
-        Invoke-RestMethod -Method POST -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'} -Body $bodyxml.OuterXml -ContentType application/xml
+        Invoke-RestMethod -Method POST -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion} -Body $bodyxml.OuterXml -ContentType application/xml
     }
     catch {
         throw (Get-VstsLocString -Key "VMExtPIR_ExtensionCreationError" -ArgumentList $_)
@@ -46,7 +46,6 @@ function Update-ExtensionPackageInAzurePIR {
         [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate,
         [string][Parameter(Mandatory = $true)]$subscriptionId)
 
-    $certificate.Thumbprint
     Write-Host (Get-VstsLocString -Key "VMExtPIR_UpdatingExtensionVersion" -ArgumentList $($bodyxml.ExtensionImage.Version))
 
     $uri = "https://management.core.windows.net/$subscriptionId/services/extensions?action=update"
@@ -54,7 +53,7 @@ function Update-ExtensionPackageInAzurePIR {
 
     # invoke PUT rest api to update the extension
 
-    Invoke-WithRetry -retryCommand {Invoke-RestMethod -Method PUT -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'} -Body $bodyxml.OuterXml -ContentType application/xml -ErrorAction SilentlyContinue} -expectedErrorMessage "Conflict"
+    Invoke-WithRetry -retryCommand {Invoke-RestMethod -Method PUT -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion} -Body $bodyxml.OuterXml -ContentType application/xml -ErrorAction SilentlyContinue} -expectedErrorMessage "Conflict"
            
     # set this version as value for release variable 
     $newVersion = $bodyxml.ExtensionImage.Version
@@ -94,7 +93,7 @@ function Delete-ExtensionPackageFromAzurePIR {
     $putUri = "https://management.core.windows.net/$subscriptionId/services/extensions?action=update"
     Write-Host (Get-VstsLocString -Key "VMExtPIR_MarkingExtensionInternal" -ArgumentList $putUri)
 
-    Invoke-WithRetry -retryCommand {Invoke-RestMethod -Method PUT -Uri $putUri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'} -Body $definitionXml -ContentType application/xml -ErrorAction SilentlyContinue} -expectedErrorMessage "Conflict"
+    Invoke-WithRetry -retryCommand {Invoke-RestMethod -Method PUT -Uri $putUri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion} -Body $definitionXml -ContentType application/xml -ErrorAction SilentlyContinue} -expectedErrorMessage "Conflict"
 
     Start-Sleep -Seconds 10
 
@@ -102,5 +101,5 @@ function Delete-ExtensionPackageFromAzurePIR {
     $uri = "https://management.core.windows.net/$subscriptionId/services/extensions/$publisher/$extensionName/$versionToDelete"
     Write-Host (Get-VstsLocString -Key "VMExtPIR_DeletingExtension" -ArgumentList $uri)
 
-    Invoke-WithRetry -retryCommand {Invoke-RestMethod -Method DELETE -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'} -ErrorAction SilentlyContinue} -expectedErrorMessage "Conflict"
+    Invoke-WithRetry -retryCommand {Invoke-RestMethod -Method DELETE -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion} -ErrorAction SilentlyContinue} -expectedErrorMessage "Conflict"
 }

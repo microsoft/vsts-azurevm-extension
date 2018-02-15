@@ -22,10 +22,10 @@ function Create-ClassicStorageAccount {
   </ExtendedProperties>
   <AccountType>Standard_LRS</AccountType>
             </CreateStorageServiceInput>'))
-    Invoke-RestMethod -Method POST -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'; "Content-Type" = "application/xml"} -Body $bodyxml.OuterXml
-    $getUri = "https://management.core.windows.net/$subscriptionId/services/storageservices/$storageAccountName"
-    try {
-        Invoke-RestMethod -Method GET -Uri $getUri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'}
+    try{
+        Invoke-RestMethod -Method POST -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion; "Content-Type" = "application/xml"} -Body $bodyxml.OuterXml
+        $getUri = "https://management.core.windows.net/$subscriptionId/services/storageservices/$storageAccountName"
+        Invoke-WithRetry -retryCommand { Invoke-RestMethod -Method GET -Uri $getUri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion} -retryInterval 10 -maxRetries 20 -expectedErrorMessage "ResourceNotFound"
     }
     catch {
         throw (Get-VstsLocString -Key "VMExtPIR_StorageAccountCreationError" -ArgumentList $_)
@@ -39,7 +39,7 @@ function Ensure-StorageAccountExists {
     
     try {
         $uri = "https://management.core.windows.net/$subscriptionId/services/storageservices/$storageAccountName"
-        $result = Invoke-RestMethod -Method GET -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'}
+        $result = Invoke-RestMethod -Method GET -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion}
     }
     catch {
         if ($_.ErrorDetails.Message.Contains("ResourceNotFound")) {
@@ -52,6 +52,21 @@ function Ensure-StorageAccountExists {
     }
 }
 
+function Get-PrimaryStorageAccountKey {
+    param([string][Parameter(Mandatory = $true)]$subscriptionId,
+        [string][Parameter(Mandatory = $true)]$storageAccountName,
+        [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate)
+    
+    try {
+        $keysUri = "https://management.core.windows.net/$subscriptionId/services/storageservices/$storageAccountName/keys"
+        $keysResult = Invoke-RestMethod -Method GET -Uri $keysUri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion}
+        return $keysResult.StorageService.StorageServiceKeys.Primary
+    }
+    catch {
+        throw (Get-VstsLocString -Key "VMExtPIR_StorageAccountKeysFetchError" -ArgumentList $_)
+    }
+}
+
 
 function Ensure-ContainerExists {
     param([string][Parameter(Mandatory = $true)]$storageAccountName,
@@ -59,7 +74,7 @@ function Ensure-ContainerExists {
         [string][Parameter(Mandatory = $true)]$storageAccountKey)
 
     $method = "GET"
-    $headerDate = '2017-04-17'
+    $headerDate = $azureStorageApiVersion
     $headers = @{"x-ms-version" = "$headerDate"}
     $Url = "https://${storageAccountName}.blob.core.windows.net/${containerName}?restype=container"
     $xmsdate = (get-date -format r).ToString()
@@ -71,7 +86,6 @@ function Ensure-ContainerExists {
     $signatureString += "/${storageAccountName}/${containerName}$([char]10)"
     $signatureString += "restype:container"
     #Add CanonicalizedResource
-    $uri = New-Object System.Uri -ArgumentList $Url
     $dataToMac = [System.Text.Encoding]::UTF8.GetBytes($signatureString)
     $accountKeyBytes = [System.Convert]::FromBase64String($storageAccountKey)
     $hmac = new-object System.Security.Cryptography.HMACSHA256((, $accountKeyBytes))
@@ -97,7 +111,7 @@ function Create-NewContainer {
         [string][Parameter(Mandatory = $true)]$storageAccountKey)
 
     $method = "PUT"
-    $headerDate = '2017-04-17'
+    $headerDate = $azureStorageApiVersion
     $headers = @{"x-ms-version" = "$headerDate"}
     $Url = "https://${storageAccountName}.blob.core.windows.net/${containerName}?restype=container"
     $xmsdate = (get-date -format r).ToString()
@@ -109,7 +123,6 @@ function Create-NewContainer {
     $signatureString += "/${storageAccountName}/${containerName}$([char]10)"
     $signatureString += "restype:container"
     #Add CanonicalizedResource
-    $uri = New-Object System.Uri -ArgumentList $Url
     $dataToMac = [System.Text.Encoding]::UTF8.GetBytes($signatureString)
     $accountKeyBytes = [System.Convert]::FromBase64String($storageAccountKey)
     $hmac = new-object System.Security.Cryptography.HMACSHA256((, $accountKeyBytes))
@@ -133,7 +146,7 @@ function Set-StorageBlobContent {
 
 
     $method = "PUT"
-    $headerDate = '2017-04-17'
+    $headerDate = $azureStorageApiVersion
     $headers = @{"x-ms-version" = "$headerDate"}
     $Url = "https://${storageAccountName}.blob.core.windows.net/${containerName}/${storageBlobName}"
     $xmsdate = (get-date -format r).ToString()
@@ -150,7 +163,6 @@ function Set-StorageBlobContent {
     $signatureString += "x-ms-version:" + $headers["x-ms-version"] + "$([char]10)"
     $signatureString += "/${storageAccountName}/${containerName}/${storageBlobName}"
     #Add CanonicalizedResource
-    $uri = New-Object System.Uri -ArgumentList $Url
     $dataToMac = [System.Text.Encoding]::UTF8.GetBytes($signatureString)
     $accountKeyBytes = [System.Convert]::FromBase64String($storageAccountKey)
     $hmac = new-object System.Security.Cryptography.HMACSHA256((, $accountKeyBytes))

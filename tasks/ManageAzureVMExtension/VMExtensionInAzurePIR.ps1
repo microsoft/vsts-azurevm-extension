@@ -1,11 +1,11 @@
 Trace-VstsEnteringInvocation $MyInvocation
 Import-VstsLocStrings "$PSScriptRoot\Task.json"
 
+Import-VstsLocStrings -LiteralPath $PSScriptRoot/Task.json
+
 . $PSScriptRoot/StorageAccountOperations.ps1
 . $PSScriptRoot/AzurePIROperations.ps1
 . $PSScriptRoot/Utils.ps1
-
-Import-VstsLocStrings -LiteralPath $PSScriptRoot/Task.json
 
 # Get inputs.
 $connectedServiceName = Get-VstsInput -Name ConnectedServiceName -Require
@@ -54,14 +54,7 @@ function Upload-ExtensionPackageToStorageBlob {
         [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate)
 
     Ensure-StorageAccountExists -subscriptionId $subscriptionId -storageAccountName $storageAccountName -certificate $certificate
-    try {
-        $keysUri = "https://management.core.windows.net/$subscriptionId/services/storageservices/$storageAccountName/keys"
-        $keysResult = Invoke-RestMethod -Method GET -Uri $keysUri -Certificate $certificate -Headers @{'x-ms-version' = '2014-08-01'}
-        $storageAccountKey = $keysResult.StorageService.StorageServiceKeys.Primary
-    }
-    catch {
-        throw (Get-VstsLocString -Key "VMExtPIR_StorageAccountKeysFetchError" -ArgumentList $_)
-    }
+    $storageAccountKey = Get-PrimaryStorageAccountKey -subscriptionId $subscriptionId -storageAccountName $storageAccountName -certificate $certificate
     Ensure-ContainerExists -storageAccountName $storageAccountName -containerName $containerName -storageAccountKey $storageAccountKey
     Set-StorageBlobContent -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -packagePath $packagePath -storageAccountKey $storageAccountKey
 }

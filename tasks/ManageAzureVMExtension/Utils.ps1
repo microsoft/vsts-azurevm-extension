@@ -18,7 +18,7 @@ function Invoke-WithRetry {
         catch {
             Write-Host (Get-VstsLocString -Key "VMExtPIR_ExceptionDetails" -ArgumentList $($_.Exception.Response.StatusCode.ToString()), $_)
             if (($expectedErrorMessage -eq "") -or ($_.Exception.Response.StatusCode.ToString() -ne $expectedErrorMessage)) {
-                Write-Error (Get-VstsLocString -Key "VMExtPIR_NonConflictErrorFail" -ArgumentList $_)
+                throw (Get-VstsLocString -Key "VMExtPIR_NonConflictErrorFail" -ArgumentList $_)
             }
         }
     
@@ -30,6 +30,6 @@ function Invoke-WithRetry {
     While (($isExecutedSuccessfully -ne $true) -and ($retryCount -lt $maxRetries))
 
     if ($isExecutedSuccessfully -ne $true) {
-        Write-Error (Get-VstsLocString -Key "VMExtPIR_FailWithTimeout")
+        throw (Get-VstsLocString -Key "VMExtPIR_FailWithTimeout")
     }
 }

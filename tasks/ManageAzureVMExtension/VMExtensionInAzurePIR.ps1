@@ -1,8 +1,6 @@
 Trace-VstsEnteringInvocation $MyInvocation
 Import-VstsLocStrings "$PSScriptRoot\Task.json"
 
-Import-VstsLocStrings -LiteralPath $PSScriptRoot/Task.json
-
 . $PSScriptRoot/StorageAccountOperations.ps1
 . $PSScriptRoot/AzurePIROperations.ps1
 . $PSScriptRoot/Utils.ps1
@@ -21,7 +19,7 @@ $extensionVersion = Get-VstsInput -Name Version
 
 # Validate the extension definition file path does not contains new-lines. Otherwise, it will
 # break invoking the script via Invoke-Expression.
-if ($extensionDefinitionFilePath -match '[\r\n]' -or [string]::IsNullOrWhitespace($extensionDefinitionFilePath)) {
+if (-not([string]::IsNullOrWhitespace($extensionDefinitionFilePath)) -and $extensionDefinitionFilePath -match '[\r\n]') {
     throw (Get-VstsLocString -Key InvalidScriptPath0 -ArgumentList $extensionDefinitionFilePath)
 }
 
@@ -70,7 +68,7 @@ function Upload-ExtensionPackageToAzurePIR {
     # read extension definition
     $mediaLink = "https://{0}.blob.core.windows.net/{1}/{2}" -f $storageAccountName, $containerName, $storageBlobName
     $bodyxml = Update-MediaLink -extensionDefinitionFilePath $extensionDefinitionFilePath -mediaLink $mediaLink
-    Write-Host (Get-VstsLocString -Key "VMExtPIR_BodyXml" -ArgumentList $bodyxml)
+    Write-Host "Body xml: {0}" -format $bodyxml
     
     $extensionExistsInPIR = $false
     $extensionExistsInPIR = Check-ExtensionExistsInAzurePIR -subscriptionId $subscriptionId -certificate $certificate -publisher $bodyxml.ExtensionImage.ProviderNameSpace -type $bodyxml.ExtensionImage.Type

@@ -11,7 +11,7 @@ function Ensure-ContainerExists {
     $xmsdate = (get-date -format r).ToString()
     $headers.Add("x-ms-date", $xmsdate)
     $resourceComponents = @($storageAccountName, $containerName)
-    $signature = Get-SharedKeySignarture -method $method -headers $headers -resourceComponents $resourceComponents -queryParametersString $queryParameterString -storageAccountKey $storageAccountKey
+    $signature = Get-SharedKeySignature -method $method -headers $headers -resourceComponents $resourceComponents -queryParameterString $queryParameterString -storageAccountKey $storageAccountKey
     $headers.Add("Authorization", "SharedKey " + $storageAccountName + ":" + $signature)
     try {
         Invoke-RestMethod -Uri $url -Method $method -headers $headers
@@ -82,7 +82,7 @@ function Set-StorageBlobContent {
     $headers.Add("Content-Type", "application/zip, application/octet-stream")
     $headers.Add("Content-Length", "$length")
     $resourceComponents = @($storageAccountName, $containerName, $storageBlobName)
-    $signature = Get-SharedKeySignarture -method $method -headers $headers -resourceComponents $resourceComponents -storageAccountKey $storageAccountKey
+    $signature = Get-SharedKeySignature -method $method -headers $headers -resourceComponents $resourceComponents -storageAccountKey $storageAccountKey
     $headers.Add("Authorization", "SharedKey " + $storageAccountName + ":" + $signature)
     try {
         Invoke-RestMethod -Uri $url -Method $method -headers $headers -Body $content
@@ -139,7 +139,7 @@ function Create-NewContainer {
     $xmsdate = (get-date -format r).ToString()
     $headers.Add("x-ms-date", $xmsdate)
     $resourceComponents = @($storageAccountName, $containerName)
-    $signature = Get-SharedKeySignarture -method $method -headers $headers -resourceComponents $resourceComponents -queryParametersString $queryParameterString -storageAccountKey $storageAccountKey
+    $signature = Get-SharedKeySignature -method $method -headers $headers -resourceComponents $resourceComponents -queryParameterString $queryParameterString -storageAccountKey $storageAccountKey
     $headers.Add("Authorization", "SharedKey " + $storageAccountName + ":" + $signature)
     try {
         Invoke-RestMethod -Uri $url -Method $method -headers $headers
@@ -149,7 +149,7 @@ function Create-NewContainer {
     }
 }
 
-function Get-SharedKeySignarture {
+function Get-SharedKeySignature {
     param([string][Parameter(Mandatory = $true)]$method,
         [hashtable][Parameter(Mandatory = $true)]$headers,
         [string[]][Parameter(Mandatory = $true)]$resourceComponents,
@@ -171,6 +171,6 @@ function Get-SharedKeySignarture {
     $signatureStringBytes = [System.Text.Encoding]::UTF8.GetBytes($signatureString)
     $accountKeyBytes = [System.Convert]::FromBase64String($storageAccountKey)
     $hmac = new-object System.Security.Cryptography.HMACSHA256((, $accountKeyBytes))
-    $signature = [System.Convert]::ToBase64String($hmac.ComputeHash($dataToMac))
+    $signature = [System.Convert]::ToBase64String($hmac.ComputeHash($signatureStringBytes))
     return $signature
 }

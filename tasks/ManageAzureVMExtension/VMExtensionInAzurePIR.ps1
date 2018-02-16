@@ -1,6 +1,7 @@
 Trace-VstsEnteringInvocation $MyInvocation
 Import-VstsLocStrings "$PSScriptRoot\Task.json"
 
+. $PSScriptRoot/Constants.ps1
 . $PSScriptRoot/StorageAccountOperations.ps1
 . $PSScriptRoot/AzurePIROperations.ps1
 . $PSScriptRoot/Utils.ps1

@@ -94,9 +94,8 @@ if ($action -eq "Upload") {
 }
 elseif ($action -eq "Delete") {
     Delete-ExtensionPackageFromAzurePIR  -extensionName $extensionName -publisher $publisherName -versionToDelete $extensionVersion -certificate $certificate -subscriptionId $serviceEndpointDetails.Data.subscriptionId
+    Write-Host (Get-VstsLocString -Key "VMExtPIR_PIRDeleteSuccess")
 }
 else {
     throw (Get-VstsLocString -Key "VMExtPIR_InvalidAction" -ArgumentList $action)
 }
-
-

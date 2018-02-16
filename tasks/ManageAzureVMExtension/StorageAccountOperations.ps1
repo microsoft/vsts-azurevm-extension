@@ -116,10 +116,10 @@ function Create-ClassicStorageAccount {
   </ExtendedProperties>
   <AccountType>Standard_LRS</AccountType>
             </CreateStorageServiceInput>'))
-    try{
+    try {
         Invoke-RestMethod -Method POST -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion; "Content-Type" = "application/xml"} -Body $bodyxml.OuterXml
         $getUri = "https://management.core.windows.net/$subscriptionId/services/storageservices/$storageAccountName"
-        Invoke-WithRetry -retryCommand { Invoke-RestMethod -Method GET -Uri $getUri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion} -retryInterval 10 -maxRetries 20 -expectedErrorMessage "ResourceNotFound"
+        Invoke-WithRetry -retryCommand { Invoke-RestMethod -Method GET -Uri $getUri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion}} -retryInterval 10 -maxRetries 20 -expectedErrorMessage "ResourceNotFound"
     }
     catch {
         throw (Get-VstsLocString -Key "VMExtPIR_StorageAccountCreationError" -ArgumentList $_)
@@ -149,7 +149,7 @@ function Create-NewContainer {
     }
 }
 
-function Get-SharedKeySignarture{
+function Get-SharedKeySignarture {
     param([string][Parameter(Mandatory = $true)]$method,
         [hashtable][Parameter(Mandatory = $true)]$headers,
         [string[]][Parameter(Mandatory = $true)]$resourceComponents,
@@ -160,11 +160,11 @@ function Get-SharedKeySignarture{
     # to do : do not replace whitespace in quoted strings in header value 
     # to do : lexicographic sorting of headers keys and query parameters
     # to do : url decode query parameters
-    $headers.Keys | sort | % {if($_ToLower().StartsWith("x-ms-")){$signatureString += "$($_.Trim(@("`t", " ", "`n"))):$($headers[$_] -replace "\s+", " ")`n"}}
+    $headers.Keys | sort | % {if ($_.ToLower().StartsWith("x-ms-")) {$signatureString += "$($_.Trim(@("`t", " ", "`n"))):$($headers[$_] -replace "\s+", " ")`n"}}
     $resourceComponents | % {$signatureString += "/$_"}
     $queryParameters = @{}
     # to do : refine this
-    if($queryParameterString){
+    if ($queryParameterString) {
         $queryParameterString.Split("&") | % {$qp = $($_.Split("=")); $queryParameters[$qp[0]] = $qp[1]}
     }
     $queryParameters.Keys | % {$signatureString += "`n$($_):$($queryParameters[$_])"}

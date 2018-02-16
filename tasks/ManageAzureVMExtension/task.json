@@ -133,6 +133,7 @@
         "VMExtPIR_StorageAccountKeysFetchError": "An error occured while fetching storage account keys: {0}",
         "VMExtPIR_BlobUploadSuccess": "Extension package uploaded successfully to the blob storage.",
         "VMExtPIR_PIRUploadSuccess": "Extension package uploaded successfully to Azure PIR.",
+        "VMExtPIR_PIRDeleteSuccess": "Extension package deleted successfully from Azure PIR.",
         "VMExtPIR_InvalidAction": "Invalid action: {0}. Action should be either 'Upload' or 'Delete'.",
         "VMExtPIR_StorageAccountCreationError": "An error occured while creating new storage account: {0}",
         "VMExtPIR_StorageDetailsFetchError": "An error occured while fetching storage account details: {0}",
@@ -149,6 +150,8 @@
         "VMExtPIR_NonConflictErrorFail": "Failed with non-conflict error. No need to retry. Fail now. Details: {0}",
         "VMExtPIR_FailWithTimeout": "Could not execute command successfully. Failing with timeout.",
         "VMExtPIR_ExceptionDetails": "Exception code: {0}. Exception details: {1}",
-        "VMExtPIR_ExecutionStats": "success: {0}}, retry count: {0}, max retries: {0}. Will retry after {0} seconds"
+        "VMExtPIR_ExecutionStats": "success: {0}}, retry count: {0}, max retries: {0}. Will retry after {0} seconds",
+        "VMExtPIR_ExtensionPublishSuccess": "Extension {0} version {1} published Azure PIR.",
+        "VMExtPIR_ExtensionDeleteSuccess": "Extension {0} version {1} deleted from Azure PIR."
     }
 }

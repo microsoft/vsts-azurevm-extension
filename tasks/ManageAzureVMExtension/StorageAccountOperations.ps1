@@ -117,9 +117,30 @@ function Create-ClassicStorageAccount {
   <AccountType>Standard_LRS</AccountType>
             </CreateStorageServiceInput>'))
     try {
-        Invoke-RestMethod -Method POST -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion; "Content-Type" = "application/xml"} -Body $bodyxml.OuterXml
-        $getUri = "https://management.core.windows.net/$subscriptionId/services/storageservices/$storageAccountName"
-        Invoke-WithRetry -retryCommand { Invoke-RestMethod -Method GET -Uri $getUri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion}} -retryInterval 10 -maxRetries 20 -expectedErrorMessage "ResourceNotFound"
+        $response = Invoke-WebRequest -Method POST -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion; "Content-Type" = "application/xml"} -Body $bodyxml.OuterXml -UseBasicParsing
+        $operationStatusUri = "https://management.core.windows.net/$subscriptionId/operations/$($response.Headers['x-ms-request-id'])"
+        $succeeded = $false
+        for($i = 0; $i -lt 20; $i++){
+            $operation = (Invoke-RestMethod -Method GET -Uri $operationStatusUri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion}).Operation.Status
+            if($operation -eq "Succeeded")
+            {
+                $succeeded = $true
+                break
+            }
+            elseif($operation -eq "InProgress")
+            {   
+                Start-Sleep -s 10
+                continue
+            }
+            else
+            {
+                throw (Get-VstsLocString -Key "VMExtPIR_CreateStorageAccountUnexpectedStatus" -ArgumentList $operation)
+            }
+        }
+        if(-not($succeeded))
+        {
+            throw (Get-VstsLocString -Key "VMExtPIR_CreateStorageAccountTimeout")
+        }
     }
     catch {
         throw (Get-VstsLocString -Key "VMExtPIR_StorageAccountCreationError" -ArgumentList $_)

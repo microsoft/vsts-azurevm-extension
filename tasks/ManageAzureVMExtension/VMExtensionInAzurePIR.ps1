@@ -69,7 +69,7 @@ function Upload-ExtensionPackageToAzurePIR {
     # read extension definition
     $mediaLink = "https://{0}.blob.core.windows.net/{1}/{2}" -f $storageAccountName, $containerName, $storageBlobName
     $bodyxml = Update-MediaLink -extensionDefinitionFilePath $extensionDefinitionFilePath -mediaLink $mediaLink
-    Write-Host "Body xml: {0}" -format $bodyxml
+    Write-Host ("Body xml: {0}" -f $bodyxml)
     
     $extensionExistsInPIR = $false
     $extensionExistsInPIR = Check-ExtensionExistsInAzurePIR -subscriptionId $subscriptionId -certificate $certificate -publisher $bodyxml.ExtensionImage.ProviderNameSpace -type $bodyxml.ExtensionImage.Type

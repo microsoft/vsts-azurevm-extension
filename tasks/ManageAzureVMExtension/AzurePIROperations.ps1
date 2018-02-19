@@ -5,7 +5,7 @@ function Check-ExtensionExistsInAzurePIR {
         [string][Parameter(Mandatory = $true)]$type)
 
     $uri = "https://management.core.windows.net/$subscriptionId/services/publisherextensions"
-    Write-Host "$uri`: {0}" -format $uri
+    Write-Host ("$uri`: {0}" -f $uri)
     # invoke GET rest api to check whether the extension already exists
     try {
         $publisherExtensions = Invoke-RestMethod -Method GET -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion}
@@ -23,7 +23,7 @@ function Create-ExtensionPackageInAzurePIR {
         [string][Parameter(Mandatory = $true)]$subscriptionId)
 
     $uri = "https://management.core.windows.net/$subscriptionId/services/extensions"
-    Write-Host "$uri`: {0}" -format $uri
+    Write-Host ("$uri`: {0}" -f $uri)
     try {
         # invoke POST rest api to create the extension
         Invoke-RestMethod -Method POST -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion} -Body $bodyxml.OuterXml -ContentType application/xml
@@ -92,7 +92,7 @@ function Update-ExtensionPackageInAzurePIR {
     Write-Host (Get-VstsLocString -Key "VMExtPIR_UpdatingExtensionVersion" -ArgumentList $($bodyxml.ExtensionImage.Version))
 
     $uri = "https://management.core.windows.net/$subscriptionId/services/extensions?action=update"
-    Write-Host "$uri`: {0}" -format $uri
+    Write-Host ("$uri`: {0}" -f $uri)
 
     # invoke PUT rest api to update the extension
 

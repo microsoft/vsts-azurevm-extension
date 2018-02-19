@@ -152,6 +152,8 @@
         "VMExtPIR_ExceptionDetails": "Exception code: {0}. Exception details: {1}",
         "VMExtPIR_ExecutionStats": "success: {0}}, retry count: {0}, max retries: {0}. Will retry after {0} seconds",
         "VMExtPIR_ExtensionPublishSuccess": "Extension {0} version {1} published Azure PIR.",
+        "VMExtPIR_CreateStorageAccountUnexpectedStatus": "Unexpected status code in storage account create operation: {0}",
+        "VMExtPIR_CreateStorageAccountTimeout": "Creation of storage account did not complete within the given time",
         "VMExtPIR_ExtensionDeleteSuccess": "Extension {0} version {1} deleted from Azure PIR."
     }
 }

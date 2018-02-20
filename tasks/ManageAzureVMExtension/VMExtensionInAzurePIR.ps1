@@ -14,6 +14,7 @@ $containerName = Get-VstsInput -Name ContainerName
 $storageBlobName = Get-VstsInput -Name StorageBlobName
 $extensionPackagePath = Get-VstsInput -Name ExtensionPackage
 $extensionDefinitionFilePath = Get-VstsInput -Name ExtensionDefinitionFile
+$newVersionVarName = Get-VstsInput -Name NewVersion
 $extensionName = Get-VstsInput -Name ExtensionName
 $publisherName = Get-VstsInput -Name Publisher
 $extensionVersion = Get-VstsInput -Name Version
@@ -64,6 +65,7 @@ function Upload-ExtensionPackageToAzurePIR {
         [string][Parameter(Mandatory = $true)]$containerName,
         [string][Parameter(Mandatory = $true)]$storageBlobName,
         [string][Parameter(Mandatory = $true)]$extensionDefinitionFilePath,
+        [string][Parameter(Mandatory = $true)]$newVersionVarName,
         [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate)
 
     # read extension definition
@@ -74,11 +76,11 @@ function Upload-ExtensionPackageToAzurePIR {
     $extensionExistsInPIR = $false
     $extensionExistsInPIR = Check-ExtensionExistsInAzurePIR -subscriptionId $subscriptionId -certificate $certificate -publisher $bodyxml.ExtensionImage.ProviderNameSpace -type $bodyxml.ExtensionImage.Type
     if ($extensionExistsInPIR) {
-        Update-ExtensionPackageInAzurePIR -bodyxml $bodyxml -certificate $certificate -subscriptionId $subscriptionId
+        Update-ExtensionPackageInAzurePIR -bodyxml $bodyxml -certificate $certificate -subscriptionId $subscriptionId -newVersionVarName $newVersionVarName
     }
     else {
         $bodyxml.ExtensionImage.Version = "1.0.0.0"
-        Create-ExtensionPackageInAzurePIR -bodyxml $bodyxml -certificate $certificate -subscriptionId $subscriptionId
+        Create-ExtensionPackageInAzurePIR -bodyxml $bodyxml -certificate $certificate -subscriptionId $subscriptionId -newVersionVarName $newVersionVarName
     }
 }
 
@@ -90,7 +92,7 @@ $certificate.Import($bytes, $null, [System.Security.Cryptography.X509Certificate
 if ($action -eq "Upload") {
     Upload-ExtensionPackageToStorageBlob -subscriptionId $serviceEndpointDetails.Data.subscriptionId -storageAccountName $storageAccountName -containerName $containerName -packagePath $extensionPackagePath -storageBlobName $storageBlobName -certificate $certificate
     Write-Host (Get-VstsLocString -Key "VMExtPIR_BlobUploadSuccess")
-    Upload-ExtensionPackageToAzurePIR -subscriptionId $serviceEndpointDetails.Data.subscriptionId -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -extensionDefinitionFilePath $extensionDefinitionFilePath -certificate $certificate
+    Upload-ExtensionPackageToAzurePIR -subscriptionId $serviceEndpointDetails.Data.subscriptionId -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -extensionDefinitionFilePath $extensionDefinitionFilePath -certificate $certificate -newVersionVarName $newVersionVarName
     Write-Host (Get-VstsLocString -Key "VMExtPIR_PIRUploadSuccess")
 }
 elseif ($action -eq "Delete") {

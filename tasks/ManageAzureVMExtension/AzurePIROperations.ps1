@@ -20,7 +20,8 @@ function Check-ExtensionExistsInAzurePIR {
 function Create-ExtensionPackageInAzurePIR {
     param([xml][Parameter(Mandatory = $true)]$bodyxml,
         [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate,
-        [string][Parameter(Mandatory = $true)]$subscriptionId)
+        [string][Parameter(Mandatory = $true)]$subscriptionId,
+        [string][Parameter(Mandatory = $true)]$newVersionVarName)
 
     $uri = "https://management.core.windows.net/$subscriptionId/services/extensions"
     Write-Host ("$uri`: {0}" -f $uri)
@@ -35,7 +36,7 @@ function Create-ExtensionPackageInAzurePIR {
 
     # set this version as value for release variable 
     $newVersion = $bodyxml.ExtensionImage.Version
-    $newVersionVariable = "NewVersion"
+    $newVersionVariable = $newVersionVarName
     Write-Host "##vso[task.setvariable variable=$newVersionVariable;]$newVersion"
 
 }
@@ -87,7 +88,8 @@ function Delete-ExtensionPackageFromAzurePIR {
 function Update-ExtensionPackageInAzurePIR {
     param([xml][Parameter(Mandatory = $true)]$bodyxml,
         [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate,
-        [string][Parameter(Mandatory = $true)]$subscriptionId)
+        [string][Parameter(Mandatory = $true)]$subscriptionId,
+        [string][Parameter(Mandatory = $true)]$newVersionVarName)
 
     Write-Host (Get-VstsLocString -Key "VMExtPIR_UpdatingExtensionVersion" -ArgumentList $($bodyxml.ExtensionImage.Version))
 
@@ -101,6 +103,6 @@ function Update-ExtensionPackageInAzurePIR {
            
     # set this version as value for release variable 
     $newVersion = $bodyxml.ExtensionImage.Version
-    $newVersionVariable = "NewVersion"
+    $newVersionVariable = $newVersionVarName
     Write-Host "##vso[task.setvariable variable=$newVersionVariable;]$newVersion"
 }

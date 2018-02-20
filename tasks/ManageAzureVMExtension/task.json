@@ -89,6 +89,15 @@
             "visibleRule": "Action = Upload"
         },
         {
+            "name": "NewVersion",
+            "type": "string",
+            "label": "New Extension Version",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Name of the variable which will contain the new/updated extension version.",
+            "visibleRule": "Action = Upload"
+        },
+        {
             "name": "ExtensionName",
             "type": "string",
             "label": "Extension Name",

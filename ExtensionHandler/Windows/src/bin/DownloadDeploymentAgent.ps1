@@ -134,34 +134,6 @@ function WriteDownloadLog
     (New-Object Net.WebClient).DownloadFile($agentDownloadUrl,$target)
     WriteDownloadLog "`t`t DeploymentAgent download done"
  }
- 
- function ExtractZip
- {
-    Param(
-    [Parameter(Mandatory=$true)]
-    [string]$sourceZipFile,
-    [Parameter(Mandatory=$true)]
-    [string]$target
-    )
-    
-    try
-    {
-        $fileInfo = Get-Item -Path $sourceZipFile
-        $appName = New-Object -ComObject Shell.Application
-        $zipName = $appName.NameSpace($fileInfo.FullName)
-        $dstFolder = $appName.NameSpace($target)
-        $dstFolder.Copyhere($zipName.Items(), 1044)
-    }
-    catch
-    {
-        $sourceZipFileItem = Get-Item -Path $sourceZipFile
-        Remove-Item "$target\*" -Recurse -Exclude $sourceZipFileItem.Name
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($sourceZipFile, $target)
-    }
-
-    WriteDownloadLog "`t`t $sourceZipFile is extracted to $target"    
- }
 
  function GetTargetZipPath
  {
@@ -219,10 +191,6 @@ try
      WriteDownloadLog "Download deploymentAgent"
      
      DowloadDeploymentAgent -agentDownloadUrl $agentDownloadUrl -target $agentZipFilePath
-     
-     WriteDownloadLog "Extract zip $agentZipFilePath to $workingFolder"
-     
-     ExtractZip -sourceZipFile $agentZipFilePath -target $workingFolder
      
      WriteDownloadLog "Done with DowloadDeploymentAgent script"
      

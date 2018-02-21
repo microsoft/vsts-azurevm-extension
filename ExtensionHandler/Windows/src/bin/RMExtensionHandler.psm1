@@ -503,6 +503,54 @@ function Invoke-GetAgentScript {
     )
 
     . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    $agentZipFilePath = GetTargetZipPath -workingFolder $workingFolder -agentZipName $agentZipName
+    $job = Start-Job -ScriptBlock {
+        Param(
+        [Parameter(Mandatory=$true)]
+        [string]$sourceZipFile,
+        [Parameter(Mandatory=$true)]
+        [string]$target
+        )
+        
+        try
+        {
+            $sourceZipFileItem = Get-Item -Path $sourceZipFile
+            Remove-Item "$target\*" -Recurse -Exclude $sourceZipFileItem.Name -Force
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            [System.IO.Compression.ZipFile]::ExtractToDirectory($sourceZipFile, $target)
+        }
+        catch
+        {
+            $fileInfo = Get-Item -Path $sourceZipFile
+            $appName = New-Object -ComObject Shell.Application
+            $zipName = $appName.NameSpace($fileInfo.FullName)
+            $dstFolder = $appName.NameSpace($target)
+            $dstFolder.Copyhere($zipName.Items(), 1044)
+        }
+    } -ArgumentList $agentZipFilePath, $workingFolder
+    
+    # poll state 20 times with 15 second interval totalling 5 minutes, which is the time allowed for enable 
+    for($i = 0; $i -lt 15; $i++){
+        $jobState = $job.State
+        if($jobState -eq "Running"){
+            Add-HandlerSubStatus $RM_Extension_Status.ExtractAgentPackage.Code $RM_Extension_Status.ExtractAgentPackage.Message -operationName $RM_Extension_Status.ExtractAgentPackage.operationName
+            Start-Sleep -s 20
+        }
+        else{
+            $output = Receive-Job -Job $job
+            if($jobState -eq "Failed"){
+                throw $output
+            }
+            elseif($jobState -eq "Completed"){
+                Write-Log "$agentZipFilePath is extracted to $workingFolder"
+                return
+            }
+            else {
+                throw "Unexpected job state: $jobState. State should be either 'Failed' or 'Completed'"
+            }
+        }
+    }
+    throw "Agent could not be extracted in the given time. Throwing due to timeout."
 }
 
 function Test-AgentAlreadyExistsInternal {

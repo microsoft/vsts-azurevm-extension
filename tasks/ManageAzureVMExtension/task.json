@@ -116,7 +116,7 @@
             "visibleRule": "Action = Delete"
         },
         {
-            "name": "Vesion",
+            "name": "Version",
             "type": "string",
             "label": "Extension Version",
             "defaultValue": "",

@@ -507,27 +507,16 @@ function Invoke-GetAgentScript {
     $job = Start-Job -ScriptBlock {
         Param(
         [Parameter(Mandatory=$true)]
+        [string]$extractZipFunctionString,
+        [Parameter(Mandatory=$true)]
         [string]$sourceZipFile,
         [Parameter(Mandatory=$true)]
         [string]$target
         )
         
-        try
-        {
-            $sourceZipFileItem = Get-Item -Path $sourceZipFile
-            Remove-Item "$target\*" -Recurse -Exclude $sourceZipFileItem.Name -Force
-            Add-Type -AssemblyName System.IO.Compression.FileSystem
-            [System.IO.Compression.ZipFile]::ExtractToDirectory($sourceZipFile, $target)
-        }
-        catch
-        {
-            $fileInfo = Get-Item -Path $sourceZipFile
-            $appName = New-Object -ComObject Shell.Application
-            $zipName = $appName.NameSpace($fileInfo.FullName)
-            $dstFolder = $appName.NameSpace($target)
-            $dstFolder.Copyhere($zipName.Items(), 1044)
-        }
-    } -ArgumentList $agentZipFilePath, $workingFolder
+        $function:extractZipFunction = & {$extractZipFunctionString}
+        extractZipFunction -sourceZipFile $sourceZipFile -target $target
+    } -ArgumentList $function:ExtractZip, $agentZipFilePath, $workingFolder
     
     # poll state 20 times with 15 second interval totalling 5 minutes, which is the time allowed for enable 
     for($i = 0; $i -lt 15; $i++){

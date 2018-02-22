@@ -135,6 +135,32 @@ function WriteDownloadLog
     WriteDownloadLog "`t`t DeploymentAgent download done"
  }
 
+ function ExtractZip
+ {
+    Param(
+    [Parameter(Mandatory=$true)]
+    [string]$sourceZipFile,
+    [Parameter(Mandatory=$true)]
+    [string]$target
+    )
+    
+    try
+    {
+        $sourceZipFileItem = Get-Item -Path $sourceZipFile
+        Remove-Item "$target\*" -Recurse -Exclude $sourceZipFileItem.Name -Force
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($sourceZipFile, $target)
+    }
+    catch
+    {
+        $fileInfo = Get-Item -Path $sourceZipFile
+        $appName = New-Object -ComObject Shell.Application
+        $zipName = $appName.NameSpace($fileInfo.FullName)
+        $dstFolder = $appName.NameSpace($target)
+        $dstFolder.Copyhere($zipName.Items(), 1044)
+    }   
+ }
+
  function GetTargetZipPath
  {
     Param(

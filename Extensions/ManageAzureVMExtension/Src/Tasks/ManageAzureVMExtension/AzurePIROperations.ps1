@@ -18,27 +18,20 @@ function Check-ExtensionExistsInAzurePIR {
 }
 
 function Create-ExtensionPackageInAzurePIR {
-    param([xml][Parameter(Mandatory = $true)]$bodyxml,
+    param([xml][Parameter(Mandatory = $true)]$extensionDefinitionXml,
         [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate,
-        [string][Parameter(Mandatory = $true)]$subscriptionId,
-        [string][Parameter(Mandatory = $true)]$newVersionVarName)
+        [string][Parameter(Mandatory = $true)]$subscriptionId)
 
     $uri = "https://management.core.windows.net/$subscriptionId/services/extensions"
     Write-Host ("$uri`: {0}" -f $uri)
     try {
         # invoke POST rest api to create the extension
-        Invoke-RestMethod -Method POST -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion} -Body $bodyxml.OuterXml -ContentType application/xml
-        Write-Host (Get-VstsLocString -Key "VMExtPIR_ExtensionPublishSuccess" -ArgumentList $bodyxml.ExtensionImage.Type, $bodyxml.ExtensionImage.Version)
+        Invoke-RestMethod -Method POST -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion} -Body $extensionDefinitionXml.OuterXml -ContentType application/xml
+        Write-Host (Get-VstsLocString -Key "VMExtPIR_ExtensionPublishSuccess" -ArgumentList $extensionDefinitionXml.ExtensionImage.Type, $extensionDefinitionXml.ExtensionImage.Version)
     }
     catch {
         throw (Get-VstsLocString -Key "VMExtPIR_ExtensionCreationError" -ArgumentList $_)
     }
-
-    # set this version as value for release variable 
-    $newVersion = $bodyxml.ExtensionImage.Version
-    $newVersionVariable = $newVersionVarName
-    Write-Host "##vso[task.setvariable variable=$newVersionVariable;]$newVersion"
-
 }
 
 function Delete-ExtensionPackageFromAzurePIR {
@@ -82,27 +75,21 @@ function Delete-ExtensionPackageFromAzurePIR {
     Write-Host (Get-VstsLocString -Key "VMExtPIR_DeletingExtension" -ArgumentList $uri)
 
     Invoke-WithRetry -retryCommand {Invoke-RestMethod -Method DELETE -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion} -ErrorAction SilentlyContinue} -expectedErrorMessage "Conflict"
-    Write-Host (Get-VstsLocString -Key "VMExtPIR_ExtensionDeleteSuccess" -ArgumentList $bodyxml.ExtensionImage.Type, $bodyxml.ExtensionImage.Version)
+    Write-Host (Get-VstsLocString -Key "VMExtPIR_ExtensionDeleteSuccess" -ArgumentList $extensionDefinitionXml.ExtensionImage.Type, $extensionDefinitionXml.ExtensionImage.Version)
 }
 
 function Update-ExtensionPackageInAzurePIR {
-    param([xml][Parameter(Mandatory = $true)]$bodyxml,
+    param([xml][Parameter(Mandatory = $true)]$extensionDefinitionXml,
         [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate,
-        [string][Parameter(Mandatory = $true)]$subscriptionId,
-        [string][Parameter(Mandatory = $true)]$newVersionVarName)
+        [string][Parameter(Mandatory = $true)]$subscriptionId)
 
-    Write-Host (Get-VstsLocString -Key "VMExtPIR_UpdatingExtensionVersion" -ArgumentList $($bodyxml.ExtensionImage.Version))
+    Write-Host (Get-VstsLocString -Key "VMExtPIR_UpdatingExtensionVersion" -ArgumentList $($extensionDefinitionXml.ExtensionImage.Version))
 
     $uri = "https://management.core.windows.net/$subscriptionId/services/extensions?action=update"
     Write-Host ("$uri`: {0}" -f $uri)
 
     # invoke PUT rest api to update the extension
 
-    Invoke-WithRetry -retryCommand {Invoke-RestMethod -Method PUT -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion} -Body $bodyxml.OuterXml -ContentType application/xml -ErrorAction SilentlyContinue} -expectedErrorMessage "Conflict"
-    Write-Host (Get-VstsLocString -Key "VMExtPIR_ExtensionPublishSuccess" -ArgumentList $bodyxml.ExtensionImage.Type, $bodyxml.ExtensionImage.Version)
-           
-    # set this version as value for release variable 
-    $newVersion = $bodyxml.ExtensionImage.Version
-    $newVersionVariable = $newVersionVarName
-    Write-Host "##vso[task.setvariable variable=$newVersionVariable;]$newVersion"
+    Invoke-WithRetry -retryCommand {Invoke-RestMethod -Method PUT -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion} -Body $extensionDefinitionXml.OuterXml -ContentType application/xml -ErrorAction SilentlyContinue} -expectedErrorMessage "Conflict"
+    Write-Host (Get-VstsLocString -Key "VMExtPIR_ExtensionPublishSuccess" -ArgumentList $extensionDefinitionXml.ExtensionImage.Type, $extensionDefinitionXml.ExtensionImage.Version)
 }

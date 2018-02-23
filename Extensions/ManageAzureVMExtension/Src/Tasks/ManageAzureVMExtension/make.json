@@ -1,10 +1,4 @@
 {
-    "common": [
-        {
-            "module": "../Common/VstsAzureHelpers_",
-            "type": "ps"
-        }
-    ],
     "externals": {
         "nugetv2": [
             {

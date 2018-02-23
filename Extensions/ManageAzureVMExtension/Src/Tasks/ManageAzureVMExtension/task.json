@@ -9,6 +9,9 @@
         "Build",
         "Release"
     ],
+    "runsOn": [
+        "Agent"
+    ],
     "author": "Microsoft Corporation",
     "version": {
         "Major": 1,
@@ -32,9 +35,9 @@
             "name": "Action",
             "type": "pickList",
             "label": "Action",
-            "defaultValue": "Upload",
+            "defaultValue": "CreateOrUpdate",
             "options": {
-                "Upload": "Upload extension to Azure PIR",
+                "CreateOrUpdate": "Create or Update extension to Azure PIR",
                 "Delete": "Delete extension from Azure PIR"
             },
             "required": true,
@@ -50,7 +53,7 @@
             "properties": {
                 "EditableOptions": "True"
             },
-            "visibleRule": "Action = Upload"
+            "visibleRule": "Action = CreateOrUpdate"
         },
         {
             "name": "ContainerName",
@@ -59,7 +62,7 @@
             "defaultValue": "",
             "required": true,
             "helpMarkDown": "Name of the Container. If the container does not exixt, it will be created.",
-            "visibleRule": "Action = Upload"
+            "visibleRule": "Action = CreateOrUpdate"
         },
         {
             "name": "StorageBlobName",
@@ -68,7 +71,7 @@
             "defaultValue": "",
             "required": true,
             "helpMarkDown": "Name of the Storage Blob to upload.",
-            "visibleRule": "Action = Upload"
+            "visibleRule": "Action = CreateOrUpdate"
         },
         {
             "name": "ExtensionPackage",
@@ -77,7 +80,7 @@
             "defaultValue": "",
             "required": true,
             "helpMarkDown": "The package file for the extension to be created/updated.",
-            "visibleRule": "Action = Upload"
+            "visibleRule": "Action = CreateOrUpdate"
         },
         {
             "name": "ExtensionDefinitionFile",
@@ -86,7 +89,7 @@
             "defaultValue": "",
             "required": true,
             "helpMarkDown": "Path of the extension definition file.",
-            "visibleRule": "Action = Upload"
+            "visibleRule": "Action = CreateOrUpdate"
         },
         {
             "name": "NewVersion",
@@ -95,7 +98,7 @@
             "defaultValue": "",
             "required": true,
             "helpMarkDown": "Name of the variable which will contain the new/updated extension version.",
-            "visibleRule": "Action = Upload"
+            "visibleRule": "Action = CreateOrUpdate"
         },
         {
             "name": "ExtensionName",
@@ -141,7 +144,7 @@
     "messages": {
         "VMExtPIR_StorageAccountKeysFetchError": "An error occured while fetching storage account keys: {0}",
         "VMExtPIR_BlobUploadSuccess": "Extension package uploaded successfully to the blob storage.",
-        "VMExtPIR_PIRUploadSuccess": "Extension package uploaded successfully to Azure PIR.",
+        "VMExtPIR_PIRCreateUpdateSuccess": "Extension package created/updated successfully in Azure PIR.",
         "VMExtPIR_PIRDeleteSuccess": "Extension package deleted successfully from Azure PIR.",
         "VMExtPIR_InvalidAction": "Invalid action: {0}. Action should be either 'Upload' or 'Delete'.",
         "VMExtPIR_StorageAccountCreationError": "An error occured while creating new storage account: {0}",

@@ -25,10 +25,6 @@ if (-not([string]::IsNullOrWhitespace($extensionDefinitionFilePath)) -and $exten
     throw (Get-VstsLocString -Key InvalidScriptPath0 -ArgumentList $extensionDefinitionFilePath)
 }
 
-# Initialize Azure.
-Import-Module $PSScriptRoot\ps_modules\VstsAzureHelpers_
-#Initialize-Azure -azurePsVersion ""
-
 function Get-ServiceEndpointDetails {
     param([string][Parameter(Mandatory = $true)]$connectedServiceName)
     
@@ -37,12 +33,11 @@ function Get-ServiceEndpointDetails {
 }
 
 function Update-MediaLink {
-    param([string][Parameter(Mandatory = $true)]$extensionDefinitionFilePath,
+    param([xml][Parameter(Mandatory = $true)]$extensionDefinitionXml,
         [string][Parameter(Mandatory = $true)]$mediaLink)
 
-    [xml]$extensionFileDocument = Get-Content -Path $extensionDefinitionFilePath
-    $extensionFileDocument.ExtensionImage.MediaLink = $mediaLink
-    return $extensionFileDocument
+    $extensionDefinitionXml.ExtensionImage.MediaLink = $mediaLink
+    return $extensionDefinitionXml
 }
 
 function Upload-ExtensionPackageToStorageBlob {
@@ -59,7 +54,7 @@ function Upload-ExtensionPackageToStorageBlob {
     Set-StorageBlobContent -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -packagePath $packagePath -storageAccountKey $storageAccountKey
 }
 
-function Upload-ExtensionPackageToAzurePIR {
+function CreateOrUpdate-ExtensionPackageInAzurePIR {
     param([string][Parameter(Mandatory = $true)]$subscriptionId,
         [string][Parameter(Mandatory = $true)]$storageAccountName,
         [string][Parameter(Mandatory = $true)]$containerName,
@@ -70,33 +65,39 @@ function Upload-ExtensionPackageToAzurePIR {
 
     # read extension definition
     $mediaLink = "https://{0}.blob.core.windows.net/{1}/{2}" -f $storageAccountName, $containerName, $storageBlobName
-    $bodyxml = Update-MediaLink -extensionDefinitionFilePath $extensionDefinitionFilePath -mediaLink $mediaLink
-    Write-Host ("Body xml: {0}" -f $bodyxml)
+    [xml]$extensionDefinitionXml = Get-Content -Path $extensionDefinitionFilePath
+    $extensionDefinitionXml = Update-MediaLink -extensionDefinitionXml $extensionDefinitionXml -mediaLink $mediaLink
+    Write-Host ("Body xml: {0}" -f $extensionDefinitionXml.InnerXml)
     
     $extensionExistsInPIR = $false
-    $extensionExistsInPIR = Check-ExtensionExistsInAzurePIR -subscriptionId $subscriptionId -certificate $certificate -publisher $bodyxml.ExtensionImage.ProviderNameSpace -type $bodyxml.ExtensionImage.Type
+    $extensionExistsInPIR = Check-ExtensionExistsInAzurePIR -subscriptionId $subscriptionId -certificate $certificate -publisher $extensionDefinitionXml.ExtensionImage.ProviderNameSpace -type $extensionDefinitionXml.ExtensionImage.Type
     if ($extensionExistsInPIR) {
-        Update-ExtensionPackageInAzurePIR -bodyxml $bodyxml -certificate $certificate -subscriptionId $subscriptionId -newVersionVarName $newVersionVarName
+        Update-ExtensionPackageInAzurePIR -extensionDefinitionXml $extensionDefinitionXml -certificate $certificate -subscriptionId $subscriptionId
     }
     else {
-        $bodyxml.ExtensionImage.Version = "1.0.0.0"
-        Create-ExtensionPackageInAzurePIR -bodyxml $bodyxml -certificate $certificate -subscriptionId $subscriptionId -newVersionVarName $newVersionVarName
+        $extensionDefinitionXml.ExtensionImage.Version = "1.0.0.0"
+        Create-ExtensionPackageInAzurePIR -extensionDefinitionXml $extensionDefinitionXml -certificate $certificate -subscriptionId $subscriptionId
     }
+    # set this version as value for release variable 
+    $newVersion = $extensionDefinitionXmls.ExtensionImage.Version
+    $newVersionVariable = $newVersionVarName
+    Write-Host "##vso[task.setvariable variable=$newVersionVariable;]$newVersion"
 }
 
 $serviceEndpointDetails = Get-ServiceEndpointDetails -connectedServiceName $connectedServiceName
 $bytes = [System.Convert]::FromBase64String($serviceEndpointDetails.Auth.parameters.certificate)
 $certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
-$certificate.Import($bytes, $null, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
+$certificate.Import($bytes, $null, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::UserKeySet)
 
-if ($action -eq "Upload") {
-    Upload-ExtensionPackageToStorageBlob -subscriptionId $serviceEndpointDetails.Data.subscriptionId -storageAccountName $storageAccountName -containerName $containerName -packagePath $extensionPackagePath -storageBlobName $storageBlobName -certificate $certificate
+$subscriptionId = $serviceEndpointDetails.Data.subscriptionId
+if ($action -eq "CreateOrUpdate") {
+    Upload-ExtensionPackageToStorageBlob -subscriptionId $subscriptionId -storageAccountName $storageAccountName -containerName $containerName -packagePath $extensionPackagePath -storageBlobName $storageBlobName -certificate $certificate
     Write-Host (Get-VstsLocString -Key "VMExtPIR_BlobUploadSuccess")
-    Upload-ExtensionPackageToAzurePIR -subscriptionId $serviceEndpointDetails.Data.subscriptionId -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -extensionDefinitionFilePath $extensionDefinitionFilePath -certificate $certificate -newVersionVarName $newVersionVarName
-    Write-Host (Get-VstsLocString -Key "VMExtPIR_PIRUploadSuccess")
+    CreateOrUpdate-ExtensionPackageToAzurePIR -subscriptionId $subscriptionId -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -extensionDefinitionFilePath $extensionDefinitionFilePath -certificate $certificate -newVersionVarName $newVersionVarName
+    Write-Host (Get-VstsLocString -Key "VMExtPIR_PIRCreateUpdateSuccess")
 }
 elseif ($action -eq "Delete") {
-    Delete-ExtensionPackageFromAzurePIR  -extensionName $extensionName -publisher $publisherName -versionToDelete $extensionVersion -certificate $certificate -subscriptionId $serviceEndpointDetails.Data.subscriptionId
+    Delete-ExtensionPackageFromAzurePIR  -extensionName $extensionName -publisher $publisherName -versionToDelete $extensionVersion -certificate $certificate -subscriptionId $subscriptionId
     Write-Host (Get-VstsLocString -Key "VMExtPIR_PIRDeleteSuccess")
 }
 else {

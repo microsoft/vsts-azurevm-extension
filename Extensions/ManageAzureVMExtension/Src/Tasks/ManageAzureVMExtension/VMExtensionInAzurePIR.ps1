@@ -2,22 +2,31 @@ Trace-VstsEnteringInvocation $MyInvocation
 Import-VstsLocStrings "$PSScriptRoot\Task.json"
 
 . $PSScriptRoot/Constants.ps1
-. $PSScriptRoot/StorageAccountOperations.ps1
-. $PSScriptRoot/AzurePIROperations.ps1
-. $PSScriptRoot/Utils.ps1
+Import-Module $PSScriptRoot\StorageAccountOperations.psm1
+Import-Module $PSScriptRoot\AzurePIROperations.psm1
+Import-Module $PSScriptRoot\Utils.psm1
 
 # Get inputs.
 $connectedServiceName = Get-VstsInput -Name ConnectedServiceName -Require
 $action = Get-VstsInput -Name Action -Require
-$storageAccountName = Get-VstsInput -Name StorageAccountName
-$containerName = Get-VstsInput -Name ContainerName
-$storageBlobName = Get-VstsInput -Name StorageBlobName
-$extensionPackagePath = Get-VstsInput -Name ExtensionPackage
-$extensionDefinitionFilePath = Get-VstsInput -Name ExtensionDefinitionFile
-$newVersionVarName = Get-VstsInput -Name NewVersion
-$extensionName = Get-VstsInput -Name ExtensionName
-$publisherName = Get-VstsInput -Name Publisher
-$extensionVersion = Get-VstsInput -Name Version
+if ($action -eq "CreateOrUpdate") {
+    $storageAccountName = Get-VstsInput -Name StorageAccountName -Require
+    $containerName = Get-VstsInput -Name ContainerName -Require
+    $storageBlobName = Get-VstsInput -Name StorageBlobName
+    $extensionPackagePath = Get-VstsInput -Name ExtensionPackage -Require
+    $extensionDefinitionFilePath = Get-VstsInput -Name ExtensionDefinitionFile -Require
+    $newVersionVarName = Get-VstsInput -Name NewVersion
+    if(-not($storageBlobName)){
+        [string]$timeSinceEpoch = Get-TimeSinceEpoch
+        $storageBlobName = "ManageAzureVMExtension" + $timeSinceEpoch
+    }
+}
+if ($action -eq "Delete") {
+    $fullExtensionName = Get-VstsInput -Name FullExtensionName -Require
+    $extensionVersion = Get-VstsInput -Name Version -Require
+    $extensionName = $fullExtensionName.Substring(0, $fullExtensionName.LastIndexOf("."))
+    $publisherName = $fullExtensionName.Substring($fullExtensionName.LastIndexOf(".") + 1)
+}
 
 # Validate the extension definition file path does not contains new-lines. Otherwise, it will
 # break invoking the script via Invoke-Expression.
@@ -60,7 +69,7 @@ function CreateOrUpdate-ExtensionPackageInAzurePIR {
         [string][Parameter(Mandatory = $true)]$containerName,
         [string][Parameter(Mandatory = $true)]$storageBlobName,
         [string][Parameter(Mandatory = $true)]$extensionDefinitionFilePath,
-        [string][Parameter(Mandatory = $true)]$newVersionVarName,
+        [string][Parameter(Mandatory = $false)]$newVersionVarName,
         [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate)
 
     # read extension definition
@@ -78,10 +87,12 @@ function CreateOrUpdate-ExtensionPackageInAzurePIR {
         $extensionDefinitionXml.ExtensionImage.Version = "1.0.0.0"
         Create-ExtensionPackageInAzurePIR -extensionDefinitionXml $extensionDefinitionXml -certificate $certificate -subscriptionId $subscriptionId
     }
-    # set this version as value for release variable 
-    $newVersion = $extensionDefinitionXmls.ExtensionImage.Version
-    $newVersionVariable = $newVersionVarName
-    Write-Host "##vso[task.setvariable variable=$newVersionVariable;]$newVersion"
+    if ($newVersionVarName) {
+        # set this version as value for release variable 
+        $newVersion = $extensionDefinitionXmls.ExtensionImage.Version
+        $newVersionVariable = $newVersionVarName
+        Write-Host "##vso[task.setvariable variable=$newVersionVariable;]$newVersion"
+    }
 }
 
 $serviceEndpointDetails = Get-ServiceEndpointDetails -connectedServiceName $connectedServiceName
@@ -93,7 +104,7 @@ $subscriptionId = $serviceEndpointDetails.Data.subscriptionId
 if ($action -eq "CreateOrUpdate") {
     Upload-ExtensionPackageToStorageBlob -subscriptionId $subscriptionId -storageAccountName $storageAccountName -containerName $containerName -packagePath $extensionPackagePath -storageBlobName $storageBlobName -certificate $certificate
     Write-Host (Get-VstsLocString -Key "VMExtPIR_BlobUploadSuccess")
-    CreateOrUpdate-ExtensionPackageToAzurePIR -subscriptionId $subscriptionId -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -extensionDefinitionFilePath $extensionDefinitionFilePath -certificate $certificate -newVersionVarName $newVersionVarName
+    CreateOrUpdate-ExtensionPackageInAzurePIR -subscriptionId $subscriptionId -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -extensionDefinitionFilePath $extensionDefinitionFilePath -certificate $certificate -newVersionVarName $newVersionVarName
     Write-Host (Get-VstsLocString -Key "VMExtPIR_PIRCreateUpdateSuccess")
 }
 elseif ($action -eq "Delete") {

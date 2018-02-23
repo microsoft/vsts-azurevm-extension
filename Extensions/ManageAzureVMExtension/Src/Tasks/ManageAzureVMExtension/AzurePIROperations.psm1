@@ -93,3 +93,13 @@ function Update-ExtensionPackageInAzurePIR {
     Invoke-WithRetry -retryCommand {Invoke-RestMethod -Method PUT -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion} -Body $extensionDefinitionXml.OuterXml -ContentType application/xml -ErrorAction SilentlyContinue} -expectedErrorMessage "Conflict"
     Write-Host (Get-VstsLocString -Key "VMExtPIR_ExtensionPublishSuccess" -ArgumentList $extensionDefinitionXml.ExtensionImage.Type, $extensionDefinitionXml.ExtensionImage.Version)
 }
+
+#
+# Exports
+#
+Export-ModuleMember `
+    -Function `
+        Check-ExtensionExistsInAzurePIR, `
+        Create-ExtensionPackageInAzurePIR, `
+        Delete-ExtensionPackageFromAzurePIR, `
+        Update-ExtensionPackageInAzurePIR

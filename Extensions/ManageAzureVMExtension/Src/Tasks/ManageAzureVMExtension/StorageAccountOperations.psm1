@@ -120,25 +120,21 @@ function Create-ClassicStorageAccount {
         $response = Invoke-WebRequest -Method POST -Uri $uri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion; "Content-Type" = "application/xml"} -Body $bodyxml.OuterXml -UseBasicParsing
         $operationStatusUri = "https://management.core.windows.net/$subscriptionId/operations/$($response.Headers['x-ms-request-id'])"
         $succeeded = $false
-        for($i = 0; $i -lt 20; $i++){
+        for ($i = 0; $i -lt 20; $i++) {
             $operation = (Invoke-RestMethod -Method GET -Uri $operationStatusUri -Certificate $certificate -Headers @{'x-ms-version' = $azureClassicApiVersion}).Operation.Status
-            if($operation -eq "Succeeded")
-            {
+            if ($operation -eq "Succeeded") {
                 $succeeded = $true
                 break
             }
-            elseif($operation -eq "InProgress")
-            {   
+            elseif ($operation -eq "InProgress") {   
                 Start-Sleep -s 10
                 continue
             }
-            else
-            {
+            else {
                 throw (Get-VstsLocString -Key "VMExtPIR_CreateStorageAccountUnexpectedStatus" -ArgumentList $operation)
             }
         }
-        if(-not($succeeded))
-        {
+        if (-not($succeeded)) {
             throw (Get-VstsLocString -Key "VMExtPIR_CreateStorageAccountTimeout")
         }
     }
@@ -195,3 +191,13 @@ function Get-SharedKeySignature {
     $signature = [System.Convert]::ToBase64String($hmac.ComputeHash($signatureStringBytes))
     return $signature
 }
+
+#
+# Exports
+#
+Export-ModuleMember `
+    -Function `
+        Ensure-ContainerExists, `
+        Ensure-StorageAccountExists, `
+        Get-PrimaryStorageAccountKey, `
+        Set-StorageBlobContent

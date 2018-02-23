@@ -33,3 +33,18 @@ function Invoke-WithRetry {
         throw (Get-VstsLocString -Key "VMExtPIR_FailWithTimeout")
     }
 }
+
+function Get-TimeSinceEpoch {
+    $epochTime = Get-Date "01/01/1970"
+    $currentTime = Get-Date
+    $timeSinceEpoch = (New-TimeSpan -Start $epochTime -End $currentTime).Ticks
+    return $timeSinceEpoch
+}
+
+#
+# Exports
+#
+Export-ModuleMember `
+    -Function `
+        Invoke-WithRetry, `
+        Get-TimeSinceEpoch

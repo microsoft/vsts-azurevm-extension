@@ -5,10 +5,7 @@
     "description": "Manage VM extensions in Azure Platform Image Repository",
     "helpMarkDown": "[More Information](https://aka.ms/azurevmextensionpirreadme)",
     "category": "Deploy",
-    "visibility": [
-        "Build",
-        "Release"
-    ],
+    "preview": true,
     "runsOn": [
         "Agent"
     ],

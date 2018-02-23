@@ -24,8 +24,8 @@ if ($action -eq "CreateOrUpdate") {
 if ($action -eq "Delete") {
     $fullExtensionName = Get-VstsInput -Name FullExtensionName -Require
     $extensionVersion = Get-VstsInput -Name Version -Require
-    $extensionName = $fullExtensionName.Substring(0, $fullExtensionName.LastIndexOf("."))
-    $publisherName = $fullExtensionName.Substring($fullExtensionName.LastIndexOf(".") + 1)
+    $publisherName = $fullExtensionName.Substring(0, $fullExtensionName.LastIndexOf("."))
+    $extensionName = $fullExtensionName.Substring($fullExtensionName.LastIndexOf(".") + 1)
 }
 
 # Validate the extension definition file path does not contains new-lines. Otherwise, it will

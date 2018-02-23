@@ -1,3 +1,5 @@
+. $PSScriptRoot/Constants.ps1
+
 function Ensure-ContainerExists {
     param([string][Parameter(Mandatory = $true)]$storageAccountName,
         [string][Parameter(Mandatory = $true)]$containerName,

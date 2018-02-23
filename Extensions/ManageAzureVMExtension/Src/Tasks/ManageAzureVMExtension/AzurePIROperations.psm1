@@ -1,3 +1,5 @@
+. $PSScriptRoot/Constants.ps1
+
 function Check-ExtensionExistsInAzurePIR {
     param([string][Parameter(Mandatory = $true)]$subscriptionId,
         [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate,

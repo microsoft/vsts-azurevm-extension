@@ -503,7 +503,7 @@ function Invoke-GetAgentScript {
     )
 
     . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
-    $agentZipFilePath = GetTargetZipPath -workingFolder $workingFolder -agentZipName $agentZipName
+    $agentZipFilePath = Join-Path $workingFolder $agentZipName
     $job = Start-Job -ScriptBlock {
         Param(
         [Parameter(Mandatory=$true)]
@@ -518,10 +518,10 @@ function Invoke-GetAgentScript {
         extractZipFunction -sourceZipFile $sourceZipFile -target $target
     } -ArgumentList $function:ExtractZip, $agentZipFilePath, $workingFolder
     
-    # poll state 20 times with 15 second interval totalling 5 minutes, which is the time allowed for enable 
-    for($i = 0; $i -lt 15; $i++){
+    # poll state a large number of times with 20 second interval  
+    for($i = 0; $i -lt 1000; $i++){
         $jobState = $job.State
-        if($jobState -eq "Running"){
+        if(($jobState -ne "Failed") -and ($jobState -ne "Completed")){
             Add-HandlerSubStatus $RM_Extension_Status.ExtractAgentPackage.Code $RM_Extension_Status.ExtractAgentPackage.Message -operationName $RM_Extension_Status.ExtractAgentPackage.operationName
             Start-Sleep -s 20
         }
@@ -530,12 +530,9 @@ function Invoke-GetAgentScript {
             if($jobState -eq "Failed"){
                 throw $output
             }
-            elseif($jobState -eq "Completed"){
+            else{
                 Write-Log "$agentZipFilePath is extracted to $workingFolder"
                 return
-            }
-            else {
-                throw "Unexpected job state: $jobState. State should be either 'Failed' or 'Completed'"
             }
         }
     }

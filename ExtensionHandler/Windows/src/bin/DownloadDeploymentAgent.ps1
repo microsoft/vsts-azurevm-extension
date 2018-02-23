@@ -160,20 +160,6 @@ function WriteDownloadLog
         $dstFolder.Copyhere($zipName.Items(), 1044)
     }   
  }
-
- function GetTargetZipPath
- {
-    Param(
-    [Parameter(Mandatory=$true)]
-    [string]$workingFolder,
-    [Parameter(Mandatory=$true)]
-    [string]$agentZipName
-    )
-    
-    return Join-Path $workingFolder $agentZipName
-
- }
- 
  
 function DownloadAgentZipRequired
 {
@@ -210,7 +196,7 @@ try
 
      WriteDownloadLog "Get the target zip file path"
      
-     $agentZipFilePath = GetTargetZipPath -workingFolder $workingFolder -agentZipName $agentZipName
+     $agentZipFilePath = Join-Path $workingFolder $agentZipName
      
      WriteDownloadLog "`t`t Deployment agent will be downloaded at - $agentZipFilePath"
      

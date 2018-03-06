@@ -40,7 +40,7 @@
             "label": "Action",
             "defaultValue": "CreateOrUpdate",
             "options": {
-                "CreateOrUpdate": "Create or Update extension to Azure PIR",
+                "CreateOrUpdate": "Create or Update extension in Azure PIR",
                 "Delete": "Delete extension from Azure PIR"
             },
             "required": true,

@@ -89,7 +89,7 @@ function CreateOrUpdate-ExtensionPackageInAzurePIR {
     }
     if ($newVersionVarName) {
         # set this version as value for release variable 
-        $newVersion = $extensionDefinitionXmls.ExtensionImage.Version
+        $newVersion = $extensionDefinitionXml.ExtensionImage.Version
         $newVersionVariable = $newVersionVarName
         Write-Host "##vso[task.setvariable variable=$newVersionVariable;]$newVersion"
     }

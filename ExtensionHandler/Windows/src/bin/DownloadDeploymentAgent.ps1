@@ -139,7 +139,7 @@ function WriteDownloadLog
     (New-Object Net.WebClient).DownloadFile($agentDownloadUrl,$target)
     WriteDownloadLog "`t`t DeploymentAgent download done"
  }
- 
+
  function ExtractZip
  {
     Param(
@@ -151,36 +151,20 @@ function WriteDownloadLog
     
     try
     {
+        $sourceZipFileItem = Get-Item -Path $sourceZipFile
+        Remove-Item "$target\*" -Recurse -Exclude $sourceZipFileItem.Name -Force
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($sourceZipFile, $target)
+    }
+    catch
+    {
         $fileInfo = Get-Item -Path $sourceZipFile
         $appName = New-Object -ComObject Shell.Application
         $zipName = $appName.NameSpace($fileInfo.FullName)
         $dstFolder = $appName.NameSpace($target)
         $dstFolder.Copyhere($zipName.Items(), 1044)
-    }
-    catch
-    {
-        $sourceZipFileItem = Get-Item -Path $sourceZipFile
-        Remove-Item "$target\*" -Recurse -Exclude $sourceZipFileItem.Name
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($sourceZipFile, $target)
-    }
-
-    WriteDownloadLog "`t`t $sourceZipFile is extracted to $target"    
+    }   
  }
-
- function GetTargetZipPath
- {
-    Param(
-    [Parameter(Mandatory=$true)]
-    [string]$workingFolder,
-    [Parameter(Mandatory=$true)]
-    [string]$agentZipName
-    )
-    
-    return Join-Path $workingFolder $agentZipName
-
- }
- 
  
 function DownloadAgentZipRequired
 {
@@ -217,17 +201,13 @@ try
 
      WriteDownloadLog "Get the target zip file path"
      
-     $agentZipFilePath = GetTargetZipPath -workingFolder $workingFolder -agentZipName $agentZipName
+     $agentZipFilePath = Join-Path $workingFolder $agentZipName
      
      WriteDownloadLog "`t`t Deployment agent will be downloaded at - $agentZipFilePath"
      
      WriteDownloadLog "Download deploymentAgent"
      
      DowloadDeploymentAgent -agentDownloadUrl $agentDownloadUrl -target $agentZipFilePath
-     
-     WriteDownloadLog "Extract zip $agentZipFilePath to $workingFolder"
-     
-     ExtractZip -sourceZipFile $agentZipFilePath -target $workingFolder
      
      WriteDownloadLog "Done with DowloadDeploymentAgent script"
      

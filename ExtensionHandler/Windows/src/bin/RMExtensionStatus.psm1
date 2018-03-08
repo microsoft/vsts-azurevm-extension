@@ -139,6 +139,11 @@ $global:RM_Extension_Status = @{
         Message = '[WARNING] The deployment agent {0} could not be uninstalled. Ensure to remove it manually from its deployment group in VSTS'
         operationName = 'Unconfigure existing agent'
     }
+    ExtractAgentPackage = @{
+        Code = 26
+        Message = 'Extracting deployment agent package'
+        operationName = 'Agent download'
+    }
 
     #
     # Warnings

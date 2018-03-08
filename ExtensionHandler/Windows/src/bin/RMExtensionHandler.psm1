@@ -503,6 +503,40 @@ function Invoke-GetAgentScript {
     )
 
     . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    $agentZipFilePath = Join-Path $workingFolder $agentZipName
+    $job = Start-Job -ScriptBlock {
+        Param(
+        [Parameter(Mandatory=$true)]
+        [string]$extractZipFunctionString,
+        [Parameter(Mandatory=$true)]
+        [string]$sourceZipFile,
+        [Parameter(Mandatory=$true)]
+        [string]$target
+        )
+        
+        $function:extractZipFunction = & {$extractZipFunctionString}
+        extractZipFunction -sourceZipFile $sourceZipFile -target $target
+    } -ArgumentList $function:ExtractZip, $agentZipFilePath, $workingFolder
+    
+    # poll state a large number of times with 20 second interval  
+    for($i = 0; $i -lt 1000; $i++){
+        $jobState = $job.State
+        if(($jobState -ne "Failed") -and ($jobState -ne "Completed")){
+            Add-HandlerSubStatus $RM_Extension_Status.ExtractAgentPackage.Code $RM_Extension_Status.ExtractAgentPackage.Message -operationName $RM_Extension_Status.ExtractAgentPackage.operationName
+            Start-Sleep -s 20
+        }
+        else{
+            $output = Receive-Job -Job $job
+            if($jobState -eq "Failed"){
+                throw $output
+            }
+            else{
+                Write-Log "$agentZipFilePath is extracted to $workingFolder"
+                return
+            }
+        }
+    }
+    throw "Agent could not be extracted in the given time. Throwing due to timeout."
 }
 
 function Test-AgentAlreadyExistsInternal {

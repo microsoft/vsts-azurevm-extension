@@ -10,7 +10,7 @@ function Ensure-ContainerExists {
     $headers = @{"x-ms-version" = "$headerDate"}
     $queryParameterString = "restype=container"
     $url = "https://${storageAccountName}.blob.core.windows.net/${containerName}" + "?" + $queryParameterString
-    $xmsdate = (get-date -format r).ToString()
+    $xmsdate = Get-UTCDateTimeNow
     $headers.Add("x-ms-date", $xmsdate)
     $resourceComponents = @($storageAccountName, $containerName)
     $signature = Get-SharedKeySignature -method $method -headers $headers -resourceComponents $resourceComponents -queryParameterString $queryParameterString -storageAccountKey $storageAccountKey
@@ -75,7 +75,7 @@ function Set-StorageBlobContent {
     $headerDate = $azureStorageApiVersion
     $headers = @{"x-ms-version" = "$headerDate"}
     $url = "https://${storageAccountName}.blob.core.windows.net/${containerName}/${storageBlobName}"
-    $xmsdate = (get-date -format r).ToString()
+    $xmsdate = Get-UTCDateTimeNow
     $content = [System.IO.File]::ReadAllBytes("$packagePath")
     $item = Get-Item "$packagePath"
     $length = $item.Length
@@ -155,7 +155,7 @@ function Create-NewContainer {
     $headers = @{"x-ms-version" = "$headerDate"}
     $queryParameterString = "restype=container"
     $url = "https://${storageAccountName}.blob.core.windows.net/${containerName}" + "?" + $queryParameterString
-    $xmsdate = (get-date -format r).ToString()
+    $xmsdate = Get-UTCDateTimeNow
     $headers.Add("x-ms-date", $xmsdate)
     $resourceComponents = @($storageAccountName, $containerName)
     $signature = Get-SharedKeySignature -method $method -headers $headers -resourceComponents $resourceComponents -queryParameterString $queryParameterString -storageAccountKey $storageAccountKey
@@ -192,6 +192,10 @@ function Get-SharedKeySignature {
     $hmac = new-object System.Security.Cryptography.HMACSHA256((, $accountKeyBytes))
     $signature = [System.Convert]::ToBase64String($hmac.ComputeHash($signatureStringBytes))
     return $signature
+}
+
+function Get-UTCDateTimeNow {
+    return [DateTime]::UtcNow.ToString("R", [System.Globalization.CultureInfo]::InvariantCulture)
 }
 
 #

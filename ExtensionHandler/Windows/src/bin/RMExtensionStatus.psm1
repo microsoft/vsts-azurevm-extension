@@ -96,7 +96,7 @@ $global:RM_Extension_Status = @{
     }
     Disabled = @{
         Code = 16
-        Message = 'Disabled extension. However, Team services agent would continue to be registered with VSTS and will keep running'
+        Message = 'Disabled extension. However, Team services agent would continue to be registered with VSTS and will keep running.'
         operationName = 'Disable'
     }
     Uninstalling = @{

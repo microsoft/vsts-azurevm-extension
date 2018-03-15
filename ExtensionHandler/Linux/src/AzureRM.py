@@ -32,8 +32,8 @@ def get_last_sequence_number():
     #Will raise IOError if file does not exist
     with open(last_seq_file) as f:
       contents = int(f.read())
-      return contents
       f.close()
+      return contents
   except IOError as e:
     pass
   except ValueError as e:
@@ -105,29 +105,19 @@ def check_python_version():
     message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(str(major) + '.' + str(minor))
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
+def ensure_systemd_exists():
+  
+
 def install_dependencies():
-  install_command = []
-  linux_version_valid = False
-  linux_distr = platform.linux_distribution()
-  distr_name = linux_distr[0]
-  version = linux_distr[1]
-  if(distr_name == Constants.red_hat_distr_name):
-    if(LooseVersion(version) >= LooseVersion('7.2')):
-      linux_version_valid = True
-      install_command += ['/bin/yum', '-yq', 'install', 'libunwind.x86_64', 'icu']
-  elif(distr_name == Constants.ubuntu_distr_name):
-    if(LooseVersion(version) >= LooseVersion('16.04')):
-      linux_version_valid = True
-      update_package_list_command = ['/usr/bin/apt-get', 'update', '-yq']
-      proc = subprocess.Popen(update_package_list_command, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-      update_out, update_err = proc.communicate()
-      install_command += ['/usr/bin/apt-get', 'install', '-yq', 'libunwind8', 'libcurl3']
-  if(linux_version_valid == False):
-    code = RMExtensionStatus.rm_extension_status['LinuxDistributionNotSupported']['Code']
-    message = RMExtensionStatus.rm_extension_status['LinuxDistributionNotSupported']['Message'].format(distr_name, version)
-    raise RMExtensionStatus.new_handler_terminating_error(code, message)
-  proc = subprocess.Popen(install_command, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-  install_out, install_err = proc.communicate()
+  install_dependencies_path = os.path.join(working_folder, Constants.install_dependencies_script)
+  install_dependencies_proc = subprocess.Popen(install_dependencies_path, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+  install_out, install_err = install_dependencies_proc.communicate()
+  return_code = install_dependencies_proc.returncode
+  write_configuration_log('Install dependencies process exit code : {0}'.format(return_code))
+  write_configuration_log('stdout : {0}'.format(install_out))
+  write_configuration_log('srderr : {0}'.format(install_err))
+  if(not (return_code == 0)):
+    raise Exception('Installing dependencies failed with error : {0}'.format(install_err))
 
 
 def start_rm_extension_handler(operation):
@@ -508,6 +498,7 @@ def main():
     handler_utility.do_parse_context(operation)
     try:
       check_python_version()
+      ensure_systemd_exists()
       install_dependencies()
       global root_dir
       root_dir = os.getcwd()

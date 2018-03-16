@@ -105,19 +105,32 @@ def check_python_version():
     message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(str(major) + '.' + str(minor))
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
-def ensure_systemd_exists():
-  
+def check_systemd_exists():
+  check_systemd_command = 'command -v systemd'
+  check_systemd_proc = subprocess.Popen(check_systemd_command, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
+  check_systemd_out, check_systemd_err = check_systemd_proc.communicate()
+  return_code = icheck_systemd_proc.returncode
+  handler_utility.log('Check systemd process exit code : {0}'.format(return_code))
+  handler_utility.log('stdout : {0}'.format(check_systemd_out))
+  handler_utility.log('srderr : {0}'.format(check_systemd_err))
+  if(return_code == 0):
+    handler_utility.log('systemd is installed on the machine.')
+  else:
+    raise Exception('Could not find systmd on the machine. Error message: {0}'.format(install_err))
 
 def install_dependencies():
   install_dependencies_path = os.path.join(working_folder, Constants.install_dependencies_script)
   install_dependencies_proc = subprocess.Popen(install_dependencies_path, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   install_out, install_err = install_dependencies_proc.communicate()
   return_code = install_dependencies_proc.returncode
-  write_configuration_log('Install dependencies process exit code : {0}'.format(return_code))
-  write_configuration_log('stdout : {0}'.format(install_out))
-  write_configuration_log('srderr : {0}'.format(install_err))
-  if(not (return_code == 0)):
+  handler_utility.log('Install dependencies process exit code : {0}'.format(return_code))
+  handler_utility.log('stdout : {0}'.format(install_out))
+  handler_utility.log('srderr : {0}'.format(install_err))
+  if(return_code == 0):
+    handler_utility.log('Dependencies installed successfully.')
+  else:
     raise Exception('Installing dependencies failed with error : {0}'.format(install_err))
+  
 
 
 def start_rm_extension_handler(operation):
@@ -498,7 +511,7 @@ def main():
     handler_utility.do_parse_context(operation)
     try:
       check_python_version()
-      ensure_systemd_exists()
+      check_systemd_exists()
       install_dependencies()
       global root_dir
       root_dir = os.getcwd()

@@ -107,7 +107,7 @@ def check_python_version():
 
 def check_systemd_exists():
   check_systemd_command = 'command -v systemd'
-  check_systemd_proc = subprocess.Popen(check_systemd_command, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
+  check_systemd_proc = subprocess.Popen(['/bin/bash', '-c', check_systemd_command], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   check_systemd_out, check_systemd_err = check_systemd_proc.communicate()
   return_code = icheck_systemd_proc.returncode
   handler_utility.log('Check systemd process exit code : {0}'.format(return_code))

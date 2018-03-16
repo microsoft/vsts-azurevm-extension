@@ -66,7 +66,7 @@ function ConfigureAgentIfRequired
     {
         Write-Log "Skipping agent configuration. Agent is already configured with given set of parameters"
         Add-HandlerSubStatus $RM_Extension_Status.SkippingAgentConfiguration.Code $RM_Extension_Status.SkippingAgentConfiguration.Message -operationName $RM_Extension_Status.SkippingAgentConfiguration.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message
     }
 }
 
@@ -86,4 +86,5 @@ Add-AgentTags $config
 Set-LastSequenceNumber
 
 Write-Log "Extension is enabled. Removing any disable markup file.."
+Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
 Remove-ExtensionDisabledMarkup

@@ -185,7 +185,7 @@ function Register-Agent {
         Write-Log "Done configuring Deployment agent"
 
         Add-HandlerSubStatus $RM_Extension_Status.ConfiguredDeploymentAgent.Code $RM_Extension_Status.ConfiguredDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguredDeploymentAgent.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message
     }
     catch
     {
@@ -222,7 +222,26 @@ function Remove-Agent {
                 $agentName = $($agentSettings.agentName)
                 Write-Log ("Renaming agent folder to {0}" -f $oldWorkingFolderName)
                 Write-Log ("Please delete the agent {0} manually from the deployment group." -f $agentName)
-                Rename-Item $config.AgentWorkingFolder $oldWorkingFolderName
+                for($i = 0; $i -lt 1000; $i++)
+                {
+                    try
+                    {
+                        Rename-Item $config.AgentWorkingFolder $oldWorkingFolderName -ErrorAction Stop
+                    }
+                    catch
+                    {
+                        if(([bool]($_.PSobject.Properties.name -match "FullyQualifiedErrorId")) -and ($_.FullyQualifiedErrorId.Contains("RenameItemIOError")))
+                        {
+                            $retryInterval = 5
+                            Write-Log "Agent service probably has not stopped yet. Will retry renaming the agent folder after $retryInterval seconds."
+                            Start-Sleep -s $retryInterval
+                        }
+                        else
+                        {
+                            throw "Unexpected error in agent folder rename: $_"
+                        }
+                    }
+                }
                 Create-AgentWorkingFolder
                 $message = ($RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Message -f $agentName)
                 Add-HandlerSubStatus $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Code $message -operationName $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.operationName -SubStatus 'warning'
@@ -231,7 +250,7 @@ function Remove-Agent {
                 throw $_
             }
         }
-        Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
+        Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message
     }
     catch
     {
@@ -267,7 +286,7 @@ function Add-AgentTags {
         }
 
         Add-HandlerSubStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -operationName $RM_Extension_Status.AgentTagsAdded.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message -Status success
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message
     }
     catch
     {

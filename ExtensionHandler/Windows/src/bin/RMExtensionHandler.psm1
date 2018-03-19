@@ -227,6 +227,7 @@ function Remove-Agent {
                     try
                     {
                         Rename-Item $config.AgentWorkingFolder $oldWorkingFolderName -ErrorAction Stop
+                        break
                     }
                     catch
                     {

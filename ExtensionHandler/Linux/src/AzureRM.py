@@ -109,16 +109,18 @@ def check_systemd_exists():
   check_systemd_command = 'command -v systemd'
   check_systemd_proc = subprocess.Popen(['/bin/bash', '-c', check_systemd_command], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   check_systemd_out, check_systemd_err = check_systemd_proc.communicate()
-  return_code = icheck_systemd_proc.returncode
+  return_code = check_systemd_proc.returncode
   handler_utility.log('Check systemd process exit code : {0}'.format(return_code))
   handler_utility.log('stdout : {0}'.format(check_systemd_out))
   handler_utility.log('srderr : {0}'.format(check_systemd_err))
   if(return_code == 0):
     handler_utility.log('systemd is installed on the machine.')
   else:
-    raise Exception('Could not find systmd on the machine. Error message: {0}'.format(install_err))
+    raise Exception('Could not find systmd on the machine. Error message: {0}'.format(check_systemd_err))
 
 def install_dependencies():
+  global config
+  working_folder = config['AgentWorkingFolder']
   install_dependencies_path = os.path.join(working_folder, Constants.install_dependencies_script)
   install_dependencies_proc = subprocess.Popen(install_dependencies_path, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   install_out, install_err = install_dependencies_proc.communicate()
@@ -465,6 +467,7 @@ def enable():
   execute_agent_pre_check()
   remove_existing_agent_if_required()
   download_agent_if_required()
+  install_dependencies()
   configure_agent_if_required()
   add_agent_tags()
   set_last_sequence_number()
@@ -511,7 +514,6 @@ def main():
     try:
       check_python_version()
       check_systemd_exists()
-      install_dependencies()
       global root_dir
       root_dir = os.getcwd()
       if(sys.argv[1] == '-enable'):

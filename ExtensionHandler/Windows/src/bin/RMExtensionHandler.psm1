@@ -548,7 +548,7 @@ function Invoke-GetAgentScript {
         else{
             $output = Receive-Job -Job $job
             if($jobState -eq "Failed"){
-                throw $output
+                throw "Extract job failed: $output"
             }
             else{
                 Write-Log "$agentZipFilePath is extracted to $workingFolder"

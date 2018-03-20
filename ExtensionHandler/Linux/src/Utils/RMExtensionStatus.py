@@ -121,6 +121,11 @@ rm_extension_status = {
     'Message' : '[WARNING] The deployment agent {0} could not be uninstalled. Ensure to remove it manually from its deployment group in VSTS.',
     'operationName' : 'Unconfigure existing agent'
   },
+  'Enabled' : {
+    'Code' : 26,
+    'Message' : 'The etension has been enabled successfully.',
+    'operationName' : 'Enable'
+  },
   #
   # Warnings
   #

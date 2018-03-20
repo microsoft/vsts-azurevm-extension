@@ -32,8 +32,8 @@ def get_last_sequence_number():
     #Will raise IOError if file does not exist
     with open(last_seq_file) as f:
       contents = int(f.read())
-      return contents
       f.close()
+      return contents
   except IOError as e:
     pass
   except ValueError as e:
@@ -105,29 +105,34 @@ def check_python_version():
     message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(str(major) + '.' + str(minor))
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
+def check_systemd_exists():
+  check_systemd_command = 'command -v systemd'
+  check_systemd_proc = subprocess.Popen(['/bin/bash', '-c', check_systemd_command], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+  check_systemd_out, check_systemd_err = check_systemd_proc.communicate()
+  return_code = check_systemd_proc.returncode
+  handler_utility.log('Check systemd process exit code : {0}'.format(return_code))
+  handler_utility.log('stdout : {0}'.format(check_systemd_out))
+  handler_utility.log('srderr : {0}'.format(check_systemd_err))
+  if(return_code == 0):
+    handler_utility.log('systemd is installed on the machine.')
+  else:
+    raise Exception('Could not find systemd on the machine. Error message: {0}'.format(check_systemd_err))
+
 def install_dependencies():
-  install_command = []
-  linux_version_valid = False
-  linux_distr = platform.linux_distribution()
-  distr_name = linux_distr[0]
-  version = linux_distr[1]
-  if(distr_name == Constants.red_hat_distr_name):
-    if(LooseVersion(version) >= LooseVersion('7.2')):
-      linux_version_valid = True
-      install_command += ['/bin/yum', '-yq', 'install', 'libunwind.x86_64', 'icu']
-  elif(distr_name == Constants.ubuntu_distr_name):
-    if(LooseVersion(version) >= LooseVersion('16.04')):
-      linux_version_valid = True
-      update_package_list_command = ['/usr/bin/apt-get', 'update', '-yq']
-      proc = subprocess.Popen(update_package_list_command, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-      update_out, update_err = proc.communicate()
-      install_command += ['/usr/bin/apt-get', 'install', '-yq', 'libunwind8', 'libcurl3']
-  if(linux_version_valid == False):
-    code = RMExtensionStatus.rm_extension_status['LinuxDistributionNotSupported']['Code']
-    message = RMExtensionStatus.rm_extension_status['LinuxDistributionNotSupported']['Message'].format(distr_name, version)
-    raise RMExtensionStatus.new_handler_terminating_error(code, message)
-  proc = subprocess.Popen(install_command, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-  install_out, install_err = proc.communicate()
+  global config
+  working_folder = config['AgentWorkingFolder']
+  install_dependencies_path = os.path.join(working_folder, Constants.install_dependencies_script)
+  install_dependencies_proc = subprocess.Popen(install_dependencies_path, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+  install_out, install_err = install_dependencies_proc.communicate()
+  return_code = install_dependencies_proc.returncode
+  handler_utility.log('Install dependencies process exit code : {0}'.format(return_code))
+  handler_utility.log('stdout : {0}'.format(install_out))
+  handler_utility.log('srderr : {0}'.format(install_err))
+  if(return_code == 0):
+    handler_utility.log('Dependencies installed successfully.')
+  else:
+    raise Exception('Installing dependencies failed with error : {0}'.format(install_err))
+  
 
 
 def start_rm_extension_handler(operation):
@@ -370,7 +375,7 @@ def register_agent():
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     code = RMExtensionStatus.rm_extension_status['Installed']['Code']
     message = RMExtensionStatus.rm_extension_status['Installed']['Message']
-    handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
+    handler_utility.set_handler_status(operation = 'Enable', code = code, message = message)
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName'], 'Enable', 6)
 
@@ -408,9 +413,6 @@ def remove_existing_agent(operation):
       else:
         raise e
     ConfigureDeploymentAgent.setting_params = {}
-    code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
-    message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']
-    handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['Uninstalling']['operationName'], operation, 7)
 
@@ -432,7 +434,7 @@ def configure_agent_if_required():
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
     message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
-    handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message) 
+    handler_utility.set_handler_status(operation = 'Enable', code = code, message = message) 
 
 def add_agent_tags():
   ss_code = RMExtensionStatus.rm_extension_status['AddingAgentTags']['Code']
@@ -451,7 +453,7 @@ def add_agent_tags():
       handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
       code = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Code']
       message = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Message']
-      handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
+      handler_utility.set_handler_status(operation = 'Enable', code = code, message = message)
     except Exception as e:
       set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName'], 'Enable', 8)
   else:
@@ -465,10 +467,14 @@ def enable():
   execute_agent_pre_check()
   remove_existing_agent_if_required()
   download_agent_if_required()
+  install_dependencies()
   configure_agent_if_required()
   add_agent_tags()
   set_last_sequence_number()
   handler_utility.log('Extension is enabled. Removing any disable markup file..')
+  code = RMExtensionStatus.rm_extension_status['Enabled']['Code']
+  message = RMExtensionStatus.rm_extension_status['Enabled']['Message']
+  handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
   remove_extension_disabled_markup()
 
 def disable():
@@ -493,10 +499,9 @@ def uninstall():
   config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
   if(configured_agent_exists == True):
     remove_existing_agent(operation)
-  else:
-    code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
-    message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']
-    handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)
+  code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
+  message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']
+  handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)
 
 def main():
   waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
@@ -508,7 +513,7 @@ def main():
     handler_utility.do_parse_context(operation)
     try:
       check_python_version()
-      install_dependencies()
+      check_systemd_exists()
       global root_dir
       root_dir = os.getcwd()
       if(sys.argv[1] == '-enable'):

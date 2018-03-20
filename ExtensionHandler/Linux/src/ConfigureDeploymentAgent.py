@@ -161,7 +161,7 @@ def get_agent_listener_path(working_folder):
   if(agent_listener_path == ''):
     agent_listener_path = os.path.join(working_folder, Constants.agent_listener)
 
-def get_agent_service_path(working_folder):
+def set_agent_service_path(working_folder):
   global agent_service_path
   if(agent_service_path == ''):
     agent_service_path = os.path.join(working_folder, Constants.agent_service)
@@ -178,7 +178,7 @@ def remove_existing_agent_internal(pat_token, working_folder, log_func):
     global agent_listener_path, agent_service_path, log_function, setting_params
     log_function = log_func
     get_agent_listener_path(working_folder)
-    get_agent_service_path(working_folder) 
+    set_agent_service_path(working_folder) 
     service_stop_proc = subprocess.Popen('{0} stop'.format(agent_service_path).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE, cwd = working_folder)
     std_out, std_err = service_stop_proc.communicate()
     return_code = service_stop_proc.returncode
@@ -310,7 +310,7 @@ def add_agent_tags_internal(account_info, project_name, pat_token, working_folde
 def configure_agent_internal(account_info, pat_token, project_name, deployment_group_name, agent_name, working_folder):
   global agent_listener_path, agent_service_path
   get_agent_listener_path(working_folder)
-  get_agent_service_path(working_folder)
+  set_agent_service_path(working_folder)
   get_host_and_address(account_info, '')
   vsts_url = (account_info[0] + '/' + account_info[1]) if (Constants.is_on_prem) else account_info[0]
   configure_command_args = ['--url', vsts_url,

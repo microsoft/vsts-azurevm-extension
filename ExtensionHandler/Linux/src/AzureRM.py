@@ -106,7 +106,7 @@ def check_python_version():
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
 def check_systemd_exists():
-  check_systemd_command = 'command -v systemd'
+  check_systemd_command = 'command -v systemctl'
   check_systemd_proc = subprocess.Popen(['/bin/bash', '-c', check_systemd_command], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   check_systemd_out, check_systemd_err = check_systemd_proc.communicate()
   return_code = check_systemd_proc.returncode

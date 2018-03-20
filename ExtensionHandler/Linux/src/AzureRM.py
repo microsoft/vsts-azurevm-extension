@@ -116,7 +116,7 @@ def check_systemd_exists():
   if(return_code == 0):
     handler_utility.log('systemd is installed on the machine.')
   else:
-    raise Exception('Could not find systmd on the machine. Error message: {0}'.format(check_systemd_err))
+    raise Exception('Could not find systemd on the machine. Error message: {0}'.format(check_systemd_err))
 
 def install_dependencies():
   global config

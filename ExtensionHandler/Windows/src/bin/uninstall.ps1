@@ -24,7 +24,5 @@ if($configuredAgentExists)
 {
     Remove-Agent $config
 }
-else
-{
-	Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
-}
+Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
+

@@ -144,6 +144,11 @@ $global:RM_Extension_Status = @{
         Message = 'Extracting deployment agent package'
         operationName = 'Agent download'
     }
+    Enabled = @{
+        Code = 27
+        Message = 'The etension has been enabled successfully.'
+        operationName = 'Enable'
+    }
 
     #
     # Warnings

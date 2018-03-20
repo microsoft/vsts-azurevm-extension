@@ -222,7 +222,7 @@ function Remove-Agent {
                 $agentName = $($agentSettings.agentName)
                 Write-Log ("Renaming agent folder to {0}" -f $oldWorkingFolderName)
                 Write-Log ("Please delete the agent {0} manually from the deployment group." -f $agentName)
-                for($i = 0; $i -lt 1000; $i++)
+                for($i = 0; $i -lt 60; $i++)
                 {
                     try
                     {

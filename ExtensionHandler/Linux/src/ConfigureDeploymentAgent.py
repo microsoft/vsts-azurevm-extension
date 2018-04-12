@@ -307,7 +307,7 @@ def add_agent_tags_internal(account_info, project_name, pat_token, working_folde
     write_add_tags_log(e.message)
     raise e
 
-def configure_agent_internal(account_info, pat_token, project_name, deployment_group_name, agent_name, working_folder):
+def configure_agent_internal(account_info, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder):
   global agent_listener_path, agent_service_path
   get_agent_listener_path(working_folder)
   set_agent_service_path(working_folder)
@@ -330,7 +330,9 @@ def configure_agent_internal(account_info, pat_token, project_name, deployment_g
   write_configuration_log('srderr : {0}'.format(std_err))
   if(not (return_code == 0)):
     raise Exception('Agent configuration failed with error : {0}'.format(std_err))
-  install_command = '{0} install root'.format(agent_service_path)
+  if(configure_agent_as_username == ''):
+    configure_agent_as_username = 'root'
+  install_command = '{0} install {1}'.format(agent_service_path, configure_agent_as_username)
   write_configuration_log('Service install command is {0}'.format(install_command))
   install_service_proc = subprocess.Popen(install_command.split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE, cwd = working_folder)
   std_out, std_err = install_service_proc.communicate()
@@ -353,7 +355,7 @@ def configure_agent_internal(account_info, pat_token, project_name, deployment_g
   
 
 
-def configure_agent(account_info, pat_token, project_name, deployment_group_name, agent_name, working_folder, agent_exists, log_func):
+def configure_agent(account_info, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder, agent_exists, log_func):
   global agent_listener_path
   global log_function
   log_function = log_func
@@ -364,7 +366,7 @@ def configure_agent(account_info, pat_token, project_name, deployment_group_name
       agent_name = platform.node() + '-DG'
       write_configuration_log('Agent name not provided, agent name will be set as ' + agent_name)
     write_configuration_log('Configuring agent')
-    configure_agent_internal(account_info, pat_token, project_name, deployment_group_name, agent_name, working_folder)
+    configure_agent_internal(account_info, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder)
     return Constants.return_success
   except Exception as e:
     write_configuration_log(e.message)

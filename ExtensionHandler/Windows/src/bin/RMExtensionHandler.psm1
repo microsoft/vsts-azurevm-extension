@@ -388,6 +388,12 @@ function Get-ConfigurationFromSettings {
             $patToken = ""
         }
 
+        $windowsLogonPassword = ""
+        if($protectedSettings.Contains('WindowsLogonPassword'))
+        {
+            $windowsLogonPassword = $protectedSettings['WindowsLogonPassword']
+        }
+
         $teamProjectName = $publicSettings['TeamProject']
         VerifyInputNotNull "TeamProject" $teamProjectName
         Write-Log "Team Project: $teamProjectName"
@@ -425,6 +431,17 @@ function Get-ConfigurationFromSettings {
             $tags = @(Format-TagsInput $tagsInput)
         }
 
+        $windowsLogonAccountName = $null
+        if($publicSettings.Contains('WindowsLogonAccountName'))
+        {
+            $windowsLogonAccountName = $publicSettings['WindowsLogonAccountName']
+        }
+
+        if(-not $windowsLogonAccountName)
+        {
+            $windowsLogonAccountName = ""
+        }
+
         $agentWorkingFolder = Create-AgentWorkingFolder
 
         Write-Log "Done reading config settings from file..."
@@ -438,6 +455,8 @@ function Get-ConfigurationFromSettings {
             AgentName          = $agentName
             Tags               = $tags
             AgentWorkingFolder = $agentWorkingFolder
+            WindowsLogonAccountName = $windowsLogonAccountName
+            WindowsLogonPassword = $windowsLogonPassword
         }
     }
     catch
@@ -589,7 +608,9 @@ function Invoke-ConfigureAgentScript {
     [hashtable] $config
     )
 
-    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -deploymentGroupName `
+    $config.DeploymentGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -logFunction $script:logger `
+    -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword
 }
 
 function Invoke-RemoveAgentScript {

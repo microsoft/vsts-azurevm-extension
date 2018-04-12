@@ -562,6 +562,72 @@ Describe "parse tags settings tests" {
             $settings.Tags[2] | Should Be "tag3"            
         }
     }
+
+    Context "Windows user credentials are not present in settings" {
+        
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "abc"
+                        TeamProject = "project"
+                        DeploymentGroup = "group"
+                        Tags = "tag1,  ,  tag2 ,, tag3,"
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                }
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+
+        $settings = Get-ConfigurationFromSettings
+
+        It "should set windows user credentials as empty strings" {
+            $settings.WindowsLogonAccountName | Should Be ""
+            $settings.WindowsLogonPassword | Should Be ""
+        }
+    }
+
+    Context "Windows user credentials are present in settings" {
+        
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "abc"
+                        TeamProject = "project"
+                        DeploymentGroup = "group"
+                        Tags = "tag1,  ,  tag2 ,, tag3,"
+                        AgentName = "name" 
+                        WindowsLogonAccountName = "domain\testuser"
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                        WindowsLogonPassword = "password"
+                }
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+
+        $settings = Get-ConfigurationFromSettings
+
+        It "config should contain the windows user credentials" {
+            $settings.WindowsLogonAccountName | Should Be "domain\testuser"
+            $settings.WindowsLogonPassword | Should Be "password"         
+        }
+    }
 }
 
 Describe "AgentReconfigurationRequired tests" {

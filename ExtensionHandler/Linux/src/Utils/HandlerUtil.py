@@ -446,4 +446,9 @@ class HandlerUtility:
             excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['ArgumentError'], message)
             raise excep
 
+    def verify_public_settings_is_dict(self, public_settings):
+        if((public_settings == None) or (public_settings.__class__.__name__ != 'dict')):
+            message ='Public settings should be a dictionary.' 
+            excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['ArgumentError'], message)
+            raise excep
 

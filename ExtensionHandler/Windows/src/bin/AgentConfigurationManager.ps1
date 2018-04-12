@@ -30,7 +30,9 @@ function ConfigureAgent
     [Parameter(Mandatory=$true)]
     [string]$agentName,
     [Parameter(Mandatory=$true)]
-    [string]$configCmdPath
+    [string]$configCmdPath,
+    [string]$windowsLogonAccountName,
+    [string]$windowsLogonPassword
     )
 
     $processStartInfo = GetProcessStartInfo
@@ -39,7 +41,9 @@ function ConfigureAgent
     if($global:isOnPrem){
         $url = $tfsUrl.Substring(0,$tfsUrl.LastIndexOf('/'))
     }
-    $processStartInfo.Arguments = CreateConfigCmdArgs -tfsUrl $tfsUrl -patToken $patToken -workingFolder $workingFolder -projectName $projectName -deploymentGroupName $deploymentGroupName -agentName $agentName
+    $processStartInfo.Arguments = CreateConfigCmdArgs -tfsUrl $tfsUrl -patToken $patToken -workingFolder $workingFolder `
+                                 -projectName $projectName -deploymentGroupName $deploymentGroupName -agentName $agentName `
+                                 -windowsLogonAccountName $windowsLogonAccountName -windowsLogonPassword $windowsLogonPassword
     if($global:isOnPrem){
         $collectionName = $tfsUrl.Substring($tfsUrl.LastIndexOf('/')+1, $tfsUrl.Length-$tfsUrl.LastIndexOf('/')-1)
         $processStartInfo.Arguments += " --collectionName $collectionName"
@@ -242,8 +246,14 @@ function CreateConfigCmdArgs
         [Parameter(Mandatory=$true)]
         [string]$deploymentGroupName,
         [Parameter(Mandatory=$true)]
-        [string]$agentName
+        [string]$agentName,
+        [string]$windowsLogonAccountName,
+        [string]$windowsLogonPassword
     )
 
-    return "$configCommonArgs --agent `"$agentName`" --url `"$tfsUrl`" --token $patToken --work `"$workingFolder`" --projectname `"$projectName`" --deploymentgroupname `"$deploymentGroupName`""
+    $configCmdArgs = "$configCommonArgs --agent `"$agentName`" --url `"$tfsUrl`" --token $patToken --work `"$workingFolder`" --projectname `"$projectName`" --deploymentgroupname `"$deploymentGroupName`""
+    if($windowsLogonAccountName){
+        $configCmdArgs += " --windowsLogonAccount `"$windowsLogonAccountName`" --windowsLogonPassword `"$windowsLogonPassword`""
+    }
+    return $configCmdArgs
 }

@@ -9,6 +9,8 @@ param(
     [string]$deploymentGroupName,    
     [Parameter(Mandatory=$true)]
     [string]$workingFolder,
+    [string]$windowsLogonAccountName,
+    [string]$windowsLogonPassword,
     [string]$agentName,
     [scriptblock]$logFunction    
 )
@@ -72,7 +74,9 @@ try
     
     WriteConfigurationLog "Configure agent"
     
-    ConfigureAgent -tfsUrl $tfsUrl -patToken $patToken -workingFolder $defaultAgentWorkingFolder -projectName $projectName -deploymentGroupName $deploymentGroupName -agentName $agentName -configCmdPath $(GetConfigCmdPath)
+    ConfigureAgent -tfsUrl $tfsUrl -patToken $patToken -workingFolder $defaultAgentWorkingFolder -projectName $projectName `
+    -deploymentGroupName $deploymentGroupName -agentName $agentName -configCmdPath $(GetConfigCmdPath) `
+    -windowsLogonAccountName $windowsLogonAccountName -windowsLogonPassword $windowsLogonPassword
     
     return $returnSuccess 
 }

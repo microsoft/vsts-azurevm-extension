@@ -5,7 +5,7 @@
         "location": {
             "value": "southcentralus"
         },
-        "linuxVirtualMachineName": {
+        "virtualMachineName": {
             "value": "vm-ext-e2e-clsc-linux"
         },
         "virtualMachineSize": {
@@ -14,16 +14,16 @@
         "adminUsername": {
             "value": "tfs"
         },
-        "linuxStorageAccountName": {
+        "storageAccountName": {
             "value": "vmextrgclscdiskslinux"
         },
         "virtualNetworkName": {
             "value": "vm-ext-rg-clsc-vnet"
         },
-        "linuxNetworkInterfaceName": {
+        "networkInterfaceName": {
             "value": "vm-ext-e2e-clsc-linu146"
         },
-        "linuxNetworkSecurityGroupName": {
+        "networkSecurityGroupName": {
             "value": "vm-ext-e2e-clsc-linux-nsg"
         },
         "adminPassword": {
@@ -38,9 +38,6 @@
         "diagnosticsStorageAccountType": {
             "value": "Standard_LRS"
         },
-        "diagnosticsStorageAccountId": {
-            "value": "Microsoft.Storage/storageAccounts/vmextrgclscdiag505"
-        },
         "addressPrefix": {
             "value": "10.14.0.0/16"
         },
@@ -50,10 +47,13 @@
         "subnetPrefix": {
             "value": "10.14.0.0/24"
         },
-        "linuxPublicIpAddressName": {
+        "publicIpAddressName": {
             "value": "vm-ext-e2e-clsc-linux-ip"
         },
         "publicIpAddressType": {
+            "value": "Dynamic"
+        },
+        "privateIpAddressType": {
             "value": "Dynamic"
         }
     }

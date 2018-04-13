@@ -38,9 +38,6 @@
         "diagnosticsStorageAccountType": {
             "value": "Standard_LRS"
         },
-        "diagnosticsStorageAccountId": {
-            "value": "Microsoft.Storage/storageAccounts/vmextrgclscdiag505"
-        },
         "addressPrefix": {
             "value": "10.14.0.0/16"
         },
@@ -54,6 +51,9 @@
             "value": "vm-ext-e2e-clsc-ip"
         },
         "publicIpAddressType": {
+            "value": "Dynamic"
+        },
+        "privateIpAddressType": {
             "value": "Dynamic"
         }
     }

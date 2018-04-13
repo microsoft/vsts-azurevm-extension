@@ -431,15 +431,15 @@ function Get-ConfigurationFromSettings {
             $tags = @(Format-TagsInput $tagsInput)
         }
 
-        $windowsLogonAccountName = $null
+        $windowsLogonAccountName = ""
         if($publicSettings.Contains('WindowsLogonAccountName'))
         {
             $windowsLogonAccountName = $publicSettings['WindowsLogonAccountName']
         }
-
-        if(-not $windowsLogonAccountName)
-        {
-            $windowsLogonAccountName = ""
+        if($windowsLogonAccountName){
+            if(-not($windowsLogonAccountName.Contains('@') -or $windowsLogonAccountName.Contains('\'))){
+                $windowsLogonAccountName = $env:COMPUTERNAME + '\' + $windowsLogonAccountName
+            }
         }
 
         $agentWorkingFolder = Create-AgentWorkingFolder

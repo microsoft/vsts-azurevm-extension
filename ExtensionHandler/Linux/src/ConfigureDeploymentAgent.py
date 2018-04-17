@@ -6,6 +6,7 @@ import Constants
 import codecs
 import base64
 import httplib
+from pwd import getpwnam
 from urllib2 import quote
 
 agent_listener_path = ''
@@ -307,6 +308,14 @@ def add_agent_tags_internal(account_info, project_name, pat_token, working_folde
     write_add_tags_log(e.message)
     raise e
 
+def set_folder_owner(folder, username):
+  user_info = getpwnam(username)
+  u_id, g_id = user_info.pw_uid, user_info.pw_gid
+  for dirpath, dirnames, filenames in os.walk(folder):
+    os.chown(dirpath, u_id, g_id)
+    for filename in filenames:
+      os.chown(os.path.join(dirpath, filename), u_id, g_id)
+
 def configure_agent_internal(account_info, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder):
   global agent_listener_path, agent_service_path
   get_agent_listener_path(working_folder)
@@ -332,6 +341,7 @@ def configure_agent_internal(account_info, pat_token, project_name, deployment_g
     raise Exception('Agent configuration failed with error : {0}'.format(std_err))
   if(configure_agent_as_username == ''):
     configure_agent_as_username = 'root'
+  set_folder_owner(working_folder, configure_agent_as_username)
   install_command = '{0} install {1}'.format(agent_service_path, configure_agent_as_username)
   write_configuration_log('Service install command is {0}'.format(install_command))
   install_service_proc = subprocess.Popen(install_command.split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE, cwd = working_folder)

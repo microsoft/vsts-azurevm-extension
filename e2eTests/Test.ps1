@@ -22,13 +22,37 @@ function Remove-ExistingVM
     [string]$storageAccountName
     )
     
-    # Delete existing VM if any. Remove-AzureRmVM does not throw if VM does not exist, hence no need to handle exception
-    Remove-AzureRmVM -ResourceGroupName $resourceGroupName -Name $vmName -Force
+    try
+    {
+        #If the resource group exists
+        Get-AzureRmResourceGroup -Name $resourceGroupName -ErrorAction Stop
+        # Delete existing VM if any. Remove-AzureRmVM does not throw if VM does not exist, hence no need to handle exception
+        Remove-AzureRmVM -ResourceGroupName $resourceGroupName -Name $vmName -Force
 
-    # Delete VM's vhd blob as creating VM again will require blob to be removed first
-    $storageKey = Get-AzureRmStorageAccountKey -ResourceGroupName $resourceGroupName -Name $storageAccountName
-    $storageCtx = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageKey[0].Value
-    Get-AzureStorageBlob -Container vhds -Context $storageCtx | Remove-AzureStorageBlob
+        #If the storage account exists
+        Get-AzureRmStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName -ErrorAction Stop
+        # Delete VM's vhd blob as creating VM again will require blob to be removed first
+        $storageKey = Get-AzureRmStorageAccountKey -ResourceGroupName $resourceGroupName -Name $storageAccountName
+        $storageCtx = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageKey[0].Value
+        Get-AzureStorageBlob -Container vhds -Context $storageCtx | Remove-AzureStorageBlob
+    }
+    catch
+    {
+        #If the error message is neither of (1)resource group does not exist, (2)storage account does not exist, delete the resource group
+        $exceptionMessage = $_.Exception.Message
+        if(-not($exceptionMessage.Contains("Provided resource group does not exist") -or 
+        $exceptionMessage.Contains("The Resource 'Microsoft.Storage/storageAccounts/$storageAccountName' under resource group '$resourceGroupName' was not found.")))
+        {
+            try 
+            {
+                Write-Host "Some unexpected error occured, deleting resource group: $_"
+                Remove-AzureRmResourceGroup -Name $resourceGroupName -Force -ErrorAction Stop
+            }
+            catch {
+                Write-Host "Deleting resource group failed: $_"
+            }
+        }
+    }
 }
 
 function Create-VM
@@ -40,6 +64,24 @@ function Create-VM
     [string]$vmPasswordString
     )
     
+    #Ensure Resource Group exists
+    try
+    {
+        Get-AzureRmResourceGroup -Name $resourceGroupName -ErrorAction Stop
+    }
+    catch
+    {
+        if($_.Exception.Message.Contains("Provided resource group does not exist"))
+        {
+            Write-Host "Rsource group does not exist. Creating it."
+            New-AzureRmResourceGroup -Name $resourceGroupName -Location southcentralus -Tag @{DaysToDelete = "Never"}
+        }
+        else
+        {
+            throw "An error occured while fetching the resource group: $_"
+        }
+    }
+
     # Create VM using template
     $vmPasswordSecureString = $vmPasswordString | ConvertTo-SecureString -AsPlainText -Force
     $deploymentName = Get-Date -Format yyyyMMddhhmmss
@@ -108,7 +150,7 @@ $storageAccountName = $inputs.storageAccountName
 $templateFile = Join-Path $currentScriptPath $inputs.templateFile
 $templateParameterFile = Join-Path $currentScriptPath $inputs.templateParameterFile
 $extensionPublicSettingsFile = Join-Path $currentScriptPath $inputs.extensionPublicSettingsFile
-$extensionReconfigurationPublicSettingsFile = Join-Path $currentScriptPath $inputs.extensionPublicSettingsFile
+$extensionReconfigurationPublicSettingsFile = Join-Path $currentScriptPath $inputs.extensionPublicSettingsFileReconfigure
 $extensionProtectedSettingsFile = Join-Path $currentScriptPath $inputs.extensionProtectedSettingsFile
 
 # Only keep major and minor version for extension

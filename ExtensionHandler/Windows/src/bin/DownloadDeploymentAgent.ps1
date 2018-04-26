@@ -89,7 +89,7 @@ function WriteDownloadLog
     }
     catch
     {
-        throw "Error while downloading VSTS extension. Please make sure that you enter the correct VSTS account name and PAT token."
+        throw "Error while downloading VSTS agent. Please make sure that you enter the correct VSTS account name and PAT token."
     }
 }
  

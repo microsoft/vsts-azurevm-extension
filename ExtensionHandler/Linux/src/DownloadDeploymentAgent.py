@@ -72,7 +72,7 @@ def get_agent_package_data(account_info, package_data_address, legacy_package_da
       if(response.status == 200):
         val = json.loads(response.read())
         return val['value'][0]['downloadUrl']
-  raise Exception('Error while downloading VSTS extension. Please make sure that you enter the correct VSTS account name and PAT token.')
+  raise Exception('Error while downloading VSTS agent. Please make sure that you enter the correct VSTS account name and PAT token.')
 
 def get_agent_download_url(account_info, user_name, pat_token):
   package_data_address_format = '/_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}'

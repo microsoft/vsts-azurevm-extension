@@ -15,7 +15,7 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
 }
 
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
-Import-Module $PSScriptRoot\RMExtensionHandler.psm1
+Import-Module $PSScriptRoot\RMExtensionHandler.psm1 -DisableNameChecking
 Import-Module $PSScriptRoot\Log.psm1
 
 $Enable_ConfiguredAgentExists = $false

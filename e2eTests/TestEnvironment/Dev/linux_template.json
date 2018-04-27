@@ -5,7 +5,7 @@
         "location": {
             "type": "string"
         },
-        "linuxVirtualMachineName": {
+        "virtualMachineName": {
             "type": "string"
         },
         "virtualMachineSize": {
@@ -14,16 +14,16 @@
         "adminUsername": {
             "type": "string"
         },
-        "linuxStorageAccountName": {
+        "storageAccountName": {
             "type": "string"
         },
         "virtualNetworkName": {
             "type": "string"
         },
-        "linuxNetworkInterfaceName": {
+        "networkInterfaceName": {
             "type": "string"
         },
-        "linuxNetworkSecurityGroupName": {
+        "networkSecurityGroupName": {
             "type": "string"
         },
         "adminPassword": {
@@ -33,9 +33,6 @@
             "type": "string"
         },
         "diagnosticsStorageAccountName": {
-            "type": "string"
-        },
-        "diagnosticsStorageAccountId": {
             "type": "string"
         },
         "diagnosticsStorageAccountType": {
@@ -50,26 +47,122 @@
         "subnetPrefix": {
             "type": "string"
         },
-        "linuxPublicIpAddressName": {
+        "publicIpAddressName": {
             "type": "string"
         },
         "publicIpAddressType": {
+            "type": "string"
+        },
+        "privateIpAddressType": {
             "type": "string"
         }
     },
     "variables": {
         "vnetId": "[resourceId('vm-ext-rg-clsc','Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
+        "ipconfig": "ipconfig"
     },
     "resources": [
         {
-            "name": "[parameters('linuxVirtualMachineName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('storageAccountName')]",
+            "apiVersion": "2015-06-15",
+            "location": "[parameters('location')]",
+            "kind": "Storage",
+            "properties": {
+                "accountType": "[parameters('storageAccountType')]"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('diagnosticsStorageAccountName')]",
+            "apiVersion": "2015-06-15",
+            "location": "[parameters('location')]",
+            "kind": "Storage",
+            "properties": {
+                "accountType": "[parameters('diagnosticsStorageAccountType')]"
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[parameters('publicIPAddressName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "[parameters('publicIpAddressType')]"
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2017-03-01",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('networkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "displayName": "NSG - Front End"
+            },
+            "properties": {}
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[parameters('networkInterfaceName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "[variables('ipconfig')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "dependsOn": [
+                "[parameters('storageAccountName')]",
+                "[parameters('diagnosticsStorageAccountName')]",
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+            ],
+            "name": "[parameters('virtualMachineName')]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2015-06-15",
             "location": "[parameters('location')]",
             "properties": {
                 "osProfile": {
-                    "computerName": "[parameters('linuxVirtualMachineName')]",
+                    "computerName": "[parameters('virtualMachineName')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
@@ -84,9 +177,9 @@
                         "version": "latest"
                     },
                     "osDisk": {
-                        "name": "[parameters('linuxVirtualMachineName')]",
+                        "name": "[parameters('virtualMachineName')]",
                         "vhd": {
-                            "uri": "[concat(concat(reference(resourceId('vm-ext-rg-clsc', 'Microsoft.Storage/storageAccounts', parameters('linuxStorageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('linuxVirtualMachineName'), '20161220105632.vhd')]"
+                            "uri": "[concat(concat(reference(resourceId('vm-ext-rg-clsc', 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('virtualMachineName'), '20161220105632.vhd')]"
                         },
                         "createOption": "fromImage"
                     },
@@ -95,7 +188,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('linuxNetworkInterfaceName'))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
                         }
                     ]
                 },

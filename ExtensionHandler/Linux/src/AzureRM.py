@@ -236,7 +236,10 @@ def get_configutation_from_settings(operation):
       code = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Code']
       RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Message']
       raise new_handler_terminating_error(code, message)
-    vsts_account_name = public_settings['VSTSAccountName'].strip('/')
+    handler_utility.verify_public_settings_is_dict(public_settings)
+    vsts_account_name = ''
+    if(public_settings.has_key('VSTSAccountName')):
+      vsts_account_name = public_settings['VSTSAccountName'].strip('/')
     handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
     account_info = parse_account_name(vsts_account_name)
     vsts_url = account_info['VSTSUrl']
@@ -250,22 +253,29 @@ def get_configutation_from_settings(operation):
       pat_token = protected_settings['PATToken']
     if((pat_token == '') and (public_settings.has_key('PATToken'))):
       pat_token = public_settings['PATToken']
-    team_project_name = public_settings['TeamProject']
+    team_project_name = ''
+    if(public_settings.has_key('TeamProject')):
+      team_project_name = public_settings['TeamProject']
     handler_utility.verify_input_not_null('TeamProject', team_project_name)
     handler_utility.log('Team Project : {0}'.format(team_project_name))
+    deployment_group_name = ''
     if(public_settings.has_key('DeploymentGroup')):
       deployment_group_name = public_settings['DeploymentGroup']
     elif(public_settings.has_key('MachineGroup')):
       deployment_group_name = public_settings['MachineGroup']
     handler_utility.verify_input_not_null('DeploymentGroup', deployment_group_name)
     handler_utility.log('Deployment Group : {0}'.format(deployment_group_name))
-    agent_name = public_settings['AgentName']
+    if(public_settings.has_key('AgentName')):
+      agent_name = public_settings['AgentName']
     handler_utility.log('Agent Name : {0}'.format(agent_name))
     tags_input = [] 
     if(public_settings.has_key('Tags')):
       tags_input = public_settings['Tags']
     handler_utility.log('Tags : {0}'.format(tags_input))
     tags = format_tags_input(tags_input)
+    configure_agent_as_username = ''
+    if(public_settings.has_key('ConfigureAgentAsUserName')):
+      configure_agent_as_username = public_settings['ConfigureAgentAsUserName']
     agent_working_folder = create_agent_working_folder()
     handler_utility.log('Done reading config settings from file...')
     ss_code = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['Code']
@@ -279,7 +289,8 @@ def get_configutation_from_settings(operation):
              'DeploymentGroup':deployment_group_name, 
              'AgentName':agent_name, 
              'Tags' : tags,
-             'AgentWorkingFolder':agent_working_folder
+             'AgentWorkingFolder':agent_working_folder,
+             'ConfigureAgentAsUserName': configure_agent_as_username
           }
     return ret_val
   except Exception as e:
@@ -367,7 +378,8 @@ def register_agent():
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log('Configuring Deployment agent...')
     ConfigureDeploymentAgent.configure_agent(config['VSTSUrl'], config['PATToken'], config['TeamProject'], \
-    config['DeploymentGroup'], config['AgentName'], config['AgentWorkingFolder'], configured_agent_exists, handler_utility.log)
+    config['DeploymentGroup'], config['ConfigureAgentAsUserName'], config['AgentName'], config['AgentWorkingFolder'], \
+    configured_agent_exists, handler_utility.log)
     handler_utility.log('Done configuring Deployment agent')
     ss_code = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Message']

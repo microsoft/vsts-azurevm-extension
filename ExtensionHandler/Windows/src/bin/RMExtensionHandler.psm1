@@ -213,7 +213,8 @@ function Remove-Agent {
             Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
         }
         catch{
-            if(($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder)){
+            if(($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder))
+            {
                 $global:IncludeWarningStatus = $true
                 [string]$timeSinceEpoch = Get-TimeSinceEpoch
                 $oldWorkingFolderName = $config.AgentWorkingFolder + $timeSinceEpoch
@@ -348,14 +349,16 @@ function Get-ConfigurationFromSettings {
             $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
 
             $vstsUrl = -join($protocolHeader, $subparts[0].trim())
-            if(!$vstsUrl.EndsWith("visualstudio.com")){
+            if(!$vstsUrl.EndsWith("visualstudio.com"))
+            {
                 # This is for the on-prem tfs scenario where url is supposed to be of format http(s)://<server-name>/<application>/<collection>
                 $global:isOnPrem = $true
                 if($subparts.Count -ge 2)
                 {
                     $tfsVirtualApplication = $subparts[1].trim()
                     $tfsCollection = 'DefaultCollection'
-                    if($subparts.Count -gt 2){
+                    if($subparts.Count -gt 2)
+                    {
                         $tfsCollection = $subparts[2].trim()
                     }
                     $vstsUrl = "$vstsUrl/$tfsVirtualApplication/$tfsCollection"
@@ -436,8 +439,10 @@ function Get-ConfigurationFromSettings {
         {
             $windowsLogonAccountName = $publicSettings['WindowsLogonAccountName']
         }
-        if($windowsLogonAccountName){
-            if(-not($windowsLogonAccountName.Contains('@') -or $windowsLogonAccountName.Contains('\'))){
+        if($windowsLogonAccountName)
+        {
+            if(-not($windowsLogonAccountName.Contains('@') -or $windowsLogonAccountName.Contains('\')))
+            {
                 $windowsLogonAccountName = $env:COMPUTERNAME + '\' + $windowsLogonAccountName
             }
         }
@@ -558,15 +563,18 @@ function Invoke-GetAgentScript {
     } -ArgumentList $function:ExtractZip, $agentZipFilePath, $workingFolder
     
     # poll state a large number of times with 20 second interval  
-    for($i = 0; $i -lt 1000; $i++){
+    for($i = 0; $i -lt 1000; $i++)
+    {
         $jobState = $job.State
-        if(($jobState -ne "Failed") -and ($jobState -ne "Completed")){
+        if(($jobState -ne "Failed") -and ($jobState -ne "Completed"))
+        {
             Add-HandlerSubStatus $RM_Extension_Status.ExtractAgentPackage.Code $RM_Extension_Status.ExtractAgentPackage.Message -operationName $RM_Extension_Status.ExtractAgentPackage.operationName
             Start-Sleep -s 20
         }
         else{
             $output = Receive-Job -Job $job
-            if($jobState -eq "Failed"){
+            if($jobState -eq "Failed")
+            {
                 throw "Extract job failed: $output"
             }
             else{

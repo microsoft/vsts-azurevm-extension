@@ -37,15 +37,14 @@ function ConfigureAgent
 
     $processStartInfo = GetProcessStartInfo
     $processStartInfo.FileName = $configCmdPath
-    $url = $tfsUrl
     if($global:isOnPrem){
-        $url = $tfsUrl.Substring(0,$tfsUrl.LastIndexOf('/'))
+        $collectionName = $tfsUrl.Substring($tfsUrl.LastIndexOf('/')+1, $tfsUrl.Length-$tfsUrl.LastIndexOf('/')-1)
+        $tfsUrl = $tfsUrl.Substring(0,$tfsUrl.LastIndexOf('/'))
     }
     $processStartInfo.Arguments = CreateConfigCmdArgs -tfsUrl $tfsUrl -patToken $patToken -workingFolder $workingFolder `
                                  -projectName $projectName -deploymentGroupName $deploymentGroupName -agentName $agentName `
                                  -windowsLogonAccountName $windowsLogonAccountName -windowsLogonPassword $windowsLogonPassword
     if($global:isOnPrem){
-        $collectionName = $tfsUrl.Substring($tfsUrl.LastIndexOf('/')+1, $tfsUrl.Length-$tfsUrl.LastIndexOf('/')-1)
         $processStartInfo.Arguments += " --collectionName $collectionName"
     }
     $configProcess = New-Object System.Diagnostics.Process
@@ -251,7 +250,7 @@ function CreateConfigCmdArgs
         [string]$windowsLogonPassword
     )
 
-    $configCmdArgs = "$configCommonArgs --agent `"$agentName`" --url `"$tfsUrl`" --token $patToken --work `"$workingFolder`" --projectname `"$projectName`" --deploymentgroupname `"$deploymentGroupName`""
+    $configCmdArgs = "$configCommonArgs --agent `"$agentName`" --url `"$tfsUrl`" --token `"$patToken`" --work `"$workingFolder`" --projectname `"$projectName`" --deploymentgroupname `"$deploymentGroupName`""
     if($windowsLogonAccountName){
         $configCmdArgs += " --windowsLogonAccount `"$windowsLogonAccountName`" --windowsLogonPassword `"$windowsLogonPassword`""
     }

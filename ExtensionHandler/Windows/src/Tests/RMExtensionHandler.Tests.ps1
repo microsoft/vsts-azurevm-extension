@@ -234,7 +234,7 @@ Describe "parse vsts account name settings tests" {
         }
     }
 
-    Context "Should handle hosted url" {
+    Context "Should handle old hosted url" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
         Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
@@ -261,6 +261,37 @@ Describe "parse vsts account name settings tests" {
 
         It "should set proper status" {
             $settings.VSTSUrl | Should Be "https://abc.visualstudio.com"
+            $settings.PATToken | Should Be ""     
+        }
+    }
+
+    Context "Should handle new hosted url" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "https://codex.azure.com/abc"
+                        TeamProject = "project"
+                        DeploymentGroup = "group"
+                        Tags = @()
+                        AgentName = "name" 
+                    };
+                protectedSettings = ""
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Format-TagsInput {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+
+        $settings = Get-ConfigurationFromSettings
+
+        It "should set proper status" {
+            $settings.VSTSUrl | Should Be "https://codex.azure.com/abc"
             $settings.PATToken | Should Be ""     
         }
     }

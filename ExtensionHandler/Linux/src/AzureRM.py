@@ -178,6 +178,8 @@ def parse_account_name(account_name):
   account_name_split = filter(lambda x: x!='', account_name.split('/'))
   if(account_name_split[0].endswith('visualstudio.com')):
     base_url = 'https://' + account_name_split[0]
+  elif(account_name_split[0] == 'codex.azure.com'):
+    base_url = 'https://' + account_name_split[0] + '/' + account_name_split[1]
   elif(account_name_prefix != ''):
     Constants.is_on_prem = True
     if(len(account_name_split) >= 2):

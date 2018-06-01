@@ -349,7 +349,13 @@ function Get-ConfigurationFromSettings {
             $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
 
             $vstsUrl = -join($protocolHeader, $subparts[0].trim())
-            if(!$vstsUrl.EndsWith("visualstudio.com"))
+
+            if($vstsUrl -eq "https://codex.azure.com")
+            {
+                $vstsUrl += "/$($subparts[1])"
+            }
+
+            if(!$vstsUrl.EndsWith("visualstudio.com") -and !$vstsUrl.StartsWith("https://codex.azure.com"))
             {
                 # This is for the on-prem tfs scenario where url is supposed to be of format http(s)://<server-name>/<application>/<collection>
                 $global:isOnPrem = $true

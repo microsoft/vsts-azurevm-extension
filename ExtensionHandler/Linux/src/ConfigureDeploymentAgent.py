@@ -321,7 +321,7 @@ def configure_agent_internal(account_info, pat_token, project_name, deployment_g
   get_agent_listener_path(working_folder)
   set_agent_service_path(working_folder)
   get_host_and_address(account_info, '')
-  vsts_url = (account_info[0] + '/' + account_info[1]) if (Constants.is_on_prem) else account_info[0]
+  vsts_url = account_info[0] + '/' + account_info[1]
   configure_command_args = ['--url', vsts_url,
                             '--auth', 'PAT',
                             '--token', pat_token,

@@ -13,6 +13,8 @@ import ConfigureDeploymentAgent
 import json
 import time
 import socket
+import httplib
+import base64
 from distutils.version import LooseVersion
 
 configured_agent_exists = False
@@ -207,7 +209,10 @@ def parse_account_name(account_name, pat_token):
     connection_data = json.loads(response.read())
     if(connection_data.has_key('deploymentType')):
       if(connection_data['deploymentType'] == 'hosted'):
-        base_url = account_name_prefix + account_name
+        base_url = account_name_prefix + account_name_split[0]
+        for split_part in account_name_split[1:]:
+          virtual_application = '/{0}'.format(split_part) + virtual_application
+        virtual_application = virtual_application.strip('/')
       elif(connection_data['deploymentType'] == 'onPremises'):
         Constants.is_on_prem = True
         if(len(account_name_split) >= 2):

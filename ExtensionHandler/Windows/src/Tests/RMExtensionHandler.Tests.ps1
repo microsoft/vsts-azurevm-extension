@@ -105,7 +105,6 @@ Describe "Download agent tests" {
     Context "Should set success status if no exception happens" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Invoke-GetAgentScript {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus
@@ -138,7 +137,6 @@ Describe "Pre-check agent tests" {
     Context "Should set success status if no exception happens" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Test-AgentAlreadyExistsInternal {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus
@@ -171,7 +169,6 @@ Describe "configure agent tests" {
     Context "Should set success status if no exception happens" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Invoke-ConfigureAgentScript {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus
@@ -188,7 +185,6 @@ Describe "remove agent tests" {
     Context "Should set proper status when agent is removed" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Invoke-RemoveAgentScript {}
@@ -205,13 +201,12 @@ Describe "parse vsts account name settings tests" {
     Context "Should add necessary fragments to VSTS url if it just accout name" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
-                        VSTSAccountName = "abc"
+                        VSTSAccountName = "tycjfchsdabvdsb"
                         TeamProject = "project"
                         DeploymentGroup = "group"
                         Tags = @()
@@ -226,86 +221,26 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Resolve-DnsName {
+            throw "Not complete url, just account name"
+        }
 
-        $settings = Get-ConfigurationFromSettings
+        $settings = Get-ConfigurationFromSettings -isEnable $true
 
         It "should set proper status" {
-            $settings.VSTSUrl | Should Be "https://abc.visualstudio.com" 
+            $settings.VSTSUrl | Should Be "https://tycjfchsdabvdsb.visualstudio.com" 
         }
     }
 
     Context "Should handle old hosted url" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
-                        VSTSAccountName = "https://abc.visualstudio.com"
-                        TeamProject = "project"
-                        DeploymentGroup = "group"
-                        Tags = @()
-                        AgentName = "name" 
-                    };
-                protectedSettings = ""
-            }
-            return $inputSettings }
-        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
-        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
-        Mock -ModuleName RMExtensionHandler Format-TagsInput {}
-        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-
-        $settings = Get-ConfigurationFromSettings
-
-        It "should set proper status" {
-            $settings.VSTSUrl | Should Be "https://abc.visualstudio.com"
-            $settings.PATToken | Should Be ""     
-        }
-    }
-
-    Context "Should handle new hosted url" {
-
-        Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
-        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
-        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
-            $inputSettings = @{
-                publicSettings =  @{ 
-                        VSTSAccountName = "https://codex.azure.com/abc"
-                        TeamProject = "project"
-                        DeploymentGroup = "group"
-                        Tags = @()
-                        AgentName = "name" 
-                    };
-                protectedSettings = ""
-            }
-            return $inputSettings }
-        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
-        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
-        Mock -ModuleName RMExtensionHandler Format-TagsInput {}
-        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-
-        $settings = Get-ConfigurationFromSettings
-
-        It "should set proper status" {
-            $settings.VSTSUrl | Should Be "https://codex.azure.com/abc"
-            $settings.PATToken | Should Be ""     
-        }
-    }
-
-    Context "Should handle hosted url with collection" {
-
-        Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
-        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
-        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
-            $inputSettings = @{
-                publicSettings =  @{ 
-                        VSTSAccountName = "https://abc.visualstudio.com/DefaultCollection/"
+                        VSTSAccountName = "https://tycjfchsdabvdsb.visualstudio.com"
                         TeamProject = "project"
                         DeploymentGroup = "group"
                         Tags = @()
@@ -320,18 +255,96 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Resolve-DnsName {}
+        Mock -ModuleName RMExtensionHandler Invoke-RestMethod {
+            $response = @{deploymentType = "hosted"}
+            return $response
+        }
 
-        $settings = Get-ConfigurationFromSettings
+        $settings = Get-ConfigurationFromSettings -isEnable $true
 
         It "should set proper status" {
-            $settings.VSTSUrl | Should Be "https://abc.visualstudio.com"       
+            $settings.VSTSUrl | Should Be "https://tycjfchsdabvdsb.visualstudio.com"
+            $settings.PATToken | Should Be "hash"     
+        }
+    }
+
+    Context "Should handle new hosted url" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "https://codex.azure.com/tycjfchsdabvdsb"
+                        TeamProject = "project"
+                        DeploymentGroup = "group"
+                        Tags = @()
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                }
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Format-TagsInput {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Resolve-DnsName {}
+        Mock -ModuleName RMExtensionHandler Invoke-RestMethod {
+            $response = @{deploymentType = "hosted"}
+            return $response
+        }
+
+        $settings = Get-ConfigurationFromSettings -isEnable $true
+
+        It "should set proper status" {
+            $settings.VSTSUrl | Should Be "https://codex.azure.com/tycjfchsdabvdsb"
+            $settings.PATToken | Should Be "hash"     
+        }
+    }
+
+    Context "Should handle hosted url with collection" {
+
+        Mock -ModuleName RMExtensionHandler Write-Log{}
+        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        VSTSAccountName = "https://tycjfchsdabvdsb.visualstudio.com/DefaultCollection/"
+                        TeamProject = "project"
+                        DeploymentGroup = "group"
+                        Tags = @()
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                }
+            }
+            return $inputSettings }
+        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
+        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
+        Mock -ModuleName RMExtensionHandler Format-TagsInput {}
+        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Resolve-DnsName {}
+        Mock -ModuleName RMExtensionHandler Invoke-RestMethod {
+            $response = @{deploymentType = "hosted"}
+            return $response
+        }
+
+        $settings = Get-ConfigurationFromSettings -isEnable $true
+
+        It "should set proper status" {
+            $settings.VSTSUrl | Should Be "https://tycjfchsdabvdsb.visualstudio.com/defaultcollection"       
         }
     }
 
     Context "Should handle on-prem url" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
@@ -352,50 +365,22 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Resolve-DnsName {}
+        Mock -ModuleName RMExtensionHandler Invoke-RestMethod {
+            $response = @{deploymentType = "onPremises"}
+            return $response
+        }
 
-        $settings = Get-ConfigurationFromSettings
+        $settings = Get-ConfigurationFromSettings -isEnable $true
 
         It "should set proper status" {
             $settings.VSTSUrl | Should Be "http://localhost:8080/tfs/defaultcollection"            
         }
     }
 
-    Context "Should handle on-prem url without collection" {
-
-        Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
-        Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
-        Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
-            $inputSettings = @{
-                publicSettings =  @{ 
-                        VSTSAccountName = "http://localhost:8080///tfs//"
-                        TeamProject = "project"
-                        DeploymentGroup = "group"
-                        Tags = @()
-                        AgentName = "name" 
-                    };
-                protectedSettings = @{
-                        PATToken = "hash"
-                }
-            }
-            return $inputSettings }
-        Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
-        Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
-        Mock -ModuleName RMExtensionHandler Format-TagsInput {}
-        Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-
-        $settings = Get-ConfigurationFromSettings
-
-        It "should set proper status" {
-            $settings.VSTSUrl | Should Be "http://localhost:8080/tfs/DefaultCollection"       
-        }
-    }
-
     Context "Should handle on-prem url with additional components" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
@@ -416,8 +401,13 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Resolve-DnsName {}
+        Mock -ModuleName RMExtensionHandler Invoke-RestMethod {
+            $response = @{deploymentType = "onPremises"}
+            return $response
+        }
 
-        $settings = Get-ConfigurationFromSettings
+        $settings = Get-ConfigurationFromSettings -isEnable $true
 
         It "should set proper status" {
             $settings.VSTSUrl | Should Be "http://localhost:8080/tfs/defaultcollection"       
@@ -448,11 +438,16 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-        Mock -ModuleName RMExtensionHandler Exit-WithCode1 {}        
+        Mock -ModuleName RMExtensionHandler Exit-WithCode1 {} 
+        Mock -ModuleName RMExtensionHandler Resolve-DnsName {}
+        Mock -ModuleName RMExtensionHandler Invoke-RestMethod {
+            $response = @{deploymentType = "onPremises"}
+            return $response
+        }
 
         It "should set proper status" {
-            Get-ConfigurationFromSettings        
-            Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1  -ParameterFilter { $ErrorRecord.Exception.Message -eq "Invalid value for VSTS account name. It should be just the account name, eg: contoso in case of https://contoso.visualstudio.com(for hosted), or of the format http(s)://<server>/<application>/<collection>(for on-prem)"}
+            Get-ConfigurationFromSettings -isEnable $true
+            Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1  -ParameterFilter { $ErrorRecord.Exception.Message -eq "Invalid value for the input 'VSTS account name'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment."}
         }
     }
 }
@@ -461,13 +456,12 @@ Describe "parse tags settings tests" {
     Context "Should copy array if input is array" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
-                        VSTSAccountName = "abc"
+                        VSTSAccountName = "tycjfchsdabvdsb"
                         TeamProject = "project"
                         DeploymentGroup = "group"
                         Tags = @("arrayValue1", "arrayValue2")
@@ -481,8 +475,11 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Resolve-DnsName {
+            throw "Not complete url, just account name"
+        }
 
-        $settings = Get-ConfigurationFromSettings
+        $settings = Get-ConfigurationFromSettings -isEnable $true
 
         It "tags should be an array with proper entries" {
             $settings.Tags.GetType().IsArray | Should Be True
@@ -494,13 +491,12 @@ Describe "parse tags settings tests" {
     Context "Should sort and select unique tags" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
-                        VSTSAccountName = "abc"
+                        VSTSAccountName = "tycjfchsdabvdsb"
                         TeamProject = "project"
                         DeploymentGroup = "group"
                         Tags = @("bb", "dd", "bb", "aa")
@@ -514,8 +510,11 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Resolve-DnsName {
+            throw "Not complete url, just account name"
+        }
 
-        $settings = Get-ConfigurationFromSettings
+        $settings = Get-ConfigurationFromSettings -isEnable $true
 
         It "tags should be an array with unique sorted entries" {
             $settings.Tags[0] | Should Be "aa"
@@ -527,13 +526,12 @@ Describe "parse tags settings tests" {
     Context "Should create array of values if input is hashtable" {
         
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
-                        VSTSAccountName = "abc"
+                        VSTSAccountName = "tycjfchsdabvdsb"
                         TeamProject = "project"
                         DeploymentGroup = "group"
                         Tags = @{ 
@@ -550,8 +548,11 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Resolve-DnsName {
+            throw "Not complete url, just account name"
+        }
 
-        $settings = Get-ConfigurationFromSettings
+        $settings = Get-ConfigurationFromSettings -isEnable $true
 
         It "tags should be an array with proper entries" {
             $settings.Tags.GetType().IsArray | Should Be True
@@ -563,13 +564,12 @@ Describe "parse tags settings tests" {
     Context "Should create array of values if input is string" {
         
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
-                        VSTSAccountName = "abc"
+                        VSTSAccountName = "tycjfchsdabvdsb"
                         TeamProject = "project"
                         DeploymentGroup = "group"
                         Tags = "tag1,  ,  tag2 ,, tag3,"
@@ -583,8 +583,11 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Resolve-DnsName {
+            throw "Not complete url, just account name"
+        }
 
-        $settings = Get-ConfigurationFromSettings
+        $settings = Get-ConfigurationFromSettings -isEnable $true
 
         It "tags should be an array with proper entries" {
             $settings.Tags.GetType().IsArray | Should Be True
@@ -597,13 +600,12 @@ Describe "parse tags settings tests" {
     Context "Windows user credentials are not present in settings" {
         
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
-                        VSTSAccountName = "abc"
+                        VSTSAccountName = "tycjfchsdabvdsb"
                         TeamProject = "project"
                         DeploymentGroup = "group"
                         Tags = "tag1,  ,  tag2 ,, tag3,"
@@ -617,8 +619,11 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Resolve-DnsName {
+            throw "Not complete url, just account name"
+        }
 
-        $settings = Get-ConfigurationFromSettings
+        $settings = Get-ConfigurationFromSettings -isEnable $true
 
         It "should set windows user credentials as empty strings" {
             $settings.WindowsLogonAccountName | Should Be ""
@@ -629,13 +634,12 @@ Describe "parse tags settings tests" {
     Context "Windows user credentials are present in settings" {
         
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus {}
         Mock -ModuleName RMExtensionHandler Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
-                        VSTSAccountName = "abc"
+                        VSTSAccountName = "tycjfchsdabvdsb"
                         TeamProject = "project"
                         DeploymentGroup = "group"
                         Tags = "tag1,  ,  tag2 ,, tag3,"
@@ -651,8 +655,11 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Resolve-DnsName {
+            throw "Not complete url, just account name"
+        }
 
-        $settings = Get-ConfigurationFromSettings
+        $settings = Get-ConfigurationFromSettings -isEnable $true
 
         It "config should contain the windows user credentials" {
             $settings.WindowsLogonAccountName | Should Be "domain\testuser"
@@ -681,7 +688,6 @@ Describe "AgentReconfigurationRequired tests" {
     Context "Should set success status if no exception happens" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
-        Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionHandler Test-AgentReConfigurationRequiredInternal { return $true}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus

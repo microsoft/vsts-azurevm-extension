@@ -12,6 +12,7 @@ import DownloadDeploymentAgent
 import ConfigureDeploymentAgent
 import json
 import time
+import socket
 from distutils.version import LooseVersion
 
 configured_agent_exists = False
@@ -166,7 +167,7 @@ def get_account_name_prefix(account_name):
     return 'https://'
   return '' 
 
-def parse_account_name(account_name): 
+def parse_account_name(account_name, pat_token): 
   account_name = account_name.lower()
   base_url = account_name
   virtual_application = ''
@@ -176,22 +177,53 @@ def parse_account_name(account_name):
     account_name = account_name[7:]
   account_name = account_name.strip('/')
   account_name_split = filter(lambda x: x!='', account_name.split('/'))
-  if(account_name_split[0].endswith('visualstudio.com')):
-    base_url = 'https://' + account_name_split[0]
-  elif(account_name_split[0] == 'codex.azure.com'):
-    base_url = 'https://' + account_name_split[0] + '/' + account_name_split[1]
-  elif(account_name_prefix != ''):
-    Constants.is_on_prem = True
-    if(len(account_name_split) >= 2):
-      base_url = account_name_prefix + account_name_split[0]
-      virtual_application = account_name_split[1]
-      collection = 'DefaultCollection'
-      if(len(account_name_split) > 2):
-        collection = account_name_split[2]
+  try:
+    host = filter(lambda x: x!='', account_name_split[0].split(':'))
+    port = host[1] if(len(host) == 2) else None
+    socket.getaddrinfo(host[0], port)
+  except Exception as e:
+    handler_utility.log('Given input is not a valid URL. Assuming it is just the account name.')
+    base_url = 'https://{0}.visualstudio.com'.format(account_name)
+    return {
+         'VSTSUrl':base_url,
+         'VirtualApplication':virtual_application,
+         'Collection':collection
+         }
+  connection_data_address = '/_apis/connectiondata'
+  for split_part in account_name_split[1:]:
+    connection_data_address = '/{0}'.format(split_part) + connection_data_address
+  method = httplib.HTTPSConnection
+  if(account_name_prefix.startswith('http://')):
+    method = httplib.HTTPConnection
+  basic_auth = '{0}:{1}'.format('', pat_token)
+  basic_auth = base64.b64encode(basic_auth)
+  headers = {
+              'Authorization' : 'Basic {0}'.format(basic_auth)
+            }
+  conn = method(account_name_split[0])
+  conn.request('GET', connection_data_address, headers = headers)
+  response = conn.getresponse()
+  if(response.status == 200):
+    connection_data = json.loads(response.read())
+    if(connection_data.has_key('deploymentType')):
+      if(connection_data['deploymentType'] == 'hosted'):
+        base_url = account_name_prefix + account_name
+      elif(connection_data['deploymentType'] == 'onPremises'):
+        Constants.is_on_prem = True
+        if(len(account_name_split) >= 2):
+          base_url = account_name_prefix + account_name_split[0]
+          virtual_application = account_name_split[1]
+          collection = 'DefaultCollection'
+          if(len(account_name_split) > 2):
+            collection = account_name_split[2]
+        else:
+          raise Exception('Invalid value for the input \'VSTS account name\'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment.')
+      else:
+        raise Exception('Invalid deployemnt type. Should be either \'hosted\', or \'onPremises\'.')
     else:
-      code = RMExtensionStatus.rm_extension_status['InvalidAccountName']['Code']
-      message = RMExtensionStatus.rm_extension_status['InvalidAccountName']['Message']
-      raise RMExtensionStatus.new_handler_terminating_error(code, message)
+      raise Exception('Deployment type is null. Please make sure that you enter the correct VSTS account name and PAT token.')
+  else:
+    raise Exception('Failed to fetch the connection data for the given url. Reason : {0}'.format(response.reason))
   return {
          'VSTSUrl':base_url,
          'VirtualApplication':virtual_application,
@@ -226,7 +258,6 @@ def create_agent_working_folder():
 
 def get_configutation_from_settings(operation):
   try:
-    format_string = 'https://{0}.visualstudio.com'
     public_settings = handler_utility.get_public_settings()
     protected_settings = handler_utility.get_protected_settings()
     if(public_settings == None):
@@ -239,22 +270,24 @@ def get_configutation_from_settings(operation):
       RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Message']
       raise new_handler_terminating_error(code, message)
     handler_utility.verify_public_settings_is_dict(public_settings)
-    vsts_account_name = ''
-    if(public_settings.has_key('VSTSAccountName')):
-      vsts_account_name = public_settings['VSTSAccountName'].strip('/')
-    handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
-    account_info = parse_account_name(vsts_account_name)
-    vsts_url = account_info['VSTSUrl']
-    virtual_application = account_info['VirtualApplication']
-    collection = account_info['Collection']
-    if(get_account_name_prefix(vsts_url) == ''):
-      vsts_url = format_string.format(vsts_account_name)
-    handler_utility.log('VSTS service URL : {0}'.format(vsts_url))
     pat_token = ''
     if((protected_settings.__class__.__name__ == 'dict') and protected_settings.has_key('PATToken')):
       pat_token = protected_settings['PATToken']
     if((pat_token == '') and (public_settings.has_key('PATToken'))):
       pat_token = public_settings['PATToken']
+    vsts_account_name = ''
+    if(public_settings.has_key('VSTSAccountName')):
+      vsts_account_name = public_settings['VSTSAccountName'].strip('/')
+    handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
+    vsts_url = vsts_account_name
+    virtual_application = ''
+    collection = ''
+    if(operation == 'Enable'):
+      account_info = parse_account_name(vsts_account_name, pat_token)
+      vsts_url = account_info['VSTSUrl']
+      virtual_application = account_info['VirtualApplication']
+      collection = account_info['Collection']
+    handler_utility.log('VSTS service URL : {0}'.format(vsts_url))
     team_project_name = ''
     if(public_settings.has_key('TeamProject')):
       team_project_name = public_settings['TeamProject']

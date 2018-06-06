@@ -7,11 +7,11 @@
         "name": "VSTSAccountName",
         "type": "Microsoft.Common.TextBox",
         "label": "Team Services Account Name",
-        "toolTip": "Specify the Team Services account to use. Example: If your account URL is https://contoso.visualstudio.com, just specify \"contoso\"",
+        "toolTip": "Enter the complete account name. For example, \"https://<accountname>.visualstudio.com\", \"https://codex.azure.com/<accountname>\"",
         "constraints": {
           "required": true,
-          "regex": "^(?!.*(https:\\/\\/|visualstudio\\.com)).*$",
-          "validationMessage": "Account name must not start with https:// and must not end with visualstudio.com"
+          "regex": "https:\\/\\/.+\\..+\\..+",
+          "validationMessage": "Account name must start with \"https://\" and must be a valid URL."
         }
       },
       {

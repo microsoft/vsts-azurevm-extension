@@ -134,18 +134,18 @@ def test_agent_configuration_required_internal(account_info, pat_token, deployme
     if(existing_deployment_group_data == None or existing_deployment_group_data == {}):
       write_log("\t\t\t agent configuration required Return : True (Unable to get the deployment group data from existing agent settings)")
       return True
-    vsts_url_for_configuration = (account_info[0] + '/' + account_info[1]).strip('/')
+    vsts_url_for_configuration = account_info[0]
     write_log('\t\t\t Agent configured with \t\t\t\t Agent needs to be configured with')
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_vsts_url, vsts_url_for_configuration))
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_deployment_group_data['project']['name'], project_name))
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_deployment_group_data['name'], deployment_group_name))
     if(Constants.is_on_prem):
-      write_log('\t\t\t {0} \t\t\t\t {1}'.format(get_agent_setting(working_folder, 'collectionName'), account_info[2]))
+      write_log('\t\t\t {0} \t\t\t\t {1}'.format(get_agent_setting(working_folder, 'collectionName'), account_info[1]))
     if(existing_vsts_url.lower() == vsts_url_for_configuration.lower() and \
            existing_deployment_group_data['name'].lower() == deployment_group_name.lower() and \
            existing_deployment_group_data['project']['name'].lower() == project_name.lower()):
       if(Constants.is_on_prem):
-        if(get_agent_setting(working_folder, 'collectionName').lower() == account_info[2].lower()):
+        if(get_agent_setting(working_folder, 'collectionName').lower() == account_info[1].lower()):
           write_log('\t\t\t test_agent_configuration_required : False') 
           return False
       else:
@@ -321,7 +321,7 @@ def configure_agent_internal(account_info, pat_token, project_name, deployment_g
   get_agent_listener_path(working_folder)
   set_agent_service_path(working_folder)
   get_host_and_address(account_info, '')
-  vsts_url = account_info[0] + '/' + account_info[1]
+  vsts_url = account_info[0]
   configure_command_args = ['--url', vsts_url,
                             '--auth', 'PAT',
                             '--token', pat_token,
@@ -330,7 +330,7 @@ def configure_agent_internal(account_info, pat_token, project_name, deployment_g
                             '--projectname', project_name,
                             '--deploymentgroupname', deployment_group_name]
   if(Constants.is_on_prem):
-    configure_command_args += ['--collectionname', account_info[2]]
+    configure_command_args += ['--collectionname', account_info[1]]
   config_agent_proc = subprocess.Popen('{0} configure --unattended --acceptteeeula --deploymentgroup --replace'.format(agent_listener_path).split(' ') + configure_command_args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   std_out, std_err = config_agent_proc.communicate()
   return_code = config_agent_proc.returncode

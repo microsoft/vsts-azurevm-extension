@@ -22,8 +22,8 @@ def empty_dir(dir_name):
       os.rmdir(os.path.join(dirpath, dirname))
 
 def get_host_and_address(account_info, package_data_address):
-  if(account_info.__class__.__name__ == 'list' and len(account_info) == 3):
-    address = '/' + account_info[1] + '/' + account_info[2] + package_data_address
+  if(account_info.__class__.__name__ == 'list' and len(account_info) == 2):
+    address = '/' + account_info[1] + package_data_address
     return account_info[0], address
   raise Exception('VSTS url is invalid')
 

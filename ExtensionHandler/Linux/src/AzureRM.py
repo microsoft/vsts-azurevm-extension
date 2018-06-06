@@ -169,71 +169,58 @@ def get_account_name_prefix(account_name):
     return 'https://'
   return '' 
 
+
 def parse_account_name(account_name, pat_token): 
-  account_name = account_name.lower()
-  base_url = account_name
-  virtual_application = ''
+  base_url = account_name.trim('/')
   collection = ''
+
   account_name_prefix = get_account_name_prefix(account_name)
-  if(account_name_prefix != ''):
-    account_name = account_name[7:]
-  account_name = account_name.strip('/')
-  account_name_split = filter(lambda x: x!='', account_name.split('/'))
-  try:
-    host = filter(lambda x: x!='', account_name_split[0].split(':'))
-    port = host[1] if(len(host) == 2) else None
-    socket.getaddrinfo(host[0], port)
-  except Exception as e:
-    handler_utility.log('Given input is not a valid URL. Assuming it is just the account name.')
+  if(account_name_prefix == ''):
     base_url = 'https://{0}.visualstudio.com'.format(account_name)
-    return {
-         'VSTSUrl':base_url,
-         'VirtualApplication':virtual_application,
-         'Collection':collection
-         }
-  connection_data_address = '/_apis/connectiondata'
-  for split_part in account_name_split[1:]:
-    connection_data_address = '/{0}'.format(split_part) + connection_data_address
-  method = httplib.HTTPSConnection
-  if(account_name_prefix.startswith('http://')):
-    method = httplib.HTTPConnection
-  basic_auth = '{0}:{1}'.format('', pat_token)
-  basic_auth = base64.b64encode(basic_auth)
-  headers = {
-              'Authorization' : 'Basic {0}'.format(basic_auth)
-            }
-  conn = method(account_name_split[0])
-  conn.request('GET', connection_data_address, headers = headers)
-  response = conn.getresponse()
+
+  deployment_type = get_deployment_type(base_url, pat_token)
+  if (deployment_type != 'hosted'):
+    Constants.is_on_prem = True
+    parts = filter(lambda x: x!='', base_url.split('/'))
+    collection = parts[len(parts) - 1]
+    base_url = base_url[0:len(base_url) - len(collection) - 1]
+
+  return {
+    'VSTSUrl':base_url,
+    'Collection':collection
+  }
+
+def get_deployment_type(base_url, pat_token):
+  response = make_http_call(base_url + '/_apis/connectiondata', 'GET', null, null, pat_token)
   if(response.status == 200):
     connection_data = json.loads(response.read())
     if(connection_data.has_key('deploymentType')):
-      if(connection_data['deploymentType'] == 'hosted'):
-        base_url = account_name_prefix + account_name_split[0]
-        for split_part in account_name_split[1:]:
-          virtual_application = '/{0}'.format(split_part) + virtual_application
-        virtual_application = virtual_application.strip('/')
-      elif(connection_data['deploymentType'] == 'onPremises'):
-        Constants.is_on_prem = True
-        if(len(account_name_split) >= 2):
-          base_url = account_name_prefix + account_name_split[0]
-          virtual_application = account_name_split[1]
-          collection = 'DefaultCollection'
-          if(len(account_name_split) > 2):
-            collection = account_name_split[2]
-        else:
-          raise Exception('Invalid value for the input \'VSTS account name\'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment.')
-      else:
-        raise Exception('Invalid deployemnt type. Should be either \'hosted\', or \'onPremises\'.')
+      return connection_data['deploymentType']
     else:
-      raise Exception('Deployment type is null. Please make sure that you enter the correct VSTS account name and PAT token.')
+      return 'onPremises';
   else:
     raise Exception('Failed to fetch the connection data for the given url. Reason : {0}'.format(response.reason))
-  return {
-         'VSTSUrl':base_url,
-         'VirtualApplication':virtual_application,
-         'Collection':collection
-         }
+
+def make_http_call(url, http_method,headers, body, pat_token):
+  prefix = get_account_name_prefix(url)
+  url_without_prefix = url[len(prefix):]
+  server_url, path = url_without_prefix.split('/', 1);
+
+  if (not headers):
+    headers = { }
+
+  if (pat_token):
+    basic_auth = '{0}:{1}'.format('', pat_token)
+    basic_auth = base64.b64encode(basic_auth)
+    headers['Authorization'] = basic_auth
+
+  connection_type = httplib.HTTPSConnection
+  if(prefix.startswith('http://')):
+    connection_type = httplib.HTTPConnection
+
+  connection = connection_type(server_url)
+  connection.request(http_method, path, headers, body)
+  return connection.getresponse();
 
 def format_tags_input(tags_input):
   tags = []
@@ -258,46 +245,51 @@ def create_agent_working_folder():
   handler_utility.log('Working folder for VSTS agent : {0}'.format(agent_working_folder))
   if(not os.path.isdir(agent_working_folder)):
     handler_utility.log('Working folder does not exist. Creating it...')
-    os.makedirs(agent_working_folder, 0700)
+    os.makedirs(agent_working_folder, 0o700)
   return agent_working_folder
 
-def get_configutation_from_settings(operation):
+def read_configutation_from_settings(operation):
+  global config
   try:
     public_settings = handler_utility.get_public_settings()
-    protected_settings = handler_utility.get_protected_settings()
     if(public_settings == None):
       public_settings = {}
+    handler_utility.verify_public_settings_is_dict(public_settings)
+
+    protected_settings = handler_utility.get_protected_settings()
     if(protected_settings == None):
       protected_settings = {}
+
     os_version = handler_utility.get_os_version()
     if(os_version['IsX64'] != True):
       code = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Code']
       RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Message']
-      raise new_handler_terminating_error(code, message)
-    handler_utility.verify_public_settings_is_dict(public_settings)
+
     pat_token = ''
     if((protected_settings.__class__.__name__ == 'dict') and protected_settings.has_key('PATToken')):
       pat_token = protected_settings['PATToken']
     if((pat_token == '') and (public_settings.has_key('PATToken'))):
       pat_token = public_settings['PATToken']
+
     vsts_account_name = ''
     if(public_settings.has_key('VSTSAccountName')):
       vsts_account_name = public_settings['VSTSAccountName'].strip('/')
     handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
     vsts_url = vsts_account_name
-    virtual_application = ''
     collection = ''
+
     if(operation == 'Enable'):
       account_info = parse_account_name(vsts_account_name, pat_token)
       vsts_url = account_info['VSTSUrl']
-      virtual_application = account_info['VirtualApplication']
       collection = account_info['Collection']
     handler_utility.log('VSTS service URL : {0}'.format(vsts_url))
+
     team_project_name = ''
     if(public_settings.has_key('TeamProject')):
       team_project_name = public_settings['TeamProject']
     handler_utility.verify_input_not_null('TeamProject', team_project_name)
     handler_utility.log('Team Project : {0}'.format(team_project_name))
+
     deployment_group_name = ''
     if(public_settings.has_key('DeploymentGroup')):
       deployment_group_name = public_settings['DeploymentGroup']
@@ -305,25 +297,30 @@ def get_configutation_from_settings(operation):
       deployment_group_name = public_settings['MachineGroup']
     handler_utility.verify_input_not_null('DeploymentGroup', deployment_group_name)
     handler_utility.log('Deployment Group : {0}'.format(deployment_group_name))
+
     if(public_settings.has_key('AgentName')):
       agent_name = public_settings['AgentName']
     handler_utility.log('Agent Name : {0}'.format(agent_name))
+
     tags_input = [] 
     if(public_settings.has_key('Tags')):
       tags_input = public_settings['Tags']
     handler_utility.log('Tags : {0}'.format(tags_input))
     tags = format_tags_input(tags_input)
+
     configure_agent_as_username = ''
     if(public_settings.has_key('ConfigureAgentAsUserName')):
       configure_agent_as_username = public_settings['ConfigureAgentAsUserName']
+
     agent_working_folder = create_agent_working_folder()
+
     handler_utility.log('Done reading config settings from file...')
     ss_code = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-    ret_val = {
-             'VSTSUrl':[vsts_url, virtual_application, collection],
+    config = {
+             'VSTSUrl':[vsts_url, collection],
              'PATToken':pat_token, 
              'TeamProject':team_project_name, 
              'DeploymentGroup':deployment_group_name, 
@@ -332,7 +329,6 @@ def get_configutation_from_settings(operation):
              'AgentWorkingFolder':agent_working_folder,
              'ConfigureAgentAsUserName': configure_agent_as_username
           }
-    return ret_val
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], operation, 2)
 
@@ -512,10 +508,9 @@ def add_agent_tags():
     handler_utility.log('No tags provided for agent')
 
 def enable():
-  global configured_agent_exists, agent_configuration_required, config
   input_operation = 'Enable'
   start_rm_extension_handler(input_operation)
-  config = get_configutation_from_settings(input_operation)
+  read_configutation_from_settings(input_operation)
   execute_agent_pre_check()
   remove_existing_agent_if_required()
   download_agent_if_required()

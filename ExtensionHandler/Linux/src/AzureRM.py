@@ -1,7 +1,6 @@
 #! /usr/bin/python
 
 import sys
-from Utils.WAAgentUtil import waagent
 import Utils.HandlerUtil as Util
 import Utils.RMExtensionStatus as RMExtensionStatus
 import os
@@ -15,6 +14,7 @@ import time
 import socket
 import httplib
 import base64
+from Utils.WAAgentUtil import waagent
 from distutils.version import LooseVersion
 
 configured_agent_exists = False
@@ -105,7 +105,7 @@ def check_python_version():
   version = '{0}.{1}'.format(version_info[0], version_info[1])
   if(LooseVersion(version) < LooseVersion('2.6')):
     code = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Code']
-    message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(str(major) + '.' + str(minor))
+    message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(version)
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
 def check_systemd_exists():
@@ -191,36 +191,36 @@ def parse_account_name(account_name, pat_token):
   }
 
 def get_deployment_type(base_url, pat_token):
-  response = make_http_call(base_url + '/_apis/connectiondata', 'GET', null, null, pat_token)
+  response = make_http_call(base_url + '/_apis/connectiondata', 'GET', None, None, pat_token)
   if(response.status == 200):
     connection_data = json.loads(response.read())
     if(connection_data.has_key('deploymentType')):
       return connection_data['deploymentType']
     else:
-      return 'onPremises';
+      return 'onPremises'
   else:
     raise Exception('Failed to fetch the connection data for the given url. Reason : {0}'.format(response.reason))
 
-def make_http_call(url, http_method,headers, body, pat_token):
+def make_http_call(url, http_method, headers, body, pat_token):
   prefix = get_account_name_prefix(url)
   url_without_prefix = url[len(prefix):]
-  server_url, path = url_without_prefix.split('/', 1);
+  server_url, path = url_without_prefix.split('/', 1)
 
   if (not headers):
-    headers = { }
+    headers = {}
 
   if (pat_token):
     basic_auth = '{0}:{1}'.format('', pat_token)
     basic_auth = base64.b64encode(basic_auth)
-    headers['Authorization'] = basic_auth
+    headers['Authorization'] = 'Basic {0}'.format(basic_auth)
 
   connection_type = httplib.HTTPSConnection
   if(prefix.startswith('http://')):
     connection_type = httplib.HTTPConnection
 
   connection = connection_type(server_url)
-  connection.request(http_method, path, headers, body)
-  return connection.getresponse();
+  connection.request(http_method, path, body, headers)
+  return connection.getresponse()
 
 def format_tags_input(tags_input):
   tags = []
@@ -340,13 +340,12 @@ def test_configured_agent_exists(operation):
     operation_name = RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log('Invoking function to pre-check agent configuration...')
-    agent_exists = ConfigureDeploymentAgent.test_configured_agent_exists_internal(config['AgentWorkingFolder'], handler_utility.log)
+    configured_agent_exists = ConfigureDeploymentAgent.test_configured_agent_exists_internal(config['AgentWorkingFolder'], handler_utility.log)
     handler_utility.log('Done pre-checking agent configuration')
     ss_code = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-    return agent_exists
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName'], operation, 3)
 
@@ -370,8 +369,8 @@ def test_agent_configuration_required():
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['operationName'], 'Enable', 4)
 
 def execute_agent_pre_check():
-  global config, configured_agent_exists, agent_configuration_required
-  configured_agent_exists = test_configured_agent_exists('Enable')
+  global configured_agent_exists, agent_configuration_required
+  test_configured_agent_exists('Enable')
   if(configured_agent_exists == True):
     agent_configuration_required = test_agent_configuration_required()
   
@@ -465,7 +464,7 @@ def remove_existing_agent(operation):
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['Uninstalling']['operationName'], operation, 7)
 
 def remove_existing_agent_if_required():
-  global configured_agent_exists, agent_configuration_required, config
+  global configured_agent_exists, agent_configuration_required
   if((configured_agent_exists == True) and (agent_configuration_required == True)):
     handler_utility.log('Remove existing configured agent')
     remove_existing_agent('Enable')
@@ -539,11 +538,11 @@ def disable():
   handler_utility.set_handler_status(operation = 'Disable', code = code, status = 'success', message = message)
 
 def uninstall():
-  global configured_agent_exists, config
+  global config
   operation = 'Uninstall'
-  config = get_configutation_from_settings(operation)
-  configured_agent_exists = test_configured_agent_exists(operation)
-  config_path = ConfigureDeploymentAgent.get_agent_listener_path(config['AgentWorkingFolder'])
+  read_configutation_from_settings(operation)
+  test_configured_agent_exists(operation)
+  ConfigureDeploymentAgent.set_agent_listener_path(config['AgentWorkingFolder'])
   if(configured_agent_exists == True):
     remove_existing_agent(operation)
   code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']

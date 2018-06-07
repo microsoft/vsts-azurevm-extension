@@ -157,7 +157,7 @@ def test_agent_configuration_required_internal(account_info, pat_token, deployme
     write_log(e.message)
     raise e
 
-def get_agent_listener_path(working_folder):
+def set_agent_listener_path(working_folder):
   global agent_listener_path
   if(agent_listener_path == ''):
     agent_listener_path = os.path.join(working_folder, Constants.agent_listener)
@@ -168,7 +168,7 @@ def set_agent_service_path(working_folder):
     agent_service_path = os.path.join(working_folder, Constants.agent_service)
 
 def agent_listener_exists(working_folder):
-  get_agent_listener_path(working_folder)
+  set_agent_listener_path(working_folder)
   write_configuration_log('\t\t Agent listener file : {0}'.format(agent_listener_path))
   agent_listener_exists = os.path.isfile(agent_listener_path)
   write_configuration_log('\t\t Agent listener file exists : {0}'.format(agent_listener_exists))
@@ -178,7 +178,7 @@ def remove_existing_agent_internal(pat_token, working_folder, log_func):
   try:
     global agent_listener_path, agent_service_path, log_function, setting_params
     log_function = log_func
-    get_agent_listener_path(working_folder)
+    set_agent_listener_path(working_folder)
     set_agent_service_path(working_folder) 
     service_stop_proc = subprocess.Popen('{0} stop'.format(agent_service_path).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE, cwd = working_folder)
     std_out, std_err = service_stop_proc.communicate()
@@ -301,7 +301,7 @@ def add_agent_tags_internal(account_info, project_name, pat_token, working_folde
     except Exception as e:
       pass
     if(agent_id == '' or deployment_group_id == ''):
-      raise Exception('Unable to get the deployment group id or agent id. Ensure that the agent is configured before adding tags.'.format(working_folder))
+      raise Exception('Unable to get the deployment group id or agent id. Ensure that the agent is configured before adding tags.')
     add_tags_to_agent(account_info, pat_token, project_name, deployment_group_id, agent_id, tags_string)
     return Constants.return_success 
   except Exception as e:
@@ -318,7 +318,7 @@ def set_folder_owner(folder, username):
 
 def configure_agent_internal(account_info, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder):
   global agent_listener_path, agent_service_path
-  get_agent_listener_path(working_folder)
+  set_agent_listener_path(working_folder)
   set_agent_service_path(working_folder)
   get_host_and_address(account_info, '')
   vsts_url = account_info[0]

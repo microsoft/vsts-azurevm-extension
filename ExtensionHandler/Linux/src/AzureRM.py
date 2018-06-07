@@ -5,15 +5,11 @@ import Utils.HandlerUtil as Util
 import Utils.RMExtensionStatus as RMExtensionStatus
 import os
 import subprocess
-import platform
 import Constants
 import DownloadDeploymentAgent
 import ConfigureDeploymentAgent
 import json
 import time
-import socket
-import httplib
-import base64
 from Utils.WAAgentUtil import waagent
 from distutils.version import LooseVersion
 
@@ -161,37 +157,25 @@ def start_rm_extension_handler(operation):
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'], operation, 1)
 
-def get_account_name_prefix(account_name):
-  account_name_lower = account_name.lower()
-  if(account_name_lower.startswith('http://')):
-    return 'http://'
-  elif(account_name_lower.startswith('https://')):
-    return 'https://'
-  return '' 
-
-
 def parse_account_name(account_name, pat_token): 
-  base_url = account_name.trim('/')
-  collection = ''
+  vsts_url = account_name.strip('/')
 
-  account_name_prefix = get_account_name_prefix(account_name)
+  account_name_prefix = Util.get_account_name_prefix(account_name)
   if(account_name_prefix == ''):
-    base_url = 'https://{0}.visualstudio.com'.format(account_name)
+    vsts_url = 'https://{0}.visualstudio.com'.format(account_name)
 
-  deployment_type = get_deployment_type(base_url, pat_token)
+  deployment_type = get_deployment_type(vsts_url, pat_token)
   if (deployment_type != 'hosted'):
     Constants.is_on_prem = True
-    parts = filter(lambda x: x!='', base_url.split('/'))
-    collection = parts[len(parts) - 1]
-    base_url = base_url[0:len(base_url) - len(collection) - 1]
+    vsts_url_without_prefix = vsts_url[len(account_name_prefix):]
+    parts = filter(lambda x: x!='', vsts_url_without_prefix.split('/'))
+    if(len(parts) <= 1):
+      raise Exception("Invalid value for the input 'VSTS account url'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment.")
 
-  return {
-    'VSTSUrl':base_url,
-    'Collection':collection
-  }
+  return vsts_url
 
-def get_deployment_type(base_url, pat_token):
-  response = make_http_call(base_url + '/_apis/connectiondata', 'GET', None, None, pat_token)
+def get_deployment_type(vsts_url, pat_token):
+  response = Util.make_http_call(vsts_url + '/_apis/connectiondata', 'GET', None, None, pat_token)
   if(response.status == 200):
     connection_data = json.loads(response.read())
     if(connection_data.has_key('deploymentType')):
@@ -200,27 +184,6 @@ def get_deployment_type(base_url, pat_token):
       return 'onPremises'
   else:
     raise Exception('Failed to fetch the connection data for the given url. Reason : {0}'.format(response.reason))
-
-def make_http_call(url, http_method, headers, body, pat_token):
-  prefix = get_account_name_prefix(url)
-  url_without_prefix = url[len(prefix):]
-  server_url, path = url_without_prefix.split('/', 1)
-
-  if (not headers):
-    headers = {}
-
-  if (pat_token):
-    basic_auth = '{0}:{1}'.format('', pat_token)
-    basic_auth = base64.b64encode(basic_auth)
-    headers['Authorization'] = 'Basic {0}'.format(basic_auth)
-
-  connection_type = httplib.HTTPSConnection
-  if(prefix.startswith('http://')):
-    connection_type = httplib.HTTPConnection
-
-  connection = connection_type(server_url)
-  connection.request(http_method, path, body, headers)
-  return connection.getresponse()
 
 def format_tags_input(tags_input):
   tags = []
@@ -276,12 +239,9 @@ def read_configutation_from_settings(operation):
       vsts_account_name = public_settings['VSTSAccountName'].strip('/')
     handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
     vsts_url = vsts_account_name
-    collection = ''
 
     if(operation == 'Enable'):
-      account_info = parse_account_name(vsts_account_name, pat_token)
-      vsts_url = account_info['VSTSUrl']
-      collection = account_info['Collection']
+      vsts_url = parse_account_name(vsts_account_name, pat_token)
     handler_utility.log('VSTS service URL : {0}'.format(vsts_url))
 
     team_project_name = ''
@@ -320,7 +280,7 @@ def read_configutation_from_settings(operation):
     operation_name = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     config = {
-             'VSTSUrl':[vsts_url, collection],
+             'VSTSUrl':vsts_url,
              'PATToken':pat_token, 
              'TeamProject':team_project_name, 
              'DeploymentGroup':deployment_group_name, 

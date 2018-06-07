@@ -442,9 +442,8 @@ function Get-VSTSURL
     )
 
     $vstsUrl = $vstsAccountName
-    $tfsVirtualApplication = ""
-    $tfsCollection = ""
     $global:isOnPrem = $false
+    $protocolHeader = ""
     VerifyInputNotNull "VSTSAccountName" $vstsAccountName
     $vstsAccountName = $vstsAccountName.TrimEnd('/')
     if (($vstsAccountName.StartsWith("https://")) -or ($vstsAccountName.StartsWith("http://"))) 
@@ -458,8 +457,7 @@ function Get-VSTSURL
         }
         else
          {
-            $protocolHeader = ""
-            $urlWithoutProtocol = $parts[0].trim()
+            throw "Invalid account url. It cannot be just `"https://`""
         }
     }
     else
@@ -467,24 +465,14 @@ function Get-VSTSURL
         $urlWithoutProtocol = $vstsAccountName
     }
 
-    $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
-    try
-     {
-        $host = $subparts[0]
-        if($host -like "*:*")
-        {
-            $hostSplit = $host.Split(':', [System.StringSplitOptions]::RemoveEmptyEntries).trim()
-            $host = $hostSplit[0]
-        }
-        $dummy = Resolve-DnsName $host -ErrorAction Stop
-    }
-    catch
-     {
+    if($protocolHeader -eq "")
+    {
         Write-Log "Given input is not a valid URL. Assuming it is just the account name."
         $vstsUrl = "https://{0}.visualstudio.com" -f $vstsAccountName
         return $vstsUrl
     }
-    [string]$restCallUrl = $vstsAccountName + "/_apis/connectiondata"
+
+    $restCallUrl = $vstsAccountName + "/_apis/connectiondata"
     $basicAuth = ("{0}:{1}" -f , "", $patToken)
     $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
     $basicAuth = [System.Convert]::ToBase64String($basicAuth)
@@ -495,41 +483,16 @@ function Get-VSTSURL
     }
     catch
      {
-        throw "Failed to fetch the connection data for the url $url : $_.Exception" 
+        throw "Failed to fetch the connection data for the url $restCallUrl : $_.Exception" 
     }
-    if ($response.deploymentType)
+    if (!$response.deploymentType -or $response.deploymentType -ne "hosted")
      {
-        if ($response.deploymentType -eq "hosted")
+        $global:isOnPrem = $true
+        $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
+        if($subparts.Count -le 1)
         {
-            $vstsUrl = $vstsAccountName
+            throw "Invalid value for the input 'VSTS account url'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment."
         }
-        elseif ($response.deploymentType -eq "onPremises")
-         {
-            $vstsUrl = -join ($protocolHeader, $subparts[0].trim())
-            $global:isOnPrem = $true
-            if ($subparts.Count -ge 2)
-            {
-                $tfsVirtualApplication = $subparts[1].trim()
-                $tfsCollection = 'DefaultCollection'
-                if ($subparts.Count -gt 2)
-                                                    {
-                    $tfsCollection = $subparts[2].trim()
-                }
-                $vstsUrl = "$vstsUrl/$tfsVirtualApplication/$tfsCollection"
-            }
-            else
-             {   
-                throw "Invalid value for the input 'VSTS account name'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment."
-            }
-        }
-        else
-         {
-            throw "Invalid deployemnt type. Should be either 'hosted', or 'onPremises'."
-        }
-    }
-    else
-     {
-        throw "Deployment type is null. Please make sure that you enter the correct VSTS account name and PAT token."
     }
 
     Write-Log "VSTS service URL: $vstsUrl"

@@ -4,8 +4,7 @@ import json
 import platform
 import Constants
 import codecs
-import base64
-import httplib
+import Utils.HandlerUtil as Util
 from pwd import getpwnam
 from urllib2 import quote
 
@@ -39,12 +38,6 @@ def get_agent_setting(working_folder, key):
     setting_params = json.load(codecs.open(agent_setting_file_path, 'r', 'utf-8-sig'))
   return setting_params[key] if(setting_params.has_key(key)) else ''
 
-def get_host_and_address(account_info, package_data_address):
-  if(account_info.__class__.__name__ == 'list' and len(account_info) == 3):
-    address = '/' + account_info[1] + '/' + account_info[2] + package_data_address
-    return account_info[0], address
-  raise Exception('VSTS url is invalid')
-
 def test_configured_agent_exists_internal(working_folder, log_func):
   global log_function
   log_function = log_func
@@ -62,22 +55,8 @@ def test_configured_agent_exists_internal(working_folder, log_func):
 
 def invoke_url_for_deployment_group_data(account_info, user_name, pat_token, deployment_group_data_address):
   write_log('\t\t Form header for making http call')
-  vsts_url, deployment_group_data_address = get_host_and_address(account_info, deployment_group_data_address)
-  method = httplib.HTTPSConnection
-  if(vsts_url.startswith('http://')):
-    vsts_url = vsts_url[7:]
-    method = httplib.HTTPConnection
-  elif(vsts_url.startswith('https://')):
-    vsts_url = vsts_url[8:]
-  basic_auth = '{0}:{1}'.format(user_name, pat_token)
-  basic_auth = base64.b64encode(basic_auth)
-  headers = {
-              'Authorization' : 'Basic {0}'.format(basic_auth)
-            }
-  write_add_tags_log('\t\t Making HTTP request for deployment group data')
-  conn = method(vsts_url)
-  conn.request('GET', deployment_group_data_address, headers = headers)
-  response = conn.getresponse()
+  deployment_group_data_url = Util.get_url_from_account_info_and_path(account_info, deployment_group_data_address)
+  response = Util.make_http_call(deployment_group_data_url, 'GET', None, None, pat_token)
   if(response.status == 200):
     val = json.loads(response.read())
     write_log('\t\t Deployment group details fetched successfully')
@@ -213,25 +192,14 @@ def remove_existing_agent_internal(pat_token, working_folder, log_func):
     raise e
 
 def apply_tags_to_agent(account_info, pat_token, project_name, deployment_group_id, agent_id, tags_string, machine_id):
-  tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets?api-version={2}'.format(quote(project_name), deployment_group_id, Constants.targets_api_version)
-  vsts_url, tags_address = get_host_and_address(account_info,  tags_address)
-  method = httplib.HTTPSConnection
-  if(vsts_url.startswith('http://')):
-    vsts_url = vsts_url[7:]
-    method = httplib.HTTPConnection
-  elif(vsts_url.startswith('https://')):
-    vsts_url = vsts_url[8:]
-  basic_auth = '{0}:{1}'.format('', pat_token)
-  basic_auth = base64.b64encode(basic_auth)
+  tags_address = '{0}/_apis/distributedtask/deploymentgroups/{1}/Targets?api-version={2}'.format(quote(project_name), deployment_group_id, Constants.targets_api_version)
+  tags_url = Util.get_url_from_account_info_and_path(account_info,  tags_address)
   headers = {
-              'Authorization' : 'Basic {0}'.format(basic_auth),
               'Content-Type' : 'application/json'
             }
   request_body = json.dumps([{'id' : json.loads(machine_id), 'tags' : json.loads(tags_string), 'agent' : {'id' : agent_id}}])
   write_add_tags_log('Add tags request body : {0}'.format(request_body))
-  conn = method(vsts_url)
-  conn.request('PATCH', tags_address, headers = headers, body = request_body)
-  response = conn.getresponse()
+  response = Util.make_http_call(tags_url, 'PATCH', request_body, headers, pat_token)
   if(response.status == 200):
     write_add_tags_log('Patch call for tags succeeded')
   else:
@@ -239,22 +207,9 @@ def apply_tags_to_agent(account_info, pat_token, project_name, deployment_group_
 
 
 def add_tags_to_agent(account_info, pat_token, project_name, deployment_group_id, agent_id, tags_string):
-  tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets?api-version={2}'.format(quote(project_name), deployment_group_id, Constants.targets_api_version)
-  vsts_url, tags_address = get_host_and_address(account_info, tags_address)
-  method = httplib.HTTPSConnection
-  if(vsts_url.startswith('http://')):
-    vsts_url = vsts_url[7:]
-    method = httplib.HTTPConnection
-  elif(vsts_url.startswith('https://')):
-    vsts_url = vsts_url[8:]
-  basic_auth = '{0}:{1}'.format('', pat_token)
-  basic_auth = base64.b64encode(basic_auth)
-  headers = {
-              'Authorization' : 'Basic {0}'.format(basic_auth)
-            }
-  conn = method(vsts_url)
-  conn.request('GET', tags_address, headers = headers)
-  response = conn.getresponse()
+  tags_address = '{0}/_apis/distributedtask/deploymentgroups/{1}/Targets?api-version={2}'.format(quote(project_name), deployment_group_id, Constants.targets_api_version)
+  tags_url = Util.get_url_from_account_info_and_path(account_info, tags_address)
+  response = Util.make_http_call(tags_url, 'GET', None, None, pat_token)
   if(response.status == 200):
     val = {}
     response_string = response.read()
@@ -316,13 +271,15 @@ def set_folder_owner(folder, username):
     for filename in filenames:
       os.chown(os.path.join(dirpath, filename), u_id, g_id)
 
-def configure_agent_internal(account_info, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder):
+def configure_agent_internal(vsts_url, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder):
   global agent_listener_path, agent_service_path
   set_agent_listener_path(working_folder)
   set_agent_service_path(working_folder)
-  get_host_and_address(account_info, '')
-  vsts_url = account_info[0]
-  configure_command_args = ['--url', vsts_url,
+  config_url = vsts_url
+  if(Constants.is_on_prem):
+    config_url = vsts_url[0:vsts_url.rfind('/')]
+    collection = vsts_url[vsts_url.rfind('/'):]
+  configure_command_args = ['--url', config_url,
                             '--auth', 'PAT',
                             '--token', pat_token,
                             '--agent', agent_name,
@@ -365,7 +322,7 @@ def configure_agent_internal(account_info, pat_token, project_name, deployment_g
   
 
 
-def configure_agent(account_info, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder, agent_exists, log_func):
+def configure_agent(vsts_url, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder, agent_exists, log_func):
   global agent_listener_path
   global log_function
   log_function = log_func
@@ -376,7 +333,7 @@ def configure_agent(account_info, pat_token, project_name, deployment_group_name
       agent_name = platform.node() + '-DG'
       write_configuration_log('Agent name not provided, agent name will be set as ' + agent_name)
     write_configuration_log('Configuring agent')
-    configure_agent_internal(account_info, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder)
+    configure_agent_internal(vsts_url, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder)
     return Constants.return_success
   except Exception as e:
     write_configuration_log(e.message)

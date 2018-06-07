@@ -221,9 +221,6 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-        Mock -ModuleName RMExtensionHandler Resolve-DnsName {
-            throw "Not complete url, just account name"
-        }
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -255,7 +252,6 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-        Mock -ModuleName RMExtensionHandler Resolve-DnsName {}
         Mock -ModuleName RMExtensionHandler Invoke-RestMethod {
             $response = @{deploymentType = "hosted"}
             return $response
@@ -292,7 +288,6 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-        Mock -ModuleName RMExtensionHandler Resolve-DnsName {}
         Mock -ModuleName RMExtensionHandler Invoke-RestMethod {
             $response = @{deploymentType = "hosted"}
             return $response
@@ -329,7 +324,6 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-        Mock -ModuleName RMExtensionHandler Resolve-DnsName {}
         Mock -ModuleName RMExtensionHandler Invoke-RestMethod {
             $response = @{deploymentType = "hosted"}
             return $response
@@ -338,7 +332,7 @@ Describe "parse vsts account name settings tests" {
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
         It "should set proper status" {
-            $settings.VSTSUrl | Should Be "https://tycjfchsdabvdsb.visualstudio.com/defaultcollection"       
+            $settings.VSTSUrl | Should Be "https://tycjfchsdabvdsb.visualstudio.com/defaultcollection/"       
         }
     }
 
@@ -365,7 +359,6 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-        Mock -ModuleName RMExtensionHandler Resolve-DnsName {}
         Mock -ModuleName RMExtensionHandler Invoke-RestMethod {
             $response = @{deploymentType = "onPremises"}
             return $response
@@ -401,7 +394,6 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-        Mock -ModuleName RMExtensionHandler Resolve-DnsName {}
         Mock -ModuleName RMExtensionHandler Invoke-RestMethod {
             $response = @{deploymentType = "onPremises"}
             return $response
@@ -410,7 +402,7 @@ Describe "parse vsts account name settings tests" {
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
         It "should set proper status" {
-            $settings.VSTSUrl | Should Be "http://localhost:8080/tfs/defaultcollection"       
+            $settings.VSTSUrl | Should Be "http://localhost:8080///tfs/defaultcollection/a/b//c/d//"       
         }
     }
 
@@ -439,7 +431,6 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
         Mock -ModuleName RMExtensionHandler Exit-WithCode1 {} 
-        Mock -ModuleName RMExtensionHandler Resolve-DnsName {}
         Mock -ModuleName RMExtensionHandler Invoke-RestMethod {
             $response = @{deploymentType = "onPremises"}
             return $response
@@ -447,7 +438,7 @@ Describe "parse vsts account name settings tests" {
 
         It "should set proper status" {
             Get-ConfigurationFromSettings -isEnable $true
-            Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1  -ParameterFilter { $ErrorRecord.Exception.Message -eq "Invalid value for the input 'VSTS account name'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment."}
+            Assert-MockCalled -ModuleName RMExtensionHandler Set-HandlerErrorStatus -Times 1  -ParameterFilter { $ErrorRecord.Exception.Message -eq "Invalid value for the input 'VSTS account url'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment."}
         }
     }
 }
@@ -475,9 +466,6 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-        Mock -ModuleName RMExtensionHandler Resolve-DnsName {
-            throw "Not complete url, just account name"
-        }
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -510,9 +498,6 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-        Mock -ModuleName RMExtensionHandler Resolve-DnsName {
-            throw "Not complete url, just account name"
-        }
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -548,9 +533,6 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-        Mock -ModuleName RMExtensionHandler Resolve-DnsName {
-            throw "Not complete url, just account name"
-        }
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -583,9 +565,6 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-        Mock -ModuleName RMExtensionHandler Resolve-DnsName {
-            throw "Not complete url, just account name"
-        }
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -619,9 +598,6 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-        Mock -ModuleName RMExtensionHandler Resolve-DnsName {
-            throw "Not complete url, just account name"
-        }
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -655,9 +631,6 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
-        Mock -ModuleName RMExtensionHandler Resolve-DnsName {
-            throw "Not complete url, just account name"
-        }
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 

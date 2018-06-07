@@ -392,9 +392,9 @@ function Get-ConfigurationFromSettings {
         }
 
         $windowsLogonPassword = ""
-        if($protectedSettings.Contains('WindowsLogonPassword'))
+        if($protectedSettings.Contains('Password'))
         {
-            $windowsLogonPassword = $protectedSettings['WindowsLogonPassword']
+            $windowsLogonPassword = $protectedSettings['Password']
         }
 
         $teamProjectName = $publicSettings['TeamProject']
@@ -435,9 +435,9 @@ function Get-ConfigurationFromSettings {
         }
 
         $windowsLogonAccountName = ""
-        if($publicSettings.Contains('WindowsLogonAccountName'))
+        if($publicSettings.Contains('UserName'))
         {
-            $windowsLogonAccountName = $publicSettings['WindowsLogonAccountName']
+            $windowsLogonAccountName = $publicSettings['UserName']
         }
         if($windowsLogonAccountName)
         {

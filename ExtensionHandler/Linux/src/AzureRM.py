@@ -274,8 +274,8 @@ def get_configutation_from_settings(operation):
     handler_utility.log('Tags : {0}'.format(tags_input))
     tags = format_tags_input(tags_input)
     configure_agent_as_username = ''
-    if(public_settings.has_key('ConfigureAgentAsUserName')):
-      configure_agent_as_username = public_settings['ConfigureAgentAsUserName']
+    if(public_settings.has_key('UserName')):
+      configure_agent_as_username = public_settings['UserName']
     agent_working_folder = create_agent_working_folder()
     handler_utility.log('Done reading config settings from file...')
     ss_code = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['Code']

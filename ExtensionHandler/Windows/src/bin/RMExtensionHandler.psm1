@@ -341,20 +341,16 @@ function Get-ConfigurationFromSettings {
             $patToken = ""
         }
 
-        $vstsAccountUrl = $publicSettings['VSTSAccountUrl'].ToLower()
+        $vstsAccountUrl = $publicSettings['VSTSAccountUrl']
         if(-not $vstsAccountUrl)
         {
-            $vstsAccountUrl = $publicSettings['VSTSAccountName'].ToLower()
+            $vstsAccountUrl = $publicSettings['VSTSAccountName']
         }
         VerifyInputNotNull "VSTSAccountUrl" $vstsAccountUrl
-        $vstsUrl = $vstsAccountUrl
+        $vstsUrl = $vstsAccountUrl.ToLower()
         if($isEnable)
         {
-            $vstsUrl = Parse-VSTSrl -vstsAccountUrl $vstsAccountUrl -patToken $patToken
-        }
-        else
-        {
-            $vstsUrl = $vstsAccountUrl
+            $vstsUrl = Parse-VSTSUrl -vstsAccountUrl $vstsAccountUrl -patToken $patToken
         }
 
         $windowsLogonPassword = ""

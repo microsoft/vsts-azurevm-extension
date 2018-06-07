@@ -18,7 +18,6 @@ agent_configuration_required = True
 config = {}
 root_dir = ''
 markup_file_format = '{0}/EXTENSIONDISABLED'
-collection = ''
 
 def get_last_sequence_number_file_path():
   global root_dir
@@ -226,7 +225,8 @@ def read_configutation_from_settings(operation):
     os_version = handler_utility.get_os_version()
     if(os_version['IsX64'] != True):
       code = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Code']
-      RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Message']
+      message = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Message']
+      raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
     pat_token = ''
     if((protected_settings.__class__.__name__ == 'dict') and protected_settings.has_key('PATToken')):
@@ -234,14 +234,16 @@ def read_configutation_from_settings(operation):
     if((pat_token == '') and (public_settings.has_key('PATToken'))):
       pat_token = public_settings['PATToken']
 
-    vsts_account_name = ''
-    if(public_settings.has_key('VSTSAccountName')):
-      vsts_account_name = public_settings['VSTSAccountName'].strip('/')
-    handler_utility.verify_input_not_null('VSTSAccountName', vsts_account_name)
-    vsts_url = vsts_account_name
+    vsts_account_url = ''
+    if(public_settings.has_key('VSTSAccountUrl')):
+      vsts_account_url = public_settings['VSTSAccountUrl'].strip('/')
+    elif(public_settings.has_key('VSTSAccountName')):
+      vsts_account_url = public_settings['VSTSAccountName'].strip('/')
+    handler_utility.verify_input_not_null('VSTSAccountUrl', vsts_account_url)
+    vsts_url = vsts_account_url
 
     if(operation == 'Enable'):
-      vsts_url = parse_account_name(vsts_account_name, pat_token)
+      vsts_url = parse_account_name(vsts_account_url, pat_token)
     handler_utility.log('VSTS service URL : {0}'.format(vsts_url))
 
     team_project_name = ''

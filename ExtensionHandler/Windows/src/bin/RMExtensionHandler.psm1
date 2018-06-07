@@ -341,15 +341,20 @@ function Get-ConfigurationFromSettings {
             $patToken = ""
         }
 
-        $vstsAccountName = $publicSettings['VSTSAccountName'].ToLower()
-        $vstsUrl = $vstsAccountName
+        $vstsAccountUrl = $publicSettings['VSTSAccountUrl'].ToLower()
+        if(-not $vstsAccountUrl)
+        {
+            $vstsAccountUrl = $publicSettings['VSTSAccountName'].ToLower()
+        }
+        VerifyInputNotNull "VSTSAccountUrl" $vstsAccountUrl
+        $vstsUrl = $vstsAccountUrl
         if($isEnable)
         {
-            $vstsUrl = Get-VSTSURL -vstsAccountName $vstsAccountName -patToken $patToken
+            $vstsUrl = Parse-VSTSrl -vstsAccountUrl $vstsAccountUrl -patToken $patToken
         }
         else
         {
-            $vstsUrl = $vstsAccountName
+            $vstsUrl = $vstsAccountUrl
         }
 
         $windowsLogonPassword = ""
@@ -431,24 +436,23 @@ function Get-ConfigurationFromSettings {
     }
 }
 
-function Get-VSTSURL
+function Parse-VSTSUrl
 {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
-        [string] $vstsAccountName,
+        [string] $vstsAccountUrl,
         [Parameter(Mandatory = $true)]
         [string] $patToken
     )
 
-    $vstsUrl = $vstsAccountName
+    $vstsUrl = $vstsAccountUrl
     $global:isOnPrem = $false
     $protocolHeader = ""
-    VerifyInputNotNull "VSTSAccountName" $vstsAccountName
-    $vstsAccountName = $vstsAccountName.TrimEnd('/')
-    if (($vstsAccountName.StartsWith("https://")) -or ($vstsAccountName.StartsWith("http://"))) 
+    $vstsAccountUrl = $vstsAccountUrl.TrimEnd('/')
+    if (($vstsAccountUrl.StartsWith("https://")) -or ($vstsAccountUrl.StartsWith("http://"))) 
     {
-        $parts = $vstsAccountName.Split(@('://'), [System.StringSplitOptions]::RemoveEmptyEntries)
+        $parts = $vstsAccountUrl.Split(@('://'), [System.StringSplitOptions]::RemoveEmptyEntries)
 
         if ($parts.Count -gt 1) 
         {
@@ -462,17 +466,17 @@ function Get-VSTSURL
     }
     else
      {
-        $urlWithoutProtocol = $vstsAccountName
+        $urlWithoutProtocol = $vstsAccountUrl
     }
 
     if($protocolHeader -eq "")
     {
         Write-Log "Given input is not a valid URL. Assuming it is just the account name."
-        $vstsUrl = "https://{0}.visualstudio.com" -f $vstsAccountName
+        $vstsUrl = "https://{0}.visualstudio.com" -f $vstsAccountUrl
         return $vstsUrl
     }
 
-    $restCallUrl = $vstsAccountName + "/_apis/connectiondata"
+    $restCallUrl = $vstsAccountUrl + "/_apis/connectiondata"
     $basicAuth = ("{0}:{1}" -f , "", $patToken)
     $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
     $basicAuth = [System.Convert]::ToBase64String($basicAuth)

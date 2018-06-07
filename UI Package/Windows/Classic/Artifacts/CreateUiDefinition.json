@@ -4,14 +4,14 @@
   "parameters": {
     "elements": [
       {
-        "name": "VSTSAccountName",
+        "name": "VSTSAccountUrl",
         "type": "Microsoft.Common.TextBox",
-        "label": "Team Services Account Name",
-        "toolTip": "Enter the complete account name. For example, \"https://<accountname>.visualstudio.com\", \"https://codex.azure.com/<accountname>\"",
+        "label": "Team Services Account Url",
+        "toolTip": "Enter the complete account url. For example, \"https://<accountname>.visualstudio.com\"",
         "constraints": {
           "required": true,
           "regex": "https:\\/\\/.+\\..+\\..+",
-          "validationMessage": "Account name must start with \"https://\" and must be a valid URL."
+          "validationMessage": "Account url must start with \"https://\" and must be a valid url."
         }
       },
       {
@@ -68,7 +68,7 @@
     "outputs": {
       "vmName": "[vmName()]",
       "location": "[location()]",
-      "VSTSAccountName": "[elements('VSTSAccountName')]",
+      "VSTSAccountUrl": "[elements('VSTSAccountUrl')]",
       "TeamProject": "[elements('TeamProject')]",
       "DeploymentGroup": "[elements('DeploymentGroup')]",
       "AgentName": "[elements('AgentName')]",

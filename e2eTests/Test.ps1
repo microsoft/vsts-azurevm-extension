@@ -197,6 +197,8 @@ Create-VM -resourceGroupName $resourceGroupName -templateFile $templateFile -tem
     #####
 
     # Verify that agent is correctly configured against VSTS
+    # Some delay has been observed, causing e2e tests to break, so adding sleep.
+    Start-Sleep -s 15
     Write-Host "Validating that agent has been registered..."
     Write-Host "Getting agent information from VSTS"
     $agentInfo = Get-VSTSAgentInformation -vstsUrl $config.VSTSUrl -teamProject $config.TeamProject -patToken $config.PATToken -deploymentGroup $config.DeploymentGroup -agentName $config.AgentName

@@ -620,11 +620,11 @@ Describe "parse tags settings tests" {
                         DeploymentGroup = "group"
                         Tags = "tag1,  ,  tag2 ,, tag3,"
                         AgentName = "name" 
-                        WindowsLogonAccountName = "domain\testuser"
+                        UserName = "domain\testuser"
                     };
                 protectedSettings = @{
                         PATToken = "hash"
-                        WindowsLogonPassword = "password"
+                        Password = "password"
                 }
             }
             return $inputSettings }

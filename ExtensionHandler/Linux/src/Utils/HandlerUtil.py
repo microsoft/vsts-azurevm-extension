@@ -61,6 +61,8 @@ import json
 import time
 import RMExtensionStatus
 import platform
+import httplib
+import base64
 
 from xml.etree import ElementTree
 from os.path import join
@@ -152,7 +154,7 @@ class HandlerUtility:
         except Exception as e:
             self._log('[Warning]: could not delete the PAT from the settings file. More details : {0}'.format(e.message))
 
-    def _parse_config(self, ctxt):
+    def _parse_config(self, ctxt, operation):
         config = None
         try:
             config=json.loads(ctxt)
@@ -178,7 +180,7 @@ class HandlerUtility:
                 os.remove("/tmp/kk")
                 if cleartxt == None:
                     self.error("OpenSSh decode error using  thumbprint " + thumb )
-                    do_exit(1,operation,'error','1', operation + ' Failed')
+                    self.do_exit(1,operation,'error','1', operation + ' Failed')
                 jctxt=''
                 try:
                     jctxt=json.loads(cleartxt)
@@ -189,12 +191,12 @@ class HandlerUtility:
         return config
 
     def do_parse_context(self,operation):
-        _context = self.try_parse_context()
+        _context = self.try_parse_context(operation)
         if not _context:
             self.do_exit(1,operation,'error','1', operation + ' Failed')
         return _context
             
-    def try_parse_context(self):
+    def try_parse_context(self, operation):
         self._context = HandlerContext(self._short_name)
         handler_env=None
         config=None
@@ -243,7 +245,7 @@ class HandlerUtility:
             error_msg = 'Unable to read ' + self._context._settings_file + '. '
             self.error(error_msg)
             return None
-        self._context._config = self._parse_config(ctxt)
+        self._context._config = self._parse_config(ctxt, operation)
         self.log("JSON config read successfully")
         self.remove_protected_settings_from_config_file()
         return self._context
@@ -452,3 +454,32 @@ class HandlerUtility:
             excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['ArgumentError'], message)
             raise excep
 
+def get_account_name_prefix(account_name):
+  account_name_lower = account_name.lower()
+  if(account_name_lower.startswith('http://')):
+    return 'http://'
+  elif(account_name_lower.startswith('https://')):
+    return 'https://'
+  return '' 
+
+def make_http_call(url, http_method, body, headers, pat_token):
+  prefix = get_account_name_prefix(url)
+  url_without_prefix = url[len(prefix):]
+  server_url, path = url_without_prefix.split('/', 1)
+  path = '/' + path
+
+  if (not headers):
+    headers = {}
+
+  if (pat_token):
+    basic_auth = '{0}:{1}'.format('', pat_token)
+    basic_auth = base64.b64encode(basic_auth)
+    headers['Authorization'] = 'Basic {0}'.format(basic_auth)
+
+  connection_type = httplib.HTTPSConnection
+  if(prefix.startswith('http://')):
+    connection_type = httplib.HTTPConnection
+
+  connection = connection_type(server_url)
+  connection.request(http_method, path, body, headers)
+  return connection.getresponse()

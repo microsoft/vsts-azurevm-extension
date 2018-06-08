@@ -302,7 +302,8 @@ function Add-AgentTags {
 #>
 function Get-ConfigurationFromSettings {
     [CmdletBinding()]
-    param()
+    param([Parameter(Mandatory=$false)]
+    [boolean] $isEnable)
 
     try
     {
@@ -325,57 +326,6 @@ function Get-ConfigurationFromSettings {
             throw New-HandlerTerminatingError $RM_Extension_Status.ArchitectureNotSupported.Code -Message $RM_Extension_Status.ArchitectureNotSupported.Message
         }
 
-        $vstsAccountName = $publicSettings['VSTSAccountName'].ToLower()
-        $tfsVirtualApplication = ""
-        $tfsCollection = ""
-        $global:isOnPrem = $false
-        VerifyInputNotNull "VSTSAccountName" $vstsAccountName
-        $vstsAccountName = $vstsAccountName.TrimEnd('/')
-        if(($vstsAccountName.StartsWith("https://")) -or ($vstsAccountName.StartsWith("http://")))
-        {
-            $parts = $vstsAccountName.Split(@('://'), [System.StringSplitOptions]::RemoveEmptyEntries)
-
-            if($parts.Count -gt 1)
-            {
-                $protocolHeader = $parts[0] + "://"
-                $urlWithoutProtocol = $parts[1].trim()
-            }
-            else
-            {
-                $protocolHeader = ""
-                $urlWithoutProtocol = $parts[0].trim()
-            }
-
-            $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
-
-            $vstsUrl = -join($protocolHeader, $subparts[0].trim())
-            if(!$vstsUrl.EndsWith("visualstudio.com"))
-            {
-                # This is for the on-prem tfs scenario where url is supposed to be of format http(s)://<server-name>/<application>/<collection>
-                $global:isOnPrem = $true
-                if($subparts.Count -ge 2)
-                {
-                    $tfsVirtualApplication = $subparts[1].trim()
-                    $tfsCollection = 'DefaultCollection'
-                    if($subparts.Count -gt 2)
-                    {
-                        $tfsCollection = $subparts[2].trim()
-                    }
-                    $vstsUrl = "$vstsUrl/$tfsVirtualApplication/$tfsCollection"
-                }
-                else
-                {   
-                    throw New-HandlerTerminatingError $RM_Extension_Status.InvalidAccountName.Code -Message $RM_Extension_Status.InvalidAccountName.Message    
-                }
-            }
-        }
-        else
-        {
-            $vstsUrl = "https://{0}.visualstudio.com" -f $vstsAccountName
-        }
-
-        Write-Log "VSTS service URL: $vstsUrl"
-
         $patToken = ""
         if($protectedSettings.Contains('PATToken'))
         {
@@ -389,6 +339,18 @@ function Get-ConfigurationFromSettings {
         if(-not $patToken)
         {
             $patToken = ""
+        }
+
+        $vstsAccountUrl = $publicSettings['VSTSAccountUrl']
+        if(-not $vstsAccountUrl)
+        {
+            $vstsAccountUrl = $publicSettings['VSTSAccountName']
+        }
+        VerifyInputNotNull "VSTSAccountUrl" $vstsAccountUrl
+        $vstsUrl = $vstsAccountUrl.ToLower()
+        if($isEnable)
+        {
+            $vstsUrl = Parse-VSTSUrl -vstsAccountUrl $vstsAccountUrl -patToken $patToken
         }
 
         $windowsLogonPassword = ""
@@ -468,6 +430,74 @@ function Get-ConfigurationFromSettings {
     {
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ReadingSettings.operationName
     }
+}
+
+function Parse-VSTSUrl
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $vstsAccountUrl,
+        [Parameter(Mandatory = $true)]
+        [string] $patToken
+    )
+
+    $vstsUrl = $vstsAccountUrl
+    $global:isOnPrem = $false
+    $protocolHeader = ""
+    $vstsAccountUrl = $vstsAccountUrl.TrimEnd('/')
+    if (($vstsAccountUrl.StartsWith("https://")) -or ($vstsAccountUrl.StartsWith("http://"))) 
+    {
+        $parts = $vstsAccountUrl.Split(@('://'), [System.StringSplitOptions]::RemoveEmptyEntries)
+
+        if ($parts.Count -gt 1) 
+        {
+            $protocolHeader = $parts[0] + "://"
+            $urlWithoutProtocol = $parts[1].trim()
+        }
+        else
+         {
+            throw "Invalid account url. It cannot be just `"https://`""
+        }
+    }
+    else
+     {
+        $urlWithoutProtocol = $vstsAccountUrl
+    }
+
+    if($protocolHeader -eq "")
+    {
+        Write-Log "Given input is not a valid URL. Assuming it is just the account name."
+        $vstsUrl = "https://{0}.visualstudio.com" -f $vstsAccountUrl
+        return $vstsUrl
+    }
+
+    $restCallUrl = $vstsAccountUrl + "/_apis/connectiondata"
+    $basicAuth = ("{0}:{1}" -f , "", $patToken)
+    $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
+    $basicAuth = [System.Convert]::ToBase64String($basicAuth)
+    $headers = @{Authorization = ("Basic {0}" -f $basicAuth)}
+    try
+     {
+        $response = Invoke-RestMethod -Uri $restCallUrl -headers $headers -Method Get -ContentType "application/json"
+    }
+    catch
+     {
+        throw "Failed to fetch the connection data for the url $restCallUrl : $_.Exception" 
+    }
+    if (!$response.deploymentType -or $response.deploymentType -ne "hosted")
+     {
+        $global:isOnPrem = $true
+        $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
+        if($subparts.Count -le 1)
+        {
+            throw "Invalid value for the input 'VSTS account url'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment."
+        }
+    }
+
+    Write-Log "VSTS service URL: $vstsUrl"
+
+    return $vstsUrl
 }
 
 function Set-ErrorStatusAndErrorExit {

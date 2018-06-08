@@ -171,11 +171,6 @@ $global:RM_Extension_Status = @{
         Code = 1003
         Message = 'Installed PowerShell version is {0}. Minimum required version is 3.0'
     }
-    
-    InvalidAccountName = @{
-        Code = 1005
-        Message = 'Invalid value for VSTS account name. It should be just the account name, eg: contoso in case of https://contoso.visualstudio.com(for hosted), or of the format http(s)://<server>/<application>/<collection>(for on-prem)'
-    }
 
     #
     # ArgumentError indicates a problem in the user input. The message for the error is provided by the specific exception

@@ -71,7 +71,7 @@ function ConfigureAgentIfRequired
 }
 
 Start-RMExtensionHandler
-$config = Get-ConfigurationFromSettings
+$config = Get-ConfigurationFromSettings -isEnable $true
 
 ExecuteAgentPreCheck ([ref]$Enable_ConfiguredAgentExists) ([ref]$Enable_AgentConfigurationRequired)
 

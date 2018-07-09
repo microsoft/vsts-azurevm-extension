@@ -8,7 +8,7 @@
     "location": {
       "type": "string"
     },
-    "VSTSAccountName": {
+    "VSTSAccountUrl": {
       "type": "string"
     },
     "TeamProject": {
@@ -41,7 +41,7 @@
         "version": "1.*",
         "parameters": {
             "public": {
-              "VSTSAccountName": "[parameters('VSTSAccountName')]",
+              "VSTSAccountUrl": "[parameters('VSTSAccountUrl')]",
               "TeamProject": "[parameters('TeamProject')]",
               "DeploymentGroup": "[parameters('DeploymentGroup')]",
               "AgentName": "[parameters('AgentName')]",

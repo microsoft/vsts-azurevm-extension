@@ -88,6 +88,8 @@ function Test-AgentSettingsAreSame
             WriteLog "`t`t`t Unable to get the deployment group data - $errorMsg" $logFunction
         }
 
+        $tfsUrl = if ($tfsUrl.StartsWith($agentUrl, "CurrentCultureIgnoreCase")) {$agentUrl} else {$tfsUrl}
+
         if(!$deploymentGroupDataAsPerSetting)
         {
             WriteLog "`t`t`t Test-AgentSettingsAreSame Return : false (Unable to get the deployment group data from existing agent settings)" $logFunction

@@ -89,8 +89,7 @@ def get_deployment_group_data_from_setting(vsts_url, pat_token):
         write_log('\t\t Deployment group projectName - {0}'.format(project_id))
     if(project_id != ''):
       deployment_group_data_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}'.format(project_id, deployment_group_id)
-      deployment_group_data_url = vsts_url + deployment_group_data_address
-      deployment_group_data = invoke_url_for_deployment_group_data(deployment_group_data_url, '', pat_token, deployment_group_data_address)
+      deployment_group_data = invoke_url_for_deployment_group_data(vsts_url, '', pat_token, deployment_group_data_address)
       return deployment_group_data
   return {}
 
@@ -112,7 +111,7 @@ def test_agent_configuration_required_internal(vsts_url, pat_token, deployment_g
     if(existing_deployment_group_data == None or existing_deployment_group_data == {}):
       write_log("\t\t\t agent configuration required Return : True (Unable to get the deployment group data from existing agent settings)")
       return True
-    vsts_url_for_configuration = vsts_url[0:vsts_url.rfind('/')]
+    vsts_url_for_configuration = existing_vsts_url if (vsts_url.lower().startswith(existing_vsts_url.lower())) else vsts_url
     write_log('\t\t\t Agent configured with \t\t\t\t Agent needs to be configured with')
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_vsts_url, vsts_url_for_configuration))
     write_log('\t\t\t {0} \t\t\t\t {1}'.format(existing_deployment_group_data['project']['name'], project_name))
@@ -183,13 +182,13 @@ def remove_existing_agent_internal(pat_token, working_folder, log_func):
     write_configuration_log(e.message)
     raise e
 
-def apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string, machine_id):
+def apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string):
   tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets?api-version={2}'.format(quote(project_name), deployment_group_id, Constants.targets_api_version)
   tags_url = vsts_url + tags_address
   headers = {
               'Content-Type' : 'application/json'
             }
-  request_body = json.dumps([{'id' : json.loads(machine_id), 'tags' : json.loads(tags_string), 'agent' : {'id' : agent_id}}])
+  request_body = json.dumps([{'id' : json.loads(agent_id), 'tags' : json.loads(tags_string), 'agent' : {'id' : json.loads(agent_id)}}])
   write_add_tags_log('Add tags request body : {0}'.format(request_body))
   response = Util.make_http_call(tags_url, 'PATCH', request_body, headers, pat_token)
   if(response.status == 200):
@@ -199,34 +198,23 @@ def apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, 
 
 
 def add_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string):
-  tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets?api-version={2}'.format(quote(project_name), deployment_group_id, Constants.targets_api_version)
+  tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets/{2}?api-version={3}'.format(quote(project_name), deployment_group_id, agent_id, Constants.targets_api_version)
   tags_url = vsts_url + tags_address
   response = Util.make_http_call(tags_url, 'GET', None, None, pat_token)
   if(response.status == 200):
     val = {}
     response_string = response.read()
     val = json.loads(response_string)
-    existing_tags = []
-    machine_id = '-1'
-    for i in range(0, val['count']):
-      each_machine = val['value'][i]
-      if(each_machine != None and each_machine.has_key('agent') and each_machine['agent']['id'] == agent_id):
-        machine_id = each_machine['id']
-        if(each_machine.has_key('tags')):
-          existing_tags = each_machine['tags']
-        break
+    existing_tags = val['tags']
     tags = json.loads(tags_string)
     for x in tags:
       if(x.lower() not in map(lambda x:x.lower(), existing_tags)):
         existing_tags.append(x)
     tags = existing_tags
   else:
-    raise Exception('Tags could not be added. Unable to fetch the existing tags or deployment group details.')
-  if(machine_id == '-1'):
-    msg = 'Tags could not be added. Unable to get the machine id'
-    raise Exception(msg)
-  write_add_tags_log('Updating the tags for agent machine - {0}'.format(machine_id))
-  apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, agent_id, json.dumps(tags, ensure_ascii = False), json.dumps(machine_id))
+    raise Exception('Tags could not be added. Unable to fetch the existing tags.')
+  write_add_tags_log('Updating the tags for agent target - {0}'.format(agent_id))
+  apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, json.dumps(agent_id), json.dumps(tags, ensure_ascii = False))
 
 def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, tags_string, log_func):
   global log_function

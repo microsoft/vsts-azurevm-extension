@@ -198,7 +198,7 @@ def format_tags_input(tags_input):
   ret_val = []
   temp = list(set(map(lambda x : x.strip(), tags)))
   for x in  temp:
-    if(x!='' and x.lower() not in map(lambda x:x.lower(), ret_val)):
+    if(x!='' and x.lower() not in map(lambda y:y.lower(), ret_val)):
       ret_val.append(x)
   return ret_val
 

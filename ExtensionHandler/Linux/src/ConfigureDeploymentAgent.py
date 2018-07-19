@@ -50,12 +50,11 @@ def test_configured_agent_exists_internal(working_folder, log_func):
     write_log('\t\t Agent setting file exists : {0}'.format(agent_setting_file_exists))
     return agent_setting_file_exists
   except Exception as e:
-    write_log(e.message)
+    write_log(e.args[0])
     raise e
 
-def invoke_url_for_deployment_group_data(vsts_url, user_name, pat_token, deployment_group_data_address):
+def invoke_url_for_deployment_group_data(deployment_group_data_url, user_name, pat_token):
   write_log('\t\t Form header for making http call')
-  deployment_group_data_url = vsts_url + deployment_group_data_address
   response = Util.make_http_call(deployment_group_data_url, 'GET', None, None, pat_token)
   if(response.status == 200):
     val = json.loads(response.read())
@@ -89,7 +88,8 @@ def get_deployment_group_data_from_setting(vsts_url, pat_token):
         write_log('\t\t Deployment group projectName - {0}'.format(project_id))
     if(project_id != ''):
       deployment_group_data_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}'.format(project_id, deployment_group_id)
-      deployment_group_data = invoke_url_for_deployment_group_data(vsts_url, '', pat_token, deployment_group_data_address)
+      deployment_group_data_url = vsts_url + deployment_group_data_address
+      deployment_group_data = invoke_url_for_deployment_group_data(deployment_group_data_url, '', pat_token)
       return deployment_group_data
   return {}
 
@@ -107,7 +107,7 @@ def test_agent_configuration_required_internal(vsts_url, pat_token, deployment_g
     try:
       existing_deployment_group_data = get_deployment_group_data_from_setting(existing_vsts_url, pat_token)
     except Exception as e:
-      write_log('\t\t\t Unable to get the deployment group data - {0}'.format(e.message))
+      write_log('\t\t\t Unable to get the deployment group data - {0}'.format(e.args[0]))
     if(existing_deployment_group_data == None or existing_deployment_group_data == {}):
       write_log("\t\t\t agent configuration required Return : True (Unable to get the deployment group data from existing agent settings)")
       return True
@@ -124,7 +124,7 @@ def test_agent_configuration_required_internal(vsts_url, pat_token, deployment_g
     write_log('\t\t\t test_agent_configuration_required : True') 
     return True
   except Exception as e:
-    write_log(e.message)
+    write_log(e.args[0])
     raise e
 
 def set_agent_listener_path(working_folder):
@@ -179,7 +179,7 @@ def remove_existing_agent_internal(pat_token, working_folder, log_func):
       setattr(e, 'Reason', 'UnConfigFailed')
       raise e
   except Exception as e:
-    write_configuration_log(e.message)
+    write_configuration_log(e.args[0])
     raise e
 
 def apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string):
@@ -198,9 +198,9 @@ def apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, 
 
 
 def add_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string):
-  tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets/{2}?api-version={3}'.format(quote(project_name), deployment_group_id, agent_id, Constants.targets_api_version)
-  tags_url = vsts_url + tags_address
-  response = Util.make_http_call(tags_url, 'GET', None, None, pat_token)
+  target_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets/{2}?api-version={3}'.format(quote(project_name), deployment_group_id, agent_id, Constants.targets_api_version)
+  target_url = vsts_url + target_address
+  response = Util.make_http_call(target_url, 'GET', None, None, pat_token)
   if(response.status == 200):
     val = {}
     response_string = response.read()
@@ -208,7 +208,7 @@ def add_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, ag
     existing_tags = val['tags']
     tags = json.loads(tags_string)
     for x in tags:
-      if(x.lower() not in map(lambda x:x.lower(), existing_tags)):
+      if(x.lower() not in map(lambda y:y.lower(), existing_tags)):
         existing_tags.append(x)
     tags = existing_tags
   else:
@@ -240,7 +240,7 @@ def add_agent_tags_internal(vsts_url, project_name, pat_token, working_folder, t
     add_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string)
     return Constants.return_success 
   except Exception as e:
-    write_add_tags_log(e.message)
+    write_add_tags_log(e.args[0])
     raise e
 
 def set_folder_owner(folder, username):
@@ -316,7 +316,7 @@ def configure_agent(vsts_url, pat_token, project_name, deployment_group_name, co
     configure_agent_internal(vsts_url, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder)
     return Constants.return_success
   except Exception as e:
-    write_configuration_log(e.message)
+    write_configuration_log(e.args[0])
     raise e
 
 

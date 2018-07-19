@@ -318,7 +318,7 @@ def test_agent_configuration_required():
     operation_name = RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log('Invoking script to check existing agent settings with given configuration settings...')
-    config_required = ConfigureDeploymentAgent.test_agent_configuration_required_internal(config['VSTSUrl'], config['PATToken'], \
+    config_required = ConfigureDeploymentAgent.is_agent_configuration_required(config['VSTSUrl'], config['PATToken'], \
                       config['DeploymentGroup'], config['TeamProject'], config['AgentWorkingFolder'])
     ss_code = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['Message']
@@ -391,7 +391,7 @@ def remove_existing_agent(operation):
   try:
     handler_utility.log('Agent removal started')
     try:
-      ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config['AgentWorkingFolder'], handler_utility.log)
+      ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config['AgentWorkingFolder'])
       ss_code = RMExtensionStatus.rm_extension_status['RemovedAgent']['Code']
       sub_status_message = RMExtensionStatus.rm_extension_status['RemovedAgent']['Message']
       operation_name = RMExtensionStatus.rm_extension_status['RemovedAgent']['operationName']
@@ -453,7 +453,7 @@ def add_agent_tags():
     try:
       tags_string = json.dumps(config['Tags'], ensure_ascii = False)
       ConfigureDeploymentAgent.add_agent_tags(config['VSTSUrl'], config['TeamProject'], \
-      config['PATToken'], config['AgentWorkingFolder'], tags_string, handler_utility.log)
+      config['PATToken'], config['AgentWorkingFolder'], tags_string)
       ss_code = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Code']
       sub_status_message = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Message']
       operation_name = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName']

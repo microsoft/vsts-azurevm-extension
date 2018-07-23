@@ -344,7 +344,7 @@ def get_agent():
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     handler_utility.log('Invoking function to download Deployment agent package...')
     DownloadDeploymentAgent.download_deployment_agent(config['VSTSUrl'], '', config['PATToken'], \
-    config['AgentWorkingFolder'], handler_utility.log)
+    config['AgentWorkingFolder'])
     handler_utility.log('Done downloading Deployment agent package...')
     ss_code = RMExtensionStatus.rm_extension_status['DownloadedDeploymentAgent']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['DownloadedDeploymentAgent']['Message']
@@ -469,6 +469,7 @@ def add_agent_tags():
 def enable():
   input_operation = 'Enable'
   ConfigureDeploymentAgent.set_logger(handler_utility.log)
+  DownloadDeploymentAgent.set_logger(handler_utility.log)
   start_rm_extension_handler(input_operation)
   read_configutation_from_settings(input_operation)
   execute_agent_pre_check()

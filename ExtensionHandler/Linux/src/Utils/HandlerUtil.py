@@ -484,9 +484,9 @@ def make_http_call(url, http_method, body, headers, pat_token):
   connection.request(http_method, path, body, headers)
   return connection.getresponse()
 
-  def empty_dir(dir_name):
-    for dirpath, dirnames, filenames in os.walk(dir_name, topdown = False):
-      for filename in filenames:
-        os.remove(os.path.join(dirpath, filename))
-      for dirname in dirnames:
-        os.rmdir(os.path.join(dirpath, dirname))
+def empty_dir(dir_name):
+  for dirpath, dirnames, filenames in os.walk(dir_name, topdown = False):
+    for filename in filenames:
+      os.remove(os.path.join(dirpath, filename))
+    for dirname in dirnames:
+      os.rmdir(os.path.join(dirpath, dirname))

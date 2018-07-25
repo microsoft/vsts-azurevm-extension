@@ -260,6 +260,7 @@ def read_configutation_from_settings(operation):
     handler_utility.verify_input_not_null('DeploymentGroup', deployment_group_name)
     handler_utility.log('Deployment Group : {0}'.format(deployment_group_name))
 
+    agent_name = ''
     if(public_settings.has_key('AgentName')):
       agent_name = public_settings['AgentName']
     handler_utility.log('Agent Name : {0}'.format(agent_name))

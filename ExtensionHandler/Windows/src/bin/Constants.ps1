@@ -9,6 +9,8 @@ $removeAgentArgs = " remove --unattended --auth PAT "
 $defaultAgentWorkingFolder = "_work"
 $legacyPlatformKey = "win7-x64"
 $platform = "win-x64"
+$agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
+$updateFileName = "EXTENSIONUPDATE"
 
 ## PS Version
 $minPSVersionSupported = 3

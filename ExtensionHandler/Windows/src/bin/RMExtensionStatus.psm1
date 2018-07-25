@@ -150,6 +150,12 @@ $global:RM_Extension_Status = @{
         operationName = 'Enable'
     }
 
+    Updated = @{
+        Code = 28
+        Message = 'The etension has been updated successfully.'
+        operationName = 'Update'
+    }
+
     #
     # Warnings
     #

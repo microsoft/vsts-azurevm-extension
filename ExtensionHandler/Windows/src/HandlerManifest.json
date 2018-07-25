@@ -3,7 +3,7 @@
     "handlerManifest": {
         "installCommand":     "install.cmd",
         "uninstallCommand":   "uninstall.cmd",
-        "updateCommand":      "",
+        "updateCommand":      "update.cmd",
         "enableCommand":      "enable.cmd",
         "disableCommand":     "disable.cmd",
         "rebootAfterInstall": false,

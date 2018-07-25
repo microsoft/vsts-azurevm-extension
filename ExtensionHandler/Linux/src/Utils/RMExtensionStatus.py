@@ -126,6 +126,11 @@ rm_extension_status = {
     'Message' : 'The etension has been enabled successfully.',
     'operationName' : 'Enable'
   },
+  'Updated' : {
+    'Code' : 27,
+    'Message' : 'The extension has been updated successfully.',
+    'operationName' : 'Updated'
+  },
   #
   # Warnings
   #

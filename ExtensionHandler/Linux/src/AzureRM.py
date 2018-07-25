@@ -61,6 +61,16 @@ def set_extension_disabled_markup():
   except Exception as e:
     pass
 
+def create_extension_update_file():
+  handler_utility.log('Creating extension update file.')
+  try:
+    extension_update_file = '{0}/{1}'.format(Constants.agent_working_folder, Constants.update_file_name)
+    with open(extension_update_file, 'w') as f:
+      f.write('')
+      f.close()
+  except Exception as e:
+    pass
+
 def test_extension_disabled_markup():
   global markup_file_format, root_dir
   markup_file = markup_file_format.format(root_dir)
@@ -203,12 +213,11 @@ def format_tags_input(tags_input):
   return ret_val
 
 def create_agent_working_folder():
-  agent_working_folder = '{0}/VSTSAgent'.format('')
-  handler_utility.log('Working folder for VSTS agent : {0}'.format(agent_working_folder))
-  if(not os.path.isdir(agent_working_folder)):
+  handler_utility.log('Working folder for VSTS agent : {0}'.format(Constants.agent_working_folder))
+  if(not os.path.isdir(Constants.agent_working_folder)):
     handler_utility.log('Working folder does not exist. Creating it...')
-    os.makedirs(agent_working_folder, 0o700)
-  return agent_working_folder
+    os.makedirs(Constants.agent_working_folder, 0o700)
+  return Constants.agent_working_folder
 
 def read_configutation_from_settings(operation):
   global config
@@ -503,11 +512,20 @@ def uninstall():
   operation = 'Uninstall'
   read_configutation_from_settings(operation)
   test_configured_agent_exists(operation)
-  ConfigureDeploymentAgent.set_agent_listener_path(config['AgentWorkingFolder'])
-  if(configured_agent_exists == True):
+  ConfigureDeploymentAgent.set_agent_listener_path(config['AgentWorkingFolder'])\
+  extension_update_file = '{0}/{1}'.format(Constants.agent_working_folder, Constants.update_file_name)
+  is_udpate_scenario = os.path.isfile(extension_update_file)
+  if(configured_agent_exists == True and not(is_udpate_scenario)):
     remove_existing_agent(operation)
   code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
   message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']
+  handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)
+
+def update():
+  operation = 'Update'
+  create_extension_update_file()
+  code = RMExtensionStatus.rm_extension_status['Update']['Code']
+  message = RMExtensionStatus.rm_extension_status['Update']['Message']
   handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)
 
 def main():
@@ -529,6 +547,8 @@ def main():
 	      disable()
       elif(sys.argv[1] == '-uninstall'):
 	      uninstall()
+      elif(sys.argv[1] == '-update'):
+	      update()
       exit_with_code_zero()
     except Exception as e:
       set_error_status_and_error_exit(e, 'main', operation, 9)

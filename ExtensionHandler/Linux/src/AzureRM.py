@@ -494,7 +494,7 @@ def enable():
   remove_extension_disabled_markup()
 
 def disable():
-  working_folder = '{0}/VSTSAgent'.format('')
+  working_folder = Constants.agent_working_folder
   agent_exists = ConfigureDeploymentAgent.test_configured_agent_exists_internal(working_folder, handler_utility.log)
   handler_utility.log('Disable command is no-op for agent')
   handler_utility.log('Creating a markup file...')
@@ -512,11 +512,15 @@ def uninstall():
   operation = 'Uninstall'
   read_configutation_from_settings(operation)
   test_configured_agent_exists(operation)
-  ConfigureDeploymentAgent.set_agent_listener_path(config['AgentWorkingFolder'])\
+  ConfigureDeploymentAgent.set_agent_listener_path(config['AgentWorkingFolder'])
   extension_update_file = '{0}/{1}'.format(Constants.agent_working_folder, Constants.update_file_name)
   is_udpate_scenario = os.path.isfile(extension_update_file)
-  if(configured_agent_exists == True and not(is_udpate_scenario)):
-    remove_existing_agent(operation)
+  if(not(is_udpate_scenario)):  
+    if(configured_agent_exists == True):
+      remove_existing_agent(operation)
+  else:
+    handler_utility.log('Extension update scenario. Deleting the temp file created.')
+    os.remove(extension_update_file)
   code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
   message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']
   handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)
@@ -524,8 +528,8 @@ def uninstall():
 def update():
   operation = 'Update'
   create_extension_update_file()
-  code = RMExtensionStatus.rm_extension_status['Update']['Code']
-  message = RMExtensionStatus.rm_extension_status['Update']['Message']
+  code = RMExtensionStatus.rm_extension_status['Updated']['Code']
+  message = RMExtensionStatus.rm_extension_status['Updated']['Message']
   handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)
 
 def main():

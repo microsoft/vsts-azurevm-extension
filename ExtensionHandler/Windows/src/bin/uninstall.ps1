@@ -21,10 +21,19 @@ Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Initialize-ExtensionLogFile
 $config = Get-ConfigurationFromSettings
 $configuredAgentExists = Test-AgentAlreadyExists $config
-$isUpdateExtensionScenario = Test-Path "$agentWorkingFolder\$updateFileName"
-if($configuredAgentExists -and !$isUpdateExtensionScenario)
+$extensionUpdateFile = "$agentWorkingFolder\$updateFileName"
+$isUpdateExtensionScenario = Test-Path extensionUpdateFile
+if (!$isUpdateExtensionScenario) 
 {
-    Remove-Agent $config
+    if ($configuredAgentExists) 
+    {
+        Remove-Agent $config
+    }
+}
+else
+{
+    Write-Log "Extension update scenario. Deleting the temp file created."
+    Remove-Item -Path $extensionUpdateFile -Force
 }
 Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
 

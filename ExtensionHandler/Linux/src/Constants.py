@@ -1,7 +1,7 @@
 agent_setting = '.agent'
 last_seq_num_file = 'LASTSEQNUM'
 download_api_version = '3.0-preview.2'
-agent_working_folder = '{0}/VSTSAgent'.format('')
+agent_working_folder = '/VSTSAgent'
 update_file_name = 'EXTENSIONUPDATE'
 
 targets_api_version = '4.1-preview.1'

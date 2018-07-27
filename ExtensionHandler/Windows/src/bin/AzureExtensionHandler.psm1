@@ -309,6 +309,28 @@ function Get-HandlerSettings
 
 <#
 .Synopsis
+   Create a new file in the agent folder to indicate that an extension update is going on. This is to prevent
+   subsequent uninstall and install from reconfiguring the agent
+#>
+function Set-ExtensionUpdateFile
+{
+    [CmdletBinding()]
+    param
+    ()
+
+    . $PSScriptRoot\Constants.ps1
+    Write-Log "Setting extension update file in $agentWorkingFolder"
+
+    try
+    {
+        New-Item -ItemType File -Path "$agentWorkingFolder\$updateFileName" -Value "" -Force
+    }
+    catch
+    {}
+}
+
+<#
+.Synopsis
    Save current sequence number as last used sequence number. This information is saved in a file
 #>
 function Set-LastSequenceNumber
@@ -990,4 +1012,5 @@ Export-ModuleMember `
         Set-ExtensionDisabledMarkup, `
         Remove-ExtensionDisabledMarkup, `
         Test-ExtensionDisabledMarkup, `
-        Set-JsonContent
+        Set-JsonContent, `
+        Set-ExtensionUpdateFile

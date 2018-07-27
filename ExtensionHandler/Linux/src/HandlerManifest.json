@@ -5,7 +5,7 @@
     "installCommand": "AzureRM.py",
     "enableCommand":      "AzureRM.py -enable",
     "uninstallCommand": "AzureRM.py -uninstall",
-    "updateCommand": "AzureRM.py",
+    "updateCommand": "AzureRM.py -update",
     "disableCommand": "AzureRM.py -disable",
     "rebootAfterInstall": false,
     "reportHeartbeat":    false

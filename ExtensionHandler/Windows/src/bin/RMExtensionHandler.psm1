@@ -518,7 +518,7 @@ function Create-AgentWorkingFolder {
     [CmdletBinding()]
     param()
 
-    $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
+    . $PSScriptRoot\Constants.ps1
     Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
     if(!(Test-Path $agentWorkingFolder))
     {

@@ -16,13 +16,14 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionHandler.psm1 -DisableNameChecking
 Import-Module $PSScriptRoot\RMExtensionStatus.psm1
-"$PSScriptRoot\Constants.ps1"
+Import-Module $PSScriptRoot\Log.psm1
+. "$PSScriptRoot\Constants.ps1"
 
 Initialize-ExtensionLogFile
 $config = Get-ConfigurationFromSettings
 $configuredAgentExists = Test-AgentAlreadyExists $config
 $extensionUpdateFile = "$agentWorkingFolder\$updateFileName"
-$isUpdateExtensionScenario = Test-Path extensionUpdateFile
+$isUpdateExtensionScenario = Test-Path $extensionUpdateFile
 if (!$isUpdateExtensionScenario) 
 {
     if ($configuredAgentExists) 
@@ -32,7 +33,7 @@ if (!$isUpdateExtensionScenario)
 }
 else
 {
-    Write-Log "Extension update scenario. Deleting the temp file created."
+    Write-Log "Extension update scenario. Deleting the file $agentWorkingFolder\$updateFileName."
     Remove-Item -Path $extensionUpdateFile -Force
 }
 Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success

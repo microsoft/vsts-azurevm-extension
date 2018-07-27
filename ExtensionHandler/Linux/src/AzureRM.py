@@ -519,7 +519,7 @@ def uninstall():
     if(configured_agent_exists == True):
       remove_existing_agent(operation)
   else:
-    handler_utility.log('Extension update scenario. Deleting the temp file created.')
+    handler_utility.log('Extension update scenario. Deleting the file {0}/{1}'.format(Constants.agent_working_folder, Constants.update_file_name))
     os.remove(extension_update_file)
   code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
   message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']

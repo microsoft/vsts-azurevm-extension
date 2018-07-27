@@ -11,6 +11,9 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
 }
 
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
-Start-RMExtensionHandler
+Import-Module $PSScriptRoot\RMExtensionStatus.psm1
+Import-Module $PSScriptRoot\Log.psm1
+
+Initialize-ExtensionLogFile
 Set-ExtensionUpdateFile
 Set-HandlerStatus $RM_Extension_Status.Updated.Code $RM_Extension_Status.Updated.Message -Status success

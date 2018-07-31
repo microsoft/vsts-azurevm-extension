@@ -12,6 +12,9 @@ $platform = "win-x64"
 $agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
 $updateFileName = "EXTENSIONUPDATE"
 
+# markup file to detect whether extension has been previously disabled
+$disabledMarkupFile = "EXTENSIONDISABLED"
+
 ## PS Version
 $minPSVersionSupported = 3
 

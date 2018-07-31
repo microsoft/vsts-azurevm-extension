@@ -17,7 +17,6 @@ configured_agent_exists = False
 agent_configuration_required = True
 config = {}
 root_dir = ''
-markup_file_format = '{0}/EXTENSIONDISABLED'
 
 def get_last_sequence_number_file_path():
   global root_dir
@@ -51,8 +50,7 @@ def set_last_sequence_number():
     pass
 
 def set_extension_disabled_markup():
-  global markup_file_format, root_dir
-  markup_file = markup_file_format.format(root_dir)
+  markup_file = '{0}/{1}'.format(Constants.agent_working_folder, Constants.disable_markup_file_name)
   handler_utility.log('Creating disabled markup file {0}'.format(markup_file))
   try:
     with open(markup_file, 'w') as f:
@@ -72,8 +70,7 @@ def create_extension_update_file():
     pass
 
 def test_extension_disabled_markup():
-  global markup_file_format, root_dir
-  markup_file = markup_file_format.format(root_dir)
+  markup_file = '{0}/{1}'.format(Constants.agent_working_folder, Constants.disable_markup_file_name)
   handler_utility.log('Testing whether disabled markup file exists: ' + markup_file)
   if(os.path.isfile(markup_file)):
     return True
@@ -81,8 +78,7 @@ def test_extension_disabled_markup():
     return False
 
 def remove_extension_disabled_markup():
-  global markup_file_format, root_dir
-  markup_file = markup_file_format.format(root_dir)
+  markup_file = '{0}/{1}'.format(Constants.agent_working_folder, Constants.disable_markup_file_name)
   handler_utility.log('Deleting disabled markup file if it exists' + markup_file)
   if(os.path.isfile(markup_file)):
     os.remove(markup_file)
@@ -476,23 +472,44 @@ def add_agent_tags():
   else:
     handler_utility.log('No tags provided for agent')
 
+def test_extension_settings_are_same_as_previous_version():
+  old_extension_settings_file_path = "{0}/{1}".format(Constants.agent_working_folder, Constants.disable_markup_file_name)
+  old_extension_settings_file_exists = os.path.isfile(old_extension_settings_file_path)
+  if(old_extension_settings_file_exists):
+    extension_settings_file_path = '{0}/{1}.settings'.format(handler_utility._context._config_dir , handler_utility._context._seq_no)
+    with open(old_extension_settings_file_path, 'r') as f:
+      old_extension_settings_file_contents = f.read()
+    with open(extension_settings_file_path, 'r') as f:
+      extension_settings_file_contents = f.read()
+    if(old_extension_settings_file_contents == extension_settings_file_contents):
+      return True
+  return False
+
 def enable():
   input_operation = 'Enable'
+  start_rm_extension_handler(input_operation)
+  
   ConfigureDeploymentAgent.set_logger(handler_utility.log)
   DownloadDeploymentAgent.set_logger(handler_utility.log)
-  start_rm_extension_handler(input_operation)
-  read_configutation_from_settings(input_operation)
-  execute_agent_pre_check()
-  remove_existing_agent_if_required()
-  download_agent_if_required()
-  install_dependencies()
-  configure_agent_if_required()
-  add_agent_tags()
+  if(test_extension_settings_are_same_as_previous_version()):
+    handler_utility.log("Skipping extension enable.")
+    code = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Code']
+    message = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Message']
+    handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
+  else:
+    read_configutation_from_settings(input_operation)
+    execute_agent_pre_check()
+    remove_existing_agent_if_required()
+    download_agent_if_required()
+    install_dependencies()
+    configure_agent_if_required()
+    add_agent_tags()
+    handler_utility.log('Extension is enabled.')
+    code = RMExtensionStatus.rm_extension_status['Enabled']['Code']
+    message = RMExtensionStatus.rm_extension_status['Enabled']['Message']
+    handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
+    handler_utility.log('Removing disable markup file..')
   set_last_sequence_number()
-  handler_utility.log('Extension is enabled. Removing any disable markup file..')
-  code = RMExtensionStatus.rm_extension_status['Enabled']['Code']
-  message = RMExtensionStatus.rm_extension_status['Enabled']['Message']
-  handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
   remove_extension_disabled_markup()
 
 def disable():

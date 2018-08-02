@@ -134,7 +134,7 @@ rm_extension_status = {
   'SkippingEnableSameSettingsAsPreviousVersion' : {
     'Code' : 28,
     'Message' : 'The extension settings are the same as the previous version. Skipping extension enable.',
-    'operationName' : 'Enable'
+    'operationName' : 'Skip enable'
   },
   #
   # Warnings

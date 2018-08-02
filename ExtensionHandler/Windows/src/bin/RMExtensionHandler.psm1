@@ -483,7 +483,9 @@ function Parse-VSTSUrl
     }
     catch
      {
-        throw "Failed to fetch the connection data for the url $restCallUrl : $_.Exception" 
+        Write-Log "Failed to fetch the connection data for the url $restCallUrl : $_.Exception"
+        $response = @{}
+        $response.deploymentType = 'hosted'
     }
     if (!$response.deploymentType -or $response.deploymentType -ne "hosted")
      {

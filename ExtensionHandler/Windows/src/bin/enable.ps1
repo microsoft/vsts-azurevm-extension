@@ -83,14 +83,26 @@ function Test-ExtensionSettingsAreSameAsPreviousVersion
         $oldExtensionSettingsFileContents = Get-Content($oldExtensionSettingsFilePath)
         $extensionSettingsFileContents = Get-Content($extensionSettingsFilePath)
         if($oldExtensionSettingsFileContents.ToString().Equals($extensionSettingsFileContents.ToString()))
-            {
-                return $true
-            }
+        {
+            Write-Log "Old and new extension version settings are same."
+            return $true
+        }
+        else
+        {
+            Write-Log "Old and new extension version settings are not same."
+            Write-Log "Old extension version settings: $oldExtensionSettingsFileContents"
+            Write-Log "New extension version settings: $extensionSettingsFileContents"
+        }
+    }
+    else
+    {
+        Write-Log "Old extension settings file does not exist in the agent directory. Will continue with enable.s"
     }
     return $false
 }
 
 Start-RMExtensionHandler
+$config = Get-ConfigurationFromSettings -isEnable $true
 $settingsAreSame = Test-ExtensionSettingsAreSameAsPreviousVersion
 if($settingsAreSame)
 {
@@ -99,7 +111,6 @@ if($settingsAreSame)
 }
 else
 {
-    $config = Get-ConfigurationFromSettings -isEnable $true
 
     ExecuteAgentPreCheck ([ref]$Enable_ConfiguredAgentExists) ([ref]$Enable_AgentConfigurationRequired)
 

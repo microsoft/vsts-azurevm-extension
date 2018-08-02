@@ -14,6 +14,4 @@ Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\Log.psm1
 
-Initialize-ExtensionLogFile
 Set-ExtensionUpdateFile
-Set-HandlerStatus $RM_Extension_Status.Updated.Code $RM_Extension_Status.Updated.Message -Status success

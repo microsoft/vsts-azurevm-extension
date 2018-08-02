@@ -12,6 +12,7 @@ import json
 import time
 from Utils.WAAgentUtil import waagent
 from distutils.version import LooseVersion
+import shutil
 
 configured_agent_exists = False
 agent_configuration_required = True
@@ -51,11 +52,10 @@ def set_last_sequence_number():
 
 def set_extension_disabled_markup():
   markup_file = '{0}/{1}'.format(Constants.agent_working_folder, Constants.disable_markup_file_name)
-  handler_utility.log('Creating disabled markup file {0}'.format(markup_file))
+  extension_settings_file_path = '{0}/{1}.settings'.format(handler_utility._context._config_dir , handler_utility._context._seq_no)
+  handler_utility.log('Writing contents of {0} to {1}'.format(extension_settings_file_path, markup_file))
   try:
-    with open(markup_file, 'w') as f:
-      f.write('')
-      f.close()
+    shutil.copyfile(extension_settings_file_path, markup_file)
   except Exception as e:
     pass
 
@@ -188,7 +188,8 @@ def get_deployment_type(vsts_url, pat_token):
     else:
       return 'onPremises'
   else:
-    raise Exception('Failed to fetch the connection data for the given url. Reason : {0}'.format(response.reason))
+    handler_utility.log('Failed to fetch the connection data for the given url. Reason : {0}'.format(response.reason))
+    return 'hosted'
 
 def format_tags_input(tags_input):
   tags = []
@@ -481,23 +482,23 @@ def test_extension_settings_are_same_as_previous_version():
       old_extension_settings_file_contents = f.read()
     with open(extension_settings_file_path, 'r') as f:
       extension_settings_file_contents = f.read()
-    if(old_extension_settings_file_contents == extension_settings_file_contents):
+    if(Util.ordered_json_object(json.loads(old_extension_settings_file_contents)) == Util.ordered_json_object(json.loads(extension_settings_file_contents))):
       return True
   return False
 
 def enable():
   input_operation = 'Enable'
   start_rm_extension_handler(input_operation)
-  
-  ConfigureDeploymentAgent.set_logger(handler_utility.log)
-  DownloadDeploymentAgent.set_logger(handler_utility.log)
+  read_configutation_from_settings(input_operation)
   if(test_extension_settings_are_same_as_previous_version()):
     handler_utility.log("Skipping extension enable.")
-    code = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Code']
-    message = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Message']
-    handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
+    ss_code = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Code']
+    sub_status_message = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Message']
+    operation_name = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['operationName']
+    handler_utility.set_handler_status(operation = 'Enable', ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   else:
-    read_configutation_from_settings(input_operation)
+    ConfigureDeploymentAgent.set_logger(handler_utility.log)
+    DownloadDeploymentAgent.set_logger(handler_utility.log)
     execute_agent_pre_check()
     remove_existing_agent_if_required()
     download_agent_if_required()
@@ -505,10 +506,10 @@ def enable():
     configure_agent_if_required()
     add_agent_tags()
     handler_utility.log('Extension is enabled.')
-    code = RMExtensionStatus.rm_extension_status['Enabled']['Code']
-    message = RMExtensionStatus.rm_extension_status['Enabled']['Message']
-    handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
     handler_utility.log('Removing disable markup file..')
+  code = RMExtensionStatus.rm_extension_status['Enabled']['Code']
+  message = RMExtensionStatus.rm_extension_status['Enabled']['Message']
+  handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
   set_last_sequence_number()
   remove_extension_disabled_markup()
 
@@ -543,11 +544,7 @@ def uninstall():
   handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)
 
 def update():
-  operation = 'Update'
   create_extension_update_file()
-  code = RMExtensionStatus.rm_extension_status['Updated']['Code']
-  message = RMExtensionStatus.rm_extension_status['Updated']['Message']
-  handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)
 
 def main():
   waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')

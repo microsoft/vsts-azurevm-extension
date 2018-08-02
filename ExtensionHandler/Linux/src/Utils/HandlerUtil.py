@@ -490,3 +490,12 @@ def empty_dir(dir_name):
       os.remove(os.path.join(dirpath, filename))
     for dirname in dirnames:
       os.rmdir(os.path.join(dirpath, dirname))
+
+def ordered_json_object(obj):
+  if isinstance(obj, dict):
+    return sorted((k, ordered_json_object(v)) for k, v in obj.items())
+  if isinstance(obj, list):
+    return sorted(ordered_json_object(x) for x in obj)
+  else:
+    return obj
+

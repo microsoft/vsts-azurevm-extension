@@ -316,7 +316,6 @@ function Set-ExtensionUpdateFile
     ()
 
     . $PSScriptRoot\Constants.ps1
-    Write-Log "Setting extension update file in $agentWorkingFolder"
 
     try
     {

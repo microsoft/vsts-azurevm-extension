@@ -495,7 +495,7 @@ def enable():
     ss_code = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['operationName']
-    handler_utility.set_handler_status(operation = 'Enable', ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   else:
     ConfigureDeploymentAgent.set_logger(handler_utility.log)
     DownloadDeploymentAgent.set_logger(handler_utility.log)

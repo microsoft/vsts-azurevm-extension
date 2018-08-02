@@ -107,7 +107,7 @@ $settingsAreSame = Test-ExtensionSettingsAreSameAsPreviousVersion
 if($settingsAreSame)
 {
     Write-Log "Skipping extension enable."
-    Set-HandlerStatus $RM_Extension_Status.SkippingEnableSameSettingsAsPreviousVersion.Code $RM_Extension_Status.SkippingEnableSameSettingsAsPreviousVersion.Message -Status success
+    Add-HandlerSubStatus $RM_Extension_Status.SkippingEnableSameSettingsAsPreviousVersion.Code $RM_Extension_Status.SkippingEnableSameSettingsAsPreviousVersion.Message -operationName $RM_Extension_Status.SkippingEnableSameSettingsAsPreviousVersion.operationName
 }
 else
 {
@@ -123,9 +123,9 @@ else
     Add-AgentTags $config
     
     Write-Log "Extension is enabled."
-    Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
 }
 
+Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
 Set-LastSequenceNumber
 Write-Log "Removing disable markup file.."
 Remove-ExtensionDisabledMarkup

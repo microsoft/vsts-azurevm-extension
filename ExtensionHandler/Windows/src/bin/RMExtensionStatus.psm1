@@ -159,7 +159,7 @@ $global:RM_Extension_Status = @{
     SkippingEnableSameSettingsAsPreviousVersion = @{
         Code = 29
         Message = 'The extension settings are the same as the previous version. Skipping extension enable.'
-        operationName = 'Enable'
+        operationName = 'Skip enable'
     }
 
     #

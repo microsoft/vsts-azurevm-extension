@@ -70,21 +70,62 @@ function ConfigureAgentIfRequired
     }
 }
 
+function Test-ExtensionSettingsAreSameAsPreviousVersion
+{
+    . $PSScriptRoot\Constants.ps1
+    $oldExtensionSettingsFilePath = "$agentWorkingFolder\$disabledMarkupFile"
+    $oldExtensionSettingsFileExists = Test-Path $oldExtensionSettingsFilePath
+    if($oldExtensionSettingsFileExists)
+    {
+        $handlerEnvironment = Get-HandlerEnvironment
+        $sequenceNumber = Get-HandlerExecutionSequenceNumber
+        $extensionSettingsFilePath = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
+        $oldExtensionSettingsFileContents = Get-Content($oldExtensionSettingsFilePath)
+        $extensionSettingsFileContents = Get-Content($extensionSettingsFilePath)
+        if($oldExtensionSettingsFileContents.ToString().Equals($extensionSettingsFileContents.ToString()))
+        {
+            Write-Log "Old and new extension version settings are same."
+            return $true
+        }
+        else
+        {
+            Write-Log "Old and new extension version settings are not same."
+            Write-Log "Old extension version settings: $oldExtensionSettingsFileContents"
+            Write-Log "New extension version settings: $extensionSettingsFileContents"
+        }
+    }
+    else
+    {
+        Write-Log "Old extension settings file does not exist in the agent directory. Will continue with enable."
+    }
+    return $false
+}
+
 Start-RMExtensionHandler
 $config = Get-ConfigurationFromSettings -isEnable $true
+$settingsAreSame = Test-ExtensionSettingsAreSameAsPreviousVersion
+if($settingsAreSame)
+{
+    Write-Log "Skipping extension enable."
+    Add-HandlerSubStatus $RM_Extension_Status.SkippingEnableSameSettingsAsPreviousVersion.Code $RM_Extension_Status.SkippingEnableSameSettingsAsPreviousVersion.Message -operationName $RM_Extension_Status.SkippingEnableSameSettingsAsPreviousVersion.operationName
+}
+else
+{
 
-ExecuteAgentPreCheck ([ref]$Enable_ConfiguredAgentExists) ([ref]$Enable_AgentConfigurationRequired)
+    ExecuteAgentPreCheck ([ref]$Enable_ConfiguredAgentExists) ([ref]$Enable_AgentConfigurationRequired)
 
-RemoveExistingAgentIfRequired
+    RemoveExistingAgentIfRequired
 
-DownloadAgentIfRequired
+    DownloadAgentIfRequired
 
-ConfigureAgentIfRequired
+    ConfigureAgentIfRequired
 
-Add-AgentTags $config
+    Add-AgentTags $config
+    
+    Write-Log "Extension is enabled."
+}
 
-Set-LastSequenceNumber
-
-Write-Log "Extension is enabled. Removing any disable markup file.."
 Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
+Set-LastSequenceNumber
+Write-Log "Removing disable markup file.."
 Remove-ExtensionDisabledMarkup

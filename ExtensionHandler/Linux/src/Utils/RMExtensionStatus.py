@@ -131,6 +131,11 @@ rm_extension_status = {
     'Message' : 'The extension has been updated successfully.',
     'operationName' : 'Updated'
   },
+  'SkippingEnableSameSettingsAsPreviousVersion' : {
+    'Code' : 28,
+    'Message' : 'The extension settings are the same as the previous version. Skipping extension enable.',
+    'operationName' : 'Skip enable'
+  },
   #
   # Warnings
   #

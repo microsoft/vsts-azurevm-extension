@@ -83,9 +83,6 @@ $script:logFilePath = ""
 # Last seq no file
 $script:lastSequenceNumberFile = "$PSScriptRoot\..\LASTSEQNUM"
 
-# markup file to detect whether extension has been previously disabled
-$script:disabledMarkupFile = "$PSScriptRoot\..\EXTENSIONDISABLED"
-
 <#
 .Synopsis
    Clears the values cached by the Get-* functions
@@ -319,7 +316,6 @@ function Set-ExtensionUpdateFile
     ()
 
     . $PSScriptRoot\Constants.ps1
-    Write-Log "Setting extension update file in $agentWorkingFolder"
 
     try
     {
@@ -377,7 +373,8 @@ function Get-LastSequenceNumber
 
 <#
 .Synopsis
-   Save a dummy markup file which indicates that extension has been disabled
+   Create a file in the agent root directory with the contents copied from the settings file. Settings
+   file contents are taken to handle extension update scenario.
 #>
 function Set-ExtensionDisabledMarkup
 {
@@ -385,16 +382,21 @@ function Set-ExtensionDisabledMarkup
     param
     ()
 
-    $markupFile =$script:disabledMarkupFile
-
-    Write-Log "Create disabled markup file $markupFile"
+    . $PSScriptRoot\Constants.ps1
+    $markupFile = "$agentWorkingFolder\$disabledMarkupFile"
+    $handlerEnvironment = Get-HandlerEnvironment
+    $sequenceNumber = Get-HandlerExecutionSequenceNumber
+    $extensionSettingsFile = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
 
     try
     {
-        New-Item -ItemType File -Path $markupFile -Force
+        Write-Log "Writing contents of $extensionSettingsFile to $markupFile"
+        Get-Content -Path $extensionSettingsFile | Set-Content -Path $markupFile -Force
     }
     catch
-    {}
+    {
+        Write-Log "Error while creating $markupFile or writing to it."
+    }
 }
 
 <#
@@ -407,7 +409,8 @@ function Remove-ExtensionDisabledMarkup
     param
     ()
 
-    $markupFile =$script:disabledMarkupFile
+    . $PSScriptRoot\Constants.ps1
+    $markupFile = "$agentWorkingFolder\$disabledMarkupFile"
 
     Write-Log "Deleting disabled markup file $markupFile"
 
@@ -429,7 +432,8 @@ function Test-ExtensionDisabledMarkup
     param
     ()
 
-    $markupFile =$script:disabledMarkupFile
+    . $PSScriptRoot\Constants.ps1
+    $markupFile = "$agentWorkingFolder\$disabledMarkupFile"
 
     Write-Log "Testing whether deleted markup file exists: $markupFile"
 

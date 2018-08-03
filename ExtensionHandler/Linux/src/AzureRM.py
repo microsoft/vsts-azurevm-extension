@@ -483,7 +483,14 @@ def test_extension_settings_are_same_as_previous_version():
     with open(extension_settings_file_path, 'r') as f:
       extension_settings_file_contents = f.read()
     if(Util.ordered_json_object(json.loads(old_extension_settings_file_contents)) == Util.ordered_json_object(json.loads(extension_settings_file_contents))):
+      handler_utility.log('Old and new extension version settings are same.')
       return True
+    else:
+      handler_utility.log('Old and new extension version settings are not same.')
+      handler_utility.log('Old extension version settings: {0}'.format(old_extension_settings_file_contents))
+      handler_utility.log('New extension version settings: {0}'.format(extension_settings_file_contents))
+  else:
+    handler_utility.log('Old extension settings file does not exist in the agent directory. Will continue with enable.')
   return False
 
 def enable():

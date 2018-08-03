@@ -96,7 +96,7 @@ function Test-ExtensionSettingsAreSameAsPreviousVersion
     }
     else
     {
-        Write-Log "Old extension settings file does not exist in the agent directory. Will continue with enable.s"
+        Write-Log "Old extension settings file does not exist in the agent directory. Will continue with enable."
     }
     return $false
 }

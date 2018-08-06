@@ -19,10 +19,15 @@ def download_deployment_agent(vsts_url, user_name, pat_token, working_folder):
   agent_download_url = _get_agent_download_url(vsts_url, user_name, pat_token)
   _write_download_log('url for downloading the agent is {0}'.format(agent_download_url))
   _write_download_log('Getting the target tar gz file path')
-  agent_target_file_path = _get_agent_target_path(working_folder, Constants.agent_target_name)
+  agent_target_file_path = os.path.join(working_folder, Constants.agent_target_name)
   _write_download_log('\t\t Deployment agent will be downloaded at {0}'.format(agent_target_file_path))
   _download_deployment_agent_internal(agent_download_url, agent_target_file_path)
   _write_download_log('Downloaded deployment agent')
+  for dirpath, dirnames, filenames in os.walk(working_folder):
+    if '.agent' in filenames:
+      raise Exception('Error while extracting the agent zip file. One or more agents are already configured at {0}.\
+      Unconfigure all the agents from the folder and all its subfolders and then try again.'.format(working_folder))
+  Util.empty_dir(working_folder)
   _write_download_log('Extracting tar gz file {0} to {1}'.format(agent_target_file_path, working_folder))
   _extract_target(agent_target_file_path, working_folder)
   _write_download_log('Done dowloading deployment agent')
@@ -69,10 +74,6 @@ def _get_agent_download_url(vsts_url, user_name, pat_token):
   legacy_package_data_url = vsts_url + package_data_address_format.format(legacy_platform_key, Constants.download_api_version)
   package_data = _get_agent_package_data(package_data_url, legacy_package_data_url, user_name, pat_token)
   return package_data
-
-def _get_agent_target_path(working_folder, agent_target_name):
-  Util.empty_dir(working_folder)
-  return os.path.join(working_folder, agent_target_name)
 
 def _download_deployment_agent_internal(agent_download_url, target):
   if(os.path.isfile(target)):

@@ -151,7 +151,7 @@ function WriteDownloadLog
     $configuredAgentsIfAny = Get-ChildItem -Path $target -Filter ".agent" -Recurse -Force
     if($configuredAgentsIfAny)
     {
-        throw "Error while extracting the agent zip file. One or more agents are already configured at $target.`
+        throw "One or more agents are already configured at $target.`
          Unconfigure all the agents from the folder and all its subfolders and then try again."
     }
     try

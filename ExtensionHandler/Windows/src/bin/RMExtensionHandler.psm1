@@ -215,6 +215,16 @@ function Remove-Agent {
         catch{
             if(($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder))
             {
+                Get-ChildItem -Path $config.AgentWorkingFolder -Force -Directory | % 
+                {
+                    Get-ChildItem -Path $_.FullName -Filter ".agent" -Recurse -Force
+                    if ($configuredAgentsIfAny) 
+                    {
+                        throw "Cannot rename the agent folder $target.`
+                        One or more agents are already configured at its subfolders. Unconfigure all the agents from all the subfolders and then try again."
+                    }
+                }
+
                 $global:IncludeWarningStatus = $true
                 [string]$timeSinceEpoch = Get-TimeSinceEpoch
                 $oldWorkingFolderName = $config.AgentWorkingFolder + $timeSinceEpoch

@@ -405,6 +405,10 @@ def remove_existing_agent(operation):
       handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
     except Exception as e:
       if(('Reason' in dir(e) and getattr(e, 'Reason') == 'UnConfigFailed') and (os.access(config['AgentWorkingFolder'], os.F_OK))):
+        agent_folder_child_items = os.listdir(config['AgentWorkingFolder'])
+        agent_folder_child_folders = [x for x in agent_folder_child_items if os.path.isdir(os.path.join(config['AgentWorkingFolder'], x))]
+        for child_folder in agent_folder_child_folders:
+          DownloadDeploymentAgent.raise_if_folder_contains_configured_agent(os.path.join(config['AgentWorkingFolder'], child_folder))
         Util.include_warning_status = True
         cur_time = '%.6f'%(time.time())
         old_agent_folder_name = config['AgentWorkingFolder'] + cur_time

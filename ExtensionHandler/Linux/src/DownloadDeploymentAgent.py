@@ -12,6 +12,12 @@ def set_logger(log_func):
   global log_function
   log_function = log_func
 
+def raise_if_folder_contains_configured_agent(folder_name):
+  for dirpath, dirnames, filenames in os.walk(folder_name):
+    if '.agent' in filenames:
+      raise Exception('One or more agents are already configured at {0}.\
+      Unconfigure all the agents from the directory and all its subdirectories and then try again.'.format(folder_name))
+
 def download_deployment_agent(vsts_url, user_name, pat_token, working_folder):
   if(user_name is None):
     user_name = ''
@@ -23,10 +29,7 @@ def download_deployment_agent(vsts_url, user_name, pat_token, working_folder):
   _write_download_log('\t\t Deployment agent will be downloaded at {0}'.format(agent_target_file_path))
   _download_deployment_agent_internal(agent_download_url, agent_target_file_path)
   _write_download_log('Downloaded deployment agent')
-  for dirpath, dirnames, filenames in os.walk(working_folder):
-    if '.agent' in filenames:
-      raise Exception('Error while extracting the agent zip file. One or more agents are already configured at {0}.\
-      Unconfigure all the agents from the folder and all its subfolders and then try again.'.format(working_folder))
+  raise_if_folder_contains_configured_agent(working_folder)
   Util.empty_dir(working_folder)
   _write_download_log('Extracting tar gz file {0} to {1}'.format(agent_target_file_path, working_folder))
   _extract_target(agent_target_file_path, working_folder)

@@ -195,33 +195,6 @@ function Register-Agent {
 
 <#
 .Synopsis
-    Tries to clean the agent folder. Will fail if some other agent is running inside one or more of the subfolders.
-#>
-function Clean-AgentFolder {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true, Position = 0)]
-        [string] $agentWorkingFolder
-    )
-
-    Write-Log ("Trying to remove the agent folder")
-    $topLevelAgentFile = "$agentWorkingFolder\.agent"
-    if (Test-Path $topLevelAgentFile) {
-        Remove-Item -Path $topLevelAgentFile -Force
-    }
-    Get-ChildItem -Path $agentWorkingFolder -Force -Directory | % {
-        $configuredAgentsIfAny = Get-ChildItem -Path $_.FullName -Filter ".agent" -Recurse -Force
-        if ($configuredAgentsIfAny) {
-            throw "Cannot remove the agent folder. One or more agents are already configured at $agentWorkingFolder.`
-            Unconfigure all the agents from the folder and all its subfolders and then try again."
-        }
-    }
-    Remove-Item -Path $agentWorkingFolder -ErrorAction Stop -Recurse -Force
-    Create-AgentWorkingFolder
-}
-
-<#
-.Synopsis
    Unconfigures and removes Deployment agent.
    Currently, uninstall is no-op for agent. It will still keep running and will still be registered to deployment group. The purpose here is to just inform user about this
 #>

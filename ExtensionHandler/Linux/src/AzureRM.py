@@ -393,6 +393,18 @@ def register_agent():
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName'], 'Enable', 6)
 
+def clean_agent_folder(agent_folder):
+  handler_utility.log("Trying to remove the agent folder")
+  top_level_agent_file = "{0}/.agent".format(agent_folder)
+  if(os.path.isfile(top_level_agent_file)):
+    os.remove(top_level_agent_file)
+  agent_folder_child_items = os.listdir(config['AgentWorkingFolder'])
+  agent_folder_child_folders = [x for x in agent_folder_child_items if os.path.isdir(os.path.join(config['AgentWorkingFolder'], x))]
+  for child_folder in agent_folder_child_folders:
+    DownloadDeploymentAgent.raise_if_folder_contains_configured_agent(os.path.join(config['AgentWorkingFolder'], child_folder))
+  shutil.rmtree(agent_folder)
+  create_agent_working_folder()
+
 def remove_existing_agent(operation):
   global config
   try:
@@ -403,31 +415,15 @@ def remove_existing_agent(operation):
       sub_status_message = RMExtensionStatus.rm_extension_status['RemovedAgent']['Message']
       operation_name = RMExtensionStatus.rm_extension_status['RemovedAgent']['operationName']
       handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+      clean_agent_folder
     except Exception as e:
       if(('Reason' in dir(e) and getattr(e, 'Reason') == 'UnConfigFailed') and (os.access(config['AgentWorkingFolder'], os.F_OK))):
-        agent_folder_child_items = os.listdir(config['AgentWorkingFolder'])
-        agent_folder_child_folders = [x for x in agent_folder_child_items if os.path.isdir(os.path.join(config['AgentWorkingFolder'], x))]
-        for child_folder in agent_folder_child_folders:
-          DownloadDeploymentAgent.raise_if_folder_contains_configured_agent(os.path.join(config['AgentWorkingFolder'], child_folder))
-        Util.include_warning_status = True
-        cur_time = '%.6f'%(time.time())
-        old_agent_folder_name = config['AgentWorkingFolder'] + cur_time
-        handler_utility.log('Failed to unconfigure the VSTS agent. Renaming the agent directory to {0}.'.format(old_agent_folder_name))
         agent_name = ConfigureDeploymentAgent.get_agent_setting(config['AgentWorkingFolder'], 'agentName')
-        handler_utility.log('Please delete the agent {0} manually from the deployment group.'.format(agent_name))
-        rename_agent_folder_proc = subprocess.Popen('mv {0} {1}'.format(config['AgentWorkingFolder'], old_agent_folder_name).split(' '), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-        std_out, std_err = rename_agent_folder_proc.communicate()
-        return_code = rename_agent_folder_proc.returncode
-        handler_utility.log('Renaming agent directory process exit code : {0}'.format(return_code))
-        handler_utility.log('stdout : {0}'.format(std_out))
-        handler_utility.log('srderr : {0}'.format(std_err))
-        if(not (return_code == 0)):
-          raise Exception('Renaming of agent directory failed with error : {0}'.format(std_err))
-        create_agent_working_folder()
         ss_code = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['Code']
         sub_status_message = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['Message'].format(agent_name)
         operation_name = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['operationName']
         handler_utility.set_handler_status(ss_code = ss_code, sub_status = 'warning', sub_status_message = sub_status_message, operation_name = operation_name)
+        clean_agent_folder
       else:
         raise e
     ConfigureDeploymentAgent.setting_params = {}

@@ -195,6 +195,33 @@ function Register-Agent {
 
 <#
 .Synopsis
+    Tries to clean the agent folder. Will fail if some other agent is running inside one or more of the subfolders.
+#>
+function Clean-AgentFolder {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true, Position = 0)]
+        [string] $agentWorkingFolder
+    )
+
+    Write-Log ("Trying to remove the agent folder")
+    $topLevelAgentFile = "$agentWorkingFolder\.agent"
+    if (Test-Path $topLevelAgentFile) {
+        Remove-Item -Path $topLevelAgentFile -Force
+    }
+    Get-ChildItem -Path $agentWorkingFolder -Force -Directory | % {
+        $configuredAgentsIfAny = Get-ChildItem -Path $_.FullName -Filter ".agent" -Recurse -Force
+        if ($configuredAgentsIfAny) {
+            throw "Cannot remove the agent folder. One or more agents are already configured at $agentWorkingFolder.`
+            Unconfigure all the agents from the folder and all its subfolders and then try again."
+        }
+    }
+    Remove-Item -Path $agentWorkingFolder -ErrorAction Stop -Recurse -Force
+    Create-AgentWorkingFolder
+}
+
+<#
+.Synopsis
    Unconfigures and removes Deployment agent.
    Currently, uninstall is no-op for agent. It will still keep running and will still be registered to deployment group. The purpose here is to just inform user about this
 #>
@@ -211,54 +238,17 @@ function Remove-Agent {
         try{
             Invoke-RemoveAgentScript $config
             Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
+            Clean-AgentFolder $config.AgentWorkingFolder
         }
         catch{
             if(($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder))
             {
-                Get-ChildItem -Path $config.AgentWorkingFolder -Force -Directory | % 
-                {
-                    Get-ChildItem -Path $_.FullName -Filter ".agent" -Recurse -Force
-                    if ($configuredAgentsIfAny) 
-                    {
-                        throw "Cannot rename the agent folder $target.`
-                        One or more agents are already configured at its subfolders. Unconfigure all the agents from all the subfolders and then try again."
-                    }
-                }
-
-                $global:IncludeWarningStatus = $true
-                [string]$timeSinceEpoch = Get-TimeSinceEpoch
-                $oldWorkingFolderName = $config.AgentWorkingFolder + $timeSinceEpoch
-                $agentSettingPath = Join-Path $config.AgentWorkingFolder $agentSetting
-                $agentSettings = Get-Content -Path $agentSettingPath | Out-String | ConvertFrom-Json
-                $agentName = $($agentSettings.agentName)
-                Write-Log ("Renaming agent folder to {0}" -f $oldWorkingFolderName)
-                Write-Log ("Please delete the agent {0} manually from the deployment group." -f $agentName)
-                for($i = 0; $i -lt 60; $i++)
-                {
-                    try
-                    {
-                        Rename-Item $config.AgentWorkingFolder $oldWorkingFolderName -ErrorAction Stop
-                        break
-                    }
-                    catch
-                    {
-                        if(([bool]($_.PSobject.Properties.name -match "FullyQualifiedErrorId")) -and ($_.FullyQualifiedErrorId.Contains("RenameItemIOError")))
-                        {
-                            $retryInterval = 5
-                            Write-Log "Agent service probably has not stopped yet. Will retry renaming the agent folder after $retryInterval seconds."
-                            Start-Sleep -s $retryInterval
-                        }
-                        else
-                        {
-                            throw "Unexpected error in agent folder rename: $_"
-                        }
-                    }
-                }
-                Create-AgentWorkingFolder
                 $message = ($RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Message -f $agentName)
                 Add-HandlerSubStatus $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Code $message -operationName $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.operationName -SubStatus 'warning'
+                Clean-AgentFolder $config.AgentWorkingFolder
             }
             else{
+                Write-Log "Some unexpected error occured: $_"
                 throw $_
             }
         }

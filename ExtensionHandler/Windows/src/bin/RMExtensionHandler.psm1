@@ -551,6 +551,7 @@ function Invoke-GetAgentScript {
     [hashtable] $config
     )
 
+    Clean-AgentFolder $target
     . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
     $agentZipFilePath = Join-Path $workingFolder $agentZipName
     $job = Start-Job -ScriptBlock {

@@ -178,11 +178,9 @@ function Clean-AgentFolder {
     [Parameter(Mandatory=$true)]
     [string]$target
     )
-    Clean-AgentFolder $target
+    
     try
     {
-        $sourceZipFileItem = Get-Item -Path $sourceZipFile
-        Remove-Item "$target\*" -Recurse -Exclude $sourceZipFileItem.Name -Force
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         [System.IO.Compression.ZipFile]::ExtractToDirectory($sourceZipFile, $target)
     }

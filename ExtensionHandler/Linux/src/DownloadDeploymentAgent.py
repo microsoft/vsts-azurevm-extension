@@ -14,14 +14,14 @@ def set_logger(log_func):
   log_function = log_func
 
 def create_agent_working_folder():
-  handler_utility.log('Working folder for VSTS agent : {0}'.format(Constants.agent_working_folder))
+  _write_download_log('Working folder for VSTS agent : {0}'.format(Constants.agent_working_folder))
   if(not os.path.isdir(Constants.agent_working_folder)):
-    handler_utility.log('Working folder does not exist. Creating it...')
+    _write_download_log('Working folder does not exist. Creating it...')
     os.makedirs(Constants.agent_working_folder, 0o700)
   return Constants.agent_working_folder
 
 def clean_agent_folder(agent_folder):
-  _write_download_log.log("Trying to remove the agent folder")
+  _write_download_log("Trying to remove the agent folder")
   top_level_agent_file = "{0}/.agent".format(agent_folder)
   if(os.path.isfile(top_level_agent_file)):
     os.remove(top_level_agent_file)

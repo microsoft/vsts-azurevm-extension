@@ -209,13 +209,6 @@ def format_tags_input(tags_input):
       ret_val.append(x)
   return ret_val
 
-def create_agent_working_folder():
-  handler_utility.log('Working folder for VSTS agent : {0}'.format(Constants.agent_working_folder))
-  if(not os.path.isdir(Constants.agent_working_folder)):
-    handler_utility.log('Working folder does not exist. Creating it...')
-    os.makedirs(Constants.agent_working_folder, 0o700)
-  return Constants.agent_working_folder
-
 def read_configutation_from_settings(operation):
   global config
   try:
@@ -280,7 +273,7 @@ def read_configutation_from_settings(operation):
     configure_agent_as_username = ''
     if(public_settings.has_key('UserName')):
       configure_agent_as_username = public_settings['UserName']
-    agent_working_folder = create_agent_working_folder()
+    agent_working_folder = DownloadDeploymentAgent.create_agent_working_folder()
 
     handler_utility.log('Done reading config settings from file...')
     ss_code = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['Code']
@@ -393,18 +386,6 @@ def register_agent():
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName'], 'Enable', 6)
 
-def clean_agent_folder(agent_folder):
-  handler_utility.log("Trying to remove the agent folder")
-  top_level_agent_file = "{0}/.agent".format(agent_folder)
-  if(os.path.isfile(top_level_agent_file)):
-    os.remove(top_level_agent_file)
-  agent_folder_child_items = os.listdir(config['AgentWorkingFolder'])
-  agent_folder_child_folders = [x for x in agent_folder_child_items if os.path.isdir(os.path.join(config['AgentWorkingFolder'], x))]
-  for child_folder in agent_folder_child_folders:
-    DownloadDeploymentAgent.raise_if_folder_contains_configured_agent(os.path.join(config['AgentWorkingFolder'], child_folder))
-  shutil.rmtree(agent_folder)
-  create_agent_working_folder()
-
 def remove_existing_agent(operation):
   global config
   try:
@@ -415,7 +396,7 @@ def remove_existing_agent(operation):
       sub_status_message = RMExtensionStatus.rm_extension_status['RemovedAgent']['Message']
       operation_name = RMExtensionStatus.rm_extension_status['RemovedAgent']['operationName']
       handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-      clean_agent_folder
+      DownloadDeploymentAgent.clean_agent_folder()
     except Exception as e:
       if(('Reason' in dir(e) and getattr(e, 'Reason') == 'UnConfigFailed') and (os.access(config['AgentWorkingFolder'], os.F_OK))):
         agent_name = ConfigureDeploymentAgent.get_agent_setting(config['AgentWorkingFolder'], 'agentName')
@@ -423,7 +404,7 @@ def remove_existing_agent(operation):
         sub_status_message = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['Message'].format(agent_name)
         operation_name = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['operationName']
         handler_utility.set_handler_status(ss_code = ss_code, sub_status = 'warning', sub_status_message = sub_status_message, operation_name = operation_name)
-        clean_agent_folder
+        DownloadDeploymentAgent.clean_agent_folder()
       else:
         raise e
     ConfigureDeploymentAgent.setting_params = {}

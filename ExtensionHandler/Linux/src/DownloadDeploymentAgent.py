@@ -18,19 +18,17 @@ def create_agent_working_folder():
   if(not os.path.isdir(Constants.agent_working_folder)):
     _write_download_log('Working folder does not exist. Creating it...')
     os.makedirs(Constants.agent_working_folder, 0o700)
-  return Constants.agent_working_folder
 
-def clean_agent_folder(agent_folder):
+def clean_agent_folder():
   _write_download_log("Trying to remove the agent folder")
-  top_level_agent_file = "{0}/.agent".format(agent_folder)
+  top_level_agent_file = "{0}/.agent".format(Constants.agent_working_folder)
   if(os.path.isfile(top_level_agent_file)):
     os.remove(top_level_agent_file)
-  for dirpath, dirnames, filenames in os.walk(agent_folder):
+  for dirpath, dirnames, filenames in os.walk(Constants.agent_working_folder):
     if '.agent' in filenames:
       raise Exception('One or more agents are already configured at {0}.\
-      Unconfigure all the agents from the directory and all its subdirectories and then try again.'.format(agent_folder))
-  shutil.rmtree(agent_folder)
-  create_agent_working_folder()
+      Unconfigure all the agents from the directory and all its subdirectories and then try again.'.format(Constants.agent_working_folder))
+  shutil.rmtree(Constants.agent_working_folder)
 
 def download_deployment_agent(vsts_url, user_name, pat_token, working_folder):
   if(user_name is None):
@@ -40,7 +38,8 @@ def download_deployment_agent(vsts_url, user_name, pat_token, working_folder):
   _write_download_log('url for downloading the agent is {0}'.format(agent_download_url))
   _write_download_log('Getting the target tar gz file path')
   agent_target_file_path = os.path.join(working_folder, Constants.agent_target_name)
-  clean_agent_folder(working_folder)
+  clean_agent_folder()
+  create_agent_working_folder()
   _write_download_log('\t\t Deployment agent will be downloaded at {0}'.format(agent_target_file_path))
   _download_deployment_agent_internal(agent_download_url, agent_target_file_path)
   _write_download_log('Downloaded deployment agent')

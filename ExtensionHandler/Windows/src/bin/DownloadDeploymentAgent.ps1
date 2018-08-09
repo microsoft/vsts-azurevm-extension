@@ -120,30 +120,6 @@ function WriteDownloadLog
 .Synopsis
     Tries to clean the agent folder. Will fail if some other agent is running inside one or more of the subfolders.
 #>
-function Clean-AgentFolder {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true, Position = 0)]
-        [string] $agentWorkingFolder
-    )
-
-    WriteDownloadLog "Trying to remove the agent folder"
-    $topLevelAgentFile = "$agentWorkingFolder\.agent"
-    if (Test-Path $topLevelAgentFile) 
-    {
-        Remove-Item -Path $topLevelAgentFile -Force
-    }
-    Get-ChildItem -Path $agentWorkingFolder -Force -Directory | % {
-        $configuredAgentsIfAny = Get-ChildItem -Path $_.FullName -Filter ".agent" -Recurse -Force
-        if ($configuredAgentsIfAny) 
-        {
-            throw "Cannot remove the agent folder. One or more agents are already configured at $agentWorkingFolder.`
-            Unconfigure all the agents from the folder and all its subfolders and then try again."
-        }
-    }
-    Remove-Item -Path $agentWorkingFolder -ErrorAction Stop -Recurse -Force
-    Create-AgentWorkingFolder
-}
 
  function DowloadDeploymentAgent
  {

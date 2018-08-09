@@ -273,7 +273,6 @@ def read_configutation_from_settings(operation):
     configure_agent_as_username = ''
     if(public_settings.has_key('UserName')):
       configure_agent_as_username = public_settings['UserName']
-    agent_working_folder = DownloadDeploymentAgent.create_agent_working_folder()
 
     handler_utility.log('Done reading config settings from file...')
     ss_code = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['Code']
@@ -287,7 +286,7 @@ def read_configutation_from_settings(operation):
              'DeploymentGroup':deployment_group_name, 
              'AgentName':agent_name, 
              'Tags' : tags,
-             'AgentWorkingFolder':agent_working_folder,
+             'AgentWorkingFolder':Constants.agent_working_folder,
              'ConfigureAgentAsUserName': configure_agent_as_username
           }
   except Exception as e:

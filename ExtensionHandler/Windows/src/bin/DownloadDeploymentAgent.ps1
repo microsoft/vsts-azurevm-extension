@@ -116,11 +116,6 @@ function WriteDownloadLog
  }
  
 
-<#
-.Synopsis
-    Tries to clean the agent folder. Will fail if some other agent is running inside one or more of the subfolders.
-#>
-
  function DowloadDeploymentAgent
  {
     Param(

@@ -22,13 +22,14 @@ def create_agent_working_folder():
 def clean_agent_folder():
   _write_download_log("Trying to remove the agent folder")
   top_level_agent_file = "{0}/.agent".format(Constants.agent_working_folder)
-  if(os.path.isfile(top_level_agent_file)):
-    os.remove(top_level_agent_file)
-  for dirpath, dirnames, filenames in os.walk(Constants.agent_working_folder):
-    if '.agent' in filenames:
-      raise Exception('One or more agents are already configured at {0}.\
-      Unconfigure all the agents from the directory and all its subdirectories and then try again.'.format(Constants.agent_working_folder))
-  shutil.rmtree(Constants.agent_working_folder)
+  if(os.path.isdir(Constants.agent_working_folder)):
+    if(os.path.isfile(top_level_agent_file)):
+      os.remove(top_level_agent_file)
+    for dirpath, dirnames, filenames in os.walk(Constants.agent_working_folder):
+      if '.agent' in filenames:
+        raise Exception('One or more agents are already configured at {0}.\
+        Unconfigure all the agents from the directory and all its subdirectories and then try again.'.format(Constants.agent_working_folder))
+    shutil.rmtree(Constants.agent_working_folder)
 
 def download_deployment_agent(vsts_url, user_name, pat_token, working_folder):
   if(user_name is None):

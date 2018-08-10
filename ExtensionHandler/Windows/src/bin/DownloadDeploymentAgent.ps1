@@ -114,7 +114,6 @@ function WriteDownloadLog
     return $packageData.downloadUrl
    
  }
- 
 
  function DowloadDeploymentAgent
  {

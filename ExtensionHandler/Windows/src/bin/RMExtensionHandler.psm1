@@ -216,6 +216,9 @@ function Remove-Agent {
         catch{
             if(($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder))
             {
+                $agentSettingPath = Join-Path $config.AgentWorkingFolder $agentSetting	
+                $agentSettings = Get-Content -Path $agentSettingPath | Out-String | ConvertFrom-Json
+                $agentName = $($agentSettings.agentName)
                 $message = ($RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Message -f $agentName)
                 Add-HandlerSubStatus $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Code $message -operationName $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.operationName -SubStatus 'warning'
                 Clean-AgentFolder
@@ -552,19 +555,22 @@ function Clean-AgentFolder {
     param()
 
     . $PSScriptRoot\Constants.ps1
-    WriteDownloadLog "Trying to remove the agent folder"
-    $topLevelAgentFile = "$agentWorkingFolder\.agent"
-    if (Test-Path $topLevelAgentFile) 
+    if (Test-Path $agentWorkingFolder)
     {
-        Remove-Item -Path $topLevelAgentFile -Force
+        Write-Log "Trying to remove the agent folder"
+        $topLevelAgentFile = "$agentWorkingFolder\.agent"
+        if (Test-Path $topLevelAgentFile)
+        {
+            Remove-Item -Path $topLevelAgentFile -Force
+        }
+        $configuredAgentsIfAny = Get-ChildItem -Path $agentWorkingFolder -Filter ".agent" -Recurse -Force
+        if ($configuredAgentsIfAny) 
+        {
+            throw "Cannot remove the agent folder. One or more agents are already configured at $agentWorkingFolder.`
+            Unconfigure all the agents from the folder and all its subfolders and then try again."
+        }
+        Remove-Item -Path $agentWorkingFolder -ErrorAction Stop -Recurse -Force
     }
-    $configuredAgentsIfAny = Get-ChildItem -Path $agentWorkingFolder -Filter ".agent" -Recurse -Force
-    if ($configuredAgentsIfAny) 
-    {
-        throw "Cannot remove the agent folder. One or more agents are already configured at $agentWorkingFolder.`
-        Unconfigure all the agents from the folder and all its subfolders and then try again."
-    }
-    Remove-Item -Path $agentWorkingFolder -ErrorAction Stop -Recurse -Force
 }
 
 function Invoke-GetAgentScript {

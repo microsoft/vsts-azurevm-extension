@@ -4,6 +4,7 @@ import json
 import Constants
 import os
 import platform
+import shutil
 import Utils.HandlerUtil as Util
 
 log_function = None
@@ -12,6 +13,24 @@ def set_logger(log_func):
   global log_function
   log_function = log_func
 
+def create_agent_working_folder():
+  _write_download_log('Working folder for VSTS agent : {0}'.format(Constants.agent_working_folder))
+  if(not os.path.isdir(Constants.agent_working_folder)):
+    _write_download_log('Working folder does not exist. Creating it...')
+    os.makedirs(Constants.agent_working_folder, 0o700)
+
+def clean_agent_folder():
+  _write_download_log("Trying to remove the agent folder")
+  top_level_agent_file = "{0}/.agent".format(Constants.agent_working_folder)
+  if(os.path.isdir(Constants.agent_working_folder)):
+    if(os.path.isfile(top_level_agent_file)):
+      os.remove(top_level_agent_file)
+    for dirpath, dirnames, filenames in os.walk(Constants.agent_working_folder):
+      if '.agent' in filenames:
+        raise Exception('One or more agents are already configured at {0}.\
+        Unconfigure all the agents from the directory and all its subdirectories and then try again.'.format(Constants.agent_working_folder))
+    shutil.rmtree(Constants.agent_working_folder)
+
 def download_deployment_agent(vsts_url, user_name, pat_token, working_folder):
   if(user_name is None):
     user_name = ''
@@ -19,7 +38,9 @@ def download_deployment_agent(vsts_url, user_name, pat_token, working_folder):
   agent_download_url = _get_agent_download_url(vsts_url, user_name, pat_token)
   _write_download_log('url for downloading the agent is {0}'.format(agent_download_url))
   _write_download_log('Getting the target tar gz file path')
-  agent_target_file_path = _get_agent_target_path(working_folder, Constants.agent_target_name)
+  agent_target_file_path = os.path.join(working_folder, Constants.agent_target_name)
+  clean_agent_folder()
+  create_agent_working_folder()
   _write_download_log('\t\t Deployment agent will be downloaded at {0}'.format(agent_target_file_path))
   _download_deployment_agent_internal(agent_download_url, agent_target_file_path)
   _write_download_log('Downloaded deployment agent')
@@ -69,10 +90,6 @@ def _get_agent_download_url(vsts_url, user_name, pat_token):
   legacy_package_data_url = vsts_url + package_data_address_format.format(legacy_platform_key, Constants.download_api_version)
   package_data = _get_agent_package_data(package_data_url, legacy_package_data_url, user_name, pat_token)
   return package_data
-
-def _get_agent_target_path(working_folder, agent_target_name):
-  Util.empty_dir(working_folder)
-  return os.path.join(working_folder, agent_target_name)
 
 def _download_deployment_agent_internal(agent_download_url, target):
   if(os.path.isfile(target)):

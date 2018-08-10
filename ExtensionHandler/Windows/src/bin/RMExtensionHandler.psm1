@@ -211,44 +211,20 @@ function Remove-Agent {
         try{
             Invoke-RemoveAgentScript $config
             Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
+            Clean-AgentFolder
         }
         catch{
             if(($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder))
             {
-                $global:IncludeWarningStatus = $true
-                [string]$timeSinceEpoch = Get-TimeSinceEpoch
-                $oldWorkingFolderName = $config.AgentWorkingFolder + $timeSinceEpoch
-                $agentSettingPath = Join-Path $config.AgentWorkingFolder $agentSetting
+                $agentSettingPath = Join-Path $config.AgentWorkingFolder $agentSetting	
                 $agentSettings = Get-Content -Path $agentSettingPath | Out-String | ConvertFrom-Json
                 $agentName = $($agentSettings.agentName)
-                Write-Log ("Renaming agent folder to {0}" -f $oldWorkingFolderName)
-                Write-Log ("Please delete the agent {0} manually from the deployment group." -f $agentName)
-                for($i = 0; $i -lt 60; $i++)
-                {
-                    try
-                    {
-                        Rename-Item $config.AgentWorkingFolder $oldWorkingFolderName -ErrorAction Stop
-                        break
-                    }
-                    catch
-                    {
-                        if(([bool]($_.PSobject.Properties.name -match "FullyQualifiedErrorId")) -and ($_.FullyQualifiedErrorId.Contains("RenameItemIOError")))
-                        {
-                            $retryInterval = 5
-                            Write-Log "Agent service probably has not stopped yet. Will retry renaming the agent folder after $retryInterval seconds."
-                            Start-Sleep -s $retryInterval
-                        }
-                        else
-                        {
-                            throw "Unexpected error in agent folder rename: $_"
-                        }
-                    }
-                }
-                Create-AgentWorkingFolder
                 $message = ($RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Message -f $agentName)
                 Add-HandlerSubStatus $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Code $message -operationName $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.operationName -SubStatus 'warning'
+                Clean-AgentFolder
             }
             else{
+                Write-Log "Some unexpected error occured: $_"
                 throw $_
             }
         }
@@ -307,6 +283,7 @@ function Get-ConfigurationFromSettings {
 
     try
     {
+        . $PSScriptRoot\Constants.ps1
         Write-Log "Reading config settings from file..."
 
         #Retrieve settings from file
@@ -408,8 +385,6 @@ function Get-ConfigurationFromSettings {
                 $windowsLogonAccountName = $env:COMPUTERNAME + '\' + $windowsLogonAccountName
             }
         }
-
-        $agentWorkingFolder = Create-AgentWorkingFolder
 
         Write-Log "Done reading config settings from file..."
         Add-HandlerSubStatus $RM_Extension_Status.SuccessfullyReadSettings.Code $RM_Extension_Status.SuccessfullyReadSettings.Message -operationName $RM_Extension_Status.SuccessfullyReadSettings.operationName
@@ -571,6 +546,33 @@ function Format-TagsInput {
     return $uniqueTags
 }
 
+<#
+.Synopsis
+    Tries to clean the agent folder. Will fail if some other agent is running inside one or more of the subfolders.
+#>
+function Clean-AgentFolder {
+    [CmdletBinding()]
+    param()
+
+    . $PSScriptRoot\Constants.ps1
+    if (Test-Path $agentWorkingFolder)
+    {
+        Write-Log "Trying to remove the agent folder"
+        $topLevelAgentFile = "$agentWorkingFolder\.agent"
+        if (Test-Path $topLevelAgentFile)
+        {
+            Remove-Item -Path $topLevelAgentFile -Force
+        }
+        $configuredAgentsIfAny = Get-ChildItem -Path $agentWorkingFolder -Filter ".agent" -Recurse -Force
+        if ($configuredAgentsIfAny) 
+        {
+            throw "Cannot remove the agent folder. One or more agents are already configured at $agentWorkingFolder.`
+            Unconfigure all the agents from the folder and all its subfolders and then try again."
+        }
+        Remove-Item -Path $agentWorkingFolder -ErrorAction Stop -Recurse -Force
+    }
+}
+
 function Invoke-GetAgentScript {
     [CmdletBinding()]
     param(
@@ -578,6 +580,8 @@ function Invoke-GetAgentScript {
     [hashtable] $config
     )
 
+    Clean-AgentFolder
+    Create-AgentWorkingFolder
     . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
     $agentZipFilePath = Join-Path $workingFolder $agentZipName
     $job = Start-Job -ScriptBlock {

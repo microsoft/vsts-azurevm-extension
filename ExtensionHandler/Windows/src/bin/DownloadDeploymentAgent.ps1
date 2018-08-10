@@ -114,7 +114,7 @@ function WriteDownloadLog
     return $packageData.downloadUrl
    
  }
- 
+
  function DowloadDeploymentAgent
  {
     Param(
@@ -151,8 +151,6 @@ function WriteDownloadLog
     
     try
     {
-        $sourceZipFileItem = Get-Item -Path $sourceZipFile
-        Remove-Item "$target\*" -Recurse -Exclude $sourceZipFileItem.Name -Force
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         [System.IO.Compression.ZipFile]::ExtractToDirectory($sourceZipFile, $target)
     }

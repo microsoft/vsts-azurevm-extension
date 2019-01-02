@@ -6,12 +6,12 @@
       {
         "name": "VSTSAccountUrl",
         "type": "Microsoft.Common.TextBox",
-        "label": "Team Services Account Url",
-        "toolTip": "Enter the complete account url. For example, \"https://<accountname>.visualstudio.com\"",
+        "label": "Azure DevOps Organization Url",
+        "toolTip": "Enter the complete organization url. For example, \"https://dev.azure.com/organizationName\"",
         "constraints": {
           "required": true,
           "regex": "https:\\/\\/.+\\..+\\..+",
-          "validationMessage": "Account url must start with \"https://\" and must be a valid url."
+          "validationMessage": "Organization url must start with \"https://\" and must be a valid url."
         }
       },
       {
@@ -47,7 +47,7 @@
         "label": {
           "password": "Personal Access Token"
         },
-        "toolTip": "Enter the [Personal Access Token](https://go.microsoft.com/fwlink/?linkid=844181) which would be used to authenticate against Team Services account to download and configure agent",
+        "toolTip": "Enter the [Personal Access Token](https://go.microsoft.com/fwlink/?linkid=844181) which would be used to authenticate against Azure DevOps organization to download and configure agent",
         "constraints": {
           "required": true
         },

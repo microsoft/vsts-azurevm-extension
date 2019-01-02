@@ -1,9 +1,9 @@
 {
-  "displayName": "Team Services Agent For Linux",
+  "displayName": "Azure Pipelines Agent For Linux",
   "publisherDisplayName": "Microsoft Corp.",
-  "summary": "Team Services linux agent for deployment groups",
-  "description": "</p>Design and automate release pipelines seamlessly across your environments to any target platform using the <strong>Release Management service</strong> within <strong>Visual Studio Team Services (VSTS)</strong>.</p><p><strong>Team Services Agent</strong> extension can be installed to deploy software using VSTS to the virtual machines hosted in Microsoft Azure. 
-When installed, the extension automatically downloads the Team Services Build and Release Agent MSI, installs it, and registers the agent with the specified Deployment Group within your Team Services Account Project.</p></p><strong>Deployment groups</strong> help to organize and define permission boundaries around your machine agent pools, When you create a VSTS build or release definition, you could specify the Deployment Group and choose \"tags\" to deploy to multiple machines in a pool in parallel.</p></p>Legal Terms</br>By clicking the Create button, I acknowledge that I am getting this software from Microsoft Corp. and that the <a target=\"_blank\" href=\"http://go.microsoft.com/fwlink/?LinkId=828975\">legal terms</a> of Microsoft Corp. apply to it.</p>",
-  "link1": "VSTS Release Management",
-  "link2": "VSTS Deployment Groups"
+  "summary": "Azure Pipelines linux agent for deployment groups",
+  "description": "</p>Design and automate release pipelines seamlessly across your environments to any target platform using the <strong>Azure Pipelines service</strong> within <strong>Azure DevOps Services</strong>.</p><p><strong>Azure Pipelines Agent</strong> extension can be installed to deploy software using Azure DevOps Services to the virtual machines hosted in Microsoft Azure. 
+When installed, the extension automatically downloads the Azure Pipelines Agent MSI, installs it, and registers the agent with the specified Deployment Group within your Azure DevOps Organization Project.</p></p><strong>Deployment groups</strong> help to organize and define permission boundaries around your machine agent pools, When you create an Azure Pipelines build or release definition, you could specify the Deployment Group and choose \"tags\" to deploy to multiple machines in a pool in parallel.</p></p>Legal Terms</br>By clicking the Create button, I acknowledge that I am getting this software from Microsoft Corp. and that the <a target=\"_blank\" href=\"http://go.microsoft.com/fwlink/?LinkId=828975\">legal terms</a> of Microsoft Corp. apply to it.</p>",
+  "link1": "Azure Pipelines",
+  "link2": "Deployment Groups"
 }

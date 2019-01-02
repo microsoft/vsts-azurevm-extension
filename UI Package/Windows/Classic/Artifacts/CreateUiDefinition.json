@@ -7,7 +7,7 @@
         "name": "VSTSAccountUrl",
         "type": "Microsoft.Common.TextBox",
         "label": "Azure DevOps Organization Url",
-        "toolTip": "Enter the complete organization url. For example, \"https://<organizationname>.visualstudio.com\"",
+        "toolTip": "Enter the complete organization url. For example, \"https://dev.azure.com/organizationName\"",
         "constraints": {
           "required": true,
           "regex": "https:\\/\\/.+\\..+\\..+",

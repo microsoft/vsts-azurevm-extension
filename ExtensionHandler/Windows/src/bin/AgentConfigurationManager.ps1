@@ -101,7 +101,7 @@ function ApplyTagsToAgent
     [Parameter(Mandatory=$true)]
     [string]$tfsUrl,
     [Parameter(Mandatory=$true)]
-    [string]$projectName,
+    [string]$projectId,
     [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
@@ -112,7 +112,7 @@ function ApplyTagsToAgent
     [string]$tagsAsJsonString
     )
 
-    $restCallUrl = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets?api-version={3}" -f $tfsUrl, $projectName, $deploymentGroupId, $targetsAPIVersion)
+    $restCallUrl = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets?api-version={3}" -f $tfsUrl, $projectId, $deploymentGroupId, $targetsAPIVersion)
 
     WriteAddTagsLog "Url for adding tags - $restCallUrl"
 
@@ -141,7 +141,7 @@ function AddTagsToAgent
     [Parameter(Mandatory=$true)]
     [string]$tfsUrl,
     [Parameter(Mandatory=$true)]
-    [string]$projectName,
+    [string]$projectId,
     [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
@@ -152,7 +152,7 @@ function AddTagsToAgent
     [string]$tagsAsJsonString
     )
 
-    $restCallUrlToGetExistingTags = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets/{3}?api-version={4}" -f $tfsUrl, $projectName, $deploymentGroupId, $agentId, $targetsAPIVersion)
+    $restCallUrlToGetExistingTags = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets/{3}?api-version={4}" -f $tfsUrl, $projectId, $deploymentGroupId, $agentId, $targetsAPIVersion)
 
     WriteAddTagsLog "Url for adding getting existing tags if any - $restCallUrlToGetExistingTags"
 
@@ -191,22 +191,7 @@ function AddTagsToAgent
     }
 
     WriteAddTagsLog "Updating the tags for agent target - $agentId"
-    ApplyTagsToAgent -tfsUrl $tfsUrl -projectName $projectName -patToken $patToken -deploymentGroupId $deploymentGroupId -agentId $agentId -tagsAsJsonString $newTagsJsonString
-}
-
-function GetRESTCallHeader
-{
-    param(
-    [Parameter(Mandatory=$false)]
-    [string]$patToken
-    )
-
-    $basicAuth = ("{0}:{1}" -f '', $patToken)
-    $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
-    $basicAuth = [System.Convert]::ToBase64String($basicAuth)
-    $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
-
-    return $headers
+    ApplyTagsToAgent -tfsUrl $tfsUrl -projectId $projectId -patToken $patToken -deploymentGroupId $deploymentGroupId -agentId $agentId -tagsAsJsonString $newTagsJsonString
 }
 
 function CreateConfigCmdArgs

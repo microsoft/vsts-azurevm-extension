@@ -272,9 +272,63 @@ function Add-AgentTags {
     }
 }
 
+function Confirm-InputsAreValid {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
+    #Verify the project exists
+    $getProjectUrl = ( "{0}/_apis/projects/{1}api-version={4}" -f $config.VSTSUrl, $config.TeamProject, $projectAPIVersion)
+    WriteAddTagsLog "Url to check project exists - $getProjectUrl"
+    $headers = GetRESTCallHeader $config.PATToken
+    try
+    {
+        $ret = Invoke-RestMethod -Uri $getProjectUrl -headers $headers -Method Get
+    }
+    catch
+    {
+        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message ("The project {0} does not exist in the specified organization. Please provide a valid project name." -f $config.TeamProject)
+    }
+
+    #Verify the deployment group eixts
+    $getDeploymentGroupUrl = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets?api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroup, $projectAPIVersion)
+    WriteAddTagsLog "Url to check deployment group exists - $getProjectUrl"
+    $headers = GetRESTCallHeader $config.PATToken
+    $deploymentGroupData = @{}
+    try
+    {
+        $deploymentGroupData = Invoke-RestMethod -Uri $getDeploymentGroupUrl -headers $headers -Method Get
+    }
+    catch
+    {
+        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message ("The deployment group {0} does not exist in the project {1} in the specified organization. Please provide a valid deployment group name." -f $config.DeploymentGroup, $config.TeamProject)
+    }
+
+    #Verify the user has manage permissions on the deployment group
+    $deploymentGroupName = $deploymentGroupData.name
+    $deploymentGroupDescription = ""
+    if($deploymentGroupData.description)
+    {
+        $deploymentGroupDescription = $deploymentGroupData.description
+    }
+    $requestBody = "{'name':" + $deploymentGroupName + ",'description':" + $deploymentGroupDescription + "}"
+    try
+    {
+        $ret = Invoke-RestMethod -Uri $getDeploymentGroupUrl -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
+    }
+    catch
+    {
+        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message ("The user required 'Manage' permissions on the deployment group {0}." -f $config.DeploymentGroup)
+    }
+}
+
 <#
 .Synopsis
-   Reads .settings file and generates configuration settings required for downloading and configuring agent
+   Reads .settings file
+   Generates configuration settings required for downloading and configuring agent
+   Validates inputs
 #>
 function Get-ConfigurationFromSettings {
     [CmdletBinding()]
@@ -288,6 +342,7 @@ function Get-ConfigurationFromSettings {
 
         #Retrieve settings from file
         $settings = Get-HandlerSettings
+        Write-Log "Read config settings from file. Now validating inputs"
 
         $publicSettings = $settings['publicSettings']
         $protectedSettings = $settings['protectedSettings']
@@ -295,9 +350,12 @@ function Get-ConfigurationFromSettings {
         {
             $publicSettings = @{}
         }
+        if (-not $protectedSettings)
+        {
+            $protectedSettings = @{}
+        }
 
         $osVersion = Get-OSVersion
-
         if (!$osVersion.IsX64)
         {
             throw New-HandlerTerminatingError $RM_Extension_Status.ArchitectureNotSupported.Code -Message $RM_Extension_Status.ArchitectureNotSupported.Message
@@ -308,16 +366,11 @@ function Get-ConfigurationFromSettings {
         {
             $patToken = $protectedSettings['PATToken']
         }
-
-        if(-not $patToken)
+        if(-not $patToken -and $publicSettings.Contains('PATToken'))
         {
             $patToken = $publicSettings['PATToken']
         }
-        if(-not $patToken)
-        {
-            $patToken = ""
-        }
-
+        
         $vstsAccountUrl = $publicSettings['VSTSAccountUrl']
         if(-not $vstsAccountUrl)
         {
@@ -360,7 +413,6 @@ function Get-ConfigurationFromSettings {
         {
             $tagsInput = $publicSettings['Tags']
         }
-
         if(-not $tagsInput)
         {
             $tags = @()
@@ -369,7 +421,6 @@ function Get-ConfigurationFromSettings {
         {
             $tagsString = $tagsInput | Out-String
             Write-Log "Tags: $tagsString"
-
             $tags = @(Format-TagsInput $tagsInput)
         }
 
@@ -389,7 +440,7 @@ function Get-ConfigurationFromSettings {
         Write-Log "Done reading config settings from file..."
         Add-HandlerSubStatus $RM_Extension_Status.SuccessfullyReadSettings.Code $RM_Extension_Status.SuccessfullyReadSettings.Message -operationName $RM_Extension_Status.SuccessfullyReadSettings.operationName
 
-        return @{
+        $config = @{
             VSTSUrl  = $vstsUrl
             PATToken = $patToken
             TeamProject        = $teamProjectName
@@ -400,6 +451,9 @@ function Get-ConfigurationFromSettings {
             WindowsLogonAccountName = $windowsLogonAccountName
             WindowsLogonPassword = $windowsLogonPassword
         }
+        Confirm-InputsAreValid -config $config
+
+        return $config
     }
     catch
     {
@@ -413,7 +467,7 @@ function Parse-VSTSUrl
     param(
         [Parameter(Mandatory = $true)]
         [string] $vstsAccountUrl,
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [string] $patToken
     )
 
@@ -447,11 +501,7 @@ function Parse-VSTSUrl
         return $vstsUrl
     }
 
-    $restCallUrl = $vstsAccountUrl + "/_apis/connectiondata"
-    $basicAuth = ("{0}:{1}" -f , "", $patToken)
-    $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
-    $basicAuth = [System.Convert]::ToBase64String($basicAuth)
-    $headers = @{Authorization = ("Basic {0}" -f $basicAuth)}
+    $headers = GetRESTCallHeader $patToken
     try
      {
         $response = Invoke-RestMethod -Uri $restCallUrl -headers $headers -Method Get -ContentType "application/json"
@@ -672,7 +722,7 @@ function Invoke-AddTagsToAgentScript{
     [hashtable] $config
     )
 
-    . $PSScriptRoot\AddTagsToDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -tagsAsJsonString ( $config.Tags | ConvertTo-Json )  -logFunction $script:logger
+    . $PSScriptRoot\AddTagsToDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -tagsAsJsonString ( $config.Tags | ConvertTo-Json )  -logFunction $script:logger
 }
 
 function VerifyInputNotNull {
@@ -687,6 +737,21 @@ function VerifyInputNotNull {
             $message = "$inputKey should be specified"
             throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message
         }
+}
+
+function GetRESTCallHeader
+{
+    param(
+    [Parameter(Mandatory=$false)]
+    [string]$patToken
+    )
+
+    $basicAuth = ("{0}:{1}" -f '', $patToken)
+    $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
+    $basicAuth = [System.Convert]::ToBase64String($basicAuth)
+    $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
+
+    return $headers
 }
 
 #

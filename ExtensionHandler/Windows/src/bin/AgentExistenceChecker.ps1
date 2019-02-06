@@ -139,43 +139,13 @@ function GetDeploymentGroupDataFromAgentSetting
     $deploymenteGroupId = ""
     $projectId = ""
 
-    try
-    {
-        $deploymentGroupId = $($agentSetting.deploymentGroupId)
-        WriteLog "`t`t` Deployment group id -  $deploymentGroupId" -logFunction $logFunction
-    }
-    catch{}
-    ## Back-compat for MG to DG rename.
-    if([string]::IsNullOrEmpty($deploymentGroupId)) 
-    {
-        try
-        {   
-            $deploymentGroupId = $($agentSetting.machineGroupId)
-            WriteLog "`t`t` Machine group id -  $deploymentGroupId" -logFunction $logFunction
-        }catch{}    
+    $deploymentGroupId = $($agentSetting.deploymentGroupId)
+    WriteLog "`t`t` Deployment group id -  $deploymentGroupId" -logFunction $logFunction
+            
+    $projectId = $($agentSetting.projectId)
+    WriteLog "`t`t` Deployment group projectId -  $projectId" -logFunction $logFunction
     }
     
-    try
-    {
-        $projectId = $($agentSetting.projectId)
-        WriteLog "`t`t` Deployment group projectId -  $projectId" -logFunction $logFunction
-    }
-    catch{}
-    ## Back-compat for ProjectName to ProjectId.
-    if([string]::IsNullOrEmpty($projectId)) 
-    {
-        WriteLog "`t`t` Project Id is not available in agent settings file, try to read the project name." -logFunction $logFunction
-        try
-        {   
-            $projectId = $($agentSetting.projectName)
-            WriteLog "`t`t` Deployment group projectName -  $projectId" -logFunction $logFunction
-        }
-        catch
-        {
-            WriteLog "`t`t` Unable to gee the peoject id/name for deployment group" -logFunction $logFunction
-        }
-    }
-
     if(![string]::IsNullOrEmpty($deploymentGroupId) -and ![string]::IsNullOrEmpty($projectId))
     {
         $restCallUrl = ContructRESTCallUrl -tfsUrl $tfsUrl -projectName $projectId -deploymentGroupId $deploymentGroupId -logFunction $logFunction
@@ -217,10 +187,7 @@ function ContructRESTCallUrl
     
     WriteLog "`t`t Form the header for invoking the rest call" $logFunction
  
-    $basicAuth = ("{0}:{1}" -f '', $patToken)
-    $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
-    $basicAuth = [System.Convert]::ToBase64String($basicAuth)
-    $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
+    $headers = GetRESTCallHeader $patToken
     
     WriteLog "`t`t Invoke-rest call for deployment group name" $logFunction
     try

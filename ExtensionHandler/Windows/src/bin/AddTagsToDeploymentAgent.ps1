@@ -4,8 +4,6 @@ param(
     [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$projectName,
-    [Parameter(Mandatory=$true)]
     [string]$workingFolder, 
     [Parameter(Mandatory=$true)]
     [string]$tagsAsJsonString,    
@@ -64,29 +62,23 @@ try
     $agentSettings = Get-Content -Path $agentSettingPath | Out-String | ConvertFrom-Json
     
     $agentId = $($agentSettings.agentId)
-    $deploymentGroupId = ""    
+    $projectId = ""
+    $deploymentGroupId = ""
     try
     {
+        $projectId = $($agentSettings.projectId)
         $deploymentGroupId = $($agentSettings.deploymentGroupId)
+        WriteLog "`t`t` Project id -  $projectId" -logFunction $logFunction
         WriteLog "`t`t` Deployment group id -  $deploymentGroupId" -logFunction $logFunction
     }
     catch{}
-    ## Back-compat for MG to DG rename.
-    if([string]::IsNullOrEmpty($deploymentGroupId)) 
-    {
-        try
-        {   
-            $deploymentGroupId = $($agentSettings.machineGroupId)
-            WriteLog "`t`t` Deployment group id -  $deploymentGroupId" -logFunction $logFunction
-        }catch{}    
-    }    
     
-    if([string]::IsNullOrEmpty($deploymentGroupId) -or [string]::IsNullOrEmpty($agentId))
+    if([string]::IsNullOrEmpty($deploymentGroupId) -or [string]::IsNullOrEmpty($agentId) -or [string]::IsNullOrEmpty($projectId))
     {
-        throw "Unable to get the deployment group id or agent id. Ensure that the agent is configured before addding tags."
+        throw "Unable to get one or more of the project id, deployment group id, or the agent id. Ensure that the agent is configured before addding tags."
     }
     
-    AddTagsToAgent -tfsUrl $tfsUrl -projectName $projectName -patToken $patToken -deploymentGroupId $deploymentGroupId -agentId $agentId -tagsAsJsonString $tagsAsJsonString
+    AddTagsToAgent -tfsUrl $tfsUrl -projectId $projectId -patToken $patToken -deploymentGroupId $deploymentGroupId -agentId $agentId -tagsAsJsonString $tagsAsJsonString
     
     return $returnSuccess 
 }

@@ -81,13 +81,13 @@ $global:RM_Extension_Status = @{
     }
     ReadingSettings = @{
         Code = 13
-        Message = 'Reading config settings from file'
-        operationName = 'Read config settings'
+        Message = 'Reading config settings from file and validating inputs'
+        operationName = 'Read config settings and validate inputs'
     }
     SuccessfullyReadSettings = @{
         Code = 14
-        Message = 'Successfully read and validated config settings from file'
-        operationName = 'Read config settings'
+        Message = 'Successfully read config settings from file and validated inputs'
+        operationName = 'Read config settings and validated inputs'
     }
     SkippedInstallation = @{
         Code = 15
@@ -175,19 +175,19 @@ $global:RM_Extension_Status = @{
     InstallError = 1001 # The message for this error is provided by the specific exception
 
     ArchitectureNotSupported = @{
-        Code = 1002
+        Code = 51
         Message = 'The current CPU architecture is not supported. Deployment agent requires x64 architecture'
     }
 
     PowershellVersionNotSupported = @{
-        Code = 1003
+        Code = 52
         Message = 'Installed PowerShell version is {0}. Minimum required version is 3.0'
     }
 
     #
     # ArgumentError indicates a problem in the user input. The message for the error is provided by the specific exception
     #
-    ArgumentError = 1100 
+    ArgumentError = 53 
     AgentUnConfigureFailWarning = 'There are some warnings in uninstalling the already existing agent. Check "Detailed Status" for more details.'
 }
 

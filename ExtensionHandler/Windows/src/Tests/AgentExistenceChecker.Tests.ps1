@@ -62,18 +62,8 @@ Describe "Agent ExistenceChecker Tests" {
         
         Mock ContructRESTCallUrl { return "test-Url" }
         Mock InvokeRestURlToGetDeploymentGroupData { return ('{ "machines":[{"tags":["t1","tag1","zxfzxcz"],"id":5022},{"tags":["t1"],"id":5023}],"machineCount":2,"id":2934,"project":{"id":"b924d689-3eae-4116-8443-9a17392d8544","name":"testProj"},"name":"deployment-GroupName","pool":{"id":352,"scope":"0efb4611-d565-4cd1-9a64-7d6cb6d7d5f0","name":"01c05ec2-bde8-48e8-a3ad-7838e92d3455","isHosted":false,"poolType":"deployment"} }' | ConvertFrom-Json ) }
-       
-        $existingAgentSetting =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Dg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/",  "workFolder": "_work",  "projectName": "testProj",  "machineGroupId": 18 }' | ConvertFrom-Json
         
-        It "should return correct deployment group name in case machine group Id is saved with agent setting file" {
-            $ret = GetDeploymentGroupDataFromAgentSetting -agentSetting $existingAgentSetting -tfsUrl "http://mylocaltfs:8080/tfs" -patToken "test-PAT"
-            $ret.name | Should be "deployment-GroupName"     
-            
-            Assert-MockCalled ContructRESTCallUrl -Times 1 -ParameterFilter { $deploymentGroupId.Equals("18") } 
-            Assert-MockCalled InvokeRestURlToGetDeploymentGroupData -Times 1
-        }
-        
-        $existingAgentSetting =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Dg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/",  "workFolder": "_work",  "projectName": "testProj",  "deploymentGroupID": 7 }' | ConvertFrom-Json
+        $existingAgentSetting =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Dg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/",  "workFolder": "_work",  "projectId": "testProj",  "deploymentGroupId": 7 }' | ConvertFrom-Json
         
         It "should return correct deployment group name in case deployment group Id is saved with agent setting file" {
             $ret = GetDeploymentGroupDataFromAgentSetting -agentSetting $existingAgentSetting -tfsUrl "http://mylocaltfs:8080/tfs" -patToken "test-PAT"
@@ -84,21 +74,11 @@ Describe "Agent ExistenceChecker Tests" {
         }
         
         $existingAgentSetting =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Dg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/",  "workFolder": "_work",  "projectId": "b924d649-3eae-4236-8443-9a17392d8544",  "deploymentGroupID": 7 }' | ConvertFrom-Json
-        It "should return correct project name for deployment group in case project Id is saved with agent setting file" {
+        It "should return correct project id for deployment group in case project Id is saved with agent setting file" {
             $ret = GetDeploymentGroupDataFromAgentSetting -agentSetting $existingAgentSetting -tfsUrl "http://mylocaltfs:8080/tfs" -patToken "test-PAT"
             $ret.project.Name | Should be "testProj"     
             
-            Assert-MockCalled ContructRESTCallUrl -Times 1 -ParameterFilter { $projectName.Equals("b924d649-3eae-4236-8443-9a17392d8544") }           
-            Assert-MockCalled InvokeRestURlToGetDeploymentGroupData -Times 1
-        }
-        
-        $existingAgentSetting =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Dg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/",  "workFolder": "_work",  "projectName": "testProj1",  "deploymentGroupID": 7 }' | ConvertFrom-Json
-        
-        It "should return correct project name for deployment group in case project name is saved with agent setting file" {
-            $ret = GetDeploymentGroupDataFromAgentSetting -agentSetting $existingAgentSetting -tfsUrl "http://mylocaltfs:8080/tfs" -patToken "test-PAT"
-            $ret.project.Name | Should be "testProj"     
-            
-            Assert-MockCalled ContructRESTCallUrl -Times 1 -ParameterFilter { $projectName.Equals("testProj1") }           
+            Assert-MockCalled ContructRESTCallUrl -Times 1 -ParameterFilter { $projectId.Equals("b924d649-3eae-4236-8443-9a17392d8544") }           
             Assert-MockCalled InvokeRestURlToGetDeploymentGroupData -Times 1
         }
     }
@@ -111,7 +91,7 @@ Describe "Agent ExistenceChecker Tests" {
             $deploymentGroupId = 7
             $expectedRESTUrl = $tfsUrl + ("/{0}/_apis/distributedtask/deploymentgroups/{1}" -f $projectName, $deploymentGroupId)
          
-            $ret = ContructRESTCallUrl -tfsUrl $tfsUrl -projectName $projectName -deploymentGroupId $deploymentGroupId
+            $ret = ContructRESTCallUrl -tfsUrl $tfsUrl -projectId $projectName -deploymentGroupId $deploymentGroupId
             
             $ret | Should be $expectedRESTUrl         
          }    

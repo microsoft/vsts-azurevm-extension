@@ -315,6 +315,7 @@ Please correct the input and retry executing the extension.
             $errorMessage = @'
 The Extension failed to execute: {0}.
 More information about the failure can be found in the logs located under '{1}' on the VM.
+To retry install, please remove the extension from the VM first.
 '@ -f $ErrorRecord.Exception.Message, (Get-HandlerEnvironment).logFolder
             break
         }

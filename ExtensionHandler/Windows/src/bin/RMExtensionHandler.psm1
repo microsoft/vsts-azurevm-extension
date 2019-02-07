@@ -93,7 +93,7 @@ function Test-AgentAlreadyExists {
     try
     {
         Add-HandlerSubStatus $RM_Extension_Status.PreCheckingDeploymentAgent.Code $RM_Extension_Status.PreCheckingDeploymentAgent.Message -operationName $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
-        Write-Log "Invoking script to pre-check agent configuration..."
+        Write-Log "Pre-checking agent configuration..."
 
         $agentAlreadyExists = Test-AgentAlreadyExistsInternal $config
 
@@ -279,49 +279,109 @@ function Confirm-InputsAreValid {
     [hashtable] $config
     )
 
-    #Verify the project exists
-    $getProjectUrl = ( "{0}/_apis/projects/{1}api-version={4}" -f $config.VSTSUrl, $config.TeamProject, $projectAPIVersion)
-    WriteAddTagsLog "Url to check project exists - $getProjectUrl"
+    #Verify the project exists and the PAT is valid for the account
+    #This is the first validation http call, so using Invoke-WebRequest instead of Invoke-RestMethod, because if the PAT provided is not a token at all(not even an unauthorized one) and some random value, then the call
+    #would redirect to sign in page and not throw an exception. So, to handle this case.
+
+    $errorMessageInitialPart = ("Could not verify that the project {0} exists in the specified organization. " -f $config.TeamProject)
+    $invaidPATErrorMessage = "Please make sure that the Personal Access Token entered is valid and has 'Deployment Groups - Read & manage' scope."
+    $errorCode = $RM_Extension_Status.ArgumentError
+    $unexpectedErrorMessage = "Some unexpected error occured. Status code : {0}"
+    $getProjectUrl = ("{0}/_apis/projects/{1}?api-version={2}" -f $config.VSTSUrl, $config.TeamProject, $projectAPIVersion)
+    Write-Log "Url to check project exists - $getProjectUrl"
     $headers = GetRESTCallHeader $config.PATToken
     try
     {
-        $ret = Invoke-RestMethod -Uri $getProjectUrl -headers $headers -Method Get
+        $ret = (Invoke-WebRequest -Uri $getProjectUrl -headers $headers -Method Get -MaximumRedirection 0 -ErrorAction Ignore)
     }
     catch
     {
-        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message ("The project {0} does not exist in the specified organization. Please provide a valid project name." -f $config.TeamProject)
+        switch($_.Exception.Response.StatusCode.value__)
+        {
+            401
+            {
+                $specificErrorMessage = $invaidPATErrorMessage
+            }
+            404
+            {
+                $specificErrorMessage = "Please make sure that you enter the correct organization name and verify that the project exists in the organization."
+            }
+            default
+            {
+                $specificErrorMessage = ($unexpectedErrorMessage -f $_)
+                $errorCode = $RM_Extension_Status.GenericError
+            }
+        }
+        throw New-HandlerTerminatingError $errorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
     }
+    if($ret.StatusCode -eq 302)
+    {
+        $specificErrorMessage = $invaidPATErrorMessage
+        throw New-HandlerTerminatingError $errorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
+    }
+    Write-Log ("Validated that the project {0} exists" -f $config.TeamProject)
 
-    #Verify the deployment group eixts
-    $getDeploymentGroupUrl = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets?api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroup, $projectAPIVersion)
-    WriteAddTagsLog "Url to check deployment group exists - $getProjectUrl"
-    $headers = GetRESTCallHeader $config.PATToken
+    #Verify the deployment group eixts and the PAT has the required(Deployment Groups - Read & manage) scope
+
+    $errorMessageInitialPart = "Could not verify that the deployment group {0} exists in the project {1} in the specified organization. "
+    $getDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroup, $projectAPIVersion)
+    Write-Log "Url to check deployment group exists - $getDeploymentGroupUrl"
     $deploymentGroupData = @{}
     try
     {
-        $deploymentGroupData = Invoke-RestMethod -Uri $getDeploymentGroupUrl -headers $headers -Method Get
+        $ret = Invoke-RestMethod -Uri $getDeploymentGroupUrl -headers $headers -Method Get
     }
     catch
     {
-        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message ("The deployment group {0} does not exist in the project {1} in the specified organization. Please provide a valid deployment group name." -f $config.DeploymentGroup, $config.TeamProject)
+        switch($_.Exception.Response.StatusCode.value__)
+        {
+            401
+            {
+                $specificErrorMessage = $invaidPATErrorMessage
+            }
+            default
+            {
+                $specificErrorMessage = ($unexpectedErrorMessage -f $_)
+                $errorCode = $RM_Extension_Status.GenericError
+            }
+        }
+        throw New-HandlerTerminatingError $errorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
+    }
+    if($ret.count -eq 0)
+    {
+        $specificErrorMessage = "Please make sure that the deployment group exists in the project."
+        throw New-HandlerTerminatingError $errorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
     }
 
+    $deploymentGroupData = $ret.value[0]
+    Write-Log ("Validated that the deployment group {0} exists" -f $config.DeploymentGroup)
+
     #Verify the user has manage permissions on the deployment group
-    $deploymentGroupName = $deploymentGroupData.name
-    $deploymentGroupDescription = ""
-    if($deploymentGroupData.description)
-    {
-        $deploymentGroupDescription = $deploymentGroupData.description
-    }
-    $requestBody = "{'name':" + $deploymentGroupName + ",'description':" + $deploymentGroupDescription + "}"
+    $deploymentGroupId = $deploymentGroupData.id
+    $patchDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $deploymentGroupId, $projectAPIVersion)
+    Write-Log "Url to check that the user has 'Manage' permissions on the deployment group - $patchDeploymentGroupUrl"
+    $requestBody = "{'name': '" + $config.DeploymentGroup + "'}"
     try
     {
-        $ret = Invoke-RestMethod -Uri $getDeploymentGroupUrl -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
+        $ret = Invoke-RestMethod -Uri $patchDeploymentGroupUrl -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
     }
     catch
     {
-        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message ("The user required 'Manage' permissions on the deployment group {0}." -f $config.DeploymentGroup)
+        switch($_.Exception.Response.StatusCode.value__)
+        {
+            403
+            {
+                $specificErrorMessage = $invaidPATErrorMessage
+            }
+            default
+            {
+                $specificErrorMessage = ($unexpectedErrorMessage -f $_)
+                $errorCode = $RM_Extension_Status.GenericError
+            }
+        }
+        throw New-HandlerTerminatingError $errorCode -Message ("The user requires 'Manage' permissions on the deployment group {0}." -f $config.DeploymentGroup)
     }
+    Write-Log ("Validated that the user has 'Manage' permissions on the deployment group {0}" -f $config.DeploymentGroup)
 }
 
 <#
@@ -451,6 +511,7 @@ function Get-ConfigurationFromSettings {
             WindowsLogonAccountName = $windowsLogonAccountName
             WindowsLogonPassword = $windowsLogonPassword
         }
+        
         Confirm-InputsAreValid -config $config
 
         return $config
@@ -501,16 +562,21 @@ function Parse-VSTSUrl
         return $vstsUrl
     }
 
+    $restCallUrl = $vstsAccountUrl + "/_apis/connectiondata"
     $headers = GetRESTCallHeader $patToken
+    $response = @{}
+    $response.deploymentType = 'hosted'
     try
      {
-        $response = Invoke-RestMethod -Uri $restCallUrl -headers $headers -Method Get -ContentType "application/json"
+        $resp = Invoke-RestMethod -Uri $restCallUrl -headers $headers -Method Get -ContentType "application/json"
+        if($resp.GetType().FullName -eq "System.Management.Automation.PSCustomObject")
+        {
+            $response = $resp
+        }
     }
     catch
      {
         Write-Log "Failed to fetch the connection data for the url $restCallUrl : $_.Exception"
-        $response = @{}
-        $response.deploymentType = 'hosted'
     }
     if (!$response.deploymentType -or $response.deploymentType -ne "hosted")
      {

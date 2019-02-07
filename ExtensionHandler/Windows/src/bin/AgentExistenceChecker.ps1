@@ -136,23 +136,19 @@ function GetDeploymentGroupDataFromAgentSetting
     [scriptblock]$logFunction
     )
     
-    $deploymenteGroupId = ""
-    $projectId = ""
-
     $deploymentGroupId = $($agentSetting.deploymentGroupId)
     WriteLog "`t`t` Deployment group id -  $deploymentGroupId" -logFunction $logFunction
             
     $projectId = $($agentSetting.projectId)
     WriteLog "`t`t` Deployment group projectId -  $projectId" -logFunction $logFunction
-    }
     
     if(![string]::IsNullOrEmpty($deploymentGroupId) -and ![string]::IsNullOrEmpty($projectId))
     {
-        $restCallUrl = ContructRESTCallUrl -tfsUrl $tfsUrl -projectName $projectId -deploymentGroupId $deploymentGroupId -logFunction $logFunction
+        $restCallUrl = ContructRESTCallUrl -tfsUrl $tfsUrl -projectId $projectId -deploymentGroupId $deploymentGroupId -logFunction $logFunction
         
         return (InvokeRestURlToGetDeploymentGroupData -restCallUrl $restCallUrl -patToken $patToken -logFunction $logFunction)
     }
-    
+
     return $null
 }
 
@@ -162,13 +158,13 @@ function ContructRESTCallUrl
     [Parameter(Mandatory=$true)]
     [string]$tfsUrl,
     [Parameter(Mandatory=$true)]
-    [string]$projectName,
+    [string]$projectId,
     [Parameter(Mandatory=$true)]
     [string]$deploymentGroupId,
     [scriptblock]$logFunction
     )
 
-    $restCallUrl = $tfsUrl + ("/{0}/_apis/distributedtask/deploymentgroups/{1}" -f $projectName, $deploymentGroupId)
+    $restCallUrl = $tfsUrl + ("/{0}/_apis/distributedtask/deploymentgroups/{1}" -f $projectId, $deploymentGroupId)
     
     WriteLog "`t`t REST call Url -  $restCallUrl" $logFunction
     

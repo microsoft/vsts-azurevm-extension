@@ -222,6 +222,7 @@ Describe "parse vsts account name settings tests" {
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Format-TagsInput {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Confirm-InputsAreValid {}
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -257,6 +258,7 @@ Describe "parse vsts account name settings tests" {
             $response = @{deploymentType = "hosted"}
             return $response
         }
+        Mock -ModuleName RMExtensionHandler Confirm-InputsAreValid {}
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -293,6 +295,7 @@ Describe "parse vsts account name settings tests" {
             $response = @{deploymentType = "hosted"}
             return $response
         }
+        Mock -ModuleName RMExtensionHandler Confirm-InputsAreValid {}
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -329,6 +332,7 @@ Describe "parse vsts account name settings tests" {
             $response = @{deploymentType = "hosted"}
             return $response
         }
+        Mock -ModuleName RMExtensionHandler Confirm-InputsAreValid {}
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -364,6 +368,7 @@ Describe "parse vsts account name settings tests" {
             $response = @{deploymentType = "onPremises"}
             return $response
         }
+        Mock -ModuleName RMExtensionHandler Confirm-InputsAreValid {}
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -399,6 +404,7 @@ Describe "parse vsts account name settings tests" {
             $response = @{deploymentType = "onPremises"}
             return $response
         }
+        Mock -ModuleName RMExtensionHandler Confirm-InputsAreValid {}
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -436,6 +442,7 @@ Describe "parse vsts account name settings tests" {
             $response = @{deploymentType = "onPremises"}
             return $response
         }
+        Mock -ModuleName RMExtensionHandler Confirm-InputsAreValid {}
 
         It "should set proper status" {
             Get-ConfigurationFromSettings -isEnable $true
@@ -467,6 +474,7 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Confirm-InputsAreValid {}
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -499,6 +507,7 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Confirm-InputsAreValid {}
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -534,6 +543,7 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Confirm-InputsAreValid {}
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -566,6 +576,7 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Confirm-InputsAreValid {}
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -599,6 +610,7 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Confirm-InputsAreValid {}
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 
@@ -632,6 +644,7 @@ Describe "parse tags settings tests" {
         Mock -ModuleName RMExtensionHandler Get-OSVersion { return @{ IsX64 = $true }}
         Mock -ModuleName RMExtensionHandler VerifyInputNotNull {}
         Mock -ModuleName RMExtensionHandler Test-Path { return $true }
+        Mock -ModuleName RMExtensionHandler Confirm-InputsAreValid {}
 
         $settings = Get-ConfigurationFromSettings -isEnable $true
 

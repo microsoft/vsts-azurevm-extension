@@ -57,7 +57,7 @@ function ApplyTagsToAgent
 
     $restCallUrl = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets?api-version={3}" -f $tfsUrl, $projectId, $deploymentGroupId, $targetsAPIVersion)
 
-    WriteAddTagsLog "Url for adding tags - $restCallUrl"
+    WriteAddTagsLog "Url for applying tags - $restCallUrl"
 
     $headers = GetRESTCallHeader $patToken
 
@@ -69,7 +69,7 @@ function ApplyTagsToAgent
         $ret = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
         if($ret.PSObject.Properties.name -notcontains "value")
         {
-            throw "PATCH call failed"
+            throw "PATCH call failed: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
         }
     }
     catch
@@ -96,42 +96,41 @@ function AddTagsToAgent
     )
 
     $restCallUrlToGetExistingTags = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets/{3}?api-version={4}" -f $tfsUrl, $projectId, $deploymentGroupId, $agentId, $targetsAPIVersion)
-
-    WriteAddTagsLog "Url for adding getting existing tags if any - $restCallUrlToGetExistingTags"
+    WriteAddTagsLog "Url for getting existing tags if any - $restCallUrlToGetExistingTags"
 
     $headers = GetRESTCallHeader $patToken
     try
     {
         $target = Invoke-RestMethod -Uri $($restCallUrlToGetExistingTags) -headers $headers -Method Get -ContentType "application/json"
-        $existingTags = $target.tags
-
-        $tags = @()
-        [Array]$newTags =  ConvertFrom-Json $tagsAsJsonString
-
-        if($existingTags.count -gt 0)
-        {
-            $tags = $existingTags    ## Append new tags to existing tags, this will ensure existing tags are not modified due to case change
-            WriteAddTagsLog "Found existing tags for agent - $existingTags"
-
-            foreach( $newTag in $newTags)
-            {
-                if(!($tags -iContains $newTag))
-                {
-                    $tags += $newTag
-                }
-            }
-        }
-        else    ## In case not exiting tags are present
-        {
-            $tags = $newTags
-        }
-
-        $newTagsJsonString = ConvertTo-Json $tags
     }
     catch
     {
-        throw "Tags could not be added. Unable to fetch the existing tags or deployment group details"
+        throw "Tags could not be added. Unable to fetch the existing tags or deployment group details: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
     }
+
+    $existingTags = $target.tags
+    $tags = @()
+    [Array]$newTags =  ConvertFrom-Json $tagsAsJsonString
+
+    if($existingTags.count -gt 0)
+    {
+        $tags = $existingTags    ## Append new tags to existing tags, this will ensure existing tags are not modified due to case change
+        WriteAddTagsLog "Found existing tags for agent - $existingTags"
+
+        foreach( $newTag in $newTags)
+        {
+            if(!($tags -iContains $newTag))
+            {
+                $tags += $newTag
+            }
+        }
+    }
+    else    ## In case not exiting tags are present
+    {
+        $tags = $newTags
+    }
+
+    $newTagsJsonString = ConvertTo-Json $tags
 
     WriteAddTagsLog "Updating the tags for agent target - $agentId"
     ApplyTagsToAgent -tfsUrl $tfsUrl -projectId $projectId -patToken $patToken -deploymentGroupId $deploymentGroupId -agentId $agentId -tagsAsJsonString $newTagsJsonString
@@ -161,16 +160,9 @@ try
     $agentSettings = Get-Content -Path $agentSettingPath | Out-String | ConvertFrom-Json
     
     $agentId = $($agentSettings.agentId)
-    $projectId = ""
-    $deploymentGroupId = ""
-    try
-    {
-        $projectId = $($agentSettings.projectId)
-        $deploymentGroupId = $($agentSettings.deploymentGroupId)
-        WriteLog "`t`t` Project id -  $projectId" -logFunction $logFunction
-        WriteLog "`t`t` Deployment group id -  $deploymentGroupId" -logFunction $logFunction
-    }
-    catch{}
+    $projectId = $($agentSettings.projectId)
+    $deploymentGroupId = $($agentSettings.deploymentGroupId)
+    WriteLog "`t`t` Agent id, Project id, Deployment group id -  $agentId, $projectId, $deploymentGroupId" -logFunction $logFunction
     
     if([string]::IsNullOrEmpty($deploymentGroupId) -or [string]::IsNullOrEmpty($agentId) -or [string]::IsNullOrEmpty($projectId))
     {

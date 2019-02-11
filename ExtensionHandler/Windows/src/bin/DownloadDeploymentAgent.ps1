@@ -68,13 +68,13 @@ function WriteDownloadLog
     try
     {
         $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
-        WriteDownloadLog "`t`t Agent PackageData : $response"
-        return $response.Value[0]
     }
     catch
     {
-        throw "Error while downloading VSTS agent."
+        throw "Error while downloading VSTS agent: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
     }
+    WriteDownloadLog "`t`t Agent PackageData : $response"
+    return $response.Value[0]
 }
  
  function GetAgentDownloadUrl

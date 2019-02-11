@@ -14,11 +14,8 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
     $PSScriptRoot = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
 }
 
-Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionCommon.psm1 -DisableNameChecking
-Import-Module $PSScriptRoot\Log.psm1
-Import-Module $PSScriptRoot\RMExtensionStatus.psm1
-. $PSScriptRoot\ReadConfigAndValidateInputs.ps1
+. $PSScriptRoot\ConfigSettingsReader.ps1
 . $PSScriptRoot\Constants.ps1
 
 $Enable_ConfiguredAgentExists = $false
@@ -31,7 +28,7 @@ function Test-AgentReConfigurationRequiredInternal {
     [hashtable] $config
     )
 
-    . $PSScriptRoot\AgentSettingHelper.ps1
+    . $PSScriptRoot\AgentSettingsHelper.ps1
     $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken -logFunction $script:logger)
     return $agentReConfigurationRequired
 }
@@ -371,6 +368,7 @@ if($settingsAreSame)
 }
 else
 {
+    Confirm-InputsAreValid $config
 
     ExecuteAgentPreCheck
 

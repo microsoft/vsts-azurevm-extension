@@ -1,8 +1,9 @@
+Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
+
 <#
 .Synopsis
    Reads .settings file
    Generates configuration settings required for downloading and configuring agent
-   Validates inputs
 #>
 function Get-ConfigurationFromSettings {
     [CmdletBinding()]
@@ -100,7 +101,7 @@ function Get-ConfigurationFromSettings {
         Write-Log "Done reading config settings from file..."
         Add-HandlerSubStatus $RM_Extension_Status.SuccessfullyReadSettings.Code $RM_Extension_Status.SuccessfullyReadSettings.Message -operationName $RM_Extension_Status.SuccessfullyReadSettings.operationName
 
-        $config = @{
+        return @{
             VSTSUrl  = $vstsUrl
             PATToken = $patToken
             TeamProject        = $teamProjectName
@@ -111,13 +112,9 @@ function Get-ConfigurationFromSettings {
             WindowsLogonAccountName = $windowsLogonAccountName
             WindowsLogonPassword = $windowsLogonPassword
         }
-        
-        Confirm-InputsAreValid -config $config
-        
-        return $config
     }
     catch
-    {
+    {   $_ > "check.txt"
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ReadingSettings.operationName
     }
 }
@@ -135,7 +132,7 @@ function Confirm-InputsAreValid {
 
     $errorMessageInitialPart = ("Could not verify that the project {0} exists in the specified organization. " -f $config.TeamProject)
     $invaidPATErrorMessage = "Please make sure that the Personal Access Token entered is valid and has 'Deployment Groups - Read & manage' scope."
-    $errorCode = $RM_Extension_Status.ArgumentError
+    $inputsValidationErrorCode = $RM_Extension_Status.ArgumentError
     $unexpectedErrorMessage = "Some unexpected error occured. Status code : {0}"
     $getProjectUrl = ("{0}/_apis/projects/{1}?api-version={2}" -f $config.VSTSUrl, $config.TeamProject, $projectAPIVersion)
     Write-Log "Url to check project exists - $getProjectUrl"
@@ -159,15 +156,15 @@ function Confirm-InputsAreValid {
             default
             {
                 $specificErrorMessage = ($unexpectedErrorMessage -f $_)
-                $errorCode = $RM_Extension_Status.GenericError
+                $inputsValidationErrorCode = $RM_Extension_Status.GenericError
             }
         }
-        throw New-HandlerTerminatingError $errorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
+        throw New-HandlerTerminatingError $inputsValidationErrorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
     }
     if($ret.StatusCode -eq 302)
     {
         $specificErrorMessage = $invaidPATErrorMessage
-        throw New-HandlerTerminatingError $errorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
+        throw New-HandlerTerminatingError $inputsValidationErrorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
     }
     Write-Log ("Validated that the project {0} exists" -f $config.TeamProject)
 
@@ -192,15 +189,15 @@ function Confirm-InputsAreValid {
             default
             {
                 $specificErrorMessage = ($unexpectedErrorMessage -f $_)
-                $errorCode = $RM_Extension_Status.GenericError
+                $inputsValidationErrorCode = $RM_Extension_Status.GenericError
             }
         }
-        throw New-HandlerTerminatingError $errorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
+        throw New-HandlerTerminatingError $inputsValidationErrorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
     }
     if($ret.count -eq 0)
     {
         $specificErrorMessage = "Please make sure that the deployment group exists in the project."
-        throw New-HandlerTerminatingError $errorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
+        throw New-HandlerTerminatingError $inputsValidationErrorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
     }
 
     $deploymentGroupData = $ret.value[0]
@@ -226,20 +223,13 @@ function Confirm-InputsAreValid {
             default
             {
                 $specificErrorMessage = ($unexpectedErrorMessage -f $_)
-                $errorCode = $RM_Extension_Status.GenericError
+                $inputsValidationErrorCode = $RM_Extension_Status.GenericError
             }
         }
-        throw New-HandlerTerminatingError $errorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
+        throw New-HandlerTerminatingError $inputsValidationErrorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
     }
     Write-Log ("Validated that the user has 'Manage' permissions on the deployment group {0}" -f $config.DeploymentGroup)
 }
-
-<#
-.Synopsis
-   Reads .settings file
-   Generates configuration settings required for downloading and configuring agent
-   Validates inputs
-#>
 
 function Parse-VSTSUrl
 {
@@ -341,4 +331,18 @@ function Format-TagsInput {
     $uniqueTags = $tags | Sort-Object -Unique | Where { -not [string]::IsNullOrWhiteSpace($_) }
 
     return $uniqueTags
+}
+
+function VerifyInputNotNull {
+    [CmdletBinding()]
+    param(
+    [string] $inputKey,
+    [string] $inputValue
+    )
+
+    if(-not $inputValue)
+        {
+            $message = "$inputKey should be specified"
+            throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message
+        }
 }

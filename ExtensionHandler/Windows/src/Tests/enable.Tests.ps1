@@ -165,3 +165,180 @@ Describe "Enable RM extension tests" {
         }
     }
 }
+
+Describe "Start RM extension tests" {
+
+    Context "Should clear up things properly" {
+        
+        Mock -ModuleName AzureExtensionHandler Get-HandlerExecutionSequenceNumber {}
+        Mock -ModuleName AzureExtensionHandler Clear-StatusFile {}
+        Mock -ModuleName AzureExtensionHandler Clear-HandlerCache {}
+        Mock -ModuleName AzureExtensionHandler Clear-HandlerSubStatusMessage {}
+        Mock -ModuleName AzureExtensionHandler Initialize-ExtensionLogFile {}
+        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName AzureExtensionHandler Write-Log {}
+        
+        Start-RMExtensionHandler
+
+        It "should call clean up functions" {
+            Assert-MockCalled Get-HandlerExecutionSequenceNumber -Times 1
+            Assert-MockCalled Clear-StatusFile -Times 1
+            Assert-MockCalled Clear-HandlerCache -Times 1
+            Assert-MockCalled Clear-HandlerSubStatusMessage -Times 1
+            Assert-MockCalled Initialize-ExtensionLogFile -Times 1
+        }
+
+        It "should set handler status as Initilized" {
+            Assert-MockCalled Set-HandlerStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.Installing.Code}
+            Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.Initialized.Code}
+        }
+    }
+
+    Context "Should skip enable if current seq number is same as last seq number" {
+        
+        Mock -ModuleName AzureExtensionHandler Get-HandlerExecutionSequenceNumber { return 2 }
+        Mock -ModuleName AzureExtensionHandler Get-LastSequenceNumber { return 2 }
+        Mock -ModuleName AzureExtensionHandler Test-ExtensionDisabledMarkup { return $false }
+        Mock -ModuleName AzureExtensionHandler Clear-StatusFile {}
+        Mock -ModuleName AzureExtensionHandler Clear-HandlerCache {}
+        Mock -ModuleName AzureExtensionHandler Clear-HandlerSubStatusMessage {}
+        Mock -ModuleName AzureExtensionHandler Initialize-ExtensionLogFile {}
+        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName Log Write-Log {}
+        Mock Exit-WithCode0 {} 
+        
+        Start-RMExtensionHandler
+
+        It "should call clean up functions" {
+            Assert-MockCalled Exit-WithCode0 -Times 1
+        }
+
+        It "should set handler status as Initilized" {
+            Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.SkippedInstallation.Code}
+        }
+    }
+
+    Context "Should not skip enable if current seq number is same as last seq number and extension was disabled" {
+        
+        Mock -ModuleName AzureExtensionHandler Get-HandlerExecutionSequenceNumber { return 2 }
+        Mock -ModuleName AzureExtensionHandler Get-LastSequenceNumber { return 2 }
+        Mock -ModuleName AzureExtensionHandler Test-ExtensionDisabledMarkup { return $true }
+        Mock -ModuleName AzureExtensionHandler Clear-StatusFile {}
+        Mock -ModuleName AzureExtensionHandler Clear-HandlerCache {}
+        Mock -ModuleName AzureExtensionHandler Clear-HandlerSubStatusMessage {}
+        Mock -ModuleName AzureExtensionHandler Initialize-ExtensionLogFile {}
+        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
+        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock -ModuleName Log Write-Log {}
+        Mock Exit-WithCode0 {} 
+        
+        Start-RMExtensionHandler
+
+        It "should call clean up functions" {
+            Assert-MockCalled Exit-WithCode0 -Times 0
+        }
+
+        It "should set handler status as Initilized" {
+            Assert-MockCalled Add-HandlerSubStatus -Times 0 -ParameterFilter { $Code -eq $RM_Extension_Status.SkippedInstallation.Code}
+            Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.Initialized.Code}
+        }
+    }
+}
+
+Describe "Download agent tests" {
+
+    Context "Should set error status if exception happens" {
+
+        Mock -ModuleName Log Write-Log{}
+        Mock -ModuleName RMExtensionStatus Set-HandlerErrorStatus {}
+        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
+        Mock Invoke-GetAgentScriptAndExtractAgent { throw New-Object System.Exception("some error")}
+        Mock Exit-WithCode1 {}
+
+        Get-Agent @{}
+
+        It "should call clean up functions" {
+            Assert-MockCalled Set-HandlerErrorStatus -Times 1 -ParameterFilter { $ErrorRecord.Exception.Message -eq "some error"}
+        }
+    }
+
+    Context "Should set success status if no exception happens" {
+
+        Mock -ModuleName Log Write-Log{}
+        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
+        Mock Invoke-GetAgentScriptAndExtractAgent {}
+        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus
+        
+        Get-Agent @{}
+
+        It "should call clean up functions" {
+            Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.DownloadedDeploymentAgent.Code}
+        }
+    }
+}
+
+Describe "configure agent tests" {
+
+    Context "Should set error status if exception happens" {
+
+        Mock -ModuleName Log Write-Log{}
+        Mock -ModuleName RMExtensionStatus Set-HandlerErrorStatus {}
+        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
+        Mock Invoke-ConfigureAgentScript { throw New-Object System.Exception("some error")}
+        Mock Exit-WithCode1 {}
+
+        Register-Agent @{}
+
+        It "should call clean up functions" {
+            Assert-MockCalled Set-HandlerErrorStatus -Times 1 -ParameterFilter { $ErrorRecord.Exception.Message -eq "some error"}
+        }
+    }
+
+    Context "Should set success status if no exception happens" {
+
+        Mock -ModuleName Log Write-Log{}
+        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
+        Mock Invoke-ConfigureAgentScript {}
+        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus
+        
+        Register-Agent @{}
+
+        It "should call clean up functions" {
+            Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.ConfiguredDeploymentAgent.Code}
+        }
+    }
+}
+
+Describe "AgentReconfigurationRequired tests" {
+
+    Context "Should set error status if exception happens" {
+
+        Mock -ModuleName Log Write-Log{}
+        Mock -ModuleName RMExtensionStatus Set-HandlerErrorStatus {}
+        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
+        Mock Test-AgentReConfigurationRequiredInternal { throw New-Object System.Exception("some error")}
+        Mock Exit-WithCode1 {}
+
+        Test-AgentReconfigurationRequired @{}
+
+        It "should call clean up functions" {
+            Assert-MockCalled Set-HandlerErrorStatus -Times 1 -ParameterFilter { $ErrorRecord.Exception.Message -eq "some error"}
+        }
+    }
+
+    Context "Should set success status if no exception happens" {
+
+        Mock -ModuleName Log Write-Log{}
+        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
+        Mock Test-AgentReConfigurationRequiredInternal { return $true}
+        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus
+        
+        Test-AgentReconfigurationRequired @{}
+
+        It "should call clean up functions" {
+            Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.CheckingAgentReConfigurationRequired.Code}
+        }
+    }
+}

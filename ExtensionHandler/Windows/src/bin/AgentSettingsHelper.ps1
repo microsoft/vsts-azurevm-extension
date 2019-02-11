@@ -126,11 +126,9 @@ function GetDeploymentGroupDataFromAgentSetting
     [scriptblock]$logFunction
     )
     
-    $deploymentGroupId = $($agentSetting.deploymentGroupId)
-    WriteLog "`t`t` Deployment group id -  $deploymentGroupId" -logFunction $logFunction
-            
     $projectId = $($agentSetting.projectId)
-    WriteLog "`t`t` Deployment group projectId -  $projectId" -logFunction $logFunction
+    $deploymentGroupId = $($agentSetting.deploymentGroupId)
+    WriteLog "`t`t` Project id, Deployment group id -  $projectId, $deploymentGroupId" -logFunction $logFunction
     
     if(![string]::IsNullOrEmpty($deploymentGroupId) -and ![string]::IsNullOrEmpty($projectId))
     {
@@ -162,18 +160,10 @@ function GetDeploymentGroupDataFromAgentSetting
     {
         $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
         WriteLog "`t`t Deployment Group Details fetched successfully" $logFunction
-        if($response.PSObject.Properties.name -contains "name")
-        {
-            return $response
-        }
-        else
-        {
-            throw "REST call failed"
-        }
     }
     catch
     {
-        throw "Unable to fetch the deployment group information from VSTS server."
+        throw "Unable to fetch the deployment group information from VSTS server: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
     }
  }
  

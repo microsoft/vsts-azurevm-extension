@@ -1,6 +1,6 @@
 ﻿<#
 .Synopsis
-   Handler for managing RM extension.
+   Some handler methods used multiple places
 #>
 
 $ErrorActionPreference = 'stop'
@@ -12,10 +12,7 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
 }
 
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
-Import-Module $PSScriptRoot\Log.psm1
 Import-Module $PSScriptRoot\RMExtensionStatus.psm1
-Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
-Import-Module $PSScriptRoot\Utils.psm1
 
 #
 # Logger function for download/configuration scripts

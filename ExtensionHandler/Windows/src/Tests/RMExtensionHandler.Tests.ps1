@@ -2,7 +2,7 @@
 
 Import-Module "$currentScriptPath\..\bin\AzureExtensionHandler.psm1"
 Import-Module "$currentScriptPath\..\bin\RMExtensionStatus.psm1"
-Import-Module "$currentScriptPath\..\bin\RMExtensionHandler.psm1"
+Import-Module "$currentScriptPath\..\bin\RMExtensionCommon.psm1"
 
 Describe "Start RM extension tests" {
 
@@ -92,7 +92,7 @@ Describe "Download agent tests" {
         Mock -ModuleName RMExtensionHandler Write-Log{}
         Mock -ModuleName RMExtensionHandler Set-HandlerErrorStatus {}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName RMExtensionHandler Invoke-GetAgentScript { throw New-Object System.Exception("some error")}
+        Mock -ModuleName RMExtensionHandler Invoke-GetAgentScriptAndExtractAgent { throw New-Object System.Exception("some error")}
         Mock -ModuleName RMExtensionHandler Exit-WithCode1 {}
 
         Get-Agent @{}
@@ -106,7 +106,7 @@ Describe "Download agent tests" {
 
         Mock -ModuleName RMExtensionHandler Write-Log{}
         Mock -ModuleName RMExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName RMExtensionHandler Invoke-GetAgentScript {}
+        Mock -ModuleName RMExtensionHandler Invoke-GetAgentScriptAndExtractAgent {}
         Mock -ModuleName RMExtensionHandler Set-HandlerStatus
         
         Get-Agent @{}
@@ -144,7 +144,7 @@ Describe "Pre-check agent tests" {
         Test-AgentAlreadyExists @{}
 
         It "should call clean up functions" {
-            Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.PreCheckedDeploymentAgent.Code}
+            Assert-MockCalled -ModuleName RMExtensionHandler Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.CheckedExistingAgent.Code}
         }
     }
 }

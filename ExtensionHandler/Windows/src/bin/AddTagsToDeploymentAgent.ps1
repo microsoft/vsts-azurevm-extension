@@ -38,6 +38,105 @@ function GetAgentSettingPath
     return Join-Path $workingFolder $agentSetting
 }
 
+function ApplyTagsToAgent
+{
+    param(
+    [Parameter(Mandatory=$true)]
+    [string]$tfsUrl,
+    [Parameter(Mandatory=$true)]
+    [string]$projectId,
+    [Parameter(Mandatory=$false)]
+    [string]$patToken,
+    [Parameter(Mandatory=$true)]
+    [string]$deploymentGroupId,
+    [Parameter(Mandatory=$true)]
+    [string]$agentId,
+    [Parameter(Mandatory=$true)]
+    [string]$tagsAsJsonString
+    )
+
+    $restCallUrl = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets?api-version={3}" -f $tfsUrl, $projectId, $deploymentGroupId, $targetsAPIVersion)
+
+    WriteAddTagsLog "Url for adding tags - $restCallUrl"
+
+    $headers = GetRESTCallHeader $patToken
+
+    $requestBody = "[{'id':" + $agentId + ",'tags':" + $tagsAsJsonString + ",'agent':{'id':" + $agentId + "}}]"
+
+    WriteAddTagsLog "Add tags request body - $requestBody"
+    try
+    {
+        $ret = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
+        if($ret.PSObject.Properties.name -notcontains "value")
+        {
+            throw "PATCH call failed"
+        }
+    }
+    catch
+    {
+        throw "Tags could not be added. Please make sure that you enter correct details."
+    }
+}
+
+function AddTagsToAgent
+{
+    param(
+    [Parameter(Mandatory=$true)]
+    [string]$tfsUrl,
+    [Parameter(Mandatory=$true)]
+    [string]$projectId,
+    [Parameter(Mandatory=$false)]
+    [string]$patToken,
+    [Parameter(Mandatory=$true)]
+    [string]$deploymentGroupId,
+    [Parameter(Mandatory=$true)]
+    [string]$agentId,
+    [Parameter(Mandatory=$true)]
+    [string]$tagsAsJsonString
+    )
+
+    $restCallUrlToGetExistingTags = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets/{3}?api-version={4}" -f $tfsUrl, $projectId, $deploymentGroupId, $agentId, $targetsAPIVersion)
+
+    WriteAddTagsLog "Url for adding getting existing tags if any - $restCallUrlToGetExistingTags"
+
+    $headers = GetRESTCallHeader $patToken
+    try
+    {
+        $target = Invoke-RestMethod -Uri $($restCallUrlToGetExistingTags) -headers $headers -Method Get -ContentType "application/json"
+        $existingTags = $target.tags
+
+        $tags = @()
+        [Array]$newTags =  ConvertFrom-Json $tagsAsJsonString
+
+        if($existingTags.count -gt 0)
+        {
+            $tags = $existingTags    ## Append new tags to existing tags, this will ensure existing tags are not modified due to case change
+            WriteAddTagsLog "Found existing tags for agent - $existingTags"
+
+            foreach( $newTag in $newTags)
+            {
+                if(!($tags -iContains $newTag))
+                {
+                    $tags += $newTag
+                }
+            }
+        }
+        else    ## In case not exiting tags are present
+        {
+            $tags = $newTags
+        }
+
+        $newTagsJsonString = ConvertTo-Json $tags
+    }
+    catch
+    {
+        throw "Tags could not be added. Unable to fetch the existing tags or deployment group details"
+    }
+
+    WriteAddTagsLog "Updating the tags for agent target - $agentId"
+    ApplyTagsToAgent -tfsUrl $tfsUrl -projectId $projectId -patToken $patToken -deploymentGroupId $deploymentGroupId -agentId $agentId -tagsAsJsonString $newTagsJsonString
+}
+
 function AgentSettingExist
 {
     $agentSettingExists = Test-Path $agentSettingPath

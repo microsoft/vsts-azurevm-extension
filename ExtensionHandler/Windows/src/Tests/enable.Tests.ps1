@@ -2,7 +2,7 @@
 
 Import-Module "$currentScriptPath\..\bin\AzureExtensionHandler.psm1"
 Import-Module "$currentScriptPath\..\bin\RMExtensionStatus.psm1"
-Import-Module "$currentScriptPath\..\bin\RMExtensionHandler.psm1"
+Import-Module "$currentScriptPath\..\bin\RMExtensionCommon.psm1"
 Import-Module "$currentScriptPath\..\bin\Log.psm1"
 
 Describe "Enable RM extension tests" {

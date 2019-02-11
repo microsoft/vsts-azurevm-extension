@@ -39,12 +39,12 @@ $global:RM_Extension_Status = @{
         Message = 'Initialized extension successfully'
         operationName = 'Initialization'
     }
-    PreCheckingDeploymentAgent = @{
+    CheckingExistingAgent = @{
         Code = 5
         Message = 'Checking whether a deployment agent is already existing'
         operationName = 'Check existing agent'
     }
-    PreCheckedDeploymentAgent = @{
+    CheckedExistingAgent = @{
         Code = 6
         Message = 'Checked for existing deployment agent'
         operationName = 'Check existing agent'
@@ -156,9 +156,9 @@ $global:RM_Extension_Status = @{
         operationName = 'Update'
     }
 
-    SkippingEnableSameSettingsAsPreviousVersion = @{
+    SkippingEnableSameSettingsAsDisabledVersion = @{
         Code = 29
-        Message = 'The extension settings are the same as the previous version. Skipping extension enable.'
+        Message = 'The extension settings are the same as the disabled version. Skipping extension enable.'
         operationName = 'Skip enable'
     }
 

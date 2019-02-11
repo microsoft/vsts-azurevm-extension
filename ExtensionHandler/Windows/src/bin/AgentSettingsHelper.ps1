@@ -11,19 +11,9 @@ function Test-ConfiguredAgentExists
 
     try
     {
-        WriteLog "Initialization for deployment agent started." $logFunction
-        WriteLog "Check for available powershell version. Minimum PowerShell $minPSVersionSupported is required to run the deployment agent." $logFunction
-
-        $psVersion = $PSVersionTable.PSVersion.Major
-
-        if( !( $psVersion -ge $minPSVersionSupported ) )
-        {
-            throw "Installed PowerShell version is $psVersion. Minimum required version is $minPSVersionSupported."
-        }
-
         WriteLog "Check if any existing agent is running from $workingFolder" $logFunction
     
-        $agentSettingFileExist = Test-Path $( GetAgentSettingFilePath $workingFolder)
+        $agentSettingFileExist = Test-Path $(GetAgentSettingFilePath $workingFolder)
         WriteLog "`t`t Agent setting file exist: $agentSettingFileExist" $logFunction
     
         return $agentSettingFileExist 
@@ -144,7 +134,8 @@ function GetDeploymentGroupDataFromAgentSetting
     
     if(![string]::IsNullOrEmpty($deploymentGroupId) -and ![string]::IsNullOrEmpty($projectId))
     {
-        $restCallUrl = ContructRESTCallUrl -tfsUrl $tfsUrl -projectId $projectId -deploymentGroupId $deploymentGroupId -logFunction $logFunction
+        $restCallUrl = $tfsUrl + ("/{0}/_apis/distributedtask/deploymentgroups/{1}" -f $projectId, $deploymentGroupId)
+        WriteLog "`t`t REST call Url -  $restCallUrl" $logFunction
         
         return (InvokeRestURlToGetDeploymentGroupData -restCallUrl $restCallUrl -patToken $patToken -logFunction $logFunction)
     }
@@ -152,25 +143,6 @@ function GetDeploymentGroupDataFromAgentSetting
     return $null
 }
 
-function ContructRESTCallUrl
- {
-    Param(
-    [Parameter(Mandatory=$true)]
-    [string]$tfsUrl,
-    [Parameter(Mandatory=$true)]
-    [string]$projectId,
-    [Parameter(Mandatory=$true)]
-    [string]$deploymentGroupId,
-    [scriptblock]$logFunction
-    )
-
-    $restCallUrl = $tfsUrl + ("/{0}/_apis/distributedtask/deploymentgroups/{1}" -f $projectId, $deploymentGroupId)
-    
-    WriteLog "`t`t REST call Url -  $restCallUrl" $logFunction
-    
-    return $restCallUrl
- }
- 
  function InvokeRestURlToGetDeploymentGroupData
  {
     Param(

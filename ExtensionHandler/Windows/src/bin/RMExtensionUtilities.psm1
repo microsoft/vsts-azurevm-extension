@@ -80,11 +80,51 @@ function Get-OSVersion {
     }
 }
 
-function Get-TimeSinceEpoch {
-    $epochTime = Get-Date "01/01/1970"
-    $currentTime = Get-Date
-    $timeSinceEpoch = (New-TimeSpan -Start $epochTime -End $currentTime).Ticks
-    return $timeSinceEpoch
+<#
+.Synopsis
+   Module containing generic utility metnods
+#>
+
+$ErrorActionPreference = 'stop'
+
+Set-StrictMode -Version latest
+
+Import-Module $PSScriptRoot\RMExtensionStatus.psm1
+function GetRESTCallHeader
+{
+    param(
+    [Parameter(Mandatory=$false)]
+    [string]$patToken
+    )
+
+    $basicAuth = ("{0}:{1}" -f '', $patToken)
+    $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
+    $basicAuth = [System.Convert]::ToBase64String($basicAuth)
+    $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
+
+    return $headers
+}
+
+function Exit-WithCode1 {
+    exit 1
+}
+
+function Exit-WithCode0 {
+    exit 0
+}
+
+function VerifyInputNotNull {
+    [CmdletBinding()]
+    param(
+    [string] $inputKey,
+    [string] $inputValue
+    )
+
+    if(-not $inputValue)
+        {
+            $message = "$inputKey should be specified"
+            throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message
+        }
 }
 
 Export-ModuleMember `

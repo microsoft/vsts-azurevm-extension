@@ -1,0 +1,344 @@
+<#
+.Synopsis
+   Reads .settings file
+   Generates configuration settings required for downloading and configuring agent
+   Validates inputs
+#>
+function Get-ConfigurationFromSettings {
+    [CmdletBinding()]
+    param()
+
+    try
+    {
+        . $PSScriptRoot\Constants.ps1
+        Write-Log "Reading config settings from file..."
+
+        #Retrieve settings from file
+        $settings = Get-HandlerSettings
+        Write-Log "Read config settings from file. Now validating inputs"
+
+        $publicSettings = $settings['publicSettings']
+        $protectedSettings = $settings['protectedSettings']
+        if (-not $publicSettings)
+        {
+            $publicSettings = @{}
+        }
+        if (-not $protectedSettings)
+        {
+            $protectedSettings = @{}
+        }
+
+        #Extract protected settings
+        $patToken = ""
+        if($protectedSettings.Contains('PATToken'))
+        {
+            $patToken = $protectedSettings['PATToken']
+        }
+        if(-not $patToken -and $publicSettings.Contains('PATToken'))
+        {
+            $patToken = $publicSettings['PATToken']
+        }
+
+        $windowsLogonPassword = ""
+        if($protectedSettings.Contains('Password'))
+        {
+            $windowsLogonPassword = $protectedSettings['Password']
+        }
+        
+        #Extract and verify public settings
+        $vstsAccountUrl = $publicSettings['VSTSAccountUrl']
+        if(-not $vstsAccountUrl)
+        {
+            $vstsAccountUrl = $publicSettings['VSTSAccountName']
+        }
+        VerifyInputNotNull "VSTSAccountUrl" $vstsAccountUrl
+        $vstsUrl = $vstsAccountUrl.ToLower()
+        $vstsUrl = Parse-VSTSUrl -vstsAccountUrl $vstsAccountUrl -patToken $patToken
+        Write-Log "VSTS service URL: $vstsUrl"
+
+        $teamProjectName = $publicSettings['TeamProject']
+        VerifyInputNotNull "TeamProject" $teamProjectName
+        Write-Log "Team Project: $teamProjectName"
+
+        $deploymentGroupName = $publicSettings['DeploymentGroup']
+        if(-not $deploymentGroupName)
+        {
+            $deploymentGroupName = $publicSettings['MachineGroup']
+        }
+        VerifyInputNotNull "DeploymentGroup" $deploymentGroupName
+        Write-Log "Deployment Group: $deploymentGroupName"
+
+        $agentName = ""
+        if($publicSettings.Contains('AgentName'))
+        {
+            $agentName = $publicSettings['AgentName']
+        }
+        Write-Log "Agent name: $agentName"
+
+        $tagsInput = @()
+        if($publicSettings.Contains('Tags'))
+        {
+            $tagsInput = $publicSettings['Tags']
+            $tagsString = $tagsInput | Out-String
+        }
+        Write-Log "Tags: $tagsString"
+        $tags = @(Format-TagsInput $tagsInput)
+
+        $windowsLogonAccountName = ""
+        if($publicSettings.Contains('UserName'))
+        {
+            $windowsLogonAccountName = $publicSettings['UserName']
+        }
+        if($windowsLogonAccountName)
+        {
+            if(-not($windowsLogonAccountName.Contains('@') -or $windowsLogonAccountName.Contains('\')))
+            {
+                $windowsLogonAccountName = $env:COMPUTERNAME + '\' + $windowsLogonAccountName
+            }
+        }
+
+        Write-Log "Done reading config settings from file..."
+        Add-HandlerSubStatus $RM_Extension_Status.SuccessfullyReadSettings.Code $RM_Extension_Status.SuccessfullyReadSettings.Message -operationName $RM_Extension_Status.SuccessfullyReadSettings.operationName
+
+        $config = @{
+            VSTSUrl  = $vstsUrl
+            PATToken = $patToken
+            TeamProject        = $teamProjectName
+            DeploymentGroup    = $deploymentGroupName
+            AgentName          = $agentName
+            Tags               = $tags
+            AgentWorkingFolder = $agentWorkingFolder
+            WindowsLogonAccountName = $windowsLogonAccountName
+            WindowsLogonPassword = $windowsLogonPassword
+        }
+        
+        Confirm-InputsAreValid -config $config
+        
+        return $config
+    }
+    catch
+    {
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ReadingSettings.operationName
+    }
+}
+
+function Confirm-InputsAreValid {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
+    #Verify the project exists and the PAT is valid for the account
+    #This is the first validation http call, so using Invoke-WebRequest instead of Invoke-RestMethod, because if the PAT provided is not a token at all(not even an unauthorized one) and some random value, then the call
+    #would redirect to sign in page and not throw an exception. So, to handle this case.
+
+    $errorMessageInitialPart = ("Could not verify that the project {0} exists in the specified organization. " -f $config.TeamProject)
+    $invaidPATErrorMessage = "Please make sure that the Personal Access Token entered is valid and has 'Deployment Groups - Read & manage' scope."
+    $errorCode = $RM_Extension_Status.ArgumentError
+    $unexpectedErrorMessage = "Some unexpected error occured. Status code : {0}"
+    $getProjectUrl = ("{0}/_apis/projects/{1}?api-version={2}" -f $config.VSTSUrl, $config.TeamProject, $projectAPIVersion)
+    Write-Log "Url to check project exists - $getProjectUrl"
+    $headers = GetRESTCallHeader $config.PATToken
+    try
+    {
+        $ret = (Invoke-WebRequest -Uri $getProjectUrl -headers $headers -Method Get -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing)
+    }
+    catch
+    {
+        switch($_.Exception.Response.StatusCode.value__)
+        {
+            401
+            {
+                $specificErrorMessage = $invaidPATErrorMessage
+            }
+            404
+            {
+                $specificErrorMessage = "Please make sure that you enter the correct organization name and verify that the project exists in the organization."
+            }
+            default
+            {
+                $specificErrorMessage = ($unexpectedErrorMessage -f $_)
+                $errorCode = $RM_Extension_Status.GenericError
+            }
+        }
+        throw New-HandlerTerminatingError $errorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
+    }
+    if($ret.StatusCode -eq 302)
+    {
+        $specificErrorMessage = $invaidPATErrorMessage
+        throw New-HandlerTerminatingError $errorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
+    }
+    Write-Log ("Validated that the project {0} exists" -f $config.TeamProject)
+
+    #Verify the deployment group eixts and the PAT has the required(Deployment Groups - Read & manage) scope
+
+    $errorMessageInitialPart = ("Could not verify that the deployment group {0} exists in the project {1} in the specified organization. " -f $config.DeploymentGroup, $config.TeamProject)
+    $getDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroup, $projectAPIVersion)
+    Write-Log "Url to check deployment group exists - $getDeploymentGroupUrl"
+    $deploymentGroupData = @{}
+    try
+    {
+        $ret = Invoke-RestMethod -Uri $getDeploymentGroupUrl -headers $headers -Method Get
+    }
+    catch
+    {
+        switch($_.Exception.Response.StatusCode.value__)
+        {
+            401
+            {
+                $specificErrorMessage = $invaidPATErrorMessage
+            }
+            default
+            {
+                $specificErrorMessage = ($unexpectedErrorMessage -f $_)
+                $errorCode = $RM_Extension_Status.GenericError
+            }
+        }
+        throw New-HandlerTerminatingError $errorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
+    }
+    if($ret.count -eq 0)
+    {
+        $specificErrorMessage = "Please make sure that the deployment group exists in the project."
+        throw New-HandlerTerminatingError $errorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
+    }
+
+    $deploymentGroupData = $ret.value[0]
+    Write-Log ("Validated that the deployment group {0} exists" -f $config.DeploymentGroup)
+
+    #Verify the user has manage permissions on the deployment group
+    $deploymentGroupId = $deploymentGroupData.id
+    $patchDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $deploymentGroupId, $projectAPIVersion)
+    Write-Log "Url to check that the user has 'Manage' permissions on the deployment group - $patchDeploymentGroupUrl"
+    $requestBody = "{'name': '" + $config.DeploymentGroup + "'}"
+    try
+    {
+        $ret = Invoke-RestMethod -Uri $patchDeploymentGroupUrl -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
+    }
+    catch
+    {
+        switch($_.Exception.Response.StatusCode.value__)
+        {
+            403
+            {
+                $specificErrorMessage = ("Please ensure that the user has 'Manage' permissions on the deployment group {0}." -f $config.DeploymentGroup)
+            }
+            default
+            {
+                $specificErrorMessage = ($unexpectedErrorMessage -f $_)
+                $errorCode = $RM_Extension_Status.GenericError
+            }
+        }
+        throw New-HandlerTerminatingError $errorCode -Message ($errorMessageInitialPart + $specificErrorMessage)
+    }
+    Write-Log ("Validated that the user has 'Manage' permissions on the deployment group {0}" -f $config.DeploymentGroup)
+}
+
+<#
+.Synopsis
+   Reads .settings file
+   Generates configuration settings required for downloading and configuring agent
+   Validates inputs
+#>
+
+function Parse-VSTSUrl
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $vstsAccountUrl,
+        [Parameter(Mandatory = $false)]
+        [string] $patToken
+    )
+
+    $vstsUrl = $vstsAccountUrl
+    $global:isOnPrem = $false
+    $protocolHeader = ""
+    $vstsAccountUrl = $vstsAccountUrl.TrimEnd('/')
+    if (($vstsAccountUrl.StartsWith("https://")) -or ($vstsAccountUrl.StartsWith("http://"))) 
+    {
+        $parts = $vstsAccountUrl.Split(@('://'), [System.StringSplitOptions]::RemoveEmptyEntries)
+
+        if ($parts.Count -gt 1) 
+        {
+            $protocolHeader = $parts[0] + "://"
+            $urlWithoutProtocol = $parts[1].trim()
+        }
+        else
+         {
+            throw "Invalid account url. It cannot be just `"https://`""
+        }
+    }
+    else
+     {
+        $urlWithoutProtocol = $vstsAccountUrl
+    }
+
+    if($protocolHeader -eq "")
+    {
+        Write-Log "Given input is not a valid URL. Assuming it is just the account name."
+        $vstsUrl = "https://{0}.visualstudio.com" -f $vstsAccountUrl
+        return $vstsUrl
+    }
+
+    $restCallUrl = $vstsAccountUrl + "/_apis/connectiondata"
+    $headers = GetRESTCallHeader $patToken
+    $response = @{}
+    $response.deploymentType = 'hosted'
+    try
+     {
+        $resp = Invoke-RestMethod -Uri $restCallUrl -headers $headers -Method Get -ContentType "application/json"
+        if($resp.GetType().FullName -eq "System.Management.Automation.PSCustomObject")
+        {
+            $response = $resp
+        }
+    }
+    catch
+     {
+        Write-Log "Failed to fetch the connection data for the url $restCallUrl : $_.Exception"
+    }
+    if (!$response.deploymentType -or $response.deploymentType -ne "hosted")
+     {
+        $global:isOnPrem = $true
+        $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
+        if($subparts.Count -le 1)
+        {
+            throw "Invalid value for the input 'VSTS account url'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment."
+        }
+    }
+
+    return $vstsUrl
+}
+
+function Format-TagsInput {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [psobject] $tagsInput
+    )
+
+    $tags = @()
+    if($tagsInput.GetType().IsArray)
+    {
+        $tags = $tagsInput
+    }
+    elseif($tagsInput.GetType().Name -eq "hashtable")
+    {
+        [System.Collections.ArrayList]$tagsList = @()
+        $tagsInput.Values | % { $tagsList.Add($_) > $null }
+        $tags = $tagsList.ToArray()
+    }
+    elseif($tagsInput.GetType().Name -eq "String")
+    {
+        $tags = $tagsInput.Split(',', [System.StringSplitOptions]::RemoveEmptyEntries).trim()
+    }
+    else
+    {
+        $message = "Tags input should either be a string, or an array of strings, or an object containing key-value pairs"
+        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message
+    }
+
+    $uniqueTags = $tags | Sort-Object -Unique | Where { -not [string]::IsNullOrWhiteSpace($_) }
+
+    return $uniqueTags
+}

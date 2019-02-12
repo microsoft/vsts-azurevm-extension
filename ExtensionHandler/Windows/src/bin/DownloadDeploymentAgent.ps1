@@ -113,11 +113,6 @@ function WriteDownloadLog
         Remove-Item $target -Force
     }
     
-    $securityProtocolString = [string][Net.ServicePointManager]::SecurityProtocol
-    if ($securityProtocolString -notlike "*Tls12*") {
-        $securityProtocolString += ", Tls12"
-        [Net.ServicePointManager]::SecurityProtocol = $securityProtocolString
-    }
     WriteDownloadLog "`t`t Start DeploymentAgent download"
     (New-Object Net.WebClient).DownloadFile($agentDownloadUrl,$target)
     WriteDownloadLog "`t`t DeploymentAgent download done"

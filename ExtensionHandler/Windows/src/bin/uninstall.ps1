@@ -13,7 +13,10 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
     $PSScriptRoot = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
 }
 
+Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionCommon.psm1 -DisableNameChecking
+Import-Module $PSScriptRoot\RMExtensionStatus.psm1
+Import-Module $PSScriptRoot\Log.psm1
 . "$PSScriptRoot\Constants.ps1"
 
 Initialize-ExtensionLogFile

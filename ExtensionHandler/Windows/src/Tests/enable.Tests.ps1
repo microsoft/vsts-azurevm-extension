@@ -339,7 +339,7 @@ Describe "AgentReconfigurationRequired tests" {
         DeploymentGroup = "DeploymentGroup"
         PATToken = "PATToken"
     }
-    $script:logger = {}
+    $global:logger = {}
 
     Context "Should set error status if exception happens" {
 

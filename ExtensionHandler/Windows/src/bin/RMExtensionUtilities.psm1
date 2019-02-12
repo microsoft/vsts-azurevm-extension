@@ -95,11 +95,13 @@ function Get-RESTCallHeader
     return $headers
 }
 
-function Exit-WithCode1 {
+function Exit-WithCode1
+{
     exit 1
 }
 
-function Exit-WithCode0 {
+function Exit-WithCode0
+{
     exit 0
 }
 

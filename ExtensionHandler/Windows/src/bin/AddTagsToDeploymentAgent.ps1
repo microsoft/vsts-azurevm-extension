@@ -162,7 +162,7 @@ try
     $agentId = $($agentSettings.agentId)
     $projectId = $($agentSettings.projectId)
     $deploymentGroupId = $($agentSettings.deploymentGroupId)
-    WriteLog "`t`t` Agent id, Project id, Deployment group id -  $agentId, $projectId, $deploymentGroupId" -logFunction $logFunction
+    WriteAddTagsLog "`t`t` Agent id, Project id, Deployment group id -  $agentId, $projectId, $deploymentGroupId" -logFunction $logFunction
     
     if([string]::IsNullOrEmpty($deploymentGroupId) -or [string]::IsNullOrEmpty($agentId) -or [string]::IsNullOrEmpty($projectId))
     {

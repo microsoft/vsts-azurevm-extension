@@ -14,14 +14,6 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 
-#
-# Logger function for download/configuration scripts
-#
-$script:logger = {
-    param([string] $Message)
-
-    Write-Log $Message
-}
 
 function Test-AgentAlreadyExists {
     [CmdletBinding()]
@@ -36,7 +28,9 @@ function Test-AgentAlreadyExists {
         Write-Log "Pre-checking agent configuration..."
 
         . $PSScriptRoot\AgentSettingsHelper.ps1
-        $agentAlreadyExists = Test-ConfiguredAgentExists -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+        "4" | Out-File .\check.txt -Append
+        $agentAlreadyExists = Test-ConfiguredAgentExists -workingFolder $config.AgentWorkingFolder -logFunction $global:logger
+        "5" | Out-File .\check.txt -Append
 
         Write-Log "Done pre-checking agent configuration..."
         Add-HandlerSubStatus $RM_Extension_Status.CheckedExistingAgent.Code $RM_Extension_Status.CheckedExistingAgent.Message -operationName $RM_Extension_Status.CheckedExistingAgent.operationName
@@ -44,6 +38,7 @@ function Test-AgentAlreadyExists {
     }
     catch
     {
+        "7" | Out-File .\check.txt -Append
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.CheckingExistingAgent.operationName
     }
 }
@@ -96,7 +91,7 @@ function Invoke-RemoveAgentScript {
     [hashtable] $config
     )
 
-    . $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    . $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $global:logger
 }
 
 function Set-ErrorStatusAndErrorExit {
@@ -161,4 +156,6 @@ Export-ModuleMember `
     -Function `
         Test-AgentAlreadyExists, `
         Remove-Agent, `
-        Set-ErrorStatusAndErrorExit
+        Set-ErrorStatusAndErrorExit, `
+        Clean-AgentFolder, `
+        Create-AgentWorkingFolder

@@ -18,6 +18,12 @@ Import-Module $PSScriptRoot\RMExtensionCommon.psm1 -DisableNameChecking
 . $PSScriptRoot\ConfigSettingsReader.ps1
 . $PSScriptRoot\Constants.ps1
 
+$global:logger = {
+    param([string] $Message)
+
+    Write-Log $Message
+}
+
 $Enable_ConfiguredAgentExists = $false
 $Enable_AgentConfigurationRequired = $true
 
@@ -34,7 +40,7 @@ function Test-AgentReconfigurationRequired {
         Write-Log "Invoking script to check existing agent settings with given configuration settings..."
 
         . $PSScriptRoot\AgentSettingsHelper.ps1
-        $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken -logFunction $script:logger)
+        $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken -logFunction $global:logger)
     
 
         Write-Log "Done pre-checking for agent re-configuration, AgentReconfigurationRequired : $agentReConfigurationRequired..."
@@ -43,7 +49,6 @@ function Test-AgentReconfigurationRequired {
     }
     catch
     {
-        $_ | Out-File .\check.txt -Append
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
     }
 }
@@ -57,7 +62,7 @@ function Invoke-GetAgentScriptAndExtractAgent {
 
     Clean-AgentFolder
     Create-AgentWorkingFolder
-    . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $script:logger
+    . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $global:logger
     $agentZipFilePath = Join-Path $workingFolder $agentZipName
     $job = Start-Job -ScriptBlock {
         Param(
@@ -162,7 +167,7 @@ function Invoke-ConfigureAgentScript {
     )
 
     . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -deploymentGroupName `
-    $config.DeploymentGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -logFunction $script:logger `
+    $config.DeploymentGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -logFunction $global:logger `
     -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword
 }
 
@@ -182,16 +187,27 @@ function Start-RMExtensionHandler {
     try
     {
         Initialize-ExtensionLogFile
+
+        #Fail if powershell version not supported
         $psVersion = $PSVersionTable.PSVersion.Major
         if(!($psVersion -ge $minPSVersionSupported))
         {
             $message = $RM_Extension_Status.PowershellVersionNotSupported.Message -f $psVersion
             throw New-HandlerTerminatingError $RM_Extension_Status.PowershellVersionNotSupported.Code -Message $message
         }
+
+        #Fail if os version is not x64
         $osVersion = Get-OSVersion
         if (!$osVersion.IsX64)
         {
             throw New-HandlerTerminatingError $RM_Extension_Status.ArchitectureNotSupported.Code -Message $RM_Extension_Status.ArchitectureNotSupported.Message
+        }
+
+        #Ensure tls1.2 support is added
+        $securityProtocolString = [string][Net.ServicePointManager]::SecurityProtocol
+        if ($securityProtocolString -notlike "*Tls12*") {
+            $securityProtocolString += ", Tls12"
+            [Net.ServicePointManager]::SecurityProtocol = $securityProtocolString
         }
 
         #
@@ -230,7 +246,7 @@ function Invoke-AddTagsToAgentScript{
     [hashtable] $config
     )
 
-    . $PSScriptRoot\AddTagsToDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -tagsAsJsonString ( $config.Tags | ConvertTo-Json )  -logFunction $script:logger
+    . $PSScriptRoot\AddTagsToDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -tagsAsJsonString ( $config.Tags | ConvertTo-Json )  -logFunction $global:logger
 }
 
 <#

@@ -80,13 +80,13 @@ $global:RM_Extension_Status = @{
     }
     ReadingSettings = @{
         Code = 13
-        Message = 'Reading config settings from file and validating inputs'
-        operationName = 'Read config settings and validate inputs'
+        Message = 'Reading config settings from file'
+        operationName = 'Read config settings'
     }
     SuccessfullyReadSettings = @{
         Code = 14
-        Message = 'Successfully read config settings from file and validated inputs'
-        operationName = 'Read config settings and validated inputs'
+        Message = 'Successfully read config settings from file'
+        operationName = 'Read config settings'
     }
     SkippedInstallation = @{
         Code = 15
@@ -159,6 +159,17 @@ $global:RM_Extension_Status = @{
         Code = 29
         Message = 'The extension settings are the same as the disabled version. Skipping extension enable.'
         operationName = 'Skip enable'
+    }
+
+    ValidatingInputs = @{
+        Code = 30
+        Message = 'Validating inputs'
+        operationName = 'Inputs validation'
+    }
+    SuccessfullyValidatedInputs = @{
+        Code = 31
+        Message = 'Successfully validated inputs'
+        operationName = 'Inputs validation'
     }
 
     #

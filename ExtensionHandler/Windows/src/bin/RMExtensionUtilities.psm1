@@ -80,7 +80,7 @@ function Get-OSVersion {
     }
 }
 
-function GetRESTCallHeader
+function Get-RESTCallHeader
 {
     param(
     [Parameter(Mandatory=$false)]
@@ -107,5 +107,6 @@ Export-ModuleMember `
     -Function `
             ConvertTo-Hashtable, `
             Get-OSVersion, `
+            Get-RESTCallHeader, `
             Exit-WithCode1, `
             Exit-WithCode0

@@ -4,9 +4,9 @@ $currentScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 Describe "parse vsts account name settings tests" {
     Context "Should add necessary fragments to VSTS url if it just accout name" {
 
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
@@ -21,7 +21,7 @@ Describe "parse vsts account name settings tests" {
                 }
             }
             return $inputSettings }
-        Mock VerifyInputNotNull {}
+        Mock Verify-InputNotNull {}
         Mock Format-TagsInput {}
 
         $settings = Get-ConfigurationFromSettings
@@ -33,9 +33,9 @@ Describe "parse vsts account name settings tests" {
 
     Context "Should handle old hosted url" {
 
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
@@ -50,7 +50,7 @@ Describe "parse vsts account name settings tests" {
                 }
             }
             return $inputSettings }
-        Mock VerifyInputNotNull {}
+        Mock Verify-InputNotNull {}
         Mock Format-TagsInput {}
         Mock Invoke-RestMethod {
             $response = @{deploymentType = "hosted"}
@@ -67,9 +67,9 @@ Describe "parse vsts account name settings tests" {
 
     Context "Should handle new hosted url" {
 
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
@@ -84,7 +84,7 @@ Describe "parse vsts account name settings tests" {
                 }
             }
             return $inputSettings }
-        Mock VerifyInputNotNull {}
+        Mock Verify-InputNotNull {}
         Mock Format-TagsInput {}
         Mock Invoke-RestMethod {
             $response = @{deploymentType = "hosted"}
@@ -101,9 +101,9 @@ Describe "parse vsts account name settings tests" {
 
     Context "Should handle hosted url with collection" {
 
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
@@ -118,7 +118,7 @@ Describe "parse vsts account name settings tests" {
                 }
             }
             return $inputSettings }
-        Mock VerifyInputNotNull {}
+        Mock Verify-InputNotNull {}
         Mock Format-TagsInput {}
         Mock Invoke-RestMethod {
             $response = @{deploymentType = "hosted"}
@@ -134,9 +134,9 @@ Describe "parse vsts account name settings tests" {
 
     Context "Should handle on-prem url" {
 
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
@@ -151,7 +151,7 @@ Describe "parse vsts account name settings tests" {
                 }
             }
             return $inputSettings }
-        Mock VerifyInputNotNull {}
+        Mock Verify-InputNotNull {}
         Mock Format-TagsInput {}
         Mock Invoke-RestMethod {
             $response = @{deploymentType = "onPremises"}
@@ -167,9 +167,9 @@ Describe "parse vsts account name settings tests" {
 
     Context "Should handle on-prem url with additional components" {
 
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
@@ -184,7 +184,7 @@ Describe "parse vsts account name settings tests" {
                 }
             }
             return $inputSettings }
-        Mock VerifyInputNotNull {}
+        Mock Verify-InputNotNull {}
         Mock Format-TagsInput {}
         Mock Invoke-RestMethod {
             $response = @{deploymentType = "onPremises"}
@@ -200,10 +200,10 @@ Describe "parse vsts account name settings tests" {
 
     Context "Should throw error if url is not well formed" {
 
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName RMExtensionStatus Set-HandlerErrorStatus {}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock Write-Log{}
+        Mock Set-ErrorStatusAndErrorExit {}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
@@ -218,17 +218,16 @@ Describe "parse vsts account name settings tests" {
                 }
             }
             return $inputSettings }
-        Mock VerifyInputNotNull {}
+        Mock Verify-InputNotNull {}
         Mock Format-TagsInput {}
-        Mock Exit-WithCode1 {} 
         Mock Invoke-RestMethod {
-            $response = @{deploymentType = "onPremises"}
+            $response = [pscustomobject]@{deploymentType = "onPremises"}
             return $response
         }
 
         It "should set proper status" {
             Get-ConfigurationFromSettings
-            Assert-MockCalled Set-HandlerErrorStatus -Times 1  -ParameterFilter { $ErrorRecord.Exception.Message -eq "Invalid value for the input 'VSTS account url'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment."}
+            Assert-MockCalled Set-ErrorStatusAndErrorExit -Times 1 #-ParameterFilter { $ErrorRecord.Exception.Message -eq "Invalid value for the input 'VSTS account url'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment."}
         }
     }
 }
@@ -236,9 +235,9 @@ Describe "parse vsts account name settings tests" {
 Describe "parse tags settings tests" {
     Context "Should copy array if input is array" {
 
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
@@ -253,7 +252,7 @@ Describe "parse tags settings tests" {
                 }
             }
             return $inputSettings }
-        Mock VerifyInputNotNull {}
+        Mock Verify-InputNotNull {}
 
         $settings = Get-ConfigurationFromSettings
 
@@ -266,9 +265,9 @@ Describe "parse tags settings tests" {
 
     Context "Should sort and select unique tags" {
 
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
@@ -283,7 +282,7 @@ Describe "parse tags settings tests" {
                 }
             }
             return $inputSettings }
-        Mock VerifyInputNotNull {}
+        Mock Verify-InputNotNull {}
 
         $settings = Get-ConfigurationFromSettings
 
@@ -296,9 +295,9 @@ Describe "parse tags settings tests" {
 
     Context "Should create array of values if input is hashtable" {
         
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
@@ -316,7 +315,7 @@ Describe "parse tags settings tests" {
                 }
             }
             return $inputSettings }
-        Mock VerifyInputNotNull {}
+        Mock Verify-InputNotNull {}
 
         $settings = Get-ConfigurationFromSettings
 
@@ -329,9 +328,9 @@ Describe "parse tags settings tests" {
 
     Context "Should create array of values if input is string" {
         
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
@@ -346,7 +345,7 @@ Describe "parse tags settings tests" {
                 }
             }
             return $inputSettings }
-        Mock VerifyInputNotNull {}
+        Mock Verify-InputNotNull {}
 
         $settings = Get-ConfigurationFromSettings
 
@@ -360,9 +359,9 @@ Describe "parse tags settings tests" {
 
     Context "Windows user credentials are not present in settings" {
         
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
@@ -377,7 +376,7 @@ Describe "parse tags settings tests" {
                 }
             }
             return $inputSettings }
-        Mock VerifyInputNotNull {}
+        Mock Verify-InputNotNull {}
 
         $settings = Get-ConfigurationFromSettings
 
@@ -389,9 +388,9 @@ Describe "parse tags settings tests" {
 
     Context "Windows user credentials are present in settings" {
         
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
@@ -408,7 +407,7 @@ Describe "parse tags settings tests" {
                 }
             }
             return $inputSettings }
-        Mock VerifyInputNotNull {}
+        Mock Verify-InputNotNull {}
 
         $settings = Get-ConfigurationFromSettings
 

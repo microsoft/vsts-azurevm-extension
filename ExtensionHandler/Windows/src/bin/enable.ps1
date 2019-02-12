@@ -21,28 +21,6 @@ Import-Module $PSScriptRoot\RMExtensionCommon.psm1 -DisableNameChecking
 $Enable_ConfiguredAgentExists = $false
 $Enable_AgentConfigurationRequired = $true
 
-function Test-AgentReConfigurationRequiredInternal {
-    [CmdletBinding()]
-    param(
-    [Parameter(Mandatory=$true, Position=0)]
-    [hashtable] $config
-    )
-
-    . $PSScriptRoot\AgentSettingsHelper.ps1
-    $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken -logFunction $script:logger)
-    return $agentReConfigurationRequired
-}
-
-function ExecuteAgentPreCheck()
-{
-
-    $script:Enable_ConfiguredAgentExists  = Test-AgentAlreadyExists $config
-    if($Enable_ConfiguredAgentExists)
-    {
-        $script:Enable_AgentConfigurationRequired = Test-AgentReconfigurationRequired $config
-    }
-}
-
 function Test-AgentReconfigurationRequired {
     [CmdletBinding()]
     param(
@@ -55,7 +33,9 @@ function Test-AgentReconfigurationRequired {
         Add-HandlerSubStatus $RM_Extension_Status.CheckingAgentReConfigurationRequired.Code $RM_Extension_Status.CheckingAgentReConfigurationRequired.Message -operationName $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
         Write-Log "Invoking script to check existing agent settings with given configuration settings..."
 
-        $agentReConfigurationRequired = Test-AgentReConfigurationRequiredInternal $config
+        . $PSScriptRoot\AgentSettingsHelper.ps1
+        $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken -logFunction $script:logger)
+    
 
         Write-Log "Done pre-checking for agent re-configuration, AgentReconfigurationRequired : $agentReConfigurationRequired..."
         Add-HandlerSubStatus $RM_Extension_Status.AgentReConfigurationRequiredChecked.Code $RM_Extension_Status.AgentReConfigurationRequiredChecked.Message -operationName $RM_Extension_Status.AgentReConfigurationRequiredChecked.operationName
@@ -63,6 +43,7 @@ function Test-AgentReconfigurationRequired {
     }
     catch
     {
+        $_ | Out-File .\check.txt -Append
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
     }
 }
@@ -174,31 +155,6 @@ function Register-Agent {
     }
 }
 
-function DownloadAgentIfRequired
-{
-    if(!$Enable_ConfiguredAgentExists)
-    {
-        Get-Agent $config
-    }
-    else
-    {
-        Write-Log "Skipping agent download as a configured agent already exists."
-        Add-HandlerSubStatus $RM_Extension_Status.SkippingDownloadDeploymentAgent.Code $RM_Extension_Status.SkippingDownloadDeploymentAgent.Message -operationName $RM_Extension_Status.SkippingDownloadDeploymentAgent.operationName
-    }
-}
-
-function RemoveExistingAgentIfRequired
-{
-    if( $Enable_ConfiguredAgentExists -and $Enable_AgentConfigurationRequired)
-    {
-        Write-Log "Remove existing configured agent"
-        Remove-Agent $config
-
-        #Execution has reached till here means that either the agent was removed successfully.
-        $script:Enable_ConfiguredAgentExists = $false
-    }
-}
-
 function Invoke-ConfigureAgentScript {
     [CmdletBinding()]
     param(
@@ -208,20 +164,6 @@ function Invoke-ConfigureAgentScript {
     . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -deploymentGroupName `
     $config.DeploymentGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -logFunction $script:logger `
     -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword
-}
-
-function ConfigureAgentIfRequired
-{
-    if($Enable_AgentConfigurationRequired)
-    {
-        Register-Agent $config
-    }
-    else
-    {
-        Write-Log "Skipping agent configuration. Agent is already configured with given set of parameters"
-        Add-HandlerSubStatus $RM_Extension_Status.SkippingAgentConfiguration.Code $RM_Extension_Status.SkippingAgentConfiguration.Message -operationName $RM_Extension_Status.SkippingAgentConfiguration.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message
-    }
 }
 
 <#
@@ -240,14 +182,12 @@ function Start-RMExtensionHandler {
     try
     {
         Initialize-ExtensionLogFile
-
         $psVersion = $PSVersionTable.PSVersion.Major
         if(!($psVersion -ge $minPSVersionSupported))
         {
             $message = $RM_Extension_Status.PowershellVersionNotSupported.Message -f $psVersion
             throw New-HandlerTerminatingError $RM_Extension_Status.PowershellVersionNotSupported.Code -Message $message
         }
-
         $osVersion = Get-OSVersion
         if (!$osVersion.IsX64)
         {
@@ -358,32 +298,86 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
     return $false
 }
 
-Start-RMExtensionHandler
-$config = Get-ConfigurationFromSettings
-$settingsAreSame = Test-ExtensionSettingsAreSameAsDisabledVersion
-if($settingsAreSame)
+function ExecuteAgentPreCheck()
 {
-    Write-Log "Skipping extension enable."
-    Add-HandlerSubStatus $RM_Extension_Status.SkippingEnableSameSettingsAsDisabledVersion.Code $RM_Extension_Status.SkippingEnableSameSettingsAsDisabledVersion.Message -operationName $RM_Extension_Status.SkippingEnableSameSettingsAsDisabledVersion.operationName
-}
-else
-{
-    Confirm-InputsAreValid $config
 
-    ExecuteAgentPreCheck
-
-    RemoveExistingAgentIfRequired
-
-    DownloadAgentIfRequired
-
-    ConfigureAgentIfRequired
-
-    Add-AgentTags $config
-    
-    Write-Log "Extension is enabled."
+    $script:Enable_ConfiguredAgentExists  = Test-AgentAlreadyExists $config
+    if($Enable_ConfiguredAgentExists)
+    {
+        $script:Enable_AgentConfigurationRequired = Test-AgentReconfigurationRequired $config
+    }
 }
 
-Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
-Set-LastSequenceNumber
-Write-Log "Removing disable markup file.."
-Remove-ExtensionDisabledMarkup
+function DownloadAgentIfRequired
+{
+    if(!$Enable_ConfiguredAgentExists)
+    {
+        Get-Agent $config
+    }
+    else
+    {
+        Write-Log "Skipping agent download as a configured agent already exists."
+        Add-HandlerSubStatus $RM_Extension_Status.SkippingDownloadDeploymentAgent.Code $RM_Extension_Status.SkippingDownloadDeploymentAgent.Message -operationName $RM_Extension_Status.SkippingDownloadDeploymentAgent.operationName
+    }
+}
+
+function RemoveExistingAgentIfRequired
+{
+    if( $Enable_ConfiguredAgentExists -and $Enable_AgentConfigurationRequired)
+    {
+        Write-Log "Remove existing configured agent"
+        Remove-Agent $config
+
+        #Execution has reached till here means that either the agent was removed successfully.
+        $script:Enable_ConfiguredAgentExists = $false
+    }
+}
+
+function ConfigureAgentIfRequired
+{
+    if($Enable_AgentConfigurationRequired)
+    {
+        Register-Agent $config
+    }
+    else
+    {
+        Write-Log "Skipping agent configuration. Agent is already configured with given set of parameters"
+        Add-HandlerSubStatus $RM_Extension_Status.SkippingAgentConfiguration.Code $RM_Extension_Status.SkippingAgentConfiguration.Message -operationName $RM_Extension_Status.SkippingAgentConfiguration.operationName
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message
+    }
+}
+
+function Enable
+{
+    Start-RMExtensionHandler
+    $config = Get-ConfigurationFromSettings
+    $settingsAreSame = Test-ExtensionSettingsAreSameAsDisabledVersion
+    if($settingsAreSame)
+    {
+        Write-Log "Skipping extension enable."
+        Add-HandlerSubStatus $RM_Extension_Status.SkippingEnableSameSettingsAsDisabledVersion.Code $RM_Extension_Status.SkippingEnableSameSettingsAsDisabledVersion.Message -operationName $RM_Extension_Status.SkippingEnableSameSettingsAsDisabledVersion.operationName
+    }
+    else
+    {
+        Confirm-InputsAreValid $config
+
+        ExecuteAgentPreCheck
+
+        RemoveExistingAgentIfRequired
+
+        DownloadAgentIfRequired
+
+        ConfigureAgentIfRequired
+
+        Add-AgentTags $config
+        
+        Write-Log "Extension is enabled."
+    }
+
+    Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
+    Set-LastSequenceNumber
+    Write-Log "Removing disable markup file.."
+    Remove-ExtensionDisabledMarkup
+}
+
+Enable

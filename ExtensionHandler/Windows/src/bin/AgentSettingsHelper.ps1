@@ -153,7 +153,7 @@ function GetDeploymentGroupDataFromAgentSetting
     
     WriteLog "`t`t Form the header for invoking the rest call" $logFunction
  
-    $headers = GetRESTCallHeader $patToken
+    $headers = Get-RESTCallHeader $patToken
     
     WriteLog "`t`t Invoke-rest call for deployment group name" $logFunction
     try

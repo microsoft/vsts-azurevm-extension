@@ -62,7 +62,7 @@ function WriteDownloadLog
     
     WriteDownloadLog "`t`t Form the header for invoking the rest call"
     
-    $headers = GetRESTCallHeader $patToken
+    $headers = Get-RESTCallHeader $patToken
     
     WriteDownloadLog "`t`t Invoke-rest call for packageData"
     try

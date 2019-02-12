@@ -59,7 +59,7 @@ function ApplyTagsToAgent
 
     WriteAddTagsLog "Url for applying tags - $restCallUrl"
 
-    $headers = GetRESTCallHeader $patToken
+    $headers = Get-RESTCallHeader $patToken
 
     $requestBody = "[{'id':" + $agentId + ",'tags':" + $tagsAsJsonString + ",'agent':{'id':" + $agentId + "}}]"
 
@@ -98,7 +98,7 @@ function AddTagsToAgent
     $restCallUrlToGetExistingTags = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets/{3}?api-version={4}" -f $tfsUrl, $projectId, $deploymentGroupId, $agentId, $targetsAPIVersion)
     WriteAddTagsLog "Url for getting existing tags if any - $restCallUrlToGetExistingTags"
 
-    $headers = GetRESTCallHeader $patToken
+    $headers = Get-RESTCallHeader $patToken
     try
     {
         $target = Invoke-RestMethod -Uri $($restCallUrlToGetExistingTags) -headers $headers -Method Get -ContentType "application/json"

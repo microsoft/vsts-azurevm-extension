@@ -60,7 +60,6 @@ Describe "Agent ExistenceChecker Tests" {
 
     Context "GetDeploymentGroupDataFromAgentSetting should work fine" {    
         
-        Mock ContructRESTCallUrl { return "test-Url" }
         Mock InvokeRestURlToGetDeploymentGroupData { return ('{ "machines":[{"tags":["t1","tag1","zxfzxcz"],"id":5022},{"tags":["t1"],"id":5023}],"machineCount":2,"id":2934,"project":{"id":"b924d689-3eae-4116-8443-9a17392d8544","name":"testProj"},"name":"deployment-GroupName","pool":{"id":352,"scope":"0efb4611-d565-4cd1-9a64-7d6cb6d7d5f0","name":"01c05ec2-bde8-48e8-a3ad-7838e92d3455","isHosted":false,"poolType":"deployment"} }' | ConvertFrom-Json ) }
         
         $existingAgentSetting =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Dg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/",  "workFolder": "_work",  "projectId": "testProj",  "deploymentGroupId": 7 }' | ConvertFrom-Json
@@ -69,7 +68,7 @@ Describe "Agent ExistenceChecker Tests" {
             $ret = GetDeploymentGroupDataFromAgentSetting -agentSetting $existingAgentSetting -tfsUrl "http://mylocaltfs:8080/tfs" -patToken "test-PAT"
             $ret.name | Should be "deployment-GroupName"     
             
-            Assert-MockCalled InvokeRestURlToGetDeploymentGroupData -Times 1 -ParameterFilter { $restCallUrl.Equals("http://mylocaltfs:8080/tfs/_apis/distributedtask/deploymentgroups/7") }
+            Assert-MockCalled InvokeRestURlToGetDeploymentGroupData -Times 1 -ParameterFilter { $restCallUrl.Equals("http://mylocaltfs:8080/tfs/testProj/_apis/distributedtask/deploymentgroups/7") }
         }
         
         $existingAgentSetting =  '{  "agentId": 17,  "agentName": "Agent-Name-For-Dg",  "poolId": 2,  "serverUrl": "http://mylocaltfs:8080/tfs/",  "workFolder": "_work",  "projectId": "b924d649-3eae-4236-8443-9a17392d8544",  "deploymentGroupID": 7 }' | ConvertFrom-Json
@@ -77,22 +76,7 @@ Describe "Agent ExistenceChecker Tests" {
             $ret = GetDeploymentGroupDataFromAgentSetting -agentSetting $existingAgentSetting -tfsUrl "http://mylocaltfs:8080/tfs" -patToken "test-PAT"
             $ret.project.Name | Should be "testProj"     
             
-            Assert-MockCalled ContructRESTCallUrl -Times 1 -ParameterFilter { $projectId.Equals("b924d649-3eae-4236-8443-9a17392d8544") }           
             Assert-MockCalled InvokeRestURlToGetDeploymentGroupData -Times 1
         }
-    }
-    
-    Context "ContructRESTCallUrl should work fine" {    
-    
-         It "should return correct REST " {         
-            $tfsUrl = "https://myaccount.visualstudio.com"
-            $projectName = "testProj"
-            $deploymentGroupId = 7
-            $expectedRESTUrl = $tfsUrl + ("/{0}/_apis/distributedtask/deploymentgroups/{1}" -f $projectName, $deploymentGroupId)
-         
-            $ret = ContructRESTCallUrl -tfsUrl $tfsUrl -projectId $projectName -deploymentGroupId $deploymentGroupId
-            
-            $ret | Should be $expectedRESTUrl         
-         }    
     }
 }

@@ -3,26 +3,34 @@
 Import-Module "$currentScriptPath\..\bin\RMExtensionCommon.psm1"
 
 Describe "Pre-check agent tests" {
+    $config = @{
+        AgentWorkingFolder = "AgentWorkingFolder"
+        Tags = @()
+        VSTSUrl = "VSTSUrl"
+        TeamProject = "TeamProject"
+        DeploymentGroup = "DeploymentGroup"
+        PATToken = "PATToken"
+    }
+    $script:logger = {}
 
     Context "Should set error status if exception happens" {
 
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName RMExtensionStatus Set-HandlerErrorStatus {}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock Exit-WithCode1 {}
+        Mock Write-Log{}
+        Mock Set-ErrorStatusAndErrorExit {}
+        Mock Add-HandlerSubStatus {}
 
         Test-AgentAlreadyExists @{}
 
         It "should call clean up functions" {
-            Assert-MockCalled Set-HandlerErrorStatus -Times 1 -ParameterFilter { $ErrorRecord.Exception.Message -eq "some error"}
+            Assert-MockCalled Set-ErrorStatusAndErrorExit -Times 1 #-ParameterFilter { $ErrorRecord.Exception.Message -eq "some error"}
         }
     }
 
     Context "Should set success status if no exception happens" {
 
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus
         
         Test-AgentAlreadyExists @{}
 
@@ -35,9 +43,9 @@ Describe "Pre-check agent tests" {
 Describe "remove agent tests" {
     Context "Should set proper status when agent is removed" {
 
-        Mock -ModuleName Log Write-Log{}
-        Mock -ModuleName AzureExtensionHandler Add-HandlerSubStatus {}
-        Mock -ModuleName AzureExtensionHandler Set-HandlerStatus {}
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Invoke-RemoveAgentScript {}
         Mock Clean-AgentFolder {}
         Remove-Agent @{AgentWorkingFolder = "AgentWorkingFolder"}

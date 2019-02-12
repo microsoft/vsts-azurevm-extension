@@ -1,4 +1,9 @@
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
+Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
+Import-Module $PSScriptRoot\RMExtensionStatus.psm1
+Import-Module $PSScriptRoot\RMExtensionCommon.psm1
+Import-Module $PSScriptRoot\Log.psm1
+
 
 <#
 .Synopsis
@@ -52,13 +57,13 @@ function Get-ConfigurationFromSettings {
         {
             $vstsAccountUrl = $publicSettings['VSTSAccountName']
         }
-        VerifyInputNotNull "VSTSAccountUrl" $vstsAccountUrl
+        Verify-InputNotNull "VSTSAccountUrl" $vstsAccountUrl
         $vstsUrl = $vstsAccountUrl.ToLower()
         $vstsUrl = Parse-VSTSUrl -vstsAccountUrl $vstsAccountUrl -patToken $patToken
         Write-Log "VSTS service URL: $vstsUrl"
 
         $teamProjectName = $publicSettings['TeamProject']
-        VerifyInputNotNull "TeamProject" $teamProjectName
+        Verify-InputNotNull "TeamProject" $teamProjectName
         Write-Log "Team Project: $teamProjectName"
 
         $deploymentGroupName = $publicSettings['DeploymentGroup']
@@ -66,7 +71,7 @@ function Get-ConfigurationFromSettings {
         {
             $deploymentGroupName = $publicSettings['MachineGroup']
         }
-        VerifyInputNotNull "DeploymentGroup" $deploymentGroupName
+        Verify-InputNotNull "DeploymentGroup" $deploymentGroupName
         Write-Log "Deployment Group: $deploymentGroupName"
 
         $agentName = ""
@@ -114,7 +119,7 @@ function Get-ConfigurationFromSettings {
         }
     }
     catch
-    {   $_ > "check.txt"
+    {   
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ReadingSettings.operationName
     }
 }
@@ -136,7 +141,7 @@ function Confirm-InputsAreValid {
     $unexpectedErrorMessage = "Some unexpected error occured. Status code : {0}"
     $getProjectUrl = ("{0}/_apis/projects/{1}?api-version={2}" -f $config.VSTSUrl, $config.TeamProject, $projectAPIVersion)
     Write-Log "Url to check project exists - $getProjectUrl"
-    $headers = GetRESTCallHeader $config.PATToken
+    $headers = Get-RESTCallHeader $config.PATToken
     try
     {
         $ret = (Invoke-WebRequest -Uri $getProjectUrl -headers $headers -Method Get -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing)
@@ -272,11 +277,11 @@ function Parse-VSTSUrl
     }
 
     $restCallUrl = $vstsAccountUrl + "/_apis/connectiondata"
-    $headers = GetRESTCallHeader $patToken
+    $headers = Get-RESTCallHeader $patToken
     $response = @{}
     $response.deploymentType = 'hosted'
     try
-     {
+    {
         $resp = Invoke-RestMethod -Uri $restCallUrl -headers $headers -Method Get -ContentType "application/json"
         if($resp.GetType().FullName -eq "System.Management.Automation.PSCustomObject")
         {
@@ -284,11 +289,11 @@ function Parse-VSTSUrl
         }
     }
     catch
-     {
+    {
         Write-Log "Failed to fetch the connection data for the url $restCallUrl : $_.Exception"
     }
     if (!$response.deploymentType -or $response.deploymentType -ne "hosted")
-     {
+    {
         $global:isOnPrem = $true
         $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
         if($subparts.Count -le 1)
@@ -333,7 +338,7 @@ function Format-TagsInput {
     return $uniqueTags
 }
 
-function VerifyInputNotNull {
+function Verify-InputNotNull {
     [CmdletBinding()]
     param(
     [string] $inputKey,

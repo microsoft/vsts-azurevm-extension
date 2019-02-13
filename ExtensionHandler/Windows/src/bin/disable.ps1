@@ -14,6 +14,8 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
 }
 
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
+Import-Module $PSScriptRoot\RMExtensionStatus.psm1
+Import-Module $PSScriptRoot\Log.psm1
 
 Initialize-ExtensionLogFile
 Write-Log "Disable command is no-op for agent"

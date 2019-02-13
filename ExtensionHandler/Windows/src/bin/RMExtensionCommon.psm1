@@ -13,6 +13,8 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
 
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionStatus.psm1
+Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
+Import-Module $PSScriptRoot\Log.psm1
 
 
 function Test-AgentAlreadyExists {

@@ -23,7 +23,7 @@ Initialize-ExtensionLogFile
 
 #Assuming PAT to be null since it would be removed during enable
 $config = @{
-    PATToken = ""
+    PATToken = "`"`""
     AgentWorkingFolder = $agentWorkingFolder
 }
 

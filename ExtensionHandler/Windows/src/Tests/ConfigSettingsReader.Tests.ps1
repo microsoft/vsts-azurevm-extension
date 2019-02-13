@@ -221,7 +221,10 @@ Describe "parse vsts account name settings tests" {
         Mock Verify-InputNotNull {}
         Mock Format-TagsInput {}
         Mock Invoke-WebRequest {
-            $response = [pscustomobject]@{deploymentType = "onPremises"}
+            $response = @{
+                StatusCode = 200
+                Content = (@{deploymentType = "onPremises"} | ConvertTo-Json)
+            }
             return $response
         }
 

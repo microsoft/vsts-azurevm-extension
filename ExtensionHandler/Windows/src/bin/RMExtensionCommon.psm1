@@ -30,9 +30,7 @@ function Test-AgentAlreadyExists {
         Write-Log "Pre-checking agent configuration..."
 
         . $PSScriptRoot\AgentSettingsHelper.ps1
-        "4" | Out-File .\check.txt -Append
         $agentAlreadyExists = Test-ConfiguredAgentExists -workingFolder $config.AgentWorkingFolder -logFunction $global:logger
-        "5" | Out-File .\check.txt -Append
 
         Write-Log "Done pre-checking agent configuration..."
         Add-HandlerSubStatus $RM_Extension_Status.CheckedExistingAgent.Code $RM_Extension_Status.CheckedExistingAgent.Message -operationName $RM_Extension_Status.CheckedExistingAgent.operationName
@@ -40,7 +38,6 @@ function Test-AgentAlreadyExists {
     }
     catch
     {
-        "7" | Out-File .\check.txt -Append
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.CheckingExistingAgent.operationName
     }
 }

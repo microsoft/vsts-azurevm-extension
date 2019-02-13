@@ -294,21 +294,30 @@ function Parse-VSTSUrl
     $restCallUrl = $vstsAccountUrl + "/_apis/connectiondata"
     $headers = Get-RESTCallHeader $patToken
     $response = @{}
+    $resp = $null
     $response.deploymentType = 'hosted'
     try
     {
-        $resp = Invoke-RestMethod -Uri $restCallUrl -headers $headers -Method Get -ContentType "application/json"
-        if($resp.GetType().FullName -eq "System.Management.Automation.PSCustomObject")
-        {
-            $response = $resp
-        }
+        $resp = Invoke-WebRequest -Uri $restCallUrl -headers $headers -Method Get -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing
     }
     catch
     {
-        Write-Log "Failed to fetch the connection data for the url $restCallUrl : $_.Exception"
+        Write-Log "Failed to fetch the connection data for the url $restCallUrl : $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
+    }
+    if($resp)
+    {
+        if($resp.StatusCode -eq 302)
+        {
+            Write-Log "Failed to fetch the connection data for the url $restCallUrl : $($resp.StatusCode) $($resp.StatusDescription)"
+        }
+        else
+        {
+            $response = ($resp.Content | ConvertFrom-Json)
+        }
     }
     if (!$response.deploymentType -or $response.deploymentType -ne "hosted")
     {
+        Write-Log "The Azure Devops server is onpremises"
         $global:isOnPrem = $true
         $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
         if($subparts.Count -le 1)

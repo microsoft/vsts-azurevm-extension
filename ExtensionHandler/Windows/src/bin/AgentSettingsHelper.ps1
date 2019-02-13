@@ -165,6 +165,7 @@ function GetDeploymentGroupDataFromAgentSetting
     {
         throw "Unable to fetch the deployment group information from VSTS server: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
     }
+    return $response
  }
  
 

@@ -66,15 +66,15 @@ function ApplyTagsToAgent
     WriteAddTagsLog "Add tags request body - $requestBody"
     try
     {
-        $ret = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
-        if($ret.PSObject.Properties.name -notcontains "value")
-        {
-            throw "PATCH call failed: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
-        }
+        $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
     }
     catch
     {
-        throw "Tags could not be added. Please make sure that you enter correct details."
+        throw "Some error occured while applying tags: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
+    }
+    if($response.PSObject.Properties.name -notcontains "value")
+    {
+        throw "Tags could not be added"
     }
 }
 

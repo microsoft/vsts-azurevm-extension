@@ -220,7 +220,7 @@ Describe "parse vsts account name settings tests" {
             return $inputSettings }
         Mock Verify-InputNotNull {}
         Mock Format-TagsInput {}
-        Mock Invoke-RestMethod {
+        Mock Invoke-WebRequest {
             $response = [pscustomobject]@{deploymentType = "onPremises"}
             return $response
         }

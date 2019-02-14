@@ -55,8 +55,6 @@ function WriteDownloadLog
     Param(
     [Parameter(Mandatory=$true)]
     [string]$restCallUrl,
-    [Parameter(Mandatory=$true)]
-    [string]$legacyRestCallUrl,   
     [string]$userName,
     [Parameter(Mandatory=$false)]
     [string]$patToken
@@ -64,33 +62,19 @@ function WriteDownloadLog
     
     WriteDownloadLog "`t`t Form the header for invoking the rest call"
     
-    $basicAuth = ("{0}:{1}" -f $username, $patToken)
-    $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
-    $basicAuth = [System.Convert]::ToBase64String($basicAuth)
-    $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
+    $headers = Get-RESTCallHeader $patToken
     
     WriteDownloadLog "`t`t Invoke-rest call for packageData"
     try
     {
         $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
-        WriteDownloadLog "`t`t Agent PackageData : $response"
-        if($response.Value.Count -gt 0)
-        {
-            return $response.Value[0]
-        }
-        else
-        {
-            # Back compat for legacy package key
-            WriteDownloadLog "`t`t Get Agent PackageData using $legacyRestCallUrl"
-            $response = Invoke-RestMethod -Uri $($legacyRestCallUrl) -headers $headers -Method Get -ContentType "application/json"
-            WriteDownloadLog "`t`t Agent PackageData : $response"
-            return $response.Value[0]
-        }
     }
     catch
     {
-        throw "Error while downloading VSTS agent. Please make sure that you enter the correct VSTS account name and PAT token."
+        throw "Error while downloading VSTS agent: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
     }
+    WriteDownloadLog "`t`t Agent PackageData : $response"
+    return $response.Value[0]
 }
  
  function GetAgentDownloadUrl
@@ -104,10 +88,9 @@ function WriteDownloadLog
     )
 
     [string]$restCallUrl = ContructPackageDataRESTCallUrl -tfsUrl $tfsUrl -platform $platform
-    [string]$legacyRestCallUrl = ContructPackageDataRESTCallUrl -tfsUrl $tfsUrl -platform $legacyPlatformKey
     
     WriteDownloadLog "`t`t Get Agent PackageData using $restCallUrl"  
-    $packageData = GetAgentPackageData -restCallUrl $restCallUrl -legacyRestCallUrl $legacyRestCallUrl -userName $userName -patToken $patToken
+    $packageData = GetAgentPackageData -restCallUrl $restCallUrl -userName $userName -patToken $patToken
 
     WriteDownloadLog "Deployment Agent download url - $($packageData.downloadUrl)"
     
@@ -130,11 +113,6 @@ function WriteDownloadLog
         Remove-Item $target -Force
     }
     
-    $securityProtocolString = [string][Net.ServicePointManager]::SecurityProtocol
-    if ($securityProtocolString -notlike "*Tls12*") {
-        $securityProtocolString += ", Tls12"
-        [Net.ServicePointManager]::SecurityProtocol = $securityProtocolString
-    }
     WriteDownloadLog "`t`t Start DeploymentAgent download"
     (New-Object Net.WebClient).DownloadFile($agentDownloadUrl,$target)
     WriteDownloadLog "`t`t DeploymentAgent download done"

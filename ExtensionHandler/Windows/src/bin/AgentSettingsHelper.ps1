@@ -11,19 +11,9 @@ function Test-ConfiguredAgentExists
 
     try
     {
-        WriteLog "Initialization for deployment agent started." $logFunction
-        WriteLog "Check for available powershell version. Minimum PowerShell $minPSVersionSupported is required to run the deployment agent." $logFunction
-
-        $psVersion = $PSVersionTable.PSVersion.Major
-
-        if( !( $psVersion -ge $minPSVersionSupported ) )
-        {
-            throw "Installed PowerShell version is $psVersion. Minimum required version is $minPSVersionSupported."
-        }
-
         WriteLog "Check if any existing agent is running from $workingFolder" $logFunction
     
-        $agentSettingFileExist = Test-Path $( GetAgentSettingFilePath $workingFolder)
+        $agentSettingFileExist = Test-Path $(GetAgentSettingFilePath $workingFolder)
         WriteLog "`t`t Agent setting file exist: $agentSettingFileExist" $logFunction
     
         return $agentSettingFileExist 
@@ -136,75 +126,21 @@ function GetDeploymentGroupDataFromAgentSetting
     [scriptblock]$logFunction
     )
     
-    $deploymenteGroupId = ""
-    $projectId = ""
-
-    try
-    {
-        $deploymentGroupId = $($agentSetting.deploymentGroupId)
-        WriteLog "`t`t` Deployment group id -  $deploymentGroupId" -logFunction $logFunction
-    }
-    catch{}
-    ## Back-compat for MG to DG rename.
-    if([string]::IsNullOrEmpty($deploymentGroupId)) 
-    {
-        try
-        {   
-            $deploymentGroupId = $($agentSetting.machineGroupId)
-            WriteLog "`t`t` Machine group id -  $deploymentGroupId" -logFunction $logFunction
-        }catch{}    
-    }
+    $projectId = $($agentSetting.projectId)
+    $deploymentGroupId = $($agentSetting.deploymentGroupId)
+    WriteLog "`t`t` Project id, Deployment group id -  $projectId, $deploymentGroupId" -logFunction $logFunction
     
-    try
-    {
-        $projectId = $($agentSetting.projectId)
-        WriteLog "`t`t` Deployment group projectId -  $projectId" -logFunction $logFunction
-    }
-    catch{}
-    ## Back-compat for ProjectName to ProjectId.
-    if([string]::IsNullOrEmpty($projectId)) 
-    {
-        WriteLog "`t`t` Project Id is not available in agent settings file, try to read the project name." -logFunction $logFunction
-        try
-        {   
-            $projectId = $($agentSetting.projectName)
-            WriteLog "`t`t` Deployment group projectName -  $projectId" -logFunction $logFunction
-        }
-        catch
-        {
-            WriteLog "`t`t` Unable to gee the peoject id/name for deployment group" -logFunction $logFunction
-        }
-    }
-
     if(![string]::IsNullOrEmpty($deploymentGroupId) -and ![string]::IsNullOrEmpty($projectId))
     {
-        $restCallUrl = ContructRESTCallUrl -tfsUrl $tfsUrl -projectName $projectId -deploymentGroupId $deploymentGroupId -logFunction $logFunction
+        $restCallUrl = $tfsUrl + ("/{0}/_apis/distributedtask/deploymentgroups/{1}" -f $projectId, $deploymentGroupId)
+        WriteLog "`t`t REST call Url -  $restCallUrl" $logFunction
         
         return (InvokeRestURlToGetDeploymentGroupData -restCallUrl $restCallUrl -patToken $patToken -logFunction $logFunction)
     }
-    
+
     return $null
 }
 
-function ContructRESTCallUrl
- {
-    Param(
-    [Parameter(Mandatory=$true)]
-    [string]$tfsUrl,
-    [Parameter(Mandatory=$true)]
-    [string]$projectName,
-    [Parameter(Mandatory=$true)]
-    [string]$deploymentGroupId,
-    [scriptblock]$logFunction
-    )
-
-    $restCallUrl = $tfsUrl + ("/{0}/_apis/distributedtask/deploymentgroups/{1}" -f $projectName, $deploymentGroupId)
-    
-    WriteLog "`t`t REST call Url -  $restCallUrl" $logFunction
-    
-    return $restCallUrl
- }
- 
  function InvokeRestURlToGetDeploymentGroupData
  {
     Param(
@@ -217,29 +153,19 @@ function ContructRESTCallUrl
     
     WriteLog "`t`t Form the header for invoking the rest call" $logFunction
  
-    $basicAuth = ("{0}:{1}" -f '', $patToken)
-    $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
-    $basicAuth = [System.Convert]::ToBase64String($basicAuth)
-    $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
+    $headers = Get-RESTCallHeader $patToken
     
     WriteLog "`t`t Invoke-rest call for deployment group name" $logFunction
     try
     {
         $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
         WriteLog "`t`t Deployment Group Details fetched successfully" $logFunction
-        if($response.PSObject.Properties.name -contains "name")
-        {
-            return $response
-        }
-        else
-        {
-            throw "REST call failed"
-        }
     }
     catch
     {
-        throw "Unable to fetch the deployment group information from VSTS server."
+        throw "Unable to fetch the deployment group information from VSTS server: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
     }
+    return $response
  }
  
 

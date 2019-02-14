@@ -39,12 +39,12 @@ $global:RM_Extension_Status = @{
         Message = 'Initialized extension successfully'
         operationName = 'Initialization'
     }
-    PreCheckingDeploymentAgent = @{
+    CheckingExistingAgent = @{
         Code = 5
         Message = 'Checking whether a deployment agent is already existing'
         operationName = 'Check existing agent'
     }
-    PreCheckedDeploymentAgent = @{
+    CheckedExistingAgent = @{
         Code = 6
         Message = 'Checked for existing deployment agent'
         operationName = 'Check existing agent'
@@ -86,7 +86,7 @@ $global:RM_Extension_Status = @{
     }
     SuccessfullyReadSettings = @{
         Code = 14
-        Message = 'Successfully read and validated config settings from file'
+        Message = 'Successfully read config settings from file'
         operationName = 'Read config settings'
     }
     SkippedInstallation = @{
@@ -156,10 +156,21 @@ $global:RM_Extension_Status = @{
         operationName = 'Update'
     }
 
-    SkippingEnableSameSettingsAsPreviousVersion = @{
+    SkippingEnableSameSettingsAsDisabledVersion = @{
         Code = 29
-        Message = 'The extension settings are the same as the previous version. Skipping extension enable.'
+        Message = 'The extension settings are the same as the disabled version. Skipping extension enable.'
         operationName = 'Skip enable'
+    }
+
+    ValidatingInputs = @{
+        Code = 30
+        Message = 'Validating inputs'
+        operationName = 'Inputs validation'
+    }
+    SuccessfullyValidatedInputs = @{
+        Code = 31
+        Message = 'Successfully validated inputs'
+        operationName = 'Inputs validation'
     }
 
     #
@@ -175,19 +186,19 @@ $global:RM_Extension_Status = @{
     InstallError = 1001 # The message for this error is provided by the specific exception
 
     ArchitectureNotSupported = @{
-        Code = 1002
+        Code = 51
         Message = 'The current CPU architecture is not supported. Deployment agent requires x64 architecture'
     }
 
     PowershellVersionNotSupported = @{
-        Code = 1003
+        Code = 52
         Message = 'Installed PowerShell version is {0}. Minimum required version is 3.0'
     }
 
     #
     # ArgumentError indicates a problem in the user input. The message for the error is provided by the specific exception
     #
-    ArgumentError = 1100 
+    ArgumentError = 53 
     AgentUnConfigureFailWarning = 'There are some warnings in uninstalling the already existing agent. Check "Detailed Status" for more details.'
 }
 
@@ -315,6 +326,7 @@ Please correct the input and retry executing the extension.
             $errorMessage = @'
 The Extension failed to execute: {0}.
 More information about the failure can be found in the logs located under '{1}' on the VM.
+To retry install, please remove the extension from the VM first.
 '@ -f $ErrorRecord.Exception.Message, (Get-HandlerEnvironment).logFolder
             break
         }

@@ -80,15 +80,35 @@ function Get-OSVersion {
     }
 }
 
-function Get-TimeSinceEpoch {
-    $epochTime = Get-Date "01/01/1970"
-    $currentTime = Get-Date
-    $timeSinceEpoch = (New-TimeSpan -Start $epochTime -End $currentTime).Ticks
-    return $timeSinceEpoch
+function Get-RESTCallHeader
+{
+    param(
+    [Parameter(Mandatory=$false)]
+    [string]$patToken
+    )
+
+    $basicAuth = ("{0}:{1}" -f '', $patToken)
+    $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
+    $basicAuth = [System.Convert]::ToBase64String($basicAuth)
+    $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
+
+    return $headers
+}
+
+function Exit-WithCode1
+{
+    exit 1
+}
+
+function Exit-WithCode0
+{
+    exit 0
 }
 
 Export-ModuleMember `
     -Function `
             ConvertTo-Hashtable, `
             Get-OSVersion, `
-            Get-TimeSinceEpoch
+            Get-RESTCallHeader, `
+            Exit-WithCode1, `
+            Exit-WithCode0

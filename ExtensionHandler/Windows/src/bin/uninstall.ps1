@@ -14,13 +14,19 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
 }
 
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
-Import-Module $PSScriptRoot\RMExtensionHandler.psm1 -DisableNameChecking
+Import-Module $PSScriptRoot\RMExtensionCommon.psm1 -DisableNameChecking
 Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\Log.psm1
 . "$PSScriptRoot\Constants.ps1"
 
 Initialize-ExtensionLogFile
-$config = Get-ConfigurationFromSettings
+
+#Assuming PAT to be null since it would be removed during enable
+$config = @{
+    PATToken = "`"`""
+    AgentWorkingFolder = $agentWorkingFolder
+}
+
 $configuredAgentExists = Test-AgentAlreadyExists $config
 $extensionUpdateFile = "$agentWorkingFolder\$updateFileName"
 $isUpdateExtensionScenario = Test-Path $extensionUpdateFile

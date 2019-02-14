@@ -12,14 +12,18 @@ $action = Get-VstsInput -Name Action -Require
 if ($action -eq "CreateOrUpdate") {
     $storageAccountName = Get-VstsInput -Name StorageAccountName -Require
     $containerName = Get-VstsInput -Name ContainerName -Require
-    $storageBlobName = Get-VstsInput -Name StorageBlobName
+    $storageBlobName = Get-VstsInput -Name StorageBlobName -Require
     $extensionPackagePath = Get-VstsInput -Name ExtensionPackage -Require
     $extensionDefinitionFilePath = Get-VstsInput -Name ExtensionDefinitionFile -Require
     $newVersionVarName = Get-VstsInput -Name NewVersion
-    if(-not($storageBlobName)){
-        [string]$timeSinceEpoch = Get-TimeSinceEpoch
-        $storageBlobName = "ManageAzureVMExtension" + $timeSinceEpoch
-    }
+}
+if ($action -eq "Promote") {
+    $storageAccountName = Get-VstsInput -Name StorageAccountName -Require
+    $containerName = Get-VstsInput -Name ContainerName -Require
+    $storageBlobName = Get-VstsInput -Name StorageBlobName -Require
+    $extensionDefinitionFilePath = Get-VstsInput -Name ExtensionDefinitionFile -Require
+    $newVersionVarName = Get-VstsInput -Name NewVersion
+    $regions = Get-VstsInput -Name Regions
 }
 if ($action -eq "Delete") {
     $fullExtensionName = Get-VstsInput -Name FullExtensionName -Require
@@ -42,11 +46,20 @@ function Get-ServiceEndpointDetails {
 }
 
 function Update-MediaLink {
-    param([xml][Parameter(Mandatory = $true)]$extensionDefinitionXml,
-        [string][Parameter(Mandatory = $true)]$mediaLink)
+    param([xml][Parameter(Mandatory = $true)]$extensionDefinitionFilePath,
+        [string][Parameter(Mandatory = $true)]$storageAccountName,
+        [string][Parameter(Mandatory = $true)]$containerName,
+        [string][Parameter(Mandatory = $true)]$storageBlobName)
 
-    $extensionDefinitionXml.ExtensionImage.MediaLink = $mediaLink
-    return $extensionDefinitionXml
+        [xml]$extensionDefinitionXml = Get-Content -Path $extensionDefinitionFilePath
+        Write-Host ("Body xml: {0}" -f $extensionDefinitionXml.InnerXml)
+        if(!$extensionDefinitionXml.ExtensionImage.Version) {
+            throw (Get-VstsLocString -Key "VMExtPIR_VersionMissingInManifestFile")
+        }
+        $extensionVersion = $extensionDefinitionXml.ExtensionImage.Version
+        $mediaLink = "https://{0}.blob.core.windows.net/{1}/{2}_{3}" -f $storageAccountName, $containerName, $extensionVersion, $storageBlobName
+        $extensionDefinitionXml.ExtensionImage.MediaLink = $mediaLink
+        return $extensionDefinitionXml
 }
 
 function Upload-ExtensionPackageToStorageBlob {
@@ -72,12 +85,8 @@ function CreateOrUpdate-ExtensionPackageInAzurePIR {
         [string][Parameter(Mandatory = $false)]$newVersionVarName,
         [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate)
 
-    # read extension definition
-    $mediaLink = "https://{0}.blob.core.windows.net/{1}/{2}" -f $storageAccountName, $containerName, $storageBlobName
-    [xml]$extensionDefinitionXml = Get-Content -Path $extensionDefinitionFilePath
-    $extensionDefinitionXml = Update-MediaLink -extensionDefinitionXml $extensionDefinitionXml -mediaLink $mediaLink
-    Write-Host ("Body xml: {0}" -f $extensionDefinitionXml.InnerXml)
-    
+    # update media link in the extension definition file
+    $extensionDefinitionXml = Update-MediaLink -extensionDefinitionFilePath $extensionDefinitionFilePath -storageAccountName $storageAccountName -containerName $containerName -storageBlobName ]$storageBlobName
     $extensionExistsInPIR = $false
     $extensionExistsInPIR = Check-ExtensionExistsInAzurePIR -subscriptionId $subscriptionId -certificate $certificate -publisher $extensionDefinitionXml.ExtensionImage.ProviderNameSpace -type $extensionDefinitionXml.ExtensionImage.Type
     if ($extensionExistsInPIR) {
@@ -86,6 +95,38 @@ function CreateOrUpdate-ExtensionPackageInAzurePIR {
     else {
         $extensionDefinitionXml.ExtensionImage.Version = "1.0.0.0"
         Create-ExtensionPackageInAzurePIR -extensionDefinitionXml $extensionDefinitionXml -certificate $certificate -subscriptionId $subscriptionId
+    }
+    if ($newVersionVarName) {
+        # set this version as value for release variable 
+        $newVersion = $extensionDefinitionXml.ExtensionImage.Version
+        $newVersionVariable = $newVersionVarName
+        Write-Host "##vso[task.setvariable variable=$newVersionVariable;]$newVersion"
+    }
+}
+
+function Promote-ExtensionPackageInAzurePIR {
+    param([string][Parameter(Mandatory = $true)]$subscriptionId,
+        [string][Parameter(Mandatory = $true)]$storageAccountName,
+        [string][Parameter(Mandatory = $true)]$containerName,
+        [string][Parameter(Mandatory = $true)]$storageBlobName,
+        [string][Parameter(Mandatory = $true)]$extensionDefinitionFilePath,
+        [string][Parameter(Mandatory = $false)]$newVersionVarName,
+        [string][Parameter(Mandatory = $false)]$regions,
+        [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate)
+
+    $extensionExistsInPIR = $false
+    $extensionExistsInPIR = Check-ExtensionExistsInAzurePIR -subscriptionId $subscriptionId -certificate $certificate -publisher $extensionDefinitionXml.ExtensionImage.ProviderNameSpace -type $extensionDefinitionXml.ExtensionImage.Type
+    if ($extensionExistsInPIR) {
+        # update the extension definition file
+        $extensionDefinitionXml = Update-MediaLink -extensionDefinitionFilePath $extensionDefinitionFilePath -storageAccountName $storageAccountName -containerName $containerName -storageBlobName ]$storageBlobName
+        $extensionDefinitionXml.ExtensionImage.IsInternalExtension = "false"
+        if($regions.Trim()) {
+            $extensionDefinitionXml.ExtensionImage.Regions = $regions
+        }
+        Update-ExtensionPackageInAzurePIR -extensionDefinitionXml $extensionDefinitionXml -certificate $certificate -subscriptionId $subscriptionId
+    }
+    else {
+        throw (Get-VstsLocString -Key "VMExtPIR_CreateExtensionBeforePromote")
     }
     if ($newVersionVarName) {
         # set this version as value for release variable 
@@ -109,7 +150,11 @@ if ($action -eq "CreateOrUpdate") {
 }
 elseif ($action -eq "Delete") {
     Delete-ExtensionPackageFromAzurePIR  -extensionName $extensionName -publisher $publisherName -versionToDelete $extensionVersion -certificate $certificate -subscriptionId $subscriptionId
-    Write-Host (Get-VstsLocString -Key "VMExtPIR_PIRDeleteSuccess")
+    Write-Host (Get-VstsLocString -Key "VMExtPIR_PIRDeleteSuccess" -ArgumentList $extensionName, $extensionVersion)
+}
+elseif ($action -eq "Promote") {
+    Promote-ExtensionPackageInAzurePIR -subscriptionId $subscriptionId -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -extensionDefinitionFilePath $extensionDefinitionFilePath -newVersionVarName $newVersionVarName -regions $regions
+    Write-Host (Get-VstsLocString -Key "VMExtPIR_PIRPromoteSuccess" -ArgumentList $regions)
 }
 else {
     throw (Get-VstsLocString -Key "VMExtPIR_InvalidAction" -ArgumentList $action)

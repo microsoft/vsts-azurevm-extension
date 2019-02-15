@@ -54,7 +54,6 @@ function Update-MediaLink {
         [string][Parameter(Mandatory = $true)]$storageBlobName)
 
         [xml]$extensionDefinitionXml = Get-Content -Path $extensionDefinitionFilePath
-        Write-Host ("Body xml: {0}" -f $extensionDefinitionXml.InnerXml)
         if(!$extensionDefinitionXml.ExtensionImage.Version) {
             throw (Get-VstsLocString -Key "VMExtPIR_VersionMissingInManifestFile")
         }

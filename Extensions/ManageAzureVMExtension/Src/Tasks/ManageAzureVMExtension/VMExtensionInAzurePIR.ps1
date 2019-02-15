@@ -134,6 +134,8 @@ function Promote-ExtensionPackageInAzurePIR {
         $extensionDefinitionXml = Update-MediaLink -extensionDefinitionFilePath $extensionDefinitionFilePath -storageAccountName $storageAccountName -containerName $containerName -storageBlobName ]$storageBlobName
         $extensionDefinitionXml.ExtensionImage.IsInternalExtension = "false"
         if($regions.Trim()) {
+            $regionsElement = $extensionDefinitionXml.CreateElement("Regions", $extensionDefinitionXml.ExtensionImage.NamespaceURI)
+            $extensionDefinitionXml.ExtensionImage.AppendChild($regionsElement)
             $extensionDefinitionXml.ExtensionImage.Regions = $regions
         }
         Update-ExtensionPackageInAzurePIR -extensionDefinitionXml $extensionDefinitionXml -certificate $certificate -subscriptionId $subscriptionId

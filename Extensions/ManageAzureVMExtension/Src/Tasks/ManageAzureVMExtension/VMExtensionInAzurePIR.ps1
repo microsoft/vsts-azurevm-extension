@@ -16,6 +16,7 @@ if ($action -eq "CreateOrUpdate") {
     $extensionPackagePath = Get-VstsInput -Name ExtensionPackage -Require
     $extensionDefinitionFilePath = Get-VstsInput -Name ExtensionDefinitionFile -Require
     $newVersionVarName = Get-VstsInput -Name NewVersion
+    $prependVersionToBlobName = Get-VstsInput -Name PrependVersionFromManifestToBlobName
 }
 if ($action -eq "Promote") {
     $storageAccountName = Get-VstsInput -Name StorageAccountName -Require
@@ -24,6 +25,7 @@ if ($action -eq "Promote") {
     $extensionDefinitionFilePath = Get-VstsInput -Name ExtensionDefinitionFile -Require
     $newVersionVarName = Get-VstsInput -Name NewVersion
     $regions = Get-VstsInput -Name Regions
+    $prependVersionToBlobName = Get-VstsInput -Name PrependVersionFromManifestToBlobName
 }
 if ($action -eq "Delete") {
     $fullExtensionName = Get-VstsInput -Name FullExtensionName -Require
@@ -46,7 +48,7 @@ function Get-ServiceEndpointDetails {
 }
 
 function Update-MediaLink {
-    param([xml][Parameter(Mandatory = $true)]$extensionDefinitionFilePath,
+    param([Parameter(Mandatory = $true)]$extensionDefinitionFilePath,
         [string][Parameter(Mandatory = $true)]$storageAccountName,
         [string][Parameter(Mandatory = $true)]$containerName,
         [string][Parameter(Mandatory = $true)]$storageBlobName)
@@ -57,9 +59,21 @@ function Update-MediaLink {
             throw (Get-VstsLocString -Key "VMExtPIR_VersionMissingInManifestFile")
         }
         $extensionVersion = $extensionDefinitionXml.ExtensionImage.Version
-        $mediaLink = "https://{0}.blob.core.windows.net/{1}/{2}_{3}" -f $storageAccountName, $containerName, $extensionVersion, $storageBlobName
+        $mediaLink = "https://{0}.blob.core.windows.net/{1}/{2}" -f $storageAccountName, $containerName, $storageBlobName
         $extensionDefinitionXml.ExtensionImage.MediaLink = $mediaLink
         return $extensionDefinitionXml
+}
+
+function PrependVersionToBlobName {
+    param([Parameter(Mandatory = $true)]$extensionDefinitionFilePath,
+        [string][Parameter(Mandatory = $true)]$storageBlobName)
+
+        [xml]$extensionDefinitionXml = Get-Content -Path $extensionDefinitionFilePath
+        if(!$extensionDefinitionXml.ExtensionImage.Version) {
+            throw (Get-VstsLocString -Key "VMExtPIR_VersionMissingInManifestFile")
+        }
+        $extensionVersion = $extensionDefinitionXml.ExtensionImage.Version
+        return ("{0}_{1}" -f $extensionVersion, $storageBlobName)
 }
 
 function Upload-ExtensionPackageToStorageBlob {
@@ -86,7 +100,7 @@ function CreateOrUpdate-ExtensionPackageInAzurePIR {
         [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate)
 
     # update media link in the extension definition file
-    $extensionDefinitionXml = Update-MediaLink -extensionDefinitionFilePath $extensionDefinitionFilePath -storageAccountName $storageAccountName -containerName $containerName -storageBlobName ]$storageBlobName
+    $extensionDefinitionXml = Update-MediaLink -extensionDefinitionFilePath $extensionDefinitionFilePath -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName
     $extensionExistsInPIR = $false
     $extensionExistsInPIR = Check-ExtensionExistsInAzurePIR -subscriptionId $subscriptionId -certificate $certificate -publisher $extensionDefinitionXml.ExtensionImage.ProviderNameSpace -type $extensionDefinitionXml.ExtensionImage.Type
     if ($extensionExistsInPIR) {
@@ -142,6 +156,9 @@ $certificate = New-Object System.Security.Cryptography.X509Certificates.X509Cert
 $certificate.Import($bytes, $null, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::UserKeySet)
 
 $subscriptionId = $serviceEndpointDetails.Data.subscriptionId
+if($prependVersionToBlobName){
+    $storageBlobName = PrependVersionToBlobName -extensionDefinitionFilePath $extensionDefinitionFilePath -storageBlobName $storageBlobName
+}
 if ($action -eq "CreateOrUpdate") {
     Upload-ExtensionPackageToStorageBlob -subscriptionId $subscriptionId -storageAccountName $storageAccountName -containerName $containerName -packagePath $extensionPackagePath -storageBlobName $storageBlobName -certificate $certificate
     Write-Host (Get-VstsLocString -Key "VMExtPIR_BlobUploadSuccess")

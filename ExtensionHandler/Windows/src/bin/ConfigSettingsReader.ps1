@@ -113,7 +113,6 @@ function Get-ConfigurationFromSettings {
             DeploymentGroup    = $deploymentGroupName
             AgentName          = $agentName
             Tags               = $tags
-            AgentWorkingFolder = $agentWorkingFolder
             WindowsLogonAccountName = $windowsLogonAccountName
             WindowsLogonPassword = $windowsLogonPassword
         }

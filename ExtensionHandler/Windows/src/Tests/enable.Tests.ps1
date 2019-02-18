@@ -20,7 +20,7 @@ Describe "Enable RM extension tests" {
 
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $config }
-        Mock Test-AgentAlreadyExists {}
+        Mock Get-AgentWorkingFolderIfAlreadyConfigured {}
         Mock Get-Agent {}
         Mock Register-Agent {}
         Mock Add-HandlerSubStatus {}
@@ -43,7 +43,7 @@ Describe "Enable RM extension tests" {
         
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $config }
-        Mock Test-AgentAlreadyExists {}
+        Mock Get-AgentWorkingFolderIfAlreadyConfigured {}
         Mock Get-Agent {}
         Mock Register-Agent { throw }
         Mock Add-HandlerSubStatus {}
@@ -70,7 +70,7 @@ Describe "Enable RM extension tests" {
         
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $config }
-        Mock Test-AgentAlreadyExists { return $true}
+        Mock Get-AgentWorkingFolderIfAlreadyConfigured { return $true}
         Mock Test-AgentReconfigurationRequired { return $false}
         Mock Get-Agent {}
         Mock Register-Agent {}
@@ -97,7 +97,7 @@ Describe "Enable RM extension tests" {
         
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $config }
-        Mock Test-AgentAlreadyExists { return $true}
+        Mock Get-AgentWorkingFolderIfAlreadyConfigured { return $true}
         Mock Test-AgentReconfigurationRequired { return $true}
         Mock Get-Agent {}
         Mock Register-Agent {}
@@ -124,7 +124,7 @@ Describe "Enable RM extension tests" {
         
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $config }
-        Mock Test-AgentAlreadyExists { return $false}
+        Mock Get-AgentWorkingFolderIfAlreadyConfigured { return $false}
         Mock Test-AgentReconfigurationRequired { return $false}
         Mock Get-Agent {}
         Mock Register-Agent {}
@@ -155,7 +155,7 @@ Describe "Enable RM extension tests" {
         
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $configWithTags }
-        Mock Test-AgentAlreadyExists { return $false}
+        Mock Get-AgentWorkingFolderIfAlreadyConfigured { return $false}
         Mock Test-AgentReconfigurationRequired { return $false}
         Mock Get-Agent {}
         Mock Register-Agent {}

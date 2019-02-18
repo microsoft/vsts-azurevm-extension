@@ -26,8 +26,8 @@ $global:logger = {
     Write-Log $Message
 }
 
-$Enable_ConfiguredAgentExists = $false
-$Enable_AgentConfigurationRequired = $true
+$agentWorkingFolderIfAlreadyConfigured = ""
+$agentConfigurationRequired = $true
 
 function Test-AgentReconfigurationRequired {
     [CmdletBinding()]
@@ -218,7 +218,7 @@ function Start-RMExtensionHandler {
         #
         $sequenceNumber = Get-HandlerExecutionSequenceNumber
         $lastSequenceNumber = Get-LastSequenceNumber
-        if(($sequenceNumber -eq $lastSequenceNumber) -and (!(Test-ExtensionDisabledMarkup)))
+        if(($sequenceNumber -eq $lastSequenceNumber) -and (!(Test-ExtensionDisabledMarkup $agentWorkingFolder)))
         {
             Write-Log $RM_Extension_Status.SkippedInstallation.Message
             Write-Log "Current seq number: $sequenceNumber, last seq number: $lastSequenceNumber"
@@ -288,14 +288,12 @@ function Add-AgentTags {
 
 function Test-ExtensionSettingsAreSameAsDisabledVersion
 {
-    $oldExtensionSettingsFilePath = "$agentWorkingFolder\$disabledMarkupFile"
-    $oldExtensionSettingsFileExists = Test-Path $oldExtensionSettingsFilePath
-    if($oldExtensionSettingsFileExists)
+    if(Test-ExtensionDisabledMarkup $script:agentWorkingFolder)
     {
         $handlerEnvironment = Get-HandlerEnvironment
         $sequenceNumber = Get-HandlerExecutionSequenceNumber
         $extensionSettingsFilePath = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
-        $oldExtensionSettingsFileContents = Get-Content($oldExtensionSettingsFilePath)
+        $oldExtensionSettingsFileContents = Get-ExtensionDisabledMarkup $script:agentWorkingFolder
         $extensionSettingsFileContents = Get-Content($extensionSettingsFilePath)
         if($oldExtensionSettingsFileContents.ToString().Equals($extensionSettingsFileContents.ToString()))
         {
@@ -318,17 +316,15 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
 
 function ExecuteAgentPreCheck()
 {
-
-    $script:Enable_ConfiguredAgentExists  = Test-AgentAlreadyExists $config
-    if($Enable_ConfiguredAgentExists)
+    if($agentWorkingFolderIfAlreadyConfigured)
     {
-        $script:Enable_AgentConfigurationRequired = Test-AgentReconfigurationRequired $config
+        $script:agentConfigurationRequired = Test-AgentReconfigurationRequired $config
     }
 }
 
 function DownloadAgentIfRequired
 {
-    if(!$Enable_ConfiguredAgentExists)
+    if(!$agentWorkingFolderIfAlreadyConfigured)
     {
         Get-Agent $config
     }
@@ -341,19 +337,19 @@ function DownloadAgentIfRequired
 
 function RemoveExistingAgentIfRequired
 {
-    if( $Enable_ConfiguredAgentExists -and $Enable_AgentConfigurationRequired)
+    if( $agentWorkingFolderIfAlreadyConfigured -and $agentConfigurationRequired)
     {
         Write-Log "Remove existing configured agent"
         Remove-Agent $config
 
         #Execution has reached till here means that either the agent was removed successfully.
-        $script:Enable_ConfiguredAgentExists = $false
+        $script:agentWorkingFolderIfAlreadyConfigured = $false
     }
 }
 
 function ConfigureAgentIfRequired
 {
-    if($Enable_AgentConfigurationRequired)
+    if($agentConfigurationRequired)
     {
         Register-Agent $config
     }
@@ -368,8 +364,11 @@ function ConfigureAgentIfRequired
 function Enable
 {
     Start-RMExtensionHandler
-    $config = Get-ConfigurationFromSettings
+    $script:agentWorkingFolderIfAlreadyConfigured  = Get-AgentWorkingFolderIfAlreadyConfigured
+    $script:agentWorkingFolder = if($agentWorkingFolderIfAlreadyConfigured) {$agentWorkingFolderIfAlreadyConfigured} else {$agentWorkingFolderNew}
     $settingsAreSame = Test-ExtensionSettingsAreSameAsDisabledVersion
+    $config = Get-ConfigurationFromSettings
+    $config.AgentWorkingFolder = $script:agentWorkingFolder
     if($settingsAreSame)
     {
         Write-Log "Skipping extension enable."

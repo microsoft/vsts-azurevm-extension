@@ -34,22 +34,6 @@ function WriteDownloadLog
     }
 }
  
- function ContructPackageDataRESTCallUrl
- {
-    Param(
-    [Parameter(Mandatory=$true)]
-    [string]$tfsUrl,
-    [Parameter(Mandatory=$true)]
-    [string]$platform
-    )
-
-    [string]$restCallUrl = $tfsUrl + ("/_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}" -f $platform,$downloadAPIVersion)
-    
-    WriteDownloadLog "`t`t REST call Url -  $restCallUrl"
-    
-    return $restCallUrl
- }
- 
  function GetAgentPackageData
  {
     Param(
@@ -87,7 +71,8 @@ function WriteDownloadLog
     [string]$patToken    
     )
 
-    [string]$restCallUrl = ContructPackageDataRESTCallUrl -tfsUrl $tfsUrl -platform $platform
+    [string]$restCallUrl = $tfsUrl + ("/_apis/distributedtask/packages/agent/{0}?top=1&api-version={1}" -f $platform,$downloadAPIVersion)
+    WriteDownloadLog "`t`t REST call Url -  $restCallUrl"
     
     WriteDownloadLog "`t`t Get Agent PackageData using $restCallUrl"  
     $packageData = GetAgentPackageData -restCallUrl $restCallUrl -userName $userName -patToken $patToken

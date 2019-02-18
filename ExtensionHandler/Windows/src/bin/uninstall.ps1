@@ -22,12 +22,16 @@ Import-Module $PSScriptRoot\Log.psm1
 Initialize-ExtensionLogFile
 
 #Assuming PAT to be null since it would be removed during enable
+
+$script:agentWorkingFolderIfAlreadyConfigured  = Get-AgentWorkingFolderIfAlreadyConfigured
+$global:agentWorkingFolder = if($agentWorkingFolderIfAlreadyConfigured) {$agentWorkingFolderIfAlreadyConfigured} else {$agentWorkingFolderNew}
+
 $config = @{
     PATToken = "`"`""
-    AgentWorkingFolder = $agentWorkingFolder
+    AgentWorkingFolder = $global:agentWorkingFolder
 }
 
-$configuredAgentExists = Test-AgentAlreadyExists $config
+$configuredAgentExists = Get-AgentWorkingFolderIfAlreadyConfigured $config
 $extensionUpdateFile = "$agentWorkingFolder\$updateFileName"
 $isUpdateExtensionScenario = Test-Path $extensionUpdateFile
 if (!$isUpdateExtensionScenario) 

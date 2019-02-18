@@ -74,7 +74,7 @@ try
     
     WriteConfigurationLog "Configure agent"
     
-    ConfigureAgent -tfsUrl $tfsUrl -patToken $patToken -workingFolder $defaultAgentWorkingFolder -projectName $projectName `
+    ConfigureAgent -tfsUrl $tfsUrl -patToken $patToken -workingFolder $defaultAgentWorkFolder -projectName $projectName `
     -deploymentGroupName $deploymentGroupName -agentName $agentName -configCmdPath $(GetConfigCmdPath) `
     -windowsLogonAccountName $windowsLogonAccountName -windowsLogonPassword $windowsLogonPassword
     

@@ -313,13 +313,12 @@ function Set-ExtensionUpdateFile
 {
     [CmdletBinding()]
     param
-    ()
-
-    . $PSScriptRoot\Constants.ps1
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
 
     try
     {
-        New-Item -ItemType File -Path "$agentWorkingFolder\$updateFileName" -Value "" -Force
+        New-Item -ItemType File -Path "$workingFolder\$updateFileName" -Value "" -Force
     }
     catch
     {}
@@ -380,10 +379,11 @@ function Set-ExtensionDisabledMarkup
 {
     [CmdletBinding()]
     param
-    ()
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
 
     . $PSScriptRoot\Constants.ps1
-    $markupFile = "$agentWorkingFolder\$disabledMarkupFile"
+    $markupFile = "$workingFolder\$disabledMarkupFile"
     $handlerEnvironment = Get-HandlerEnvironment
     $sequenceNumber = Get-HandlerExecutionSequenceNumber
     $extensionSettingsFile = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
@@ -401,16 +401,42 @@ function Set-ExtensionDisabledMarkup
 
 <#
 .Synopsis
+   Fetches the contents from the disabled markup file and returns it as a string
+#>
+function Get-ExtensionDisabledMarkup
+{
+    [CmdletBinding()]
+    param
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
+
+    . $PSScriptRoot\Constants.ps1
+    $markupFile = "$workingFolder\$disabledMarkupFile"
+
+    try
+    {
+        Write-Log "Fetching contents of $markupFile"
+        Get-Content -Path $markupFile
+    }
+    catch
+    {
+        Write-Log "Error while fetching contents of  $markupFile."
+    }
+}
+
+<#
+.Synopsis
    Removes any disabled markup file. This indicates that extension has been enabled
 #>
 function Remove-ExtensionDisabledMarkup
 {
     [CmdletBinding()]
     param
-    ()
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
 
     . $PSScriptRoot\Constants.ps1
-    $markupFile = "$agentWorkingFolder\$disabledMarkupFile"
+    $markupFile = "$workingFolder\$disabledMarkupFile"
 
     Write-Log "Deleting disabled markup file $markupFile"
 
@@ -430,10 +456,11 @@ function Test-ExtensionDisabledMarkup
 {
     [CmdletBinding()]
     param
-    ()
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
 
     . $PSScriptRoot\Constants.ps1
-    $markupFile = "$agentWorkingFolder\$disabledMarkupFile"
+    $markupFile = "$workingFolder\$disabledMarkupFile"
 
     Write-Log "Testing whether deleted markup file exists: $markupFile"
 

@@ -54,10 +54,6 @@ function Update-MediaLink {
         [string][Parameter(Mandatory = $true)]$storageBlobName)
 
         [xml]$extensionDefinitionXml = Get-Content -Path $extensionDefinitionFilePath
-        if(!$extensionDefinitionXml.ExtensionImage.Version) {
-            throw (Get-VstsLocString -Key "VMExtPIR_VersionMissingInManifestFile")
-        }
-        $extensionVersion = $extensionDefinitionXml.ExtensionImage.Version
         $mediaLink = "https://{0}.blob.core.windows.net/{1}/{2}" -f $storageAccountName, $containerName, $storageBlobName
         $extensionDefinitionXml.ExtensionImage.MediaLink = $mediaLink
         return $extensionDefinitionXml
@@ -131,7 +127,7 @@ function Promote-ExtensionPackageInAzurePIR {
     $extensionExistsInPIR = Check-ExtensionExistsInAzurePIR -subscriptionId $subscriptionId -certificate $certificate -publisher $extensionDefinitionXml.ExtensionImage.ProviderNameSpace -type $extensionDefinitionXml.ExtensionImage.Type
     if ($extensionExistsInPIR) {
         # update the extension definition file
-        $extensionDefinitionXml = Update-MediaLink -extensionDefinitionFilePath $extensionDefinitionFilePath -storageAccountName $storageAccountName -containerName $containerName -storageBlobName ]$storageBlobName
+        $extensionDefinitionXml = Update-MediaLink -extensionDefinitionFilePath $extensionDefinitionFilePath -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName
         $extensionDefinitionXml.ExtensionImage.IsInternalExtension = "false"
         if($regions.Trim()) {
             $regionsElement = $extensionDefinitionXml.CreateElement("Regions", $extensionDefinitionXml.ExtensionImage.NamespaceURI)
@@ -171,7 +167,7 @@ elseif ($action -eq "Delete") {
     Write-Host (Get-VstsLocString -Key "VMExtPIR_PIRDeleteSuccess" -ArgumentList $extensionName, $extensionVersion)
 }
 elseif ($action -eq "Promote") {
-    Promote-ExtensionPackageInAzurePIR -subscriptionId $subscriptionId -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -extensionDefinitionFilePath $extensionDefinitionFilePath -newVersionVarName $newVersionVarName -regions $regions
+    Promote-ExtensionPackageInAzurePIR -subscriptionId $subscriptionId -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName -extensionDefinitionFilePath $extensionDefinitionFilePath -certificate $certificate -newVersionVarName $newVersionVarName -regions $regions
     Write-Host (Get-VstsLocString -Key "VMExtPIR_PIRPromoteSuccess" -ArgumentList $regions)
 }
 else {

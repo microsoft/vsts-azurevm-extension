@@ -123,11 +123,11 @@ function Promote-ExtensionPackageInAzurePIR {
         [string][Parameter(Mandatory = $false)]$regions,
         [System.Security.Cryptography.X509Certificates.X509Certificate2][Parameter(Mandatory = $true)]$certificate)
 
+    $extensionDefinitionXml = Update-MediaLink -extensionDefinitionFilePath $extensionDefinitionFilePath -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName
     $extensionExistsInPIR = $false
     $extensionExistsInPIR = Check-ExtensionExistsInAzurePIR -subscriptionId $subscriptionId -certificate $certificate -publisher $extensionDefinitionXml.ExtensionImage.ProviderNameSpace -type $extensionDefinitionXml.ExtensionImage.Type
     if ($extensionExistsInPIR) {
         # update the extension definition file
-        $extensionDefinitionXml = Update-MediaLink -extensionDefinitionFilePath $extensionDefinitionFilePath -storageAccountName $storageAccountName -containerName $containerName -storageBlobName $storageBlobName
         $extensionDefinitionXml.ExtensionImage.IsInternalExtension = "false"
         if($regions.Trim()) {
             $regionsElement = $extensionDefinitionXml.CreateElement("Regions", $extensionDefinitionXml.ExtensionImage.NamespaceURI)

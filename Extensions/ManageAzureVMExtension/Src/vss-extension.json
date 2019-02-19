@@ -3,7 +3,7 @@
 	"id": "vss-services-manageazurevmextension",
 	"name": "Manage VM extensions in Azure PIR ",
 	"publisher": "ms-vscs-rm",
-	"version": "0.0.11",
+	"version": "0.0.14",
 	"public": false,
 	"description": "Manage VM extensions in Azure Platform Image Repository.",
 	"categories": [

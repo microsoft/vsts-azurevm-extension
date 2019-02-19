@@ -19,8 +19,7 @@ Import-Module $PSScriptRoot\Log.psm1
 
 Initialize-ExtensionLogFile
 
-$script:agentWorkingFolderIfAlreadyConfigured  = Get-AgentWorkingFolderIfAlreadyConfigured
-$agentWorkingFolder = if($agentWorkingFolderIfAlreadyConfigured) {$agentWorkingFolderIfAlreadyConfigured} else {$agentWorkingFolderNew}
+$agentWorkingFolder = Get-AgentWorkingFolder
 
 Write-Log "Disable command is no-op for agent"
 

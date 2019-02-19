@@ -26,7 +26,7 @@ $global:logger = {
     Write-Log $Message
 }
 
-$agentWorkingFolderIfAlreadyConfigured = ""
+$configuredAgentExists = $false
 $agentConfigurationRequired = $true
 
 function Test-AgentReconfigurationRequired {
@@ -316,7 +316,8 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
 
 function ExecuteAgentPreCheck()
 {
-    if($agentWorkingFolderIfAlreadyConfigured)
+    $script:configuredAgentExists  = Test-AgentAlreadyExists
+    if($configuredAgentExists)
     {
         $script:agentConfigurationRequired = Test-AgentReconfigurationRequired $config
     }
@@ -324,7 +325,7 @@ function ExecuteAgentPreCheck()
 
 function DownloadAgentIfRequired
 {
-    if(!$agentWorkingFolderIfAlreadyConfigured)
+    if(!$configuredAgentExists)
     {
         Get-Agent $config
     }
@@ -337,13 +338,13 @@ function DownloadAgentIfRequired
 
 function RemoveExistingAgentIfRequired
 {
-    if( $agentWorkingFolderIfAlreadyConfigured -and $agentConfigurationRequired)
+    if( $configuredAgentExists -and $agentConfigurationRequired)
     {
         Write-Log "Remove existing configured agent"
         Remove-Agent $config
 
         #Execution has reached till here means that either the agent was removed successfully.
-        $script:agentWorkingFolderIfAlreadyConfigured = $false
+        $script:configuredAgentExists = $false
     }
 }
 
@@ -364,8 +365,7 @@ function ConfigureAgentIfRequired
 function Enable
 {
     Start-RMExtensionHandler
-    $script:agentWorkingFolderIfAlreadyConfigured  = Get-AgentWorkingFolderIfAlreadyConfigured
-    $script:agentWorkingFolder = if($agentWorkingFolderIfAlreadyConfigured) {$agentWorkingFolderIfAlreadyConfigured} else {$agentWorkingFolderNew}
+    $script:agentWorkingFolder = Get-AgentWorkingFolder
     $settingsAreSame = Test-ExtensionSettingsAreSameAsDisabledVersion
     $config = Get-ConfigurationFromSettings
     $config.AgentWorkingFolder = $script:agentWorkingFolder
@@ -394,7 +394,7 @@ function Enable
     Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
     Set-LastSequenceNumber
     Write-Log "Removing disable markup file.."
-    Remove-ExtensionDisabledMarkup
+    Remove-ExtensionDisabledMarkup $agentWorkingFolder
 }
 
 Enable

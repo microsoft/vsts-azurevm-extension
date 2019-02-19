@@ -17,7 +17,7 @@ Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 Import-Module $PSScriptRoot\Log.psm1
 
 
-function Get-AgentWorkingFolderIfAlreadyConfigured {
+function Test-AgentAlreadyExists {
     [CmdletBinding()]
     param()
 
@@ -28,23 +28,31 @@ function Get-AgentWorkingFolderIfAlreadyConfigured {
 
         . $PSScriptRoot\AgentSettingsHelper.ps1
         . $PSScriptRoot\Constants.ps1
-        $agentWorkingFolder = ""
-        if(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderNew -logFunction $global:logger)
-        {
-            $agentWorkingFolder = $agentWorkingFolderNew
-        }
-        if(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderOld -logFunction $global:logger)
-        {
-            $agentWorkingFolder = $agentWorkingFolderOld
-        }
+
+        $agentAlreadyExistsOld = Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderNew -logFunction $global:logger
+        $agentAlreadyExistsNew = Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderNew -logFunction $global:logger
 
         Add-HandlerSubStatus $RM_Extension_Status.CheckedExistingAgent.Code $RM_Extension_Status.CheckedExistingAgent.Message -operationName $RM_Extension_Status.CheckedExistingAgent.operationName
-        return $agentWorkingFolder
+        return ($agentAlreadyExistsOld -or $agentAlreadyExistsNew)
     }
     catch
     {
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.CheckingExistingAgent.operationName
     }
+}
+
+function Get-AgentWorkingFolder {
+    [CmdletBinding()]
+    param()
+
+    . $PSScriptRoot\AgentSettingsHelper.ps1
+    . $PSScriptRoot\Constants.ps1
+
+    if(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderOld -logFunction $global:logger)
+    {
+        return $agentWorkingFolderOld
+    }
+    return $agentWorkingFolderNew
 }
 
 <#
@@ -155,7 +163,8 @@ function Create-AgentWorkingFolder {
 #
 Export-ModuleMember `
     -Function `
-        Get-AgentWorkingFolderIfAlreadyConfigured, `
+        Test-AgentAlreadyExists, `
+        Get-AgentWorkingFolder, `
         Remove-Agent, `
         Set-ErrorStatusAndErrorExit, `
         Clean-AgentFolder, `

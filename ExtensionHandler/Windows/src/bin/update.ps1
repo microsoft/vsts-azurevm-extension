@@ -16,9 +16,8 @@ Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\Log.psm1
 . $PSScriptRoot\Constants.ps1
 
-$script:agentWorkingFolderIfAlreadyConfigured  = Get-AgentWorkingFolderIfAlreadyConfigured
-$global:agentWorkingFolder = if($agentWorkingFolderIfAlreadyConfigured) {$agentWorkingFolderIfAlreadyConfigured} else {$agentWorkingFolderNew}
+$agentWorkingFolder = Get-AgentWorkingFolder
 
-Set-ExtensionUpdateFile
+Set-ExtensionUpdateFile $agentWorkingFolder
 
 Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success

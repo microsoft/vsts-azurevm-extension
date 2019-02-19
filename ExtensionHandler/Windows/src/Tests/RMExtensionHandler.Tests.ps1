@@ -19,7 +19,7 @@ Describe "Pre-check agent tests" {
         }
         Mock -ModuleName RMExtensionCommon Set-ErrorStatusAndErrorExit {}
 
-        Get-AgentWorkingFolderIfAlreadyConfigured $config
+        Test-AgentAlreadyExists $config
 
         It "should call clean up functions" {
             Assert-MockCalled -ModuleName RMExtensionCommon Set-ErrorStatusAndErrorExit -Times 1 #-ParameterFilter { $ErrorRecord.Exception.Message -eq "some error"}
@@ -32,7 +32,7 @@ Describe "Pre-check agent tests" {
         Mock -ModuleName RMExtensionCommon Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionCommon Test-ConfiguredAgentExists {}
         
-        Get-AgentWorkingFolderIfAlreadyConfigured $config
+        Test-AgentAlreadyExists $config
 
         It "should call clean up functions" {
             Assert-MockCalled -ModuleName RMExtensionCommon Add-HandlerSubStatus -Times 2 #-ParameterFilter { $Code -eq $RM_Extension_Status.CheckedExistingAgent.Code}

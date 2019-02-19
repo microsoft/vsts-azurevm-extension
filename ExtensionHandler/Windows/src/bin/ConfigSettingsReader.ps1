@@ -85,8 +85,8 @@ function Get-ConfigurationFromSettings {
         if($publicSettings.Contains('Tags'))
         {
             $tagsInput = $publicSettings['Tags']
-            $tagsString = $tagsInput | Out-String
         }
+        $tagsString = $tagsInput | Out-String
         Write-Log "Tags: $tagsString"
         $tags = @(Format-TagsInput $tagsInput)
 

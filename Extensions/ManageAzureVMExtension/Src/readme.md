@@ -9,4 +9,4 @@ This extension allows a user to manage Virtual Machine extensions in Azure Platf
 
 ## Delete VM extension from Azure PIR
 ![Delete extension in Azure PIR snapshot](images/Delete_UX.png)
-* For deleting an extension, the task requires the full extension name(<Publisher name>.<Extension name>), and the complete extension version to delete(<Major version>.<Minor version>.<Patch>.<Revision>).
+* For deleting an extension, the task requires the full extension name(&ltPublisher name&gt.&ltExtension name&gt), and the complete extension version to delete(&ltMajor version&gt.&ltMinor version&lt.&ltPatch&gt.&ltRevision&gt).

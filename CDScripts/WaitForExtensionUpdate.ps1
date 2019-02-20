@@ -17,7 +17,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$extensionVersion,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$location
 )
 
@@ -35,12 +35,11 @@ $retryInterval = 120
 # maximum number of retries to attempt
 $maxRetries = 1440
 
-$location = $location.Split(';')[0].Replace(' ', '').ToLower()
+if (!$location) { $location = "southcentralus" }
+$location = $location.Split(';')[-1].Replace(' ', '').ToLower()
 
 do
 {
-  Start-Sleep -s $retryInterval
-
   try 
   {
       $extensionDetails = Get-AzureRmVMExtensionImage -Location $location -PublisherName $publisher -Type $extensionName -Version $extensionVersion -ErrorAction SilentlyContinue
@@ -55,6 +54,7 @@ do
   {
     Write-Host "Extension is not yet replicated. Will retry after $retryInterval seconds"
     $retryCount++
+    Start-Sleep -s $retryInterval
   }
 
   Write-Host "is Replicated: $isReplicated, retry count: $retryCount, max retries: $maxRetries"

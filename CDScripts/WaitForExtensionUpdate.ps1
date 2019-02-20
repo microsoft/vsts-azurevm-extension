@@ -35,6 +35,8 @@ $retryInterval = 120
 # maximum number of retries to attempt
 $maxRetries = 1440
 
+$location = $location.Split(';')[0].Replace(' ', '').ToLower()
+
 do
 {
   Start-Sleep -s $retryInterval

@@ -16,6 +16,11 @@ Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 Import-Module $PSScriptRoot\Log.psm1
 
+$global:logger = {
+    param([string] $Message)
+
+    Write-Log $Message
+}
 
 function Test-AgentAlreadyExists {
     [CmdletBinding()]

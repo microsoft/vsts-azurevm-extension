@@ -20,12 +20,6 @@ Import-Module $PSScriptRoot\Log.psm1
 . $PSScriptRoot\ConfigSettingsReader.ps1
 . $PSScriptRoot\Constants.ps1
 
-$global:logger = {
-    param([string] $Message)
-
-    Write-Log $Message
-}
-
 $Enable_ConfiguredAgentExists = $false
 $Enable_AgentConfigurationRequired = $true
 

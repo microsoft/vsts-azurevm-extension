@@ -212,6 +212,25 @@ function Start-RMExtensionHandler {
             [Net.ServicePointManager]::SecurityProtocol = $securityProtocolString
         }
 
+        Clear-StatusFile
+        Clear-HandlerCache
+        Clear-HandlerSubStatusMessage
+
+        Add-HandlerSubStatus $RM_Extension_Status.Initialized.Code $RM_Extension_Status.Initialized.Message -operationName $RM_Extension_Status.Initialized.operationName
+        Set-HandlerStatus $RM_Extension_Status.Installing.Code $RM_Extension_Status.Installing.Message
+    }
+    catch
+    {
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.Initializing.operationName
+    }
+}
+
+function Compare-SequenceNumber{
+    [CmdletBinding()]
+    param()
+        
+    try
+    {
         #
         # If same sequence number has already been processed, do not process again. This can happen if extension has been set again without changing any config settings or if VM has been rebooted.
         # Not updating handler status, so that the previous status(success or failure) still holds and is useful to user. Just setting substatus for more detailed information
@@ -223,22 +242,13 @@ function Start-RMExtensionHandler {
             Write-Log $RM_Extension_Status.SkippedInstallation.Message
             Write-Log "Current seq number: $sequenceNumber, last seq number: $lastSequenceNumber"
             Add-HandlerSubStatus $RM_Extension_Status.SkippedInstallation.Code $RM_Extension_Status.SkippedInstallation.Message -operationName $RM_Extension_Status.SkippedInstallation.operationName
-
             Exit-WithCode0
         }
-
-        Clear-StatusFile
-        Clear-HandlerCache
-        Clear-HandlerSubStatusMessage
-
         Write-Log "Sequence Number: $sequenceNumber"
-
-        Set-HandlerStatus $RM_Extension_Status.Installing.Code $RM_Extension_Status.Installing.Message
-        Add-HandlerSubStatus $RM_Extension_Status.Initialized.Code $RM_Extension_Status.Initialized.Message -operationName $RM_Extension_Status.Initialized.operationName
     }
     catch
     {
-        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.Initializing.operationName
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ComparingWithPreviousSettings.operationName
     }
 }
 
@@ -288,32 +298,39 @@ function Add-AgentTags {
 
 function Test-ExtensionSettingsAreSameAsDisabledVersion
 {
-    $oldExtensionSettingsFilePath = "$agentWorkingFolder\$disabledMarkupFile"
-    $oldExtensionSettingsFileExists = Test-Path $oldExtensionSettingsFilePath
-    if($oldExtensionSettingsFileExists)
+    try
     {
-        $handlerEnvironment = Get-HandlerEnvironment
-        $sequenceNumber = Get-HandlerExecutionSequenceNumber
-        $extensionSettingsFilePath = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
-        $oldExtensionSettingsFileContents = Get-Content($oldExtensionSettingsFilePath)
-        $extensionSettingsFileContents = Get-Content($extensionSettingsFilePath)
-        if($oldExtensionSettingsFileContents.ToString().Equals($extensionSettingsFileContents.ToString()))
+        $oldExtensionSettingsFilePath = "$agentWorkingFolder\$disabledMarkupFile"
+        $oldExtensionSettingsFileExists = Test-Path $oldExtensionSettingsFilePath
+        if($oldExtensionSettingsFileExists)
         {
-            Write-Log "Old and new extension version settings are same."
-            return $true
+            $handlerEnvironment = Get-HandlerEnvironment
+            $sequenceNumber = Get-HandlerExecutionSequenceNumber
+            $extensionSettingsFilePath = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
+            $oldExtensionSettingsFileContents = Get-Content($oldExtensionSettingsFilePath)
+            $extensionSettingsFileContents = Get-Content($extensionSettingsFilePath)
+            if($oldExtensionSettingsFileContents.ToString().Equals($extensionSettingsFileContents.ToString()))
+            {
+                Write-Log "Old and new extension version settings are same."
+                return $true
+            }
+            else
+            {
+                Write-Log "Old and new extension version settings are not same."
+                Write-Log "Old extension version settings: $oldExtensionSettingsFileContents"
+                Write-Log "New extension version settings: $extensionSettingsFileContents"
+            }
         }
         else
         {
-            Write-Log "Old and new extension version settings are not same."
-            Write-Log "Old extension version settings: $oldExtensionSettingsFileContents"
-            Write-Log "New extension version settings: $extensionSettingsFileContents"
+            Write-Log "Old extension settings file does not exist in the agent directory. Will continue with enable."
         }
+        return $false
     }
-    else
+    catch
     {
-        Write-Log "Old extension settings file does not exist in the agent directory. Will continue with enable."
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ComparingWithPreviousSettings.operationName
     }
-    return $false
 }
 
 function ExecuteAgentPreCheck()
@@ -369,6 +386,7 @@ function Enable
 {
     Start-RMExtensionHandler
     $config = Get-ConfigurationFromSettings
+    Compare-SequenceNumber
     $settingsAreSame = Test-ExtensionSettingsAreSameAsDisabledVersion
     if($settingsAreSame)
     {

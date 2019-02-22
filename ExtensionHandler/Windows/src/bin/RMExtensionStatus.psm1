@@ -173,6 +173,12 @@ $global:RM_Extension_Status = @{
         operationName = 'Inputs validation'
     }
 
+    ComparingWithPreviousSettings = @{
+        Code = 32
+        Message = 'Comparing settings with previous settings'
+        operationName = 'Settings Comparison'
+    }
+
     #
     # Warnings
     #

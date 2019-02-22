@@ -212,12 +212,7 @@ function Start-RMExtensionHandler {
             [Net.ServicePointManager]::SecurityProtocol = $securityProtocolString
         }
 
-        Clear-StatusFile
-        Clear-HandlerCache
-        Clear-HandlerSubStatusMessage
-
         Add-HandlerSubStatus $RM_Extension_Status.Initialized.Code $RM_Extension_Status.Initialized.Message -operationName $RM_Extension_Status.Initialized.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installing.Code $RM_Extension_Status.Installing.Message
     }
     catch
     {
@@ -307,9 +302,10 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
             $handlerEnvironment = Get-HandlerEnvironment
             $sequenceNumber = Get-HandlerExecutionSequenceNumber
             $extensionSettingsFilePath = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
-            $oldExtensionSettingsFileContents = Get-Content($oldExtensionSettingsFilePath)
-            $extensionSettingsFileContents = Get-Content($extensionSettingsFilePath)
-            if($oldExtensionSettingsFileContents.ToString().Equals($extensionSettingsFileContents.ToString()))
+            $oldExtensionPublicSettings = (Get-Content($oldExtensionSettingsFilePath) | ConvertFrom-Json).runtimeSettings.handlerSettings.publicSettings
+            $extensionPublicSettings = (Get-Content($extensionSettingsFilePath) | ConvertFrom-Json).runtimeSettings.handlerSettings.publicSettings
+            $settingsDiff = Compare-Object $oldExtensionPublicSettings.psobject.Properties $extensionPublicSettings.psobject.Properties
+            if(!$settingsDiff)
             {
                 Write-Log "Old and new extension version settings are same."
                 return $true
@@ -317,8 +313,8 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
             else
             {
                 Write-Log "Old and new extension version settings are not same."
-                Write-Log "Old extension version settings: $oldExtensionSettingsFileContents"
-                Write-Log "New extension version settings: $extensionSettingsFileContents"
+                Write-Log "Old extension version settings: $oldExtensionPublicSettings"
+                Write-Log "New extension version settings:$extensionPublicSettings"
             }
         }
         else
@@ -395,6 +391,8 @@ function Enable
     }
     else
     {
+        Set-HandlerStatus $RM_Extension_Status.Installing.Code $RM_Extension_Status.Installing.Message
+
         Confirm-InputsAreValid $config
 
         ExecuteAgentPreCheck

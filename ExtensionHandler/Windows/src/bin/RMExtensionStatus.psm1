@@ -92,7 +92,7 @@ $global:RM_Extension_Status = @{
     SkippedInstallation = @{
         Code = 15
         Message = 'No change in config settings or VM has just been rebooted. Skipping initialization.'
-        operationName = 'Initialization'
+        operationName = 'Settings Comparison'
     }
     Disabled = @{
         Code = 16

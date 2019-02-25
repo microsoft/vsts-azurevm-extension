@@ -18,10 +18,13 @@ Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\Log.psm1
 
 Initialize-ExtensionLogFile
+
+$agentWorkingFolder = Get-AgentWorkingFolder
+
 Write-Log "Disable command is no-op for agent"
 
 Write-Log "Disabling extension handler. Creating a markup file.."
-Set-ExtensionDisabledMarkup
+Set-ExtensionDisabledMarkup $agentWorkingFolder
 
 Add-HandlerSubStatus $RM_Extension_Status.Disabled.Code $RM_Extension_Status.Disabled.Message -operationName $RM_Extension_Status.Disabled.operationName
 Set-HandlerStatus $RM_Extension_Status.Disabled.Code $RM_Extension_Status.Disabled.Message -Status success

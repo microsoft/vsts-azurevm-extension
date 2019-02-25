@@ -306,20 +306,20 @@ function Get-HandlerSettings
 
 <#
 .Synopsis
-   Create a new file in the agent folder to indicate that an extension update is going on. This is to prevent
+   Create a new file in the given folder to indicate that an extension update is going on. This is to prevent
    subsequent uninstall and install from reconfiguring the agent
 #>
 function Set-ExtensionUpdateFile
 {
     [CmdletBinding()]
     param
-    ()
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
 
     . $PSScriptRoot\Constants.ps1
-
     try
     {
-        New-Item -ItemType File -Path "$agentWorkingFolder\$updateFileName" -Value "" -Force
+        New-Item -ItemType File -Path "$workingFolder\$updateFileName" -Value "" -Force
     }
     catch
     {}
@@ -327,7 +327,27 @@ function Set-ExtensionUpdateFile
 
 <#
 .Synopsis
-   Save current sequence number as last used sequence number. This information is saved in a file
+   Removes the extension update file from the given folder
+#>
+function Remove-ExtensionUpdateFile
+{
+    [CmdletBinding()]
+    param
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
+
+    . $PSScriptRoot\Constants.ps1
+    try
+    {
+        Remove-Item -Path "$workingFolder\$updateFileName" -Force
+    }
+    catch
+    {}
+}
+
+<#
+.Synopsis
+   Save current sequence number as last used sequence number. This information is saved in a file in the current directory
 #>
 function Set-LastSequenceNumber
 {
@@ -373,17 +393,18 @@ function Get-LastSequenceNumber
 
 <#
 .Synopsis
-   Create a file in the agent root directory with the contents copied from the settings file. Settings
+   Create a file in the given folder with the contents copied from the settings file. Settings
    file contents are taken to handle extension update scenario.
 #>
 function Set-ExtensionDisabledMarkup
 {
     [CmdletBinding()]
     param
-    ()
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
 
     . $PSScriptRoot\Constants.ps1
-    $markupFile = "$agentWorkingFolder\$disabledMarkupFile"
+    $markupFile = "$workingFolder\$disabledMarkupFile"
     $handlerEnvironment = Get-HandlerEnvironment
     $sequenceNumber = Get-HandlerExecutionSequenceNumber
     $extensionSettingsFile = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
@@ -401,16 +422,42 @@ function Set-ExtensionDisabledMarkup
 
 <#
 .Synopsis
+   Fetches the contents from the disabled markup file and returns it as a string
+#>
+function Get-ExtensionDisabledMarkup
+{
+    [CmdletBinding()]
+    param
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
+
+    . $PSScriptRoot\Constants.ps1
+    $markupFile = "$workingFolder\$disabledMarkupFile"
+
+    try
+    {
+        Write-Log "Fetching contents of $markupFile"
+        Get-Content -Path $markupFile
+    }
+    catch
+    {
+        Write-Log "Error while fetching contents of  $markupFile."
+    }
+}
+
+<#
+.Synopsis
    Removes any disabled markup file. This indicates that extension has been enabled
 #>
 function Remove-ExtensionDisabledMarkup
 {
     [CmdletBinding()]
     param
-    ()
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
 
     . $PSScriptRoot\Constants.ps1
-    $markupFile = "$agentWorkingFolder\$disabledMarkupFile"
+    $markupFile = "$workingFolder\$disabledMarkupFile"
 
     Write-Log "Deleting disabled markup file $markupFile"
 
@@ -430,10 +477,11 @@ function Test-ExtensionDisabledMarkup
 {
     [CmdletBinding()]
     param
-    ()
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
 
     . $PSScriptRoot\Constants.ps1
-    $markupFile = "$agentWorkingFolder\$disabledMarkupFile"
+    $markupFile = "$workingFolder\$disabledMarkupFile"
 
     Write-Log "Testing whether deleted markup file exists: $markupFile"
 

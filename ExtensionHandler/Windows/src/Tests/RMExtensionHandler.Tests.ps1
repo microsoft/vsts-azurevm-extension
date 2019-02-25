@@ -47,7 +47,7 @@ Describe "remove agent tests" {
         Mock -ModuleName RMExtensionCommon Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionCommon Set-HandlerStatus {}
         Mock -ModuleName RMExtensionCommon Invoke-RemoveAgentScript {}
-        Mock -ModuleName RMExtensionCommon Clean-AgentFolder {}
+        Mock -ModuleName RMExtensionCommon Clean-AgentWorkingFolder {}
         Remove-Agent @{AgentWorkingFolder = "AgentWorkingFolder"}
 
         It "should set proper status" {

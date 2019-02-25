@@ -22,15 +22,17 @@ Import-Module $PSScriptRoot\Log.psm1
 Initialize-ExtensionLogFile
 
 #Assuming PAT to be null since it would be removed during enable
+
+$agentWorkingFolder = Get-AgentWorkingFolder
 $config = @{
     PATToken = "`"`""
     AgentWorkingFolder = $agentWorkingFolder
 }
 
-$configuredAgentExists = Test-AgentAlreadyExists $config
+$configuredAgentExists = Test-AgentAlreadyExists
 $extensionUpdateFile = "$agentWorkingFolder\$updateFileName"
 $isUpdateExtensionScenario = Test-Path $extensionUpdateFile
-if (!$isUpdateExtensionScenario) 
+if (!$isUpdateExtensionScenario)
 {
     if ($configuredAgentExists) 
     {
@@ -39,8 +41,8 @@ if (!$isUpdateExtensionScenario)
 }
 else
 {
-    Write-Log "Extension update scenario. Deleting the file $agentWorkingFolder\$updateFileName."
-    Remove-Item -Path $extensionUpdateFile -Force
+    Write-Log "Extension update scenario. Deleting the update file."
+    Remove-ExtensionUpdateFile $agentWorkingFolder
 }
 Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
 

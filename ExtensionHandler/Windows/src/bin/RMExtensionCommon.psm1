@@ -24,27 +24,40 @@ $global:logger = {
 
 function Test-AgentAlreadyExists {
     [CmdletBinding()]
-    param(
-    [Parameter(Mandatory=$true, Position=0)]
-    [hashtable] $config
-    )
+    param()
 
     try
     {
         Add-HandlerSubStatus $RM_Extension_Status.CheckingExistingAgent.Code $RM_Extension_Status.CheckingExistingAgent.Message -operationName $RM_Extension_Status.CheckingExistingAgent.operationName
-        Write-Log "Pre-checking agent configuration..."
+        Write-Log "Checking whether a configured agent already exists..."
 
         . $PSScriptRoot\AgentSettingsHelper.ps1
-        $agentAlreadyExists = Test-ConfiguredAgentExists -workingFolder $config.AgentWorkingFolder -logFunction $global:logger
+        . $PSScriptRoot\Constants.ps1
 
-        Write-Log "Done pre-checking agent configuration..."
+        $agentAlreadyExistsOld = Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderNew -logFunction $global:logger
+        $agentAlreadyExistsNew = Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderNew -logFunction $global:logger
+
         Add-HandlerSubStatus $RM_Extension_Status.CheckedExistingAgent.Code $RM_Extension_Status.CheckedExistingAgent.Message -operationName $RM_Extension_Status.CheckedExistingAgent.operationName
-        return $agentAlreadyExists
+        return ($agentAlreadyExistsOld -or $agentAlreadyExistsNew)
     }
     catch
     {
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.CheckingExistingAgent.operationName
     }
+}
+
+function Get-AgentWorkingFolder {
+    [CmdletBinding()]
+    param()
+
+    . $PSScriptRoot\AgentSettingsHelper.ps1
+    . $PSScriptRoot\Constants.ps1
+
+    if(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderOld -logFunction $global:logger)
+    {
+        return $agentWorkingFolderOld
+    }
+    return $agentWorkingFolderNew
 }
 
 <#
@@ -59,12 +72,11 @@ function Remove-Agent {
     )
     try
     {
-        . $PSScriptRoot\Constants.ps1
         Write-Log "Remove-Agent command started"
         try{
             Invoke-RemoveAgentScript $config
             Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
-            Clean-AgentFolder
+            Clean-AgentWorkingFolder $config
         }
         catch{
             if(($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder))
@@ -74,7 +86,7 @@ function Remove-Agent {
                 $agentName = $($agentSettings.agentName)
                 $message = ($RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Message -f $agentName)
                 Add-HandlerSubStatus $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.Code $message -operationName $RM_Extension_Status.UnConfiguringDeploymentAgentFailed.operationName -SubStatus 'warning'
-                Clean-AgentFolder
+                Clean-AgentWorkingFolder $config
             }
             else{
                 Write-Log "Some unexpected error occured: $_"
@@ -116,41 +128,44 @@ function Set-ErrorStatusAndErrorExit {
 .Synopsis
     Tries to clean the agent folder. Will fail if some other agent is running inside one or more of the subfolders.
 #>
-function Clean-AgentFolder {
+function Clean-AgentWorkingFolder {
     [CmdletBinding()]
-    param()
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
 
     . $PSScriptRoot\Constants.ps1
-    if (Test-Path $agentWorkingFolder)
+    if (Test-Path $config.AgentWorkingFolder)
     {
         Write-Log "Trying to remove the agent folder"
-        $topLevelAgentFile = "$agentWorkingFolder\.agent"
+        $topLevelAgentFile = "$($config.AgentWorkingFolder)\.agent"
         if (Test-Path $topLevelAgentFile)
         {
             Remove-Item -Path $topLevelAgentFile -Force
         }
-        $configuredAgentsIfAny = Get-ChildItem -Path $agentWorkingFolder -Filter ".agent" -Recurse -Force
-        if ($configuredAgentsIfAny) 
-        {
-            throw "Cannot remove the agent folder. One or more agents are already configured at $agentWorkingFolder.`
-            Unconfigure all the agents from the folder and all its subfolders and then try again."
-        }
-        Remove-Item -Path $agentWorkingFolder -ErrorAction Stop -Recurse -Force
     }
+    $config.AgentWorkingFolder = $agentWorkingFolderNew
+    $configuredAgentsIfAny = Get-ChildItem -Path $config.AgentWorkingFolder -Filter ".agent" -Recurse -Force
+    if ($configuredAgentsIfAny)
+    {
+        throw "Cannot remove the agent folder. One or more agents are already configured at $($config.AgentWorkingFolder).`
+        Unconfigure all the agents from the folder and all its subfolders and then try again."
+    }
+    Remove-Item -Path $config.AgentWorkingFolder -ErrorAction Stop -Recurse -Force
 }
 
 function Create-AgentWorkingFolder {
     [CmdletBinding()]
-    param()
+    param([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
 
-    . $PSScriptRoot\Constants.ps1
-    Write-Log "Working folder for VSTS agent: $agentWorkingFolder"
-    if(!(Test-Path $agentWorkingFolder))
+    Write-Log "Working folder for VSTS agent: $workingFolder"
+    if(!(Test-Path $workingFolder))
     {
         Write-Log "Working folder does not exist. Creating it..."
-        New-Item -ItemType Directory $agentWorkingFolder > $null
+        New-Item -ItemType Directory $workingFolder > $null
     }
-    return $agentWorkingFolder
 }
 
 #
@@ -159,7 +174,8 @@ function Create-AgentWorkingFolder {
 Export-ModuleMember `
     -Function `
         Test-AgentAlreadyExists, `
+        Get-AgentWorkingFolder, `
         Remove-Agent, `
         Set-ErrorStatusAndErrorExit, `
-        Clean-AgentFolder, `
+        Clean-AgentWorkingFolder, `
         Create-AgentWorkingFolder

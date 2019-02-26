@@ -1,4 +1,4 @@
-Powershell.exe -executionpolicy bypass bin\enable.ps1
-if errorlevel 1 (
-    exit /b -1
+Powershell.exe -executionpolicy bypass -command "& .\bin\enable.ps1; exit $lastexitcode"
+if %ERRORLEVEL% NEQ 0 (
+    exit /b  %ERRORLEVEL% 
 )

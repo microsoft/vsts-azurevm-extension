@@ -1,4 +1,4 @@
-﻿<#
+<#
 .Synopsis
    Utilities for managing Azure extensions
 
@@ -319,7 +319,7 @@ function Set-ExtensionUpdateFile
     . $PSScriptRoot\Constants.ps1
     try
     {
-        New-Item -ItemType File -Path "$workingFolder\$updateFileName" -Value "" -Force
+        New-Item -ItemType File -Path "$workingFolder\$updateFileName" -Value "" -Force  > $null
     }
     catch
     {}
@@ -362,7 +362,7 @@ function Set-LastSequenceNumber
 
     try
     {
-        New-Item -ItemType File -Path $lastSeqFile -Value $currentSequenceNumber -Force
+        New-Item -ItemType File -Path $lastSeqFile -Value $currentSequenceNumber -Force > $null
     }
     catch
     {}

@@ -196,14 +196,16 @@ Describe "Start RM extension tests" {
     }
 
     Context "Should skip enable if current seq number is same as last seq number" {
-        
+
+        $config = @{AgentWorkingFolder = "AgentWorkingFolder"}
         Mock Get-HandlerExecutionSequenceNumber { return 2 }
         Mock Get-LastSequenceNumber { return 2 }
         Mock Add-HandlerSubStatus {}
         Mock Write-Log {}
         Mock Exit-WithCode {}
+        Mock Test-ExtensionDisabledMarkup {return $false}
 
-        Compare-SequenceNumber
+        Compare-SequenceNumber $config
 
         It "should call clean up functions" {
             Assert-MockCalled Exit-WithCode -Times 1

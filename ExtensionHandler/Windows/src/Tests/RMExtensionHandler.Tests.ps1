@@ -30,9 +30,9 @@ Describe "Pre-check agent tests" {
 
         Mock -ModuleName RMExtensionCommon Write-Log{}
         Mock -ModuleName RMExtensionCommon Add-HandlerSubStatus {}
-        Mock -ModuleName RMExtensionCommon Test-ConfiguredAgentExists {}
+        Mock -ModuleName RMExtensionCommon Test-ConfiguredAgentExists {return $true}
         
-        Test-AgentAlreadyExists $config
+        Test-AgentAlreadyExists
 
         It "should call clean up functions" {
             Assert-MockCalled -ModuleName RMExtensionCommon Add-HandlerSubStatus -Times 2 #-ParameterFilter { $Code -eq $RM_Extension_Status.CheckedExistingAgent.Code}

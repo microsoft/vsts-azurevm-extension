@@ -319,7 +319,7 @@ function Set-ExtensionUpdateFile
 
     try
     {
-        New-Item -ItemType File -Path "$agentWorkingFolder\$updateFileName" -Value "" -Force
+        New-Item -ItemType File -Path "$agentWorkingFolder\$updateFileName" -Value "" -Force > $null
     }
     catch
     {}
@@ -342,7 +342,7 @@ function Set-LastSequenceNumber
 
     try
     {
-        New-Item -ItemType File -Path $lastSeqFile -Value $currentSequenceNumber -Force
+        New-Item -ItemType File -Path $lastSeqFile -Value $currentSequenceNumber -Force > $null
     }
     catch
     {}

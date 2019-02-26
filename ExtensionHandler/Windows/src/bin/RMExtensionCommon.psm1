@@ -109,7 +109,11 @@ function Set-ErrorStatusAndErrorExit {
     )
 
     Set-HandlerErrorStatus $exception -operationName $operationName
-    Exit-WithCode1
+    $exitCode = -1
+    if ($exception.FullyQualifiedErrorId -eq $RM_TerminatingErrorId) {
+        $exitCode = $exception.Exception.Data['Code']
+    }
+    Exit-WithCode $exitCode
 }
 
 <#

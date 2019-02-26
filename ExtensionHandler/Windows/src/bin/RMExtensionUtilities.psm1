@@ -95,14 +95,13 @@ function Get-RESTCallHeader
     return $headers
 }
 
-function Exit-WithCode1
+function Exit-WithCode
 {
-    exit 1
-}
-
-function Exit-WithCode0
-{
-    exit 0
+    param(
+    [Parameter(Mandatory=$false, Position=0)]
+    [int]$exitCode
+    )
+    exit $exitCode
 }
 
 Export-ModuleMember `
@@ -110,5 +109,4 @@ Export-ModuleMember `
             ConvertTo-Hashtable, `
             Get-OSVersion, `
             Get-RESTCallHeader, `
-            Exit-WithCode1, `
-            Exit-WithCode0
+            Exit-WithCode

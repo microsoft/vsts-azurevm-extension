@@ -231,7 +231,7 @@ function Compare-SequenceNumber{
             Write-Log $RM_Extension_Status.SkippedInstallation.Message
             Write-Log "Current seq number: $sequenceNumber, last seq number: $lastSequenceNumber"
             Add-HandlerSubStatus $RM_Extension_Status.SkippedInstallation.Code $RM_Extension_Status.SkippedInstallation.Message -operationName $RM_Extension_Status.SkippedInstallation.operationName
-            Exit-WithCode0
+            Exit-WithCode 0
         }
         Write-Log "Sequence Number: $sequenceNumber"
     }
@@ -298,8 +298,14 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
             $extensionSettingsFilePath = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
             $oldExtensionPublicSettings = (Get-Content($oldExtensionSettingsFilePath) | ConvertFrom-Json).runtimeSettings.handlerSettings.publicSettings
             $extensionPublicSettings = (Get-Content($extensionSettingsFilePath) | ConvertFrom-Json).runtimeSettings.handlerSettings.publicSettings
-            $settingsDiff = Compare-Object $oldExtensionPublicSettings.psobject.Properties $extensionPublicSettings.psobject.Properties
-            if(!$settingsDiff)
+            $settingsSame = $oldExtensionPublicSettings.AgentName -eq $extensionPublicSettings.AgentName -and 
+                            $oldExtensionPublicSettings.VSTSAccountUrl -eq $extensionPublicSettings.VSTSAccountUrl -and 
+                            $oldExtensionPublicSettings.VSTSAccountName -eq $extensionPublicSettings.VSTSAccountName -and 
+                            $oldExtensionPublicSettings.Tags -eq $extensionPublicSettings.Tags -and 
+                            $oldExtensionPublicSettings.DeploymentGroup -eq $extensionPublicSettings.DeploymentGroup -and 
+                            $oldExtensionPublicSettings.MachineGroup -eq $extensionPublicSettings.MachineGroup -and 
+                            $oldExtensionPublicSettings.TeamProject -eq $extensionPublicSettings.TeamProject
+            if($settingsSame)
             {
                 Write-Log "Old and new extension version settings are same."
                 return $true

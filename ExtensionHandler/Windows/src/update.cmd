@@ -1,4 +1,4 @@
-Powershell.exe -executionpolicy bypass bin\update.ps1
-if errorlevel 1 (
-    exit /b -1
+Powershell.exe -executionpolicy bypass -command "& .\bin\update.ps1; exit $lastexitcode"
+if %ERRORLEVEL% NEQ 0 (
+    exit /b  %ERRORLEVEL% 
 )

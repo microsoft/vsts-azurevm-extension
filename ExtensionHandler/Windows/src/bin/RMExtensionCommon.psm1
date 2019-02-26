@@ -34,7 +34,7 @@ function Test-AgentAlreadyExists {
         . $PSScriptRoot\AgentSettingsHelper.ps1
         . $PSScriptRoot\Constants.ps1
 
-        $agentAlreadyExistsOld = Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderNew -logFunction $global:logger
+        $agentAlreadyExistsOld = Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderOld -logFunction $global:logger
         $agentAlreadyExistsNew = Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderNew -logFunction $global:logger
 
         Add-HandlerSubStatus $RM_Extension_Status.CheckedExistingAgent.Code $RM_Extension_Status.CheckedExistingAgent.Message -operationName $RM_Extension_Status.CheckedExistingAgent.operationName

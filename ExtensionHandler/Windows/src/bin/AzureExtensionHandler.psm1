@@ -1062,7 +1062,9 @@ Export-ModuleMember `
         Set-LastSequenceNumber, `
         Get-LastSequenceNumber, `
         Set-ExtensionDisabledMarkup, `
+        Get-ExtensionDisabledMarkup, `
         Remove-ExtensionDisabledMarkup, `
         Test-ExtensionDisabledMarkup, `
         Set-JsonContent, `
-        Set-ExtensionUpdateFile
+        Set-ExtensionUpdateFile, `
+        Remove-ExtensionUpdateFile

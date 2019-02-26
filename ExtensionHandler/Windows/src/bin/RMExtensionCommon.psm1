@@ -146,13 +146,16 @@ function Clean-AgentWorkingFolder {
         }
     }
     $config.AgentWorkingFolder = $agentWorkingFolderNew
-    $configuredAgentsIfAny = Get-ChildItem -Path $config.AgentWorkingFolder -Filter ".agent" -Recurse -Force
-    if ($configuredAgentsIfAny)
+    if (Test-Path $config.AgentWorkingFolder)
     {
-        throw "Cannot remove the agent folder. One or more agents are already configured at $($config.AgentWorkingFolder).`
-        Unconfigure all the agents from the folder and all its subfolders and then try again."
+        $configuredAgentsIfAny = Get-ChildItem -Path $config.AgentWorkingFolder -Filter ".agent" -Recurse -Force
+        if ($configuredAgentsIfAny)
+        {
+            throw "Cannot remove the agent folder. One or more agents are already configured at $($config.AgentWorkingFolder).`
+            Unconfigure all the agents from the folder and all its subfolders and then try again."
+        }
+        Remove-Item -Path $config.AgentWorkingFolder -ErrorAction Stop -Recurse -Force
     }
-    Remove-Item -Path $config.AgentWorkingFolder -ErrorAction Stop -Recurse -Force
 }
 
 function Create-AgentWorkingFolder {

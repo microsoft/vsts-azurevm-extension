@@ -19,5 +19,3 @@ Import-Module $PSScriptRoot\Log.psm1
 $agentWorkingFolder = Get-AgentWorkingFolder
 
 Set-ExtensionUpdateFile $agentWorkingFolder
-
-Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success

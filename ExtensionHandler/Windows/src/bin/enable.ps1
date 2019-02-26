@@ -300,8 +300,10 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
             $extensionPublicSettings = (Get-Content($extensionSettingsFilePath) | ConvertFrom-Json).runtimeSettings.handlerSettings.publicSettings
             $settingsSame = $oldExtensionPublicSettings.AgentName -eq $extensionPublicSettings.AgentName -and 
                             $oldExtensionPublicSettings.VSTSAccountUrl -eq $extensionPublicSettings.VSTSAccountUrl -and 
+                            $oldExtensionPublicSettings.VSTSAccountName -eq $extensionPublicSettings.VSTSAccountName -and 
                             $oldExtensionPublicSettings.Tags -eq $extensionPublicSettings.Tags -and 
                             $oldExtensionPublicSettings.DeploymentGroup -eq $extensionPublicSettings.DeploymentGroup -and 
+                            $oldExtensionPublicSettings.MachineGroup -eq $extensionPublicSettings.MachineGroup -and 
                             $oldExtensionPublicSettings.TeamProject -eq $extensionPublicSettings.TeamProject
             if($settingsSame)
             {

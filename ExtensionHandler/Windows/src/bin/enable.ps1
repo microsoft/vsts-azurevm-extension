@@ -298,13 +298,19 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
             $extensionSettingsFilePath = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
             $oldExtensionPublicSettings = (Get-Content($oldExtensionSettingsFilePath) | ConvertFrom-Json).runtimeSettings.handlerSettings.publicSettings
             $extensionPublicSettings = (Get-Content($extensionSettingsFilePath) | ConvertFrom-Json).runtimeSettings.handlerSettings.publicSettings
-            $settingsSame = $oldExtensionPublicSettings.AgentName -eq $extensionPublicSettings.AgentName -and 
-                            $oldExtensionPublicSettings.VSTSAccountUrl -eq $extensionPublicSettings.VSTSAccountUrl -and 
-                            $oldExtensionPublicSettings.VSTSAccountName -eq $extensionPublicSettings.VSTSAccountName -and 
-                            $oldExtensionPublicSettings.Tags -eq $extensionPublicSettings.Tags -and 
-                            $oldExtensionPublicSettings.DeploymentGroup -eq $extensionPublicSettings.DeploymentGroup -and 
-                            $oldExtensionPublicSettings.MachineGroup -eq $extensionPublicSettings.MachineGroup -and 
-                            $oldExtensionPublicSettings.TeamProject -eq $extensionPublicSettings.TeamProject
+            $oldExtensionPublicSettingsPropertyNames = $oldExtensionPublicSettings.psobject.Properties | % {$_.Name}
+            $extensionPublicSettingsPropertyNames = $extensionPublicSettings.psobject.Properties | % {$_.Name}
+            $settingsSame = $false
+            if($oldExtensionPublicSettingsPropertyNames.Count -eq $extensionPublicSettingsPropertyNames.Count)
+            {
+                $settingsSame = $true
+                $oldExtensionPublicSettingsPropertyNames | % {
+                    if(!$extensionPublicSettingsPropertyNames.Contains($_) -or !($oldExtensionPublicSettings.$_ -eq $extensionPublicSettings.$_))
+                    {
+                        $settingsSame = $false
+                    }
+                }
+            }
             if($settingsSame)
             {
                 Write-Log "Old and new extension version settings are same."
@@ -314,7 +320,7 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
             {
                 Write-Log "Old and new extension version settings are not same."
                 Write-Log "Old extension version settings: $oldExtensionPublicSettings"
-                Write-Log "New extension version settings:$extensionPublicSettings"
+                Write-Log "New extension version settings: $extensionPublicSettings"
             }
         }
         else

@@ -253,14 +253,15 @@ def validate_inputs(operation):
       raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message + specific_error_message)
 
 
-    handler_utility.log("Validated that the deployment group {0} exists".format(config['DeploymentGroup']))
     deployment_group_data = json.loads(response.read())
-    deployment_group_id = deployment_group_data['value'][0]['id']
 
     if(('value' not in deployment_group_data) or len(deployment_group_data['value']) == 0):
       specificErrorMessage = "Please make sure that the deployment group {0} exists in the project {1}, and the user has 'Manage' permissions on the deployment group.".format(config['DeploymentGroup'], config['TeamProject'])
       raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message_initial_part.format(response.status, "Not found") + specific_error_message)
 
+    deployment_group_id = deployment_group_data['value'][0]['id']
+    handler_utility.log("Validated that the deployment group {0} exists".format(config['DeploymentGroup']))
+    
     headers = {}
     headers['Content-Type'] = 'application/json'
     body = "{'name': '" + config['DeploymentGroup'] + "'}"

@@ -181,30 +181,16 @@ Describe "Start RM extension tests" {
 
     Context "Should clear up things properly" {
         
-        Mock Get-HandlerExecutionSequenceNumber {}
-        Mock Clear-StatusFile {}
-        Mock Clear-HandlerCache {}
-        Mock Clear-HandlerSubStatusMessage {}
         Mock Initialize-ExtensionLogFile {}
         Mock Add-HandlerSubStatus {}
-        Mock Set-HandlerStatus {}
-        Mock Write-Log {}
-        Mock Get-ConfigurationFromSettings {}
-        Mock Test-ExtensionSettingsAreSameAsDisabledVersion {return $true}
-        Mock Confirm-InputsAreValid {}
-
+        
         Start-RMExtensionHandler
 
         It "should call clean up functions" {
-            Assert-MockCalled Get-HandlerExecutionSequenceNumber -Times 1
-            Assert-MockCalled Clear-StatusFile -Times 1
-            Assert-MockCalled Clear-HandlerCache -Times 1
-            Assert-MockCalled Clear-HandlerSubStatusMessage -Times 1
             Assert-MockCalled Initialize-ExtensionLogFile -Times 1
         }
 
         It "should set handler status as Initilized" {
-            Assert-MockCalled Set-HandlerStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.Installing.Code}
             Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.Initialized.Code}
         }
     }
@@ -213,23 +199,14 @@ Describe "Start RM extension tests" {
         
         Mock Get-HandlerExecutionSequenceNumber { return 2 }
         Mock Get-LastSequenceNumber { return 2 }
-        Mock Test-ExtensionDisabledMarkup { return $false }
-        Mock Clear-StatusFile {}
-        Mock Clear-HandlerCache {}
-        Mock Clear-HandlerSubStatusMessage {}
-        Mock Initialize-ExtensionLogFile {}
         Mock Add-HandlerSubStatus {}
-        Mock Set-HandlerStatus {}
         Mock Write-Log {}
-        Mock Exit-WithCode0 {} 
-        Mock Get-ConfigurationFromSettings {}
-        Mock Test-ExtensionSettingsAreSameAsDisabledVersion {return $true}
-        Mock Confirm-InputsAreValid {}
+        Mock Exit-WithCode {}
 
-        Start-RMExtensionHandler
+        Compare-SequenceNumber
 
         It "should call clean up functions" {
-            Assert-MockCalled Exit-WithCode0 -Times 1
+            Assert-MockCalled Exit-WithCode -Times 1
         }
 
         It "should set handler status as Initilized" {
@@ -249,7 +226,7 @@ Describe "Start RM extension tests" {
         Mock Add-HandlerSubStatus {}
         Mock Set-HandlerStatus {}
         Mock Write-Log {}
-        Mock Exit-WithCode0 {}
+        Mock Exit-WithCode {}
         Mock Get-ConfigurationFromSettings {}
         Mock Test-ExtensionSettingsAreSameAsDisabledVersion {return $true}
         Mock Confirm-InputsAreValid {}
@@ -257,7 +234,7 @@ Describe "Start RM extension tests" {
         Start-RMExtensionHandler
 
         It "should call clean up functions" {
-            Assert-MockCalled Exit-WithCode0 -Times 0
+            Assert-MockCalled Exit-WithCode -Times 0
         }
 
         It "should set handler status as Initilized" {

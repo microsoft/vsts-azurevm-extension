@@ -16,6 +16,11 @@ Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 Import-Module $PSScriptRoot\Log.psm1
 
+$global:logger = {
+    param([string] $Message)
+
+    Write-Log $Message
+}
 
 function Test-AgentAlreadyExists {
     [CmdletBinding()]
@@ -104,7 +109,11 @@ function Set-ErrorStatusAndErrorExit {
     )
 
     Set-HandlerErrorStatus $exception -operationName $operationName
-    Exit-WithCode1
+    $exitCode = -1
+    if ($exception.FullyQualifiedErrorId -eq $RM_TerminatingErrorId) {
+        $exitCode = $exception.Exception.Data['Code']
+    }
+    Exit-WithCode $exitCode
 }
 
 <#

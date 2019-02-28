@@ -146,6 +146,16 @@ rm_extension_status = {
     'Message' : 'Successfully validated the inputs',
     'operationName': 'InputValidationSuccess'
   },
+  'OSValidation': {
+    'Code': 31,
+    'Message': 'Validating OS',
+    'operationName': 'OSValidation'
+  },
+  'OSValidationSuccess': {
+    'Code': 32,
+    'Message': 'Successfully validated OS',
+    'operationName': 'OSValidationSuccess'
+  },
 
   #
   # Warnings

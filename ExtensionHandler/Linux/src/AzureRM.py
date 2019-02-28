@@ -212,70 +212,47 @@ def format_tags_input(tags_input):
 def validate_inputs(operation):
   global config
   try:
-    projectUrl = "{0}/_apis/projects/{1}?api-version={2}".format(config['VSTSUrl'], config['TeamProject'], Constants.projectAPIVersion)
+    invalid_pat_error_message = "Please make sure that the Personal Access Token entered is valid and has 'Deployment Groups - Read & manage' scope."
+    inputs_validation_error_code = RMExtensionStatus.rm_extension_status['ArgumentError']
+    unexpected_error_message = "Some unexpected error occured. Status code : {0}"
+
+    error_message_initial_part = "Could not verify that the deployment group '{0}' exists in the project '{1}' in the specified organization. ".format(config['DeploymentGroup'], config['TeamProject'])
+    deployment_url = "{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}".format(config['VSTSUrl'], config['TeamProject'], config['DeploymentGroup'], Constants.projectAPIVersion)
     
-    errorMessageInitialPart = "Could not verify that the project '{0}' exists in the specified organization. ".format(config['TeamProject'])
-    invalidPATErrorMessage = "Please make sure that the Personal Access Token entered is valid and has 'Deployment Groups - Read & manage' scope."
-    inputsValidationErrorCode = RMExtensionStatus.rm_extension_status['ArgumentError']
-    unexpectedErrorMessage = "Some unexpected error occured. Status code : {0}"
+    handler_utility.log("Url to check deployment group exists - {0}".format(deployment_url))
 
-    response = Util.make_http_call(projectUrl, 'GET', None, None, config['PATToken'])
-
-    if(response.status != 200): 
-      if(response.status == 302 or response.status == 401):
-        specificErrorMessage = invalidPATErrorMessage
-      elif(response.status == 403):
-        specificErrorMessage = "Please ensure that the user has 'View project-level information' permissions on the project '{0}'.".format(config['TeamProject'])
-      elif(response.status == 404):
-        specificErrorMessage = "Please make sure that you enter the correct organization name and verify that the project exists in the organization."
-      else:
-        specificErrorMessage = unexpectedErrorMessage.format(str(response.status))
-        inputsValidationErrorCode = RMExtensionStatus.rm_extension_status['GenericError']
-    
-      raise RMExtensionStatus.new_handler_terminating_error(inputsValidationErrorCode, errorMessageInitialPart + specificErrorMessage)
-
-    handler_utility.log("Validated that the project '{0}' exists".format(config['TeamProject'])) 
-
-    errorMessageInitialPart = "Could not verify that the deployment group '{0}' exists in the project '{1}' in the specified organization. ".format(config['DeploymentGroup'], config['TeamProject'])
-    deploymentUrl = "{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}".format(config['VSTSUrl'], config['TeamProject'], config['DeploymentGroup'], Constants.projectAPIVersion)
-    inputsValidationErrorCode = RMExtensionStatus.rm_extension_status['ArgumentError']
-    
-    handler_utility.log("Url to check deployment group exists - {0}".format(deploymentUrl))
-
-    response = Util.make_http_call(deploymentUrl, 'GET', None, None, config['PATToken'])
+    response = Util.make_http_call(deployment_url, 'GET', None, None, config['PATToken'])
 
     if(response.status != 200):
       if(response.status == 401):
-        specificErrorMessage = invalidPATErrorMessage
+        specific_error_message = invalid_pat_error_message
       else:
-        specificErrorMessage = unexpectedErrorMessage.format(str(response.status))
-        inputsValidationErrorCode = RMExtensionStatus.rm_extension_status['GenericError']
+        specific_error_message = unexpected_error_message.format(str(response.status))
+        inputs_validation_error_code = RMExtensionStatus.rm_extension_status['GenericError']
       
-      raise RMExtensionStatus.new_handler_terminating_error(inputsValidationErrorCode, errorMessageInitialPart + specificErrorMessage)
+      raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message_initial_part + specific_error_message)
 
 
     handler_utility.log("Validated that the deployment group {0} exists".format(config['DeploymentGroup']))
-    deploymentGroupData = json.loads(response.read())
-    deploymentGroupId = deploymentGroupData['value'][0]['id']
+    deployment_group_data = json.loads(response.read())
+    deployment_group_id = deployment_group_data['value'][0]['id']
 
     headers = {}
     headers['Content-Type'] = 'application/json'
     body = "{'name': '" + config['DeploymentGroup'] + "'}"
-    patchDeploymentGroupUrl = "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}".format(config['VSTSUrl'], config['TeamProject'], deploymentGroupId, Constants.projectAPIVersion)
-    inputsValidationErrorCode = RMExtensionStatus.rm_extension_status['ArgumentError']
+    patch_deployment_group_url = "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}".format(config['VSTSUrl'], config['TeamProject'], deployment_group_id, Constants.projectAPIVersion) 
     
-    
-    handler_utility.log("Url to check that the user has 'Manage' permissions on the deployment group - {0}".format(patchDeploymentGroupUrl))
-    response = Util.make_http_call(deploymentUrl, 'PATCH', body, headers, config['PATToken'])
+    handler_utility.log("Url to check that the user has 'Manage' permissions on the deployment group - {0}".format(patch_deployment_group_url))
+    response = Util.make_http_call(patch_deployment_group_url, 'PATCH', body, headers, config['PATToken'])
 
     if(response.status != 200):
       if(response.status == 403):
-        specificErrorMessage = "Please ensure that the user has 'Manage' permissions on the deployment group {0}".format(config['DeploymentGroup'])
+        specific_error_message = "Please ensure that the user has 'Manage' permissions on the deployment group {0}".format(config['DeploymentGroup'])
       else:
-        specificErrorMessage = unexpectedErrorMessage.format(str(response.status))
-        inputsValidationErrorCode = RMExtensionStatus.rm_extension_status['GenericError']
+        specific_error_message = unexpected_error_message.format(str(response.status))
+        inputs_validation_error_code = RMExtensionStatus.rm_extension_status['GenericError']
 
-      raise RMExtensionStatus.new_handler_terminating_error(inputsValidationErrorCode, errorMessageInitialPart + specificErrorMessage)
+      raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message_initial_part + specific_error_message)
       
 
     handler_utility.log("Validated that the user has 'Manage' permissions on the deployment group '{0}'".format(config['DeploymentGroup']))
@@ -288,7 +265,23 @@ def validate_inputs(operation):
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
 
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['InputValidation']['operationName'], operation, 10)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['InputValidation']['operationName'], operation, 53)
+
+def validate_os(operation):
+  try:
+    os_version = handler_utility.get_os_version()
+
+    if(os_version['IsX64'] != True):
+      code = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Code']
+      message = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Message']
+      raise RMExtensionStatus.new_handler_terminating_error(code, message)
+
+    ss_code = RMExtensionStatus.rm_extension_status['OSValidationSuccess']['Code']
+    sub_status_message = RMExtensionStatus.rm_extension_status['OSValidationSuccess']['Message']
+    operation_name = RMExtensionStatus.rm_extension_status['OSValidationSuccess']['operationName']
+    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+  except Exception as e:
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['OSValidation']['operationName'], operation, 51)
 
 def read_configutation_from_settings(operation):
   global config
@@ -301,12 +294,6 @@ def read_configutation_from_settings(operation):
     protected_settings = handler_utility.get_protected_settings()
     if(protected_settings == None):
       protected_settings = {}
-
-    os_version = handler_utility.get_os_version()
-    if(os_version['IsX64'] != True):
-      code = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Code']
-      message = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Message']
-      raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
     pat_token = ''
     if((protected_settings.__class__.__name__ == 'dict') and protected_settings.has_key('PATToken')):
@@ -371,7 +358,7 @@ def read_configutation_from_settings(operation):
              'ConfigureAgentAsUserName': configure_agent_as_username
           }
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], operation, 2)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], operation, 53)
 
 def test_configured_agent_exists(operation):
   global configured_agent_exists, config
@@ -557,6 +544,7 @@ def test_extension_settings_are_same_as_previous_version():
 def enable():
   input_operation = 'Enable'
   start_rm_extension_handler(input_operation)
+  validate_os(input_operation)
   read_configutation_from_settings(input_operation)
   validate_inputs(input_operation)
   if(test_extension_settings_are_same_as_previous_version()):

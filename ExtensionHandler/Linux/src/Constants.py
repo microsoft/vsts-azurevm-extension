@@ -6,6 +6,7 @@ update_file_name = 'EXTENSIONUPDATE'
 disable_markup_file_name = 'EXTENSIONDISABLED'
 
 targets_api_version = '4.1-preview.1'
+projectAPIVersion = '5.0-preview.1'
 agent_target_name = 'agent.tar.gz'
 agent_listener = 'bin/Agent.Listener'
 agent_service = 'svc.sh'

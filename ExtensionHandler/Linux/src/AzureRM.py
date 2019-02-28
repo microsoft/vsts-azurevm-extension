@@ -209,6 +209,62 @@ def format_tags_input(tags_input):
       ret_val.append(x)
   return ret_val
 
+def validate_inputs(operation):
+  global config
+  try:
+    projectUrl = "{0}/_apis/projects/{1}?api-version={2}".format(config['VSTSUrl'], config['TeamProject'], Constants.projectAPIVersion)
+    
+    errorMessageInitialPart = "Could not verify that the project '{0}' exists in the specified organization. ".format(config['TeamProject'])
+    invalidPATErrorMessage = "Please make sure that the Personal Access Token entered is valid and has 'Deployment Groups - Read & manage' scope."
+    inputsValidationErrorCode = RMExtensionStatus.rm_extension_status['ArgumentError']
+    unexpectedErrorMessage = "Some unexpected error occured. Status code : {0}"
+
+    response = Util.make_http_call(projectUrl, 'GET', None, None, config['PATToken'])
+
+    if(response.status != 200): 
+      if(response.status == 302 or response.status == 401):
+        specificErrorMessage = invalidPATErrorMessage
+      elif(response.status == 403):
+        specificErrorMessage = "Please ensure that the user has 'View project-level information' permissions on the project '{0}'.".format(config['TeamProject'])
+      elif(response.status == 404):
+        specificErrorMessage = "Please make sure that you enter the correct organization name and verify that the project exists in the organization."
+      else:
+        specificErrorMessage = unexpectedErrorMessage.format(str(response.status))
+        inputsValidationErrorCode = RMExtensionStatus.rm_extension_status['GenericError']
+    
+      raise RMExtensionStatus.new_handler_terminating_error(inputsValidationErrorCode, errorMessageInitialPart + specificErrorMessage)
+
+    handler_utility.log("Validated that the project '{0}' exists".format(config['TeamProject'])) 
+
+    errorMessageInitialPart = "Could not verify that the deployment group '{0}' exists in the project '{1}' in the specified organization. ".format(config['DeploymentGroup'], config['TeamProject'])
+    deploymentUrl = "{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}".format(config['VSTSUrl'], config['TeamProject'], config['DeploymentGroup'], Constants.projectAPIVersion)
+    inputsValidationErrorCode = RMExtensionStatus.rm_extension_status['ArgumentError']
+    
+    handler_utility.log("Url to check deployment group exists - {0}".format(deploymentUrl))
+
+    response = Util.make_http_call(deploymentUrl, 'GET', None, None, config['PATToken'])
+
+    if(response.status != 200):
+      if(response.status == 401):
+        specificErrorMessage = invalidPATErrorMessage
+      else:
+        specificErrorMessage = unexpectedErrorMessage.format(str(response.status))
+        inputsValidationErrorCode = RMExtensionStatus.rm_extension_status['GenericError']
+      
+      raise RMExtensionStatus.new_handler_terminating_error(inputsValidationErrorCode, errorMessageInitialPart + specificErrorMessage)
+
+    handler_utility.log("Validated that the user has 'Manage' permissions on the deployment group '{0}'".format(config['DeploymentGroup']))
+
+    handler_utility.log("Done validating inputs...")
+
+    ss_code = RMExtensionStatus.rm_extension_status['SuccessfulInputValidation']['Code']
+    sub_status_message = RMExtensionStatus.rm_extension_status['SuccessfulInputValidation']['Message']
+    operation_name = RMExtensionStatus.rm_extension_status['SuccessfulInputValidation']['operationName']
+    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+
+  except Exception as e:
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['InputValidation']['operationName'], operation, 10)
+
 def read_configutation_from_settings(operation):
   global config
   try:
@@ -477,6 +533,7 @@ def enable():
   input_operation = 'Enable'
   start_rm_extension_handler(input_operation)
   read_configutation_from_settings(input_operation)
+  validate_inputs(input_operation)
   if(test_extension_settings_are_same_as_previous_version()):
     handler_utility.log("Skipping extension enable.")
     ss_code = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Code']

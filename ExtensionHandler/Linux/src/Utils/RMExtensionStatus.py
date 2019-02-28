@@ -123,7 +123,7 @@ rm_extension_status = {
   },
   'Enabled' : {
     'Code' : 26,
-    'Message' : 'The etension has been enabled successfully.',
+    'Message' : 'The extension has been enabled successfully.',
     'operationName' : 'Enable'
   },
   'Updated' : {
@@ -136,6 +136,17 @@ rm_extension_status = {
     'Message' : 'The extension settings are the same as the previous version. Skipping extension enable.',
     'operationName' : 'Skip enable'
   },
+  'InputValidation': {
+    'Code' : 29,
+    'Message': 'Validating Inputs',
+    'operationName': 'InputValidation'
+  },
+  'SuccessfulInputValidation' : {
+    'Code' : 30,
+    'Message' : 'Successfully validated the inputs',
+    'operationName': 'InputValidationSuccess'
+  },
+
   #
   # Warnings
   #
@@ -146,21 +157,17 @@ rm_extension_status = {
   'GenericError' : 1000, # The message for this error is provided by the specific exception
   'InstallError' : 1001, # The message for this error is provided by the specific exception
   'ArchitectureNotSupported' : {
-    'Code' : 1002,
+    'Code' : 51,
     'Message' : 'The current CPU architecture is not supported. Deployment agent requires x64 architecture.'
   },
   'PythonVersionNotSupported' : {
-    'Code' : 1003,
+    'Code' : 52,
     'Message' : 'Installed Python version is {0}. Minimum required version is 2.6.'
-  },
-  'LinuxDistributionNotSupported' : {
-    'Code' : 1004,
-    'Message' : 'Linux distribution {0} {1} not supported.'
   },
   #
   # ArgumentError indicates a problem in the input provided by the user. The message for the error is provided by the specific exception
   #
-  'ArgumentError' : 1100,
+  'ArgumentError' : 53,
   'AgentUnConfigureFailWarning' : 'There are some warnings in uninstalling the already existing agent. Check \"Detailed Status\" for more details.'
 }
 

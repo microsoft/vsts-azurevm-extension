@@ -299,8 +299,6 @@ def read_configutation_from_settings(operation):
     handler_utility.verify_public_settings_is_dict(public_settings)
 
     protected_settings = handler_utility.get_protected_settings()
-    protected_settings = {}
-    protected_settings['PATToken'] = "k52hnfc7xkjx3f6h4iprcozgdj7remysonsuq62clbdvh3d7bztq"
     if(protected_settings == None):
       protected_settings = {}
 

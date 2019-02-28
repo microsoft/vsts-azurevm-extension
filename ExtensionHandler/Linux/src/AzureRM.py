@@ -242,7 +242,11 @@ def validate_inputs(operation):
     
     handler_utility.log("Url to check deployment group exists - {0}".format(deploymentUrl))
 
-    response = Util.make_http_call(deploymentUrl, 'GET', None, None, config['PATToken'])
+    headers = {}
+    headers['Content-Type'] = 'application/json'
+    
+    body = "{'name': '{0}'}".format(config['DeploymentGroup'])
+    response = Util.make_http_call(deploymentUrl, 'PATCH', body, headers, config['PATToken'])
 
     if(response.status != 200):
       if(response.status == 401):

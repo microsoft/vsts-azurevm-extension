@@ -101,7 +101,7 @@ def set_error_status_and_error_exit(e, operation_name, operation, code):
   handler_utility.error(error_message)
   exit_with_non_zero_code(code)
 
-def check_python_version():
+def check_python_version(operation):
   try:
     version_info = sys.version_info
     version = '{0}.{1}'.format(version_info[0], version_info[1])
@@ -109,14 +109,14 @@ def check_python_version():
       code = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Code']
       message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(version)
       raise RMExtensionStatus.new_handler_terminating_error(code, message)
-    ss_code = RMExtensionStatus.rm_extension_status['DependencyValidationSuccess']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['DependencyValidationSuccess']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['DependencyValidationSuccess']['operationName']
+    ss_code = RMExtensionStatus.rm_extension_status['PythonDependencyValidationSuccess']['Code']
+    sub_status_message = RMExtensionStatus.rm_extension_status['PythonDependencyValidationSuccess']['Message']
+    operation_name = RMExtensionStatus.rm_extension_status['PythonDependencyValidationSuccess']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-  except e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DependencyValidation']['operationName'], operation, Constants.MISSING_DEPENDENCY)
+  except Exception as e:
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PythonDependencyValidation']['operationName'], 'operation', Constants.MISSING_DEPENDENCY)
 
-def check_systemd_exists():
+def check_systemd_exists(operation):
   try:
     check_systemd_command = 'command -v systemctl'
     check_systemd_proc = subprocess.Popen(['/bin/bash', '-c', check_systemd_command], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
@@ -129,12 +129,12 @@ def check_systemd_exists():
       handler_utility.log('systemd is installed on the machine.')
     else:
       raise Exception('Could not find systemd on the machine. Error message: {0}'.format(check_systemd_err))
-    ss_code = RMExtensionStatus.rm_extension_status['DependencyValidationSuccess']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['DependencyValidationSuccess']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['DependencyValidationSuccess']['operationName']
+    ss_code = RMExtensionStatus.rm_extension_status['SystemdDependencyValidationSuccess']['Code']
+    sub_status_message = RMExtensionStatus.rm_extension_status['SystemdDependencyValidationSuccess']['Message']
+    operation_name = RMExtensionStatus.rm_extension_status['SystemdDependencyValidationSuccess']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-  except e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DependencyValidation']['operationName'], operation, Constants.MISSING_DEPENDENCY)
+  except Exception as e:
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['SystemdDependencyValidation']['operationName'], operation, Constants.MISSING_DEPENDENCY)
 
 def install_dependencies():
   global config
@@ -151,8 +151,6 @@ def install_dependencies():
   else:
     raise Exception('Installing dependencies failed with error : {0}'.format(install_err))
   
-
-
 def start_rm_extension_handler(operation):
   try:
     sequence_number = int(handler_utility._context._seq_no)
@@ -230,7 +228,7 @@ def validate_inputs(operation):
     inputs_validation_error_code = RMExtensionStatus.rm_extension_status['ArgumentError']
     unexpected_error_message = "Some unexpected error occured. Status code : {0}"
 
-    error_message_initial_part = "Could not verify that the deployment group '{0}' exists in the project '{1}' in the specified organization. ".format(config['DeploymentGroup'], config['TeamProject'])
+    error_message_initial_part = "Could not verify that the deployment group '" + config['DeploymentGroup'] + "' exists in the project '" + config['TeamProject'] + "' in the specified organization. {0} {1}"
     deployment_url = "{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}".format(config['VSTSUrl'], config['TeamProject'], config['DeploymentGroup'], Constants.projectAPIVersion)
     
     handler_utility.log("Url to check deployment group exists - {0}".format(deployment_url))
@@ -238,18 +236,30 @@ def validate_inputs(operation):
     response = Util.make_http_call(deployment_url, 'GET', None, None, config['PATToken'])
 
     if(response.status != 200):
+      error_message = error_message_initial_part.format(response.status, response.reason)
+      if(response.status == 302):
+        specific_error_message = invalid_pat_error_message
+        error_message = error_message_initial_part.format(response.status, "Redirected")
       if(response.status == 401):
         specific_error_message = invalid_pat_error_message
+      elif(response.status == 403):
+        specificErrorMessage = "Please ensure that the user has 'View project-level information' permissions on the project {0}.".format(config['TeamProject'])
+      elif(response.status == 404):
+        specificErrorMessage = "Please make sure that you enter the correct organization name and verify that the project exists in the organization."
       else:
-        specific_error_message = unexpected_error_message.format(str(response.status))
+        specific_error_message = unexpected_error_message.format(response.status)
         inputs_validation_error_code = RMExtensionStatus.rm_extension_status['GenericError']
       
-      raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message_initial_part + specific_error_message)
+      raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message + specific_error_message)
 
 
     handler_utility.log("Validated that the deployment group {0} exists".format(config['DeploymentGroup']))
     deployment_group_data = json.loads(response.read())
     deployment_group_id = deployment_group_data['value'][0]['id']
+
+    if(('value' not in deployment_group_data) or len(deployment_group_data['value']) == 0):
+      specificErrorMessage = "Please make sure that the deployment group {0} exists in the project {1}, and the user has 'Manage' permissions on the deployment group.".format(config['DeploymentGroup'], config['TeamProject'])
+      raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message_initial_part.format(response.status, "Not found") + specific_error_message)
 
     headers = {}
     headers['Content-Type'] = 'application/json'
@@ -266,7 +276,7 @@ def validate_inputs(operation):
         specific_error_message = unexpected_error_message.format(str(response.status))
         inputs_validation_error_code = RMExtensionStatus.rm_extension_status['GenericError']
 
-      raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message_initial_part + specific_error_message)
+      raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message_initial_part.format(response.status, response.reason) + specific_error_message)
       
 
     handler_utility.log("Validated that the user has 'Manage' permissions on the deployment group '{0}'".format(config['DeploymentGroup']))
@@ -626,18 +636,25 @@ def main():
     operation = sys.argv[1]
     handler_utility.do_parse_context(operation)
     try:
-      check_python_version()
-      check_systemd_exists()
       global root_dir
       root_dir = os.getcwd()
-      if(sys.argv[1] == '-enable'):
-	      enable()
-      elif(sys.argv[1] == '-disable'):
-	      disable()
-      elif(sys.argv[1] == '-uninstall'):
-	      uninstall()
-      elif(sys.argv[1] == '-update'):
-	      update()
+      
+      if(sys.argv[1] not in Constants.input_arguments_dict):
+        exit_with_code_zero()
+
+      input_operation = Constants.input_arguments_dict[sys.argv[1]]
+      check_python_version(input_operation)
+      check_systemd_exists(input_operation)
+
+      if(input_operation == 'Enable'):
+        enable()
+      elif(input_operation == 'Disable'):
+        disable()
+      elif(input_operation == 'Uninstall'):
+        uninstall()
+      elif(input_operation == 'Update'):
+        update()
+
       exit_with_code_zero()
     except Exception as e:
       set_error_status_and_error_exit(e, 'main', operation, 9)

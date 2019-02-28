@@ -156,15 +156,25 @@ rm_extension_status = {
     'Message': 'Successfully validated OS',
     'operationName': 'OSValidationSuccess'
   },
-  'DependencyValidation': {
+  'PythonDependencyValidation': {
     'Code': 33,
-    'Message': 'Validating Dependency',
-    'operationName': 'DependencyValidation'
+    'Message': 'Validating python dependency',
+    'operationName': 'PythonDependencyValidation'
   },
-  'DependencyValidationSuccess': {
+  'PythonDependencyValidationSuccess': {
     'Code': 34,
-    'Message': 'Successfully validated dependency',
-    'operationName': 'DependencyValidationSuccess'
+    'Message': 'Successfully validated python dependency',
+    'operationName': 'PythonDependencyValidationSuccess'
+  },
+  'SystemdDependencyValidation': {
+    'Code': 35,
+    'Message': 'Validating systemd dependency',
+    'operationName': 'SystemdDependencyValidation'
+  },
+  'SystemdDependencyValidationSuccess': {
+    'Code': 36,
+    'Message': 'Successfully validated systemd dependency',
+    'operationName': 'SystemdDependencyValidationSuccess'
   },
 
   #

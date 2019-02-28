@@ -25,6 +25,14 @@ ubuntu_distr_name = 'Ubuntu'
 default_agent_work_dir = '_work'
 is_on_prem = False
 
+input_arguments_dict = {
+    '-enable': 'Enable',
+    '-disable': 'Disable',
+    '-uninstall': 'Uninstall',
+    '-update': 'Update'
+}
+
+# Error Codes
 UNSUPPORTED_OS = 51
 MISSING_DEPENDENCY = 52
 CONFIGURATION_ERROR = 53

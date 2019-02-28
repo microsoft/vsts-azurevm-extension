@@ -1,7 +1,6 @@
 #To pass the log method to this script - 
 #
-# DeploymentAgent.ps1 -tfsUrl "https://myvstsaccout.visualstusio.com" -patToken ........ -logFunction ${function:My-Logmethod}
-
+# DeploymentAgent.ps1 -tfsUrl "https://myvstsaccout.visualstusio.com" -patToken ........
 
 param(
     [Parameter(Mandatory=$true)]
@@ -9,12 +8,11 @@ param(
     [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$workingFolder,
-    [string]$userName,
-    [scriptblock]$logFunction
+    [string]$workingFolder
 )
 
 $ErrorActionPreference = 'Stop'
+Import-Module $PSScriptRoot\Log.psm1
 . "$PSScriptRoot\Constants.ps1"
 
 function WriteDownloadLog
@@ -23,15 +21,7 @@ function WriteDownloadLog
     [string]$logMessage
     )
     
-    $log = "[Download]: " + $logMessage
-    if($logFunction -ne $null)
-    {
-        $logFunction.Invoke($log)
-    }
-    else
-    {
-        write-verbose $log
-    }
+    Write-Log "[Download]: " + $logMessage
 }
  
  function ContructPackageDataRESTCallUrl
@@ -54,25 +44,16 @@ function WriteDownloadLog
  {
     Param(
     [Parameter(Mandatory=$true)]
-    [string]$restCallUrl,
-    [string]$userName,
+    [string]$restCallUrl
     [Parameter(Mandatory=$false)]
     [string]$patToken
     )
     
-    WriteDownloadLog "`t`t Form the header for invoking the rest call"
-    
-    $headers = Get-RESTCallHeader $patToken
-    
     WriteDownloadLog "`t`t Invoke-rest call for packageData"
-    try
-    {
-        $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
-    }
-    catch
-    {
-        throw "Error while downloading VSTS agent: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
-    }
+    $getAgentPackageDataErrorMessageBlock = {"Error while downloading VSTS agent: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"}
+    $target = Invoke-WithRetry -retryBlock {Invoke-RestCall -uri $restCallUrl -Method "Get" -patToken $patToken} `
+                               -retryCatchBlock {Write-Log (& $getAgentPackageDataErrorMessageBlock)} -finalCatchBlock {throw (& $getAgentPackageDataErrorMessageBlock)}
+
     WriteDownloadLog "`t`t Agent PackageData : $response"
     return $response.Value[0]
 }
@@ -81,8 +62,7 @@ function WriteDownloadLog
  {
     Param(
     [Parameter(Mandatory=$true)]
-    [string]$tfsUrl,   
-    [string]$userName,
+    [string]$tfsUrl,
     [Parameter(Mandatory=$false)]
     [string]$patToken    
     )
@@ -90,7 +70,7 @@ function WriteDownloadLog
     [string]$restCallUrl = ContructPackageDataRESTCallUrl -tfsUrl $tfsUrl -platform $platform
     
     WriteDownloadLog "`t`t Get Agent PackageData using $restCallUrl"  
-    $packageData = GetAgentPackageData -restCallUrl $restCallUrl -userName $userName -patToken $patToken
+    $packageData = GetAgentPackageData -restCallUrl $restCallUrl -patToken $patToken
 
     WriteDownloadLog "Deployment Agent download url - $($packageData.downloadUrl)"
     
@@ -161,36 +141,25 @@ function DownloadAgentZipRequired
 }
 
 try
- {
+{
 
     WriteDownloadLog "Starting the DowloadDeploymentAgent script"
-     
-    if([string]::IsNullOrEmpty($userName))
-    {
-        $userName = ' '
-        WriteDownloadLog "No user name provided setting as empty string"
-    }
-     
-     WriteDownloadLog "Get the url for downloading the agent"
-     
-     $agentDownloadUrl = GetAgentDownloadUrl -tfsUrl $tfsUrl -userName $userName -patToken $patToken
 
-     WriteDownloadLog "Get the target zip file path"
-     
-     $agentZipFilePath = Join-Path $workingFolder $agentZipName
-     
-     WriteDownloadLog "`t`t Deployment agent will be downloaded at - $agentZipFilePath"
-     
-     WriteDownloadLog "Download deploymentAgent"
-     
-     DowloadDeploymentAgent -agentDownloadUrl $agentDownloadUrl -target $agentZipFilePath
-     
-     WriteDownloadLog "Done with DowloadDeploymentAgent script"
-     
-     return $returnSuccess 
- }
- catch
- {  
+    WriteDownloadLog "Get the url for downloading the agent"
+    $agentDownloadUrl = GetAgentDownloadUrl -tfsUrl $tfsUrl -patToken $patToken
+
+    WriteDownloadLog "Get the target zip file path"
+    $agentZipFilePath = Join-Path $workingFolder $agentZipName
+    WriteDownloadLog "`t`t Deployment agent will be downloaded at - $agentZipFilePath"
+
+    WriteDownloadLog "Downloading deploymentAgent"
+    DowloadDeploymentAgent -agentDownloadUrl $agentDownloadUrl -target $agentZipFilePath
+    WriteDownloadLog "Done with DowloadDeploymentAgent script"
+    
+    return $returnSuccess 
+}
+catch
+{  
     WriteDownloadLog $_.Exception
     throw $_.Exception
- }
+}

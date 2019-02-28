@@ -2,32 +2,15 @@ param(
     [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$workingFolder,
-    [scriptblock]$logFunction    
+    [string]$workingFolder
 )
 
 $ErrorActionPreference = 'Stop'
 $configCmdPath = ''
 
+Import-Module $PSScriptRoot\Log.psm1
 . "$PSScriptRoot\Constants.ps1"
 . "$PSScriptRoot\AgentConfigurationManager.ps1"
-
-function WriteConfigurationLog
-{
-    param(
-    [string]$logMessage
-    )
-    
-    $log = "[Configuration]: " + $logMessage
-    if($logFunction -ne $null)
-    {
-        $logFunction.Invoke($log)
-    }
-    else
-    {
-        write-verbose $log
-    }
-}
 
 function GetConfigCmdPath
 {

@@ -1,26 +1,27 @@
 $ErrorActionPreference = 'Stop'
+Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
+Import-Module $PSScriptRoot\Log.psm1
 . "$PSScriptRoot\Constants.ps1"
 
 function Test-ConfiguredAgentExists
 {
     param(
         [Parameter(Mandatory=$true)]
-        [string]$workingFolder,
-        [scriptblock]$logFunction
+        [string]$workingFolder
     )
 
     try
     {
-        WriteLog "Check if any existing agent is running from $workingFolder" $logFunction
+        WriteAgentSettingsHelperLog "Check if any existing agent is running from $workingFolder"
     
         $agentSettingFileExist = Test-Path $(GetAgentSettingFilePath $workingFolder)
-        WriteLog "`t`t Agent setting file exist: $agentSettingFileExist" $logFunction
+        WriteAgentSettingsHelperLog "`t`t Agent setting file exist: $agentSettingFileExist"
     
         return $agentSettingFileExist 
     }
     catch
     {  
-        WriteLog $_.Exception
+        WriteAgentSettingsHelperLog $_.Exception
         throw $_.Exception
     }
 }
@@ -37,22 +38,21 @@ function Test-AgentSettingsAreSame
         [Parameter(Mandatory=$true)]
         [string]$deploymentGroupName,
         [Parameter(Mandatory=$false)]
-        [string]$patToken,
-        [scriptblock]$logFunction
+        [string]$patToken
     )
 
     try
     {
-        WriteLog "AgentReConfigurationRequired check started." $logFunction
+        WriteAgentSettingsHelperLog "AgentReConfigurationRequired check started."
         
         $agentSettingFile = GetAgentSettingFilePath $workingFolder        
 
         if( !(Test-Path $agentSettingFile) )
         {
-            WriteLog "`t`t Agent setting file $agentSettingFile does not exist" $logFunction
+            WriteAgentSettingsHelperLog "`t`t Agent setting file $agentSettingFile does not exist"
             return $true
         }
-        WriteLog "`t`tReading agent setting file - $agentSettingFile" $logFunction
+        WriteAgentSettingsHelperLog "`t`tReading agent setting file - $agentSettingFile"
         
         $agentSetting = Get-AgentSettings $agentSettingFile
         
@@ -69,38 +69,38 @@ function Test-AgentSettingsAreSame
                 $agentUrl = -join($agentUrl, '/', $agentCollection)
             }
             
-            WriteLog "`t`tCall GetDeploymentGroupDataFromAgentSetting" $logFunction
-            $deploymentGroupDataAsPerSetting = GetDeploymentGroupDataFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentUrl -patToken $patToken -logFunction $logFunction
+            WriteAgentSettingsHelperLog "`t`tCall GetDeploymentGroupDataFromAgentSetting"
+            $deploymentGroupDataAsPerSetting = GetDeploymentGroupDataFromAgentSetting -agentSetting $agentSetting -tfsUrl $agentUrl -patToken $patToken
         }
         catch
         {
             $errorMsg = $_.Exception.Message.ToString()
-            WriteLog "`t`t`t Unable to get the deployment group data - $errorMsg" $logFunction
+            WriteAgentSettingsHelperLog "`t`t`t Unable to get the deployment group data - $errorMsg"
         }
 
         $tfsUrl = if ($tfsUrl.StartsWith($agentUrl, "CurrentCultureIgnoreCase")) {$agentUrl} else {$tfsUrl}
 
         if(!$deploymentGroupDataAsPerSetting)
         {
-            WriteLog "`t`t`t Test-AgentSettingsAreSame Return : false (Unable to get the deployment group data from existing agent settings)" $logFunction
+            WriteAgentSettingsHelperLog "`t`t`t Test-AgentSettingsAreSame Return : false (Unable to get the deployment group data from existing agent settings)"
             return $false;
         }
         
-        WriteLog "`t`t`t Agent Configured With `t`t`t`t`t Agent Need To Be Configured With" $logFunction
-        WriteLog "`t`t`t $agentUrl `t`t`t`t`t $tfsUrl" $logFunction
-        WriteLog "`t`t`t $($deploymentGroupDataAsPerSetting.project.name) `t`t`t`t`t $projectName" $logFunction
-        WriteLog "`t`t`t $($deploymentGroupDataAsPerSetting.name) `t`t`t`t`t $deploymentGroupName" $logFunction
+        WriteAgentSettingsHelperLog "`t`t`t Agent Configured With `t`t`t`t`t Agent Need To Be Configured With"
+        WriteAgentSettingsHelperLog "`t`t`t $agentUrl `t`t`t`t`t $tfsUrl"
+        WriteAgentSettingsHelperLog "`t`t`t $($deploymentGroupDataAsPerSetting.project.name) `t`t`t`t`t $projectName"
+        WriteAgentSettingsHelperLog "`t`t`t $($deploymentGroupDataAsPerSetting.name) `t`t`t`t`t $deploymentGroupName"
         if( ([string]::Compare($tfsUrl, $agentUrl, $True) -eq 0) -and ([string]::Compare($projectName, $($deploymentGroupDataAsPerSetting.project.name), $True) -eq 0) -and ([string]::Compare($deploymentGroupName, $($deploymentGroupDataAsPerSetting.name), $True) -eq 0) )
         {
-            WriteLog "`t`t`t Test-AgentSettingsAreSame Return : true" $logFunction        
+            WriteAgentSettingsHelperLog "`t`t`t Test-AgentSettingsAreSame Return : true"
             return $true
         }
-        WriteLog "`t`t`t Test-AgentSettingsAreSame Return : false" $logFunction        
+        WriteAgentSettingsHelperLog "`t`t`t Test-AgentSettingsAreSame Return : false"
         return $false
     }
     catch
     {  
-        WriteLog $_.Exception
+        WriteAgentSettingsHelperLog $_.Exception
         throw $_.Exception
     }
 }
@@ -122,20 +122,19 @@ function GetDeploymentGroupDataFromAgentSetting
     [Parameter(Mandatory=$true)]
     [string]$tfsUrl,    
     [Parameter(Mandatory=$false)]
-    [string]$patToken,
-    [scriptblock]$logFunction
+    [string]$patToken
     )
     
     $projectId = $($agentSetting.projectId)
     $deploymentGroupId = $($agentSetting.deploymentGroupId)
-    WriteLog "`t`t` Project id, Deployment group id -  $projectId, $deploymentGroupId" -logFunction $logFunction
+    WriteAgentSettingsHelperLog "`t`t` Project id, Deployment group id -  $projectId, $deploymentGroupId"
     
     if(![string]::IsNullOrEmpty($deploymentGroupId) -and ![string]::IsNullOrEmpty($projectId))
     {
         $restCallUrl = $tfsUrl + ("/{0}/_apis/distributedtask/deploymentgroups/{1}" -f $projectId, $deploymentGroupId)
-        WriteLog "`t`t REST call Url -  $restCallUrl" $logFunction
+        WriteAgentSettingsHelperLog "`t`t REST call Url -  $restCallUrl"
         
-        return (InvokeRestURlToGetDeploymentGroupData -restCallUrl $restCallUrl -patToken $patToken -logFunction $logFunction)
+        return (InvokeRestURlToGetDeploymentGroupData -restCallUrl $restCallUrl -patToken $patToken)
     }
 
     return $null
@@ -147,44 +146,26 @@ function GetDeploymentGroupDataFromAgentSetting
     [Parameter(Mandatory=$true)]
     [string]$restCallUrl,
     [Parameter(Mandatory=$false)]
-    [string]$patToken,
-    [scriptblock]$logFunction
+    [string]$patToken
     )
     
-    WriteLog "`t`t Form the header for invoking the rest call" $logFunction
- 
-    $headers = Get-RESTCallHeader $patToken
-    
-    WriteLog "`t`t Invoke-rest call for deployment group name" $logFunction
-    try
-    {
-        $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Get -ContentType "application/json"
-        WriteLog "`t`t Deployment Group Details fetched successfully" $logFunction
-    }
-    catch
-    {
-        throw "Unable to fetch the deployment group information from VSTS server: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
-    }
+    WriteAgentSettingsHelperLog "`t`t Invoke-rest call for deployment group data"
+    $detDeploymentGroupDataErrorMessageBlock = {"Unable to fetch the deployment group information from VSTS server: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"}
+    $response = Invoke-WithRetry -retryBlock {Invoke-RestCall -uri $restCallUrl -Method "Get"} `
+                                 -retryCatchBlock {Write-Log (& $detDeploymentGroupDataErrorMessageBlock)} -finalCatchBlock {throw (& $detDeploymentGroupDataErrorMessageBlock)}
+
+    WriteAgentSettingsHelperLog "`t`t Deployment Group Details fetched successfully"
     return $response
  }
  
 
-function WriteLog
+function WriteAgentSettingsHelperLog
 {
     param(
-    [string]$logMessage,
-    [scriptblock]$logFunction
+    [string]$logMessage
     )
     
-    $log = "[Agent Checker]: " + $logMessage
-    if($logFunction -ne $null)
-    {
-        $logFunction.Invoke($log)
-    }
-    else
-    {
-        write-verbose $log
-    }
+    Write-Log "[Agent Settings Helper]: " + $logMessage
 }
 
 function GetAgentSettingFilePath
@@ -194,7 +175,7 @@ function GetAgentSettingFilePath
     )
 
     $agentSettingFile = Join-Path $workingFolder $agentSetting
-    WriteLog "`t`t Agent setting file path $agentSettingFile"  
+    WriteAgentSettingsHelperLog "`t`t Agent setting file path $agentSettingFile"  
     
     return $agentSettingFile
 }

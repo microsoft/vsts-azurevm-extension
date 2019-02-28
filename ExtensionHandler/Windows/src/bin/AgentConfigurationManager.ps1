@@ -2,6 +2,15 @@ $ErrorActionPreference = 'Stop'
 
 . "$PSScriptRoot\Constants.ps1"
 
+function WriteConfigurationLog
+{
+    param(
+    [string]$logMessage
+    )
+    
+    Write-Log "[Configuration]: " + $logMessage
+}
+
 function GetProcessStartInfo
 {
     $processStartInfo  = New-Object System.Diagnostics.ProcessStartInfo

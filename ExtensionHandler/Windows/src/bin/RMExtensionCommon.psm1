@@ -16,12 +16,6 @@ Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 Import-Module $PSScriptRoot\Log.psm1
 
-$global:logger = {
-    param([string] $Message)
-
-    Write-Log $Message
-}
-
 function Test-AgentAlreadyExists {
     [CmdletBinding()]
     param(
@@ -35,8 +29,7 @@ function Test-AgentAlreadyExists {
         Write-Log "Pre-checking agent configuration..."
 
         . $PSScriptRoot\AgentSettingsHelper.ps1
-        $agentAlreadyExists = Test-ConfiguredAgentExists -workingFolder $config.AgentWorkingFolder -logFunction $global:logger
-
+        $agentAlreadyExists = Test-ConfiguredAgentExists -workingFolder $config.AgentWorkingFolder
         Write-Log "Done pre-checking agent configuration..."
         Add-HandlerSubStatus $RM_Extension_Status.CheckedExistingAgent.Code $RM_Extension_Status.CheckedExistingAgent.Message -operationName $RM_Extension_Status.CheckedExistingAgent.operationName
         return $agentAlreadyExists
@@ -95,7 +88,7 @@ function Invoke-RemoveAgentScript {
     [hashtable] $config
     )
 
-    . $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $global:logger
+    . $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder
 }
 
 function Set-ErrorStatusAndErrorExit {

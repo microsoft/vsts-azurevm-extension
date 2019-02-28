@@ -7,7 +7,6 @@ Describe "Pre-check agent tests" {
     $config = @{
         AgentWorkingFolder = "AgentWorkingFolder"
     }
-    $global:logger = {}
 
     <#Context "Should set error status if exception happens" {
 

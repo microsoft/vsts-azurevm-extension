@@ -114,7 +114,7 @@ def check_python_version():
     operation_name = RMExtensionStatus.rm_extension_status['DependencyValidationSuccess']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DependencyValidation']['operationName'], operation, 52)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DependencyValidation']['operationName'], operation, Constants.MISSING_DEPENDENCY)
 
 def check_systemd_exists():
   try:
@@ -134,7 +134,7 @@ def check_systemd_exists():
     operation_name = RMExtensionStatus.rm_extension_status['DependencyValidationSuccess']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DependencyValidation']['operationName'], operation, 52)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DependencyValidation']['operationName'], operation, Constants.MISSING_DEPENDENCY)
 
 def install_dependencies():
   global config
@@ -279,7 +279,7 @@ def validate_inputs(operation):
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
 
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['InputValidation']['operationName'], operation, 53)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['InputValidation']['operationName'], operation, Constants.CONFIGURATION_ERROR)
 
 def validate_os(operation):
   try:
@@ -295,7 +295,7 @@ def validate_os(operation):
     operation_name = RMExtensionStatus.rm_extension_status['OSValidationSuccess']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['OSValidation']['operationName'], operation, 51)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['OSValidation']['operationName'], operation, Constants.UNSUPPORTED_OS)
 
 def read_configutation_from_settings(operation):
   global config
@@ -372,7 +372,7 @@ def read_configutation_from_settings(operation):
              'ConfigureAgentAsUserName': configure_agent_as_username
           }
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], operation, 53)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], operation, Constants.CONFIGURATION_ERROR)
 
 def test_configured_agent_exists(operation):
   global configured_agent_exists, config

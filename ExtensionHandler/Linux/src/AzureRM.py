@@ -242,11 +242,7 @@ def validate_inputs(operation):
     
     handler_utility.log("Url to check deployment group exists - {0}".format(deploymentUrl))
 
-    headers = {}
-    headers['Content-Type'] = 'application/json'
-    
-    body = "{'name': '{0}'}".format(config['DeploymentGroup'])
-    response = Util.make_http_call(deploymentUrl, 'PATCH', body, headers, config['PATToken'])
+    response = Util.make_http_call(deploymentUrl, 'GET', None, None, config['PATToken'])
 
     if(response.status != 200):
       if(response.status == 401):
@@ -256,6 +252,31 @@ def validate_inputs(operation):
         inputsValidationErrorCode = RMExtensionStatus.rm_extension_status['GenericError']
       
       raise RMExtensionStatus.new_handler_terminating_error(inputsValidationErrorCode, errorMessageInitialPart + specificErrorMessage)
+
+
+    handler_utility.log("Validated that the deployment group {0} exists".format(config['DeploymentGroup']))
+    deploymentGroupData = json.loads(response.read())
+    deploymentGroupId = deploymentGroupData['value'][0]['id']
+
+    headers = {}
+    headers['Content-Type'] = 'application/json'
+    body = "{'name': '" + config['DeploymentGroup'] + "'}"
+    patchDeploymentGroupUrl = "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}".format(config['VSTSUrl'], config['TeamProject'], deploymentGroupId, Constants.projectAPIVersion)
+    inputsValidationErrorCode = RMExtensionStatus.rm_extension_status['ArgumentError']
+    
+    
+    handler_utility.log("Url to check that the user has 'Manage' permissions on the deployment group - {0}".format(patchDeploymentGroupUrl))
+    response = Util.make_http_call(deploymentUrl, 'PATCH', body, headers, config['PATToken'])
+
+    if(response.status != 200):
+      if(response.status == 403):
+        specificErrorMessage = "Please ensure that the user has 'Manage' permissions on the deployment group {0}".format(config['DeploymentGroup'])
+      else:
+        specificErrorMessage = unexpectedErrorMessage.format(str(response.status))
+        inputsValidationErrorCode = RMExtensionStatus.rm_extension_status['GenericError']
+
+      raise RMExtensionStatus.new_handler_terminating_error(inputsValidationErrorCode, errorMessageInitialPart + specificErrorMessage)
+      
 
     handler_utility.log("Validated that the user has 'Manage' permissions on the deployment group '{0}'".format(config['DeploymentGroup']))
 
@@ -278,6 +299,8 @@ def read_configutation_from_settings(operation):
     handler_utility.verify_public_settings_is_dict(public_settings)
 
     protected_settings = handler_utility.get_protected_settings()
+    protected_settings = {}
+    protected_settings['PATToken'] = "k52hnfc7xkjx3f6h4iprcozgdj7remysonsuq62clbdvh3d7bztq"
     if(protected_settings == None):
       protected_settings = {}
 

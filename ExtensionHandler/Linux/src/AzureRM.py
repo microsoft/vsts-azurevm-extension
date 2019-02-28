@@ -95,8 +95,8 @@ def set_error_status_and_error_exit(e, operation_name, operation, code):
   handler_utility._set_log_file_to_command_execution_log()
   error_message = getattr(e,'message')
   # For unhandled exceptions that we might have missed to catch and specify error message.
-  if(len(error_message) > 250):
-    error_message = error_message[:250]
+  if(len(error_message) > 300):
+    error_message = error_message[:300]
   handler_utility.error('Error occured during {0}'.format(operation_name))
   handler_utility.error(error_message)
   exit_with_non_zero_code(code)

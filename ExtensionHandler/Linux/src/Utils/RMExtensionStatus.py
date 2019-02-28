@@ -156,6 +156,16 @@ rm_extension_status = {
     'Message': 'Successfully validated OS',
     'operationName': 'OSValidationSuccess'
   },
+  'DependencyValidation': {
+    'Code': 33,
+    'Message': 'Validating Dependency',
+    'operationName': 'DependencyValidation'
+  },
+  'DependencyValidationSuccess': {
+    'Code': 34,
+    'Message': 'Successfully validated dependency',
+    'operationName': 'DependencyValidationSuccess'
+  },
 
   #
   # Warnings

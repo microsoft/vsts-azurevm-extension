@@ -102,25 +102,39 @@ def set_error_status_and_error_exit(e, operation_name, operation, code):
   exit_with_non_zero_code(code)
 
 def check_python_version():
-  version_info = sys.version_info
-  version = '{0}.{1}'.format(version_info[0], version_info[1])
-  if(LooseVersion(version) < LooseVersion('2.6')):
-    code = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Code']
-    message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(version)
-    raise RMExtensionStatus.new_handler_terminating_error(code, message)
+  try:
+    version_info = sys.version_info
+    version = '{0}.{1}'.format(version_info[0], version_info[1])
+    if(LooseVersion(version) < LooseVersion('2.6')):
+      code = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Code']
+      message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(version)
+      raise RMExtensionStatus.new_handler_terminating_error(code, message)
+    ss_code = RMExtensionStatus.rm_extension_status['DependencyValidationSuccess']['Code']
+    sub_status_message = RMExtensionStatus.rm_extension_status['DependencyValidationSuccess']['Message']
+    operation_name = RMExtensionStatus.rm_extension_status['DependencyValidationSuccess']['operationName']
+    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+  except e:
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DependencyValidation']['operationName'], operation, 52)
 
 def check_systemd_exists():
-  check_systemd_command = 'command -v systemctl'
-  check_systemd_proc = subprocess.Popen(['/bin/bash', '-c', check_systemd_command], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-  check_systemd_out, check_systemd_err = check_systemd_proc.communicate()
-  return_code = check_systemd_proc.returncode
-  handler_utility.log('Check systemd process exit code : {0}'.format(return_code))
-  handler_utility.log('stdout : {0}'.format(check_systemd_out))
-  handler_utility.log('srderr : {0}'.format(check_systemd_err))
-  if(return_code == 0):
-    handler_utility.log('systemd is installed on the machine.')
-  else:
-    raise Exception('Could not find systemd on the machine. Error message: {0}'.format(check_systemd_err))
+  try:
+    check_systemd_command = 'command -v systemctl'
+    check_systemd_proc = subprocess.Popen(['/bin/bash', '-c', check_systemd_command], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    check_systemd_out, check_systemd_err = check_systemd_proc.communicate()
+    return_code = check_systemd_proc.returncode
+    handler_utility.log('Check systemd process exit code : {0}'.format(return_code))
+    handler_utility.log('stdout : {0}'.format(check_systemd_out))
+    handler_utility.log('srderr : {0}'.format(check_systemd_err))
+    if(return_code == 0):
+      handler_utility.log('systemd is installed on the machine.')
+    else:
+      raise Exception('Could not find systemd on the machine. Error message: {0}'.format(check_systemd_err))
+    ss_code = RMExtensionStatus.rm_extension_status['DependencyValidationSuccess']['Code']
+    sub_status_message = RMExtensionStatus.rm_extension_status['DependencyValidationSuccess']['Message']
+    operation_name = RMExtensionStatus.rm_extension_status['DependencyValidationSuccess']['operationName']
+    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+  except e:
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DependencyValidation']['operationName'], operation, 52)
 
 def install_dependencies():
   global config

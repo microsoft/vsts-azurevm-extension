@@ -95,8 +95,8 @@ def set_error_status_and_error_exit(e, operation_name, operation, code):
   handler_utility._set_log_file_to_command_execution_log()
   error_message = getattr(e,'message')
   # For unhandled exceptions that we might have missed to catch and specify error message.
-  if(len(error_message) > 200):
-    error_message = error_message[:200]
+  if(len(error_message) > 250):
+    error_message = error_message[:250]
   handler_utility.error('Error occured during {0}'.format(operation_name))
   handler_utility.error(error_message)
   exit_with_non_zero_code(code)
@@ -228,7 +228,8 @@ def validate_inputs(operation):
     inputs_validation_error_code = RMExtensionStatus.rm_extension_status['ArgumentError']
     unexpected_error_message = "Some unexpected error occured. Status code : {0}"
 
-    error_message_initial_part = "Could not verify that the deployment group '" + config['DeploymentGroup'] + "' exists in the project '" + config['TeamProject'] + "' in the specified organization. {0} {1}"
+    error_message_initial_part = "Could not verify that the deployment group '" + config['DeploymentGroup'] + "' exists in the project '" + config['TeamProject'] + "' in the specified organization. {0} {1}. "
+    specific_error_message = ""
     deployment_url = "{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}".format(config['VSTSUrl'], config['TeamProject'], config['DeploymentGroup'], Constants.projectAPIVersion)
     
     handler_utility.log("Url to check deployment group exists - {0}".format(deployment_url))
@@ -239,13 +240,13 @@ def validate_inputs(operation):
       error_message = error_message_initial_part.format(response.status, response.reason)
       if(response.status == 302):
         specific_error_message = invalid_pat_error_message
-        error_message = error_message_initial_part.format(response.status, "Redirected")
-      if(response.status == 401):
+        error_message = error_message_initial_part.format(response.status, "Redirected. ")
+      elif(response.status == 401):
         specific_error_message = invalid_pat_error_message
       elif(response.status == 403):
-        specificErrorMessage = "Please ensure that the user has 'View project-level information' permissions on the project {0}.".format(config['TeamProject'])
+        specific_error_message = "Please ensure that the user has 'View project-level information' permissions on the project {0}.".format(config['TeamProject'])
       elif(response.status == 404):
-        specificErrorMessage = "Please make sure that you enter the correct organization name and verify that the project exists in the organization."
+        specific_error_message = "Please make sure that you enter the correct organization name and verify that the project exists in the organization."
       else:
         specific_error_message = unexpected_error_message.format(response.status)
         inputs_validation_error_code = RMExtensionStatus.rm_extension_status['GenericError']
@@ -256,8 +257,8 @@ def validate_inputs(operation):
     deployment_group_data = json.loads(response.read())
 
     if(('value' not in deployment_group_data) or len(deployment_group_data['value']) == 0):
-      specificErrorMessage = "Please make sure that the deployment group {0} exists in the project {1}, and the user has 'Manage' permissions on the deployment group.".format(config['DeploymentGroup'], config['TeamProject'])
-      raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message_initial_part.format(response.status, "Not found") + specific_error_message)
+      specific_error_message = "Please make sure that the deployment group {0} exists in the project {1}, and the user has 'Manage' permissions on the deployment group.".format(config['DeploymentGroup'], config['TeamProject'])
+      raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message_initial_part.format(response.status, "Not found. ") + specific_error_message)
 
     deployment_group_id = deployment_group_data['value'][0]['id']
     handler_utility.log("Validated that the deployment group {0} exists".format(config['DeploymentGroup']))

@@ -347,6 +347,32 @@ function Remove-ExtensionUpdateFile
 
 <#
 .Synopsis
+   Tests whether markup file for extension update scenario exists or not.
+#>
+function Test-ExtensionUpdateFile
+{
+    [CmdletBinding()]
+    param
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
+
+    . $PSScriptRoot\Constants.ps1
+    $updateFile = "$workingFolder\$updateFileName"
+
+    Write-Log "Testing whether extension update file exists: $updateFile"
+
+    try
+    {
+        return Test-Path $updateFile
+    }
+    catch
+    {}
+
+    return $false
+}
+
+<#
+.Synopsis
    Save current sequence number as last used sequence number. This information is saved in a file in the current directory
 #>
 function Set-LastSequenceNumber
@@ -393,8 +419,9 @@ function Get-LastSequenceNumber
 
 <#
 .Synopsis
-   Create a file in the given folder with the contents copied from the settings file. Settings
-   file contents are taken to handle extension update scenario.
+   Create a file in the given folder. Copy the settings file contents if the settings file number has 
+   been written in LASTSEQNUM to indicate a successful enable.
+   Settings file contents are taken to handle extension update scenario.
 #>
 function Set-ExtensionDisabledMarkup
 {
@@ -407,6 +434,10 @@ function Set-ExtensionDisabledMarkup
     $markupFile = "$workingFolder\$disabledMarkupFile"
     $handlerEnvironment = Get-HandlerEnvironment
     $sequenceNumber = Get-HandlerExecutionSequenceNumber
+    $lastSequenceNumber = Get-LastSequenceNumber
+
+    if($sequenceNumber -eq $lastSequenceNumber)
+    {
     $extensionSettingsFile = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
 
     try
@@ -418,6 +449,7 @@ function Set-ExtensionDisabledMarkup
     {
         Write-Log "Error while creating $markupFile or writing to it."
     }
+}
 }
 
 <#

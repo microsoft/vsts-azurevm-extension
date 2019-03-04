@@ -24,18 +24,15 @@ Initialize-ExtensionLogFile
 #Assuming PAT to be null since it would be removed during enable
 
 $agentWorkingFolder = Get-AgentWorkingFolder
-$config = @{
-    PATToken = "`"`""
-    AgentWorkingFolder = $agentWorkingFolder
-}
 
-$configuredAgentExists = Test-AgentAlreadyExists
-$extensionUpdateFile = "$agentWorkingFolder\$updateFileName"
-$isUpdateExtensionScenario = Test-Path $extensionUpdateFile
-if (!$isUpdateExtensionScenario)
+if (!Test-ExtensionUpdateFile)
 {
-    if ($configuredAgentExists) 
+    if (Test-AgentAlreadyExists) 
     {
+        $config = @{
+            PATToken = "`"`""
+            AgentWorkingFolder = $agentWorkingFolder
+        }
         Remove-Agent $config
     }
 }

@@ -1,4 +1,4 @@
-﻿<#
+<#
 .Synopsis
    Some handler methods used multiple places
 #>
@@ -149,6 +149,8 @@ function Clean-AgentWorkingFolder {
             Remove-Item -Path $topLevelAgentFile -Force
         }
     }
+
+    #Switching the agent working folder to new one always after the previously configured agent has been removed either from old or new folder
     $config.AgentWorkingFolder = $agentWorkingFolderNew
     if (Test-Path $config.AgentWorkingFolder)
     {

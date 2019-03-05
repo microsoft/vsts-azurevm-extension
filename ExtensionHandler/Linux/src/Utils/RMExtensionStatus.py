@@ -146,36 +146,17 @@ rm_extension_status = {
     'Message' : 'Successfully validated the inputs',
     'operationName': 'InputValidationSuccess'
   },
-  'OSValidation': {
+  'PreValidationCheck': {
     'Code': 31,
-    'Message': 'Validating OS',
-    'operationName': 'OSValidation'
+    'Message': 'Validating dependecies',
+    'operationName': 'PreValidationCheck'
   },
-  'OSValidationSuccess': {
+  'PreValidationCheckSuccess': {
     'Code': 32,
-    'Message': 'Successfully validated OS',
-    'operationName': 'OSValidationSuccess'
+    'Message': 'Successfully validated dependecies',
+    'operationName': 'PreValidationCheckSuccess'
   },
-  'PythonDependencyValidation': {
-    'Code': 33,
-    'Message': 'Validating python dependency',
-    'operationName': 'PythonDependencyValidation'
-  },
-  'PythonDependencyValidationSuccess': {
-    'Code': 34,
-    'Message': 'Successfully validated python dependency',
-    'operationName': 'PythonDependencyValidationSuccess'
-  },
-  'SystemdDependencyValidation': {
-    'Code': 35,
-    'Message': 'Validating systemd dependency',
-    'operationName': 'SystemdDependencyValidation'
-  },
-  'SystemdDependencyValidationSuccess': {
-    'Code': 36,
-    'Message': 'Successfully validated systemd dependency',
-    'operationName': 'SystemdDependencyValidationSuccess'
-  },
+  
 
   #
   # Warnings

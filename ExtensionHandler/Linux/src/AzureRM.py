@@ -108,41 +108,52 @@ def set_error_status_and_error_exit(e, operation_name, operation, code):
   exit_with_non_zero_code(code)
 
 def check_python_version(operation):
-  try:
-    version_info = sys.version_info
-    version = '{0}.{1}'.format(version_info[0], version_info[1])
-    if(not(LooseVersion('2.6') < LooseVersion(version) < LooseVersion('3.0'))):
-      code = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Code']
-      message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(version)
-      raise RMExtensionStatus.new_handler_terminating_error(code, message)
-    ss_code = RMExtensionStatus.rm_extension_status['PythonDependencyValidationSuccess']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['PythonDependencyValidationSuccess']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['PythonDependencyValidationSuccess']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-  except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PythonDependencyValidation']['operationName'], 'operation', Constants.ERROR_MISSING_DEPENDENCY)
+  version_info = sys.version_info
+  version = '{0}.{1}'.format(version_info[0], version_info[1])
+  if(LooseVersion(version) < LooseVersion('2.6')):
+    code = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Code']
+    message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(version)
+    raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
 def check_systemd_exists(operation):
+  check_systemd_command = 'command -v systemctl'
+  check_systemd_proc = subprocess.Popen(['/bin/bash', '-c', check_systemd_command], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+  check_systemd_out, check_systemd_err = check_systemd_proc.communicate()
+  return_code = check_systemd_proc.returncode
+  handler_utility.log('Check systemd process exit code : {0}'.format(return_code))
+  handler_utility.log('stdout : {0}'.format(check_systemd_out))
+  handler_utility.log('srderr : {0}'.format(check_systemd_err))
+  if(return_code == 0):
+    handler_utility.log('systemd is installed on the machine.')
+  else:
+    code = RMExtensionStatus.rm_extension_status['SystemdNotFound']['Code']
+    message = RMExtensionStatus.rm_extension_status['SystemdNotFound']['Message'].format(check_systemd_err)
+    raise RMExtensionStatus.new_handler_terminating_error(code, message)
+
+def validate_os(operation):
+  os_version = handler_utility.get_os_version()
+
+  if(os_version['IsX64'] != True):
+    code = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Code']
+    message = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Message']
+    raise RMExtensionStatus.new_handler_terminating_error(code, message)
+
+def pre_validation_checks(operation):
   try:
-    check_systemd_command = 'command -v systemctl'
-    check_systemd_proc = subprocess.Popen(['/bin/bash', '-c', check_systemd_command], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-    check_systemd_out, check_systemd_err = check_systemd_proc.communicate()
-    return_code = check_systemd_proc.returncode
-    handler_utility.log('Check systemd process exit code : {0}'.format(return_code))
-    handler_utility.log('stdout : {0}'.format(check_systemd_out))
-    handler_utility.log('srderr : {0}'.format(check_systemd_err))
-    if(return_code == 0):
-      handler_utility.log('systemd is installed on the machine.')
-    else:
-      code = RMExtensionStatus.rm_extension_status['SystemdNotFound']['Code']
-      message = RMExtensionStatus.rm_extension_status['SystemdNotFound']['Message'].format(check_systemd_err)
-      raise RMExtensionStatus.new_handler_terminating_error(code, message)
-    ss_code = RMExtensionStatus.rm_extension_status['SystemdDependencyValidationSuccess']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['SystemdDependencyValidationSuccess']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['SystemdDependencyValidationSuccess']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    validate_os(operation)
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['SystemdDependencyValidation']['operationName'], operation, Constants.ERROR_MISSING_DEPENDENCY)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreValidationCheck']['operationName'], operation, Constants.ERROR_UNSUPPORTED_OS)
+  
+  try:
+    check_python_version(operation)
+    check_systemd_exists(operation)
+  except Exception as e:
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreValidationCheck']['operationName'], operation, Constants.ERROR_MISSING_DEPENDENCY)
+
+  ss_code = RMExtensionStatus.rm_extension_status['PreValidationCheckSuccess']['Code']
+  sub_status_message = RMExtensionStatus.rm_extension_status['PreValidationCheckSuccess']['Message']
+  operation_name = RMExtensionStatus.rm_extension_status['PreValidationCheckSuccess']['operationName']
+  handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
 
 def install_dependencies():
   global config
@@ -300,22 +311,6 @@ def validate_inputs(operation):
 
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['InputValidation']['operationName'], operation, Constants.ERROR_CONFIGURATION)
-
-def validate_os(operation):
-  try:
-    os_version = handler_utility.get_os_version()
-
-    if(os_version['IsX64'] != True):
-      code = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Code']
-      message = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Message']
-      raise RMExtensionStatus.new_handler_terminating_error(code, message)
-
-    ss_code = RMExtensionStatus.rm_extension_status['OSValidationSuccess']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['OSValidationSuccess']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['OSValidationSuccess']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-  except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['OSValidation']['operationName'], operation, Constants.ERROR_UNSUPPORTED_OS)
 
 def read_configutation_from_settings(operation):
   global config
@@ -578,7 +573,6 @@ def test_extension_settings_are_same_as_previous_version():
 def enable():
   input_operation = 'Enable'
   start_rm_extension_handler(input_operation)
-  validate_os(input_operation)
   read_configutation_from_settings(input_operation)
   validate_inputs(input_operation)
   if(test_extension_settings_are_same_as_previous_version()):
@@ -653,8 +647,8 @@ def main():
         exit_with_code_zero()
 
       input_operation = Constants.input_arguments_dict[sys.argv[1]]
-      check_python_version(input_operation)
-      check_systemd_exists(input_operation)
+      
+      pre_validation_checks(input_operation)
 
       if(input_operation == 'Enable'):
         enable()

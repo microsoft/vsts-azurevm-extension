@@ -107,7 +107,7 @@ def set_error_status_and_error_exit(e, operation_name, operation, code):
   handler_utility.error(error_message)
   exit_with_non_zero_code(code)
 
-def check_python_version(operation):
+def check_python_version():
   version_info = sys.version_info
   version = '{0}.{1}'.format(version_info[0], version_info[1])
   if(LooseVersion(version) < LooseVersion('2.6')):
@@ -115,7 +115,7 @@ def check_python_version(operation):
     message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(version)
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
-def check_systemd_exists(operation):
+def check_systemd_exists():
   check_systemd_command = 'command -v systemctl'
   check_systemd_proc = subprocess.Popen(['/bin/bash', '-c', check_systemd_command], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   check_systemd_out, check_systemd_err = check_systemd_proc.communicate()
@@ -130,7 +130,7 @@ def check_systemd_exists(operation):
     message = RMExtensionStatus.rm_extension_status['SystemdNotFound']['Message'].format(check_systemd_err)
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
-def validate_os(operation):
+def validate_os():
   os_version = handler_utility.get_os_version()
 
   if(os_version['IsX64'] != True):
@@ -140,13 +140,13 @@ def validate_os(operation):
 
 def pre_validation_checks(operation):
   try:
-    validate_os(operation)
+    validate_os()
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreValidationCheck']['operationName'], operation, Constants.ERROR_UNSUPPORTED_OS)
   
   try:
-    check_python_version(operation)
-    check_systemd_exists(operation)
+    check_python_version()
+    check_systemd_exists()
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreValidationCheck']['operationName'], operation, Constants.ERROR_MISSING_DEPENDENCY)
 
@@ -550,38 +550,48 @@ def add_agent_tags():
   else:
     handler_utility.log('No tags provided for agent')
 
-def test_extension_settings_are_same_as_previous_version():
-  old_extension_settings_file_path = "{0}/{1}".format(Constants.agent_working_folder, Constants.disable_markup_file_name)
-  old_extension_settings_file_exists = os.path.isfile(old_extension_settings_file_path)
-  if(old_extension_settings_file_exists):
-    extension_settings_file_path = '{0}/{1}.settings'.format(handler_utility._context._config_dir , handler_utility._context._seq_no)
-    with open(old_extension_settings_file_path, 'r') as f:
-      old_extension_settings_file_contents = f.read()
-    with open(extension_settings_file_path, 'r') as f:
-      extension_settings_file_contents = f.read()
-    if(Util.ordered_json_object(json.loads(old_extension_settings_file_contents)) == Util.ordered_json_object(json.loads(extension_settings_file_contents))):
-      handler_utility.log('Old and new extension version settings are same.')
-      return True
+def test_extension_settings_are_same_as_previous_version(operation):
+  try:
+    old_extension_settings_file_path = "{0}/{1}".format(Constants.agent_working_folder, Constants.disable_markup_file_name)
+    old_extension_settings_file_exists = os.path.isfile(old_extension_settings_file_path)
+    if(old_extension_settings_file_exists):
+      extension_settings_file_path = '{0}/{1}.settings'.format(handler_utility._context._config_dir , handler_utility._context._seq_no)
+
+      with open(old_extension_settings_file_path, 'r') as f:
+        old_extension_settings_file_contents = f.read()
+        old_extension_public_settings = json.loads(old_extension_settings_file_contents)
+        old_extension_public_settings = old_extension_public_settings['runtimeSettings']['handlerSettings']['publicSettings']
+
+      with open(extension_settings_file_path, 'r') as f:
+        extension_settings_file_contents = f.read()
+        extension_public_settings = json.loads(extension_settings_file_contents)
+        extension_public_settings = extension_public_settings['runtimeSettings']['handlerSettings']['publicSettings']
+
+      if(Util.ordered_json_object(old_extension_public_settings) == Util.ordered_json_object(extension_public_settings)):
+        handler_utility.log('Old and new extension version settings are same.')
+        return True
+      else:
+        handler_utility.log('Old and new extension version settings are not same.')
+        handler_utility.log('Old extension version settings: {0}'.format(old_extension_public_settings))
+        handler_utility.log('New extension version settings: {0}'.format(extension_public_settings))
     else:
-      handler_utility.log('Old and new extension version settings are not same.')
-      handler_utility.log('Old extension version settings: {0}'.format(old_extension_settings_file_contents))
-      handler_utility.log('New extension version settings: {0}'.format(extension_settings_file_contents))
-  else:
-    handler_utility.log('Old extension settings file does not exist in the agent directory. Will continue with enable.')
-  return False
+      handler_utility.log('Old extension settings file does not exist in the agent directory. Will continue with enable.')
+    return False
+  except Exception as e:
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ComparingWithPreviousSettings']['operationName'], operation, 9)
 
 def enable():
   input_operation = 'Enable'
   start_rm_extension_handler(input_operation)
   read_configutation_from_settings(input_operation)
-  validate_inputs(input_operation)
-  if(test_extension_settings_are_same_as_previous_version()):
+  if(test_extension_settings_are_same_as_previous_version(input_operation)):
     handler_utility.log("Skipping extension enable.")
     ss_code = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   else:
+    validate_inputs(input_operation)
     ConfigureDeploymentAgent.set_logger(handler_utility.log)
     DownloadDeploymentAgent.set_logger(handler_utility.log)
     execute_agent_pre_check()
@@ -644,7 +654,7 @@ def main():
       root_dir = os.getcwd()
       
       if(sys.argv[1] not in Constants.input_arguments_dict):
-        exit_with_code_zero()
+        raise("Internal Error: Invalid argument provided to the script")
 
       input_operation = Constants.input_arguments_dict[sys.argv[1]]
       

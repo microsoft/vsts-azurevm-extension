@@ -156,7 +156,11 @@ rm_extension_status = {
     'Message': 'Successfully validated dependecies',
     'operationName': 'PreValidationCheckSuccess'
   },
-  
+  'ComparingWithPreviousSettings': {
+    'Code': 33,
+    'Message': 'Comparing settings with previous settings',
+    'operationName': 'Settings Comparison'
+  },
 
   #
   # Warnings

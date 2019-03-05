@@ -321,10 +321,7 @@ To retry install, please remove the extension from the VM first.
         } 
 
         $RM_Extension_Status.ArgumentError {
-            $errorMessage = @'
-The Extension received an incorrect input: {0}.
-Please correct the input and retry executing the extension.
-'@ -f $ErrorRecord.Exception.Message
+            $errorMessage = 'The extension received an incorrect input. Please correct the input and try again. More details: {0}.' -f $ErrorRecord.Exception.Message
             break
         }
 

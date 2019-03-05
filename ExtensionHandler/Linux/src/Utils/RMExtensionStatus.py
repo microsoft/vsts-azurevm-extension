@@ -194,6 +194,10 @@ rm_extension_status = {
     'Code' : 52,
     'Message' : 'Installed Python version is {0}. Minimum required version is 2.6.'
   },
+  'SystemdNotFound': {
+    'Code' : 52,
+    'Message': 'Could not find systemd on the machine. Error message: {0}'
+  },
   #
   # ArgumentError indicates a problem in the input provided by the user. The message for the error is provided by the specific exception
   #

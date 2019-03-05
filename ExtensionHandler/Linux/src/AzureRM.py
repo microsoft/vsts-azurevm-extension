@@ -1,6 +1,12 @@
 #! /usr/bin/python
 
 import sys
+
+try:
+  assert sys.version_info < (3,0), "Need Python 2.7 to continue execution of this extension"
+except Exception as e:
+  sys.exit(52)
+  
 import Utils.HandlerUtil as Util
 import Utils.RMExtensionStatus as RMExtensionStatus
 import os
@@ -95,8 +101,8 @@ def set_error_status_and_error_exit(e, operation_name, operation, code):
   handler_utility._set_log_file_to_command_execution_log()
   error_message = getattr(e,'message')
   # For unhandled exceptions that we might have missed to catch and specify error message.
-  if(len(error_message) > 300):
-    error_message = error_message[:300]
+  if(len(error_message) > Constants.ERROR_MESSAGE_LENGTH):
+    error_message = error_message[:Constants.ERROR_MESSAGE_LENGTH]
   handler_utility.error('Error occured during {0}'.format(operation_name))
   handler_utility.error(error_message)
   exit_with_non_zero_code(code)
@@ -105,7 +111,7 @@ def check_python_version(operation):
   try:
     version_info = sys.version_info
     version = '{0}.{1}'.format(version_info[0], version_info[1])
-    if(LooseVersion(version) < LooseVersion('2.6')):
+    if(not(LooseVersion('2.6') < LooseVersion(version) < LooseVersion('3.0'))):
       code = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Code']
       message = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Message'].format(version)
       raise RMExtensionStatus.new_handler_terminating_error(code, message)
@@ -114,7 +120,7 @@ def check_python_version(operation):
     operation_name = RMExtensionStatus.rm_extension_status['PythonDependencyValidationSuccess']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PythonDependencyValidation']['operationName'], 'operation', Constants.MISSING_DEPENDENCY)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PythonDependencyValidation']['operationName'], 'operation', Constants.ERROR_MISSING_DEPENDENCY)
 
 def check_systemd_exists(operation):
   try:
@@ -128,13 +134,15 @@ def check_systemd_exists(operation):
     if(return_code == 0):
       handler_utility.log('systemd is installed on the machine.')
     else:
-      raise Exception('Could not find systemd on the machine. Error message: {0}'.format(check_systemd_err))
+      code = RMExtensionStatus.rm_extension_status['SystemdNotFound']['Code']
+      message = RMExtensionStatus.rm_extension_status['SystemdNotFound']['Message'].format(check_systemd_err)
+      raise RMExtensionStatus.new_handler_terminating_error(code, message)
     ss_code = RMExtensionStatus.rm_extension_status['SystemdDependencyValidationSuccess']['Code']
     sub_status_message = RMExtensionStatus.rm_extension_status['SystemdDependencyValidationSuccess']['Message']
     operation_name = RMExtensionStatus.rm_extension_status['SystemdDependencyValidationSuccess']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['SystemdDependencyValidation']['operationName'], operation, Constants.MISSING_DEPENDENCY)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['SystemdDependencyValidation']['operationName'], operation, Constants.ERROR_MISSING_DEPENDENCY)
 
 def install_dependencies():
   global config
@@ -193,7 +201,7 @@ def parse_account_name(account_name, pat_token):
 
 def get_deployment_type(vsts_url, pat_token):
   response = Util.make_http_call(vsts_url + '/_apis/connectiondata', 'GET', None, None, pat_token)
-  if(response.status == 200):
+  if(response.status == Constants.HTTP_OK):
     connection_data = json.loads(response.read())
     if(connection_data.has_key('deploymentType')):
       return connection_data['deploymentType']
@@ -236,16 +244,16 @@ def validate_inputs(operation):
 
     response = Util.make_http_call(deployment_url, 'GET', None, None, config['PATToken'])
 
-    if(response.status != 200):
+    if(response.status != Constants.HTTP_OK):
       error_message = error_message_initial_part.format(response.status, response.reason)
-      if(response.status == 302):
+      if(response.status == Constants.HTTP_FOUND):
         specific_error_message = invalid_pat_error_message
         error_message = error_message_initial_part.format(response.status, "Redirected. ")
-      elif(response.status == 401):
+      elif(response.status == Constants.HTTP_UNAUTHORIZED):
         specific_error_message = invalid_pat_error_message
-      elif(response.status == 403):
+      elif(response.status == Constants.HTTP_FORBIDDEN):
         specific_error_message = "Please ensure that the user has 'View project-level information' permissions on the project {0}.".format(config['TeamProject'])
-      elif(response.status == 404):
+      elif(response.status == Constants.HTTP_NOTFOUND):
         specific_error_message = "Please make sure that you enter the correct organization name and verify that the project exists in the organization."
       else:
         specific_error_message = unexpected_error_message.format(response.status)
@@ -271,8 +279,8 @@ def validate_inputs(operation):
     handler_utility.log("Url to check that the user has 'Manage' permissions on the deployment group - {0}".format(patch_deployment_group_url))
     response = Util.make_http_call(patch_deployment_group_url, 'PATCH', body, headers, config['PATToken'])
 
-    if(response.status != 200):
-      if(response.status == 403):
+    if(response.status != Constants.HTTP_OK):
+      if(response.status == Constants.HTTP_FORBIDDEN):
         specific_error_message = "Please ensure that the user has 'Manage' permissions on the deployment group {0}".format(config['DeploymentGroup'])
       else:
         specific_error_message = unexpected_error_message.format(str(response.status))
@@ -291,7 +299,7 @@ def validate_inputs(operation):
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
 
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['InputValidation']['operationName'], operation, Constants.CONFIGURATION_ERROR)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['InputValidation']['operationName'], operation, Constants.ERROR_CONFIGURATION)
 
 def validate_os(operation):
   try:
@@ -307,7 +315,7 @@ def validate_os(operation):
     operation_name = RMExtensionStatus.rm_extension_status['OSValidationSuccess']['operationName']
     handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['OSValidation']['operationName'], operation, Constants.UNSUPPORTED_OS)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['OSValidation']['operationName'], operation, Constants.ERROR_UNSUPPORTED_OS)
 
 def read_configutation_from_settings(operation):
   global config
@@ -384,7 +392,7 @@ def read_configutation_from_settings(operation):
              'ConfigureAgentAsUserName': configure_agent_as_username
           }
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], operation, Constants.CONFIGURATION_ERROR)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], operation, Constants.ERROR_CONFIGURATION)
 
 def test_configured_agent_exists(operation):
   global configured_agent_exists, config

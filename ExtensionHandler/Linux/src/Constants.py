@@ -1,3 +1,5 @@
+import Utils.RMExtensionStatus as RMExtensionStatus
+
 agent_setting = '.agent'
 last_seq_num_file = 'LASTSEQNUM'
 download_api_version = '3.0-preview.2'
@@ -29,10 +31,21 @@ input_arguments_dict = {
     '-enable': 'Enable',
     '-disable': 'Disable',
     '-uninstall': 'Uninstall',
-    '-update': 'Update'
+    '-update': 'Update',
+    '-install': 'Install'
 }
 
+ERROR_MESSAGE_LENGTH = 300
+
+# Http Respose Codes
+HTTP_OK = 200
+HTTP_FOUND = 302
+HTTP_UNAUTHORIZED = 401
+HTTP_FORBIDDEN = 403
+HTTP_NOTFOUND = 404
+
+
 # Error Codes
-UNSUPPORTED_OS = 51
-MISSING_DEPENDENCY = 52
-CONFIGURATION_ERROR = 53
+ERROR_UNSUPPORTED_OS = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Code']
+ERROR_MISSING_DEPENDENCY = RMExtensionStatus.rm_extension_status['PythonVersionNotSupported']['Code']
+ERROR_CONFIGURATION = RMExtensionStatus.rm_extension_status['ArgumentError']

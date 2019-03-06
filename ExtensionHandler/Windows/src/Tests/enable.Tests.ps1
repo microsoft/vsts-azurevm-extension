@@ -68,6 +68,7 @@ Describe "Enable RM extension tests" {
         
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $config }
+        Mock Test-ConfiguredAgentExists { return $true}
         Mock Test-AgentReconfigurationRequired { return $false}
         Mock Get-Agent {}
         Mock Register-Agent {}
@@ -94,6 +95,7 @@ Describe "Enable RM extension tests" {
         
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $config }
+        Mock Test-ConfiguredAgentExists { return $true}
         Mock Test-AgentReconfigurationRequired { return $true}
         Mock Get-Agent {}
         Mock Register-Agent {}

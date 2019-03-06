@@ -1,12 +1,6 @@
 #! /usr/bin/python
 
 import sys
-
-try:
-  assert sys.version_info < (3,0), "Need Python 2.7 to continue execution of this extension"
-except Exception as e:
-  sys.exit(52)
-  
 import Utils.HandlerUtil as Util
 import Utils.RMExtensionStatus as RMExtensionStatus
 import os
@@ -560,12 +554,12 @@ def test_extension_settings_are_same_as_previous_version(operation):
       with open(old_extension_settings_file_path, 'r') as f:
         old_extension_settings_file_contents = f.read()
         old_extension_public_settings = json.loads(old_extension_settings_file_contents)
-        old_extension_public_settings = old_extension_public_settings['runtimeSettings']['handlerSettings']['publicSettings']
+        old_extension_public_settings = old_extension_public_settings['runtimeSettings'][0]['handlerSettings']['publicSettings']
 
       with open(extension_settings_file_path, 'r') as f:
         extension_settings_file_contents = f.read()
         extension_public_settings = json.loads(extension_settings_file_contents)
-        extension_public_settings = extension_public_settings['runtimeSettings']['handlerSettings']['publicSettings']
+        extension_public_settings = extension_public_settings['runtimeSettings'][0]['handlerSettings']['publicSettings']
 
       if(Util.ordered_json_object(old_extension_public_settings) == Util.ordered_json_object(extension_public_settings)):
         handler_utility.log('Old and new extension version settings are same.')

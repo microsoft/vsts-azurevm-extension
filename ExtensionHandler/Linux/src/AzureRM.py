@@ -205,7 +205,8 @@ def parse_account_name(account_name, pat_token):
   return vsts_url
 
 def get_deployment_type(vsts_url, pat_token):
-  response = Util.make_http_call(vsts_url + '/_apis/connectiondata', 'GET', None, None, pat_token)
+  rest_call_url = vsts_url + '/_apis/connectiondata'
+  response = Util.make_http_call(rest_call_url, 'GET', None, None, pat_token)
   if(response.status == Constants.HTTP_OK):
     connection_data = json.loads(response.read())
     if(connection_data.has_key('deploymentType')):
@@ -213,7 +214,7 @@ def get_deployment_type(vsts_url, pat_token):
     else:
       return 'onPremises'
   else:
-    handler_utility.log('Failed to fetch the connection data for the given url. Reason : {0}'.format(response.reason))
+    handler_utility.log('Failed to fetch the connection data for the url {0}. Reason : {1} {2}'.format(rest_call_url, str(response.status), response.reason))
     return 'hosted'
 
 def format_tags_input(tags_input):

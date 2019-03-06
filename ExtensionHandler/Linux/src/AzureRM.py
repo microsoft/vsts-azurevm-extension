@@ -655,13 +655,13 @@ def main():
       
       pre_validation_checks(input_operation)
 
-      if(input_operation == 'Enable'):
+      if(input_operation == Constants.ENABLE):
         enable()
-      elif(input_operation == 'Disable'):
+      elif(input_operation == Constants.DISABLE):
         disable()
-      elif(input_operation == 'Uninstall'):
+      elif(input_operation == Constants.UNINSTALL):
         uninstall()
-      elif(input_operation == 'Update'):
+      elif(input_operation == Constants.UPDATE):
         update()
 
       exit_with_code_zero()

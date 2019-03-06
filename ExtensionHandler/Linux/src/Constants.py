@@ -27,12 +27,19 @@ ubuntu_distr_name = 'Ubuntu'
 default_agent_work_dir = '_work'
 is_on_prem = False
 
+# Input Operations
+ENABLE = 'Enable'
+DISABLE = 'Disable'
+UNINSTALL = 'Uninstall'
+UPDATE = 'Update'
+INSTALL = 'Install'
+
 input_arguments_dict = {
-    '-enable': 'Enable',
-    '-disable': 'Disable',
-    '-uninstall': 'Uninstall',
-    '-update': 'Update',
-    '-install': 'Install'
+    '-enable': ENABLE,
+    '-disable': DISABLE,
+    '-uninstall': UNINSTALL,
+    '-update': UPDATE,
+    '-install': INSTALL
 }
 
 ERROR_MESSAGE_LENGTH = 300
@@ -43,7 +50,6 @@ HTTP_FOUND = 302
 HTTP_UNAUTHORIZED = 401
 HTTP_FORBIDDEN = 403
 HTTP_NOTFOUND = 404
-
 
 # Error Codes
 ERROR_UNSUPPORTED_OS = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Code']

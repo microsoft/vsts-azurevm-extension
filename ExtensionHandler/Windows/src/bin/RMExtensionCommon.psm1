@@ -29,9 +29,12 @@ function Get-AgentWorkingFolder {
     . $PSScriptRoot\AgentSettingsHelper.ps1
     . $PSScriptRoot\Constants.ps1
 
-    if(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderOld -logFunction $global:logger)
+    if(!(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderNew -logFunction $global:logger))
     {
-        return $agentWorkingFolderOld
+        if(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderOld -logFunction $global:logger)
+        {
+            return $agentWorkingFolderOld
+        }
     }
     return $agentWorkingFolderNew
 }

@@ -11,5 +11,8 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
 }
 
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
+Import-Module $PSScriptRoot\RMExtensionCommon.psm1 -DisableNameChecking
 
-Set-ExtensionUpdateFile
+$agentWorkingFolder = Get-AgentWorkingFolder
+
+Set-ExtensionUpdateFile $agentWorkingFolder

@@ -20,8 +20,8 @@ Import-Module $PSScriptRoot\Log.psm1
 . $PSScriptRoot\ConfigSettingsReader.ps1
 . $PSScriptRoot\Constants.ps1
 
-$Enable_ConfiguredAgentExists = $false
-$Enable_AgentConfigurationRequired = $true
+$configuredAgentExists = $false
+$agentConfigurationRequired = $true
 
 function Test-AgentReconfigurationRequired {
     [CmdletBinding()]
@@ -56,8 +56,8 @@ function Invoke-GetAgentScriptAndExtractAgent {
     [hashtable] $config
     )
 
-    Clean-AgentFolder
-    Create-AgentWorkingFolder
+    Clean-AgentWorkingFolder $config
+    Create-AgentWorkingFolder $config.AgentWorkingFolder
     . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $global:logger
     $agentZipFilePath = Join-Path $workingFolder $agentZipName
     $job = Start-Job -ScriptBlock {
@@ -216,7 +216,9 @@ function Start-RMExtensionHandler {
 
 function Compare-SequenceNumber{
     [CmdletBinding()]
-    param()
+    param(
+        [hashtable] $config
+    )
         
     try
     {
@@ -226,7 +228,7 @@ function Compare-SequenceNumber{
         #
         $sequenceNumber = Get-HandlerExecutionSequenceNumber
         $lastSequenceNumber = Get-LastSequenceNumber
-        if(($sequenceNumber -eq $lastSequenceNumber) -and (!(Test-ExtensionDisabledMarkup)))
+        if(($sequenceNumber -eq $lastSequenceNumber) -and (!(Test-ExtensionDisabledMarkup $config.AgentWorkingFolder)))
         {
             Write-Log $RM_Extension_Status.SkippedInstallation.Message
             Write-Log "Current seq number: $sequenceNumber, last seq number: $lastSequenceNumber"
@@ -254,7 +256,8 @@ function Invoke-AddTagsToAgentScript{
 .Synopsis
    Adds the tag to configured agent.
 #>
-function Add-AgentTags {
+function Add-AgentTags
+{
     [CmdletBinding()]
     param(
     [Parameter(Mandatory=$true, Position=0)]
@@ -287,17 +290,21 @@ function Add-AgentTags {
 
 function Test-ExtensionSettingsAreSameAsDisabledVersion
 {
+    [CmdletBinding()]
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
     try
     {
-        $oldExtensionSettingsFilePath = "$agentWorkingFolder\$disabledMarkupFile"
-        $oldExtensionSettingsFileExists = Test-Path $oldExtensionSettingsFilePath
-        if($oldExtensionSettingsFileExists)
+        if(Test-ExtensionDisabledMarkup $config.AgentWorkingFolder)
         {
             $handlerEnvironment = Get-HandlerEnvironment
             $sequenceNumber = Get-HandlerExecutionSequenceNumber
             $extensionSettingsFilePath = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
-            $oldExtensionPublicSettings = (Get-Content($oldExtensionSettingsFilePath) | ConvertFrom-Json).runtimeSettings.handlerSettings.publicSettings
-            $extensionPublicSettings = (Get-Content($extensionSettingsFilePath) | ConvertFrom-Json).runtimeSettings.handlerSettings.publicSettings
+            $oldExtensionPublicSettings = (Get-ExtensionDisabledMarkup $config.AgentWorkingFolder | ConvertFrom-Json).runtimeSettings[0].handlerSettings.publicSettings
+            $extensionPublicSettings = (Get-Content($extensionSettingsFilePath) | ConvertFrom-Json).runtimeSettings[0].handlerSettings.publicSettings
             $oldExtensionPublicSettingsPropertyNames = $oldExtensionPublicSettings.psobject.Properties | % {$_.Name}
             $extensionPublicSettingsPropertyNames = $extensionPublicSettings.psobject.Properties | % {$_.Name}
             $settingsSame = $false
@@ -335,19 +342,28 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
     }
 }
 
-function ExecuteAgentPreCheck()
+function ExecuteAgentPreCheck
 {
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
 
-    $script:Enable_ConfiguredAgentExists  = Test-AgentAlreadyExists $config
-    if($Enable_ConfiguredAgentExists)
+    $script:configuredAgentExists  = Test-ConfiguredAgentExists -workingFolder $config.AgentWorkingFolder -logFunction $global:logger
+    if($configuredAgentExists)
     {
-        $script:Enable_AgentConfigurationRequired = Test-AgentReconfigurationRequired $config
+        $script:agentConfigurationRequired = Test-AgentReconfigurationRequired $config
     }
 }
 
 function DownloadAgentIfRequired
 {
-    if(!$Enable_ConfiguredAgentExists)
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
+    if(!$configuredAgentExists)
     {
         Get-Agent $config
     }
@@ -360,19 +376,29 @@ function DownloadAgentIfRequired
 
 function RemoveExistingAgentIfRequired
 {
-    if( $Enable_ConfiguredAgentExists -and $Enable_AgentConfigurationRequired)
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
+    if($configuredAgentExists -and $agentConfigurationRequired)
     {
         Write-Log "Remove existing configured agent"
         Remove-Agent $config
 
         #Execution has reached till here means that either the agent was removed successfully.
-        $script:Enable_ConfiguredAgentExists = $false
+        $script:configuredAgentExists = $false
     }
 }
 
 function ConfigureAgentIfRequired
 {
-    if($Enable_AgentConfigurationRequired)
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
+    if($agentConfigurationRequired)
     {
         Register-Agent $config
     }
@@ -388,8 +414,9 @@ function Enable
 {
     Start-RMExtensionHandler
     $config = Get-ConfigurationFromSettings
-    Compare-SequenceNumber
-    $settingsAreSame = Test-ExtensionSettingsAreSameAsDisabledVersion
+    $config.AgentWorkingFolder = Get-AgentWorkingFolder
+    Compare-SequenceNumber $config
+    $settingsAreSame = Test-ExtensionSettingsAreSameAsDisabledVersion $config
     if($settingsAreSame)
     {
         Write-Log "Skipping extension enable."
@@ -401,13 +428,13 @@ function Enable
 
         Confirm-InputsAreValid $config
 
-        ExecuteAgentPreCheck
+        ExecuteAgentPreCheck $config
 
-        RemoveExistingAgentIfRequired
+        RemoveExistingAgentIfRequired $config
 
-        DownloadAgentIfRequired
+        DownloadAgentIfRequired $config
 
-        ConfigureAgentIfRequired
+        ConfigureAgentIfRequired $config
 
         Add-AgentTags $config
         
@@ -417,7 +444,7 @@ function Enable
     Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
     Set-LastSequenceNumber
     Write-Log "Removing disable markup file.."
-    Remove-ExtensionDisabledMarkup
+    Remove-ExtensionDisabledMarkup $config.AgentWorkingFolder
 }
 
 Enable

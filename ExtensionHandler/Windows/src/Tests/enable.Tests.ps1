@@ -20,7 +20,6 @@ Describe "Enable RM extension tests" {
 
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $config }
-        Mock Test-AgentAlreadyExists {}
         Mock Get-Agent {}
         Mock Register-Agent {}
         Mock Add-HandlerSubStatus {}
@@ -43,7 +42,6 @@ Describe "Enable RM extension tests" {
         
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $config }
-        Mock Test-AgentAlreadyExists {}
         Mock Get-Agent {}
         Mock Register-Agent { throw }
         Mock Add-HandlerSubStatus {}
@@ -70,7 +68,6 @@ Describe "Enable RM extension tests" {
         
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $config }
-        Mock Test-AgentAlreadyExists { return $true}
         Mock Test-AgentReconfigurationRequired { return $false}
         Mock Get-Agent {}
         Mock Register-Agent {}
@@ -97,7 +94,6 @@ Describe "Enable RM extension tests" {
         
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $config }
-        Mock Test-AgentAlreadyExists { return $true}
         Mock Test-AgentReconfigurationRequired { return $true}
         Mock Get-Agent {}
         Mock Register-Agent {}
@@ -124,7 +120,6 @@ Describe "Enable RM extension tests" {
         
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $config }
-        Mock Test-AgentAlreadyExists { return $false}
         Mock Test-AgentReconfigurationRequired { return $false}
         Mock Get-Agent {}
         Mock Register-Agent {}
@@ -155,7 +150,6 @@ Describe "Enable RM extension tests" {
         
         Mock Start-RMExtensionHandler {}
         Mock Get-ConfigurationFromSettings { return $configWithTags }
-        Mock Test-AgentAlreadyExists { return $false}
         Mock Test-AgentReconfigurationRequired { return $false}
         Mock Get-Agent {}
         Mock Register-Agent {}
@@ -197,13 +191,15 @@ Describe "Start RM extension tests" {
 
     Context "Should skip enable if current seq number is same as last seq number" {
         
+        $config = @{AgentWorkingFolder = "AgentWorkingFolder"}
         Mock Get-HandlerExecutionSequenceNumber { return 2 }
         Mock Get-LastSequenceNumber { return 2 }
         Mock Add-HandlerSubStatus {}
         Mock Write-Log {}
         Mock Exit-WithCode {}
+        Mock Test-ExtensionDisabledMarkup {return $false}
 
-        Compare-SequenceNumber
+        Compare-SequenceNumber $config
 
         It "should call clean up functions" {
             Assert-MockCalled Exit-WithCode -Times 1

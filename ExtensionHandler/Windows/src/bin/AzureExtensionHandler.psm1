@@ -306,20 +306,20 @@ function Get-HandlerSettings
 
 <#
 .Synopsis
-   Create a new file in the agent folder to indicate that an extension update is going on. This is to prevent
+   Create a new file in the given folder to indicate that an extension update is going on. This is to prevent
    subsequent uninstall and install from reconfiguring the agent
 #>
 function Set-ExtensionUpdateFile
 {
     [CmdletBinding()]
     param
-    ()
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
 
     . $PSScriptRoot\Constants.ps1
-
     try
     {
-        New-Item -ItemType File -Path "$agentWorkingFolder\$updateFileName" -Value "" -Force > $null
+        New-Item -ItemType File -Path "$workingFolder\$updateFileName" -Value "" -Force  > $null
     }
     catch
     {}
@@ -327,7 +327,54 @@ function Set-ExtensionUpdateFile
 
 <#
 .Synopsis
-   Save current sequence number as last used sequence number. This information is saved in a file
+   Removes the extension update file from the given folder
+#>
+function Remove-ExtensionUpdateFile
+{
+    [CmdletBinding()]
+    param
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
+
+    . $PSScriptRoot\Constants.ps1
+    try
+    {
+        Remove-Item -Path "$workingFolder\$updateFileName" -Force
+    }
+    catch
+    {}
+}
+
+<#
+.Synopsis
+   Tests whether markup file for extension update scenario exists or not.
+#>
+function Test-ExtensionUpdateFile
+{
+    [CmdletBinding()]
+    param
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
+
+    . $PSScriptRoot\Constants.ps1
+    $updateFile = "$workingFolder\$updateFileName"
+
+    Write-Log "Testing whether extension update file exists: $updateFile"
+
+    try
+    {
+        return Test-Path $updateFile
+    }
+    catch
+    {}
+
+    return $false
+}
+
+<#
+.Synopsis
+   Save current sequence number as last used sequence number.
+   This information is saved in a file in the current directory
 #>
 function Set-LastSequenceNumber
 {
@@ -373,29 +420,61 @@ function Get-LastSequenceNumber
 
 <#
 .Synopsis
-   Create a file in the agent root directory with the contents copied from the settings file. Settings
-   file contents are taken to handle extension update scenario.
+   Create a file in the given folder. Copy the settings file contents if the settings file number has 
+   been written in LASTSEQNUM to indicate a successful enable.
+   Settings file contents are taken to handle extension update scenario.
 #>
 function Set-ExtensionDisabledMarkup
 {
     [CmdletBinding()]
     param
-    ()
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
 
     . $PSScriptRoot\Constants.ps1
-    $markupFile = "$agentWorkingFolder\$disabledMarkupFile"
+    $markupFile = "$workingFolder\$disabledMarkupFile"
     $handlerEnvironment = Get-HandlerEnvironment
     $sequenceNumber = Get-HandlerExecutionSequenceNumber
-    $extensionSettingsFile = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
+    $lastSequenceNumber = Get-LastSequenceNumber
+
+    if($sequenceNumber -eq $lastSequenceNumber)
+    {
+        $extensionSettingsFile = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
+
+        try
+        {
+            Write-Log "Writing contents of $extensionSettingsFile to $markupFile"
+            Get-Content -Path $extensionSettingsFile | Set-Content -Path $markupFile -Force
+        }
+        catch
+        {
+            Write-Log "Error while creating $markupFile or writing to it."
+        }
+    }
+}
+
+<#
+.Synopsis
+   Fetches the contents from the disabled markup file and returns it as a string
+#>
+function Get-ExtensionDisabledMarkup
+{
+    [CmdletBinding()]
+    param
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
+
+    . $PSScriptRoot\Constants.ps1
+    $markupFile = "$workingFolder\$disabledMarkupFile"
 
     try
     {
-        Write-Log "Writing contents of $extensionSettingsFile to $markupFile"
-        Get-Content -Path $extensionSettingsFile | Set-Content -Path $markupFile -Force
+        Write-Log "Fetching contents of $markupFile"
+        Get-Content -Path $markupFile
     }
     catch
     {
-        Write-Log "Error while creating $markupFile or writing to it."
+        Write-Log "Error while fetching contents of  $markupFile."
     }
 }
 
@@ -407,10 +486,11 @@ function Remove-ExtensionDisabledMarkup
 {
     [CmdletBinding()]
     param
-    ()
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
 
     . $PSScriptRoot\Constants.ps1
-    $markupFile = "$agentWorkingFolder\$disabledMarkupFile"
+    $markupFile = "$workingFolder\$disabledMarkupFile"
 
     Write-Log "Deleting disabled markup file $markupFile"
 
@@ -430,10 +510,11 @@ function Test-ExtensionDisabledMarkup
 {
     [CmdletBinding()]
     param
-    ()
+    ([Parameter(Mandatory=$true, Position=0)]
+    [string] $workingFolder)
 
     . $PSScriptRoot\Constants.ps1
-    $markupFile = "$agentWorkingFolder\$disabledMarkupFile"
+    $markupFile = "$workingFolder\$disabledMarkupFile"
 
     Write-Log "Testing whether deleted markup file exists: $markupFile"
 
@@ -1014,7 +1095,9 @@ Export-ModuleMember `
         Set-LastSequenceNumber, `
         Get-LastSequenceNumber, `
         Set-ExtensionDisabledMarkup, `
+        Get-ExtensionDisabledMarkup, `
         Remove-ExtensionDisabledMarkup, `
         Test-ExtensionDisabledMarkup, `
         Set-JsonContent, `
-        Set-ExtensionUpdateFile
+        Set-ExtensionUpdateFile, `
+        Remove-ExtensionUpdateFile

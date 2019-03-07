@@ -74,6 +74,29 @@ DateTimeFormat = "%Y-%m-%dT%H:%M:%SZ"
 MANIFEST_XML = "manifest.xml"
 include_warning_status = False
 
+class HandlerStatus:
+    operation = ''
+    code = None
+    message = None
+    status = 'transitioning'
+    operation_name = None
+    sub_status = 'success'
+    ss_code = None
+    sub_status_message = None
+
+    def __init__(self, operation):
+        if type(RMExtensionStatus.rm_extension_status[operation]) is not dict:
+            return
+
+        if 'Code' in RMExtensionStatus.rm_extension_status[operation]:
+            self.ss_code = RMExtensionStatus.rm_extension_status[operation]['Code']
+        
+        if 'Message' in RMExtensionStatus.rm_extension_status[operation]:
+            self.sub_status_message = RMExtensionStatus.rm_extension_status[operation]['Message']
+        
+        if 'operationName' in RMExtensionStatus.rm_extension_status[operation]:
+            self.operation_name = RMExtensionStatus.rm_extension_status[operation]['operationName']
+
 class HandlerContext:
     def __init__(self,name):
         self._name = name
@@ -365,54 +388,54 @@ class HandlerUtility:
         self.log("Clearing status file " + status_file)
         open(status_file, 'w').close()
 
-    def set_handler_status(self, operation = '', code=None, message=None, status = 'transitioning', operation_name = None, sub_status = 'success', ss_code = None, sub_status_message = None):
+    def set_handler_status(self, handler_status):
         global include_warning_status
         status_file = '{0}/{1}.status'.format(self._context._status_dir, self._context._seq_no)
         #handlerUtility.log("Setting handler status to '{0}' ({1})".format(status, message))
         #to do correctr time, correct time format
-        if(code != None and include_warning_status):
-            message = message + RMExtensionStatus.rm_extension_status['AgentUnConfigureFailWarning']
+        if(handler_status.code != None and include_warning_status):
+            handler_status.message = handler_status.message + RMExtensionStatus.rm_extension_status['AgentUnConfigureFailWarning']
         timestamp_utc = time.strftime(DateTimeFormat, time.gmtime())
         if(os.path.isfile(status_file) and os.stat(status_file).st_size != 0):
             status_file_contents = waagent.GetFileContents(status_file)
             status_list = json.loads(status_file_contents)
             status_object = status_list[0]
             sub_status_list = status_object['status']['substatus']
-            if(code != None):
-                self.log("Setting handler message to '{0}'".format(message))
-                status_object['status']['formattedMessage']['message'] = message
-                self.log("Setting handler status to '{0}'".format(status))
-                status_object['status']['status'] = status
-                self.log("Setting handler code to '{0}'".format(code))
-                status_object['status']['operation'] = operation
-                status_object['status']['code'] = code
+            if(handler_status.code != None):
+                self.log("Setting handler message to '{0}'".format(handler_status.message))
+                status_object['status']['formattedMessage']['message'] = handler_status.message
+                self.log("Setting handler status to '{0}'".format(handler_status.status))
+                status_object['status']['status'] = handler_status.status
+                self.log("Setting handler code to '{0}'".format(handler_status.code))
+                status_object['status']['operation'] = handler_status.operation
+                status_object['status']['code'] = handler_status.code
                 status_object['timestampUTC'] = timestamp_utc
                 status_object['status']['configurationAppliedTime'] = timestamp_utc
-            elif(ss_code != None):
+            elif(handler_status.ss_code != None):
                 self.log("Appending sub status")
-                new_msg = {'lang' : 'eng-US', 'message' : sub_status_message}
-                new_item = {'name' : operation_name, 'code' : ss_code, 'status' : sub_status, 'formattedMessage' : new_msg}
+                new_msg = {'lang' : 'eng-US', 'message' : handler_status.sub_status_message}
+                new_item = {'name' : handler_status.operation_name, 'code' : handler_status.ss_code, 'status' : handler_status.sub_status, 'formattedMessage' : new_msg}
                 sub_status_list.append(new_item)
         else:
             status_list = [{
                 'status' : {
                     'formattedMessage' : {
-                        'message' : message,
+                        'message' : handler_status.message,
                         'lang' : 'en-US'
                     },
                     'name' : self._context._name,
-                    'operation' : operation,
-                    'status' : status,
-                    'code' : code,
+                    'operation' : handler_status.operation,
+                    'status' : handler_status.status,
+                    'code' : handler_status.code,
                     'substatus' : [],
                     'configurationAppliedTime' : timestamp_utc
                 },
                 'version' : self._context._version,
                 'timestampUTC' : timestamp_utc
             }]
-            if(ss_code != None):
+            if(handler_status.ss_code != None):
                 self.log("Appending sub status")
-                status_list[0]['status']['substatus'].append({'name' : operation_name, 'code' : ss_code, 'status' : sub_status, 'formattedMessage' : {'lang' : 'eng-US', 'message' : sub_status_message}})
+                status_list[0]['status']['substatus'].append({'name' : handler_status.operation_name, 'code' : handler_status.ss_code, 'status' : handler_status.sub_status, 'formattedMessage' : {'lang' : 'eng-US', 'message' : handler_status.sub_status_message}})
         new_contents = json.dumps(status_list)
         waagent.SetFileContents(status_file, new_contents)
  
@@ -432,8 +455,18 @@ class HandlerUtility:
         else:
             error_status_message = 'The Extension failed to execute: {0}'.format(e.message)
             error_sub_status_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(e.message, self._context._log_dir)
-        self.set_handler_status(operation = operation, code = error_code, message = error_status_message, status = 'error')
-        self.set_handler_status(operation = operation, ss_code = error_code, sub_status_message = error_sub_status_message, sub_status = 'error', operation_name = operation_name)
+        
+        handler_status = HandlerStatus(operation_name)
+        handler_status.operation = operation
+        handler_status.code = error_code
+        handler_status.message = error_status_message
+        handler_status.status = 'error'
+        self.set_handler_status(handler_status)
+
+        handler_status.sub_status_message = error_sub_status_message
+        handler_status.sub_status = 'error'
+        handler_status.operation_name = operation_name
+        self.set_handler_status(handler_status)
 
     def get_os_version(self):
         value = platform.uname()[4]

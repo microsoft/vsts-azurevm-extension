@@ -144,10 +144,8 @@ def pre_validation_checks(operation):
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreValidationCheck']['operationName'], operation, Constants.ERROR_MISSING_DEPENDENCY)
 
-  ss_code = RMExtensionStatus.rm_extension_status['PreValidationCheckSuccess']['Code']
-  sub_status_message = RMExtensionStatus.rm_extension_status['PreValidationCheckSuccess']['Message']
-  operation_name = RMExtensionStatus.rm_extension_status['PreValidationCheckSuccess']['operationName']
-  handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+  handler_status = Util.HandlerStatus('PreValidationCheckSuccess')
+  handler_utility.set_handler_status(handler_status)
 
 def install_dependencies():
   global config
@@ -171,19 +169,17 @@ def start_rm_extension_handler(operation):
     if((sequence_number == last_sequence_number) and not(test_extension_disabled_markup())):
       handler_utility.log(RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'])
       handler_utility.log('Current sequence number : {0}, last sequence number : {1}'.format(sequence_number, last_sequence_number))
-      ss_code = RMExtensionStatus.rm_extension_status['SkippedInstallation']['Code']
-      sub_status_message = RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message']
-      operation_name = RMExtensionStatus.rm_extension_status['SkippedInstallation']['operationName']
-      handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+      handler_status = Util.HandlerStatus('SkippedInstallation')
+      handler_utility.set_handler_status(handler_status)
       exit_with_code_zero()
     handler_utility.clear_status_file()
-    code = RMExtensionStatus.rm_extension_status['Installing']['Code']
-    message = RMExtensionStatus.rm_extension_status['Installing']['Message']
-    handler_utility.set_handler_status(operation = operation, code = code, message = message)
-    ss_code = RMExtensionStatus.rm_extension_status['Initialized']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['Initialized']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['Initialized']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+
+    handler_status = Util.HandlerStatus('Installing')
+    handler_status.operation = operation
+    handler_utility.set_handler_status(handler_status)
+
+    handler_status = Util.HandlerStatus('Initialized')
+    handler_utility.set_handler_status(handler_status)
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'], operation, 1)
 
@@ -299,10 +295,8 @@ def validate_inputs(operation):
 
     handler_utility.log("Done validating inputs...")
 
-    ss_code = RMExtensionStatus.rm_extension_status['SuccessfulInputValidation']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['SuccessfulInputValidation']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['SuccessfulInputValidation']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    handler_status = Util.HandlerStatus('SuccessfulInputValidation')
+    handler_utility.set_handler_status(handler_status)
 
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['InputValidation']['operationName'], operation, Constants.ERROR_CONFIGURATION)
@@ -367,10 +361,9 @@ def read_configutation_from_settings(operation):
       configure_agent_as_username = public_settings['UserName']
 
     handler_utility.log('Done reading config settings from file...')
-    ss_code = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['SuccessfullyReadSettings']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    
+    handler_status = Util.HandlerStatus('SuccessfullyReadSettings')
+    handler_utility.set_handler_status(handler_status)
     config = {
              'VSTSUrl':vsts_url,
              'PATToken':pat_token, 
@@ -387,34 +380,30 @@ def read_configutation_from_settings(operation):
 def test_configured_agent_exists(operation):
   global configured_agent_exists, config
   try:
-    ss_code = RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    handler_status = Util.HandlerStatus('PreCheckingDeploymentAgent')
+    handler_utility.set_handler_status(handler_status)
+    
     handler_utility.log('Invoking function to pre-check agent configuration...')
     configured_agent_exists = ConfigureDeploymentAgent.is_agent_configured(config['AgentWorkingFolder'])
     handler_utility.log('Done pre-checking agent configuration')
-    ss_code = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['PreCheckedDeploymentAgent']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    
+    handler_status = Util.HandlerStatus('PreCheckedDeploymentAgent')
+    handler_utility.set_handler_status(handler_status)
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName'], operation, 3)
 
 def test_agent_configuration_required():
   global config
   try:
-    ss_code = RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    handler_status = Util.HandlerStatus('CheckingAgentReConfigurationRequired')
+    handler_utility.set_handler_status(handler_status)
     handler_utility.log('Invoking script to check existing agent settings with given configuration settings...')
     config_required = ConfigureDeploymentAgent.is_agent_configuration_required(config['VSTSUrl'], config['PATToken'], \
                       config['DeploymentGroup'], config['TeamProject'], config['AgentWorkingFolder'])
-    ss_code = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['AgentReConfigurationRequiredChecked']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    
+    handler_status = Util.HandlerStatus('AgentReConfigurationRequiredChecked')
+    handler_utility.set_handler_status(handler_status)
+    
     handler_utility.log('Done pre-checking for agent re-configuration, AgentReconfigurationRequired : {0}'.format(config_required))
     return config_required
   except Exception as e:
@@ -429,18 +418,16 @@ def execute_agent_pre_check():
 def get_agent():
   global config
   try:
-    ss_code = RMExtensionStatus.rm_extension_status['DownloadingDeploymentAgent']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['DownloadingDeploymentAgent']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['DownloadingDeploymentAgent']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    handler_status = Util.HandlerStatus('DownloadingDeploymentAgent')
+    handler_utility.set_handler_status(handler_status)
+    
     handler_utility.log('Invoking function to download Deployment agent package...')
     DownloadDeploymentAgent.download_deployment_agent(config['VSTSUrl'], '', config['PATToken'], \
     config['AgentWorkingFolder'])
     handler_utility.log('Done downloading Deployment agent package...')
-    ss_code = RMExtensionStatus.rm_extension_status['DownloadedDeploymentAgent']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['DownloadedDeploymentAgent']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['DownloadedDeploymentAgent']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+
+    handler_status = Util.HandlerStatus('DownloadedDeploymentAgent')
+    handler_utility.set_handler_status(handler_status)
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DownloadingDeploymentAgent']['operationName'], 'Enable', 5)
 
@@ -450,30 +437,27 @@ def download_agent_if_required():
     get_agent()
   else:
     handler_utility.log('Skipping agent download as agent already exists.')
-    ss_code = RMExtensionStatus.rm_extension_status['SkippingDownloadDeploymentAgent']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['SkippingDownloadDeploymentAgent']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['SkippingDownloadDeploymentAgent']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-  
+    
+    handler_status = Util.HandlerStatus('SkippingDownloadDeploymentAgent')
+    handler_utility.set_handler_status(handler_status)
 
 def register_agent():
   global config, configured_agent_exists
   try:
-    ss_code = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    
+    handler_status = Util.HandlerStatus('ConfiguringDeploymentAgent')
+    handler_utility.set_handler_status(handler_status)
     handler_utility.log('Configuring Deployment agent...')
     ConfigureDeploymentAgent.configure_agent(config['VSTSUrl'], config['PATToken'], config['TeamProject'], \
       config['DeploymentGroup'], config['ConfigureAgentAsUserName'], config['AgentName'], config['AgentWorkingFolder'])
     handler_utility.log('Done configuring Deployment agent')
-    ss_code = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['ConfiguredDeploymentAgent']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-    code = RMExtensionStatus.rm_extension_status['Installed']['Code']
-    message = RMExtensionStatus.rm_extension_status['Installed']['Message']
-    handler_utility.set_handler_status(operation = 'Enable', code = code, message = message)
+    
+    handler_status = Util.HandlerStatus('ConfiguredDeploymentAgent')
+    handler_utility.set_handler_status(handler_status)
+    
+    handler_status = Util.HandlerStatus('Installed')
+    handler_status.operation = Constants.ENABLE
+    handler_utility.set_handler_status(handler_status)
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName'], 'Enable', 6)
 
@@ -483,18 +467,18 @@ def remove_existing_agent(operation):
     handler_utility.log('Agent removal started')
     try:
       ConfigureDeploymentAgent.remove_existing_agent(config['PATToken'], config['AgentWorkingFolder'])
-      ss_code = RMExtensionStatus.rm_extension_status['RemovedAgent']['Code']
-      sub_status_message = RMExtensionStatus.rm_extension_status['RemovedAgent']['Message']
-      operation_name = RMExtensionStatus.rm_extension_status['RemovedAgent']['operationName']
-      handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+      
+      handler_status = Util.HandlerStatus('RemovedAgent')
+      handler_utility.set_handler_status(handler_status)
       DownloadDeploymentAgent.clean_agent_folder()
     except Exception as e:
       if(('Reason' in dir(e) and getattr(e, 'Reason') == 'UnConfigFailed') and (os.access(config['AgentWorkingFolder'], os.F_OK))):
         agent_name = ConfigureDeploymentAgent.get_agent_setting(config['AgentWorkingFolder'], 'agentName')
-        ss_code = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['Code']
-        sub_status_message = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['Message'].format(agent_name)
-        operation_name = RMExtensionStatus.rm_extension_status['UnConfiguringDeploymentAgentFailed']['operationName']
-        handler_utility.set_handler_status(ss_code = ss_code, sub_status = 'warning', sub_status_message = sub_status_message, operation_name = operation_name)
+        
+        handler_status = Util.HandlerStatus('UnConfiguringDeploymentAgentFailed')
+        handler_status.message.format(agent_name)
+        handler_utility.set_handler_status(handler_status)
+
         DownloadDeploymentAgent.clean_agent_folder()
       else:
         raise e
@@ -514,32 +498,32 @@ def configure_agent_if_required():
   if(agent_configuration_required):
     register_agent()
   else:
-    ss_code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-    code = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Code']
-    message = RMExtensionStatus.rm_extension_status['SkippingAgentConfiguration']['Message']
-    handler_utility.set_handler_status(operation = 'Enable', code = code, message = message) 
+    handler_status = Util.HandlerStatus('SkippingAgentConfiguration')
+    handler_utility.set_handler_status(handler_status)
+
+    handler_status = Util.HandlerStatus('SkippingAgentConfiguration')
+    handler_status.operation = Constants.ENABLE
+    handler_status.operation_name = None
+    handler_utility.set_handler_status(handler_status) 
 
 def add_agent_tags():
-  ss_code = RMExtensionStatus.rm_extension_status['AddingAgentTags']['Code']
-  sub_status_message = RMExtensionStatus.rm_extension_status['AddingAgentTags']['Message']
-  operation_name = RMExtensionStatus.rm_extension_status['AddingAgentTags']['operationName']
-  handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+
+  handler_status = Util.HandlerStatus('AddingAgentTags')
+  handler_utility.set_handler_status(handler_status)
   if(config['Tags'] !=None and len(config['Tags']) > 0):
     handler_utility.log('Adding tags to configured agent - {0}'.format(str(config['Tags'])))
     try:
       tags_string = json.dumps(config['Tags'], ensure_ascii = False)
       ConfigureDeploymentAgent.add_agent_tags(config['VSTSUrl'], config['TeamProject'], \
       config['PATToken'], config['AgentWorkingFolder'], tags_string)
-      ss_code = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Code']
-      sub_status_message = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Message']
-      operation_name = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName']
-      handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-      code = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Code']
-      message = RMExtensionStatus.rm_extension_status['AgentTagsAdded']['Message']
-      handler_utility.set_handler_status(operation = 'Enable', code = code, message = message)
+      
+      handler_status = Util.HandlerStatus('AgentTagsAdded')
+      handler_utility.set_handler_status(handler_status)
+
+      handler_status = Util.HandlerStatus('AgentTagsAdded')
+      handler_status.operation = Constants.ENABLE
+      handler_status.operation_name = None
+      handler_utility.set_handler_status(handler_status)
     except Exception as e:
       set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName'], 'Enable', 8)
   else:
@@ -581,10 +565,9 @@ def enable():
   read_configutation_from_settings(input_operation)
   if(test_extension_settings_are_same_as_previous_version(input_operation)):
     handler_utility.log("Skipping extension enable.")
-    ss_code = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Code']
-    sub_status_message = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Message']
-    operation_name = RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['operationName']
-    handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
+    
+    handler_status = Util.HandlerStatus('SkippingEnableSameSettingsAsPreviousVersion')
+    handler_utility.set_handler_status(handler_status)
   else:
     validate_inputs(input_operation)
     ConfigureDeploymentAgent.set_logger(handler_utility.log)
@@ -597,9 +580,12 @@ def enable():
     add_agent_tags()
     handler_utility.log('Extension is enabled.')
     handler_utility.log('Removing disable markup file..')
-  code = RMExtensionStatus.rm_extension_status['Enabled']['Code']
-  message = RMExtensionStatus.rm_extension_status['Enabled']['Message']
-  handler_utility.set_handler_status(operation = 'Enable', code = code, status = 'success', message = message)
+  
+  handler_status = Util.HandlerStatus('Enabled')
+  handler_status.operation = Constants.ENABLE
+  handler_status.operation_name = None
+  handler_utility.set_handler_status(handler_status)
+
   set_last_sequence_number()
   remove_extension_disabled_markup()
 
@@ -608,13 +594,13 @@ def disable():
   handler_utility.log('Disable command is no-op for agent')
   handler_utility.log('Creating a markup file...')
   set_extension_disabled_markup()
-  ss_code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
-  sub_status_message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
-  operation_name = RMExtensionStatus.rm_extension_status['Disabled']['operationName']
-  handler_utility.set_handler_status(ss_code = ss_code, sub_status_message = sub_status_message, operation_name = operation_name)
-  code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
-  message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
-  handler_utility.set_handler_status(operation = 'Disable', code = code, status = 'success', message = message)
+  
+  handler_status = Util.HandlerStatus('Disabled')
+  handler_utility.set_handler_status(handler_status)
+  
+  handler_status.operation_name = None
+  handler_status.operation = Constants.DISABLE
+  handler_utility.set_handler_status(handler_status)
 
 def uninstall():
   global config
@@ -631,7 +617,12 @@ def uninstall():
     os.remove(extension_update_file)
   code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
   message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']
-  handler_utility.set_handler_status(operation = operation, code = code, status = 'success', message = message)
+  
+  handler_status = Util.HandlerStatus('Uninstalling')
+  handler_status.operation = Constants.DISABLE
+  handler_status.operation_name = None
+  handler_status.status = 'success'
+  handler_utility.set_handler_status(handler_status)
 
 def update():
   create_extension_update_file()

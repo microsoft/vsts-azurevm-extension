@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+import sys
+sys.path.append('..')
+import Constants as Constants
+
 rm_terminating_error_id = 'RMHandlerTerminatingError'
 
 rm_extension_status = {
@@ -172,15 +176,15 @@ rm_extension_status = {
   'GenericError' : 1000, # The message for this error is provided by the specific exception
   'InstallError' : 1001, # The message for this error is provided by the specific exception
   'ArchitectureNotSupported' : {
-    'Code' : 51,
+    'Code' : Constants.ERROR_UNSUPPORTED_OS,
     'Message' : 'The current CPU architecture is not supported. Deployment agent requires x64 architecture.'
   },
   'PythonVersionNotSupported' : {
-    'Code' : 52,
+    'Code' : Constants.ERROR_MISSING_DEPENDENCY,
     'Message' : 'Installed Python version is {0}. Minimum required version is 2.6.'
   },
   'SystemdNotFound': {
-    'Code' : 52,
+    'Code' : Constants.ERROR_CONFIGURATION,
     'Message': 'Could not find systemd on the machine. Error message: {0}'
   },
   #

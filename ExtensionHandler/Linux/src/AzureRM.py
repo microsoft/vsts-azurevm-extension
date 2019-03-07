@@ -235,6 +235,10 @@ def validate_inputs(operation):
     inputs_validation_error_code = RMExtensionStatus.rm_extension_status['ArgumentError']
     unexpected_error_message = "Some unexpected error occured. Status code : {0}"
 
+    # Verify the deployment group exists and the PAT has the required(Deployment Groups - Read & manage) scope
+    # This is the first validation http call, so using Invoke-WebRequest instead of Invoke-RestMethod, because if the PAT provided is not a token at all(not even an unauthorized one) and some random value, then the call
+    # would redirect to sign in page and not throw an exception. So, to handle this case.
+
     error_message_initial_part = "Could not verify that the deployment group '" + config['DeploymentGroup'] + "' exists in the project '" + config['TeamProject'] + "' in the specified organization. {0} {1}. "
     specific_error_message = ""
     deployment_url = "{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}".format(config['VSTSUrl'], config['TeamProject'], config['DeploymentGroup'], Constants.projectAPIVersion)
@@ -251,7 +255,7 @@ def validate_inputs(operation):
       elif(response.status == Constants.HTTP_UNAUTHORIZED):
         specific_error_message = invalid_pat_error_message
       elif(response.status == Constants.HTTP_FORBIDDEN):
-        specific_error_message = "Please ensure that the user has 'View project-level information' permissions on the project {0}.".format(config['TeamProject'])
+        specific_error_message = "Please ensure that the user has 'View project-level information' permissions on the project '{0}'.".format(config['TeamProject'])
       elif(response.status == Constants.HTTP_NOTFOUND):
         specific_error_message = "Please make sure that you enter the correct organization name and verify that the project exists in the organization."
       else:
@@ -292,10 +296,10 @@ def validate_inputs(operation):
 
     handler_utility.log("Done validating inputs...")
 
-    handler_utility.set_handler_status(Util.HandlerStatus('SuccessfulInputValidation'))
+    handler_utility.set_handler_status(Util.HandlerStatus('SuccessfullyValidatedInputs'))
 
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['InputValidation']['operationName'], operation, Constants.ERROR_CONFIGURATION)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ValidatingInputs']['operationName'], operation, Constants.ERROR_CONFIGURATION)
 
 def read_configutation_from_settings(operation):
   global config

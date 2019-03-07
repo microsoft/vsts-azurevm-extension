@@ -140,25 +140,25 @@ rm_extension_status = {
     'Message' : 'The extension settings are the same as the previous version. Skipping extension enable.',
     'operationName' : 'Skip enable'
   },
-  'InputValidation': {
+  'ValidatingInputs': {
     'Code' : 29,
     'Message': 'Validating Inputs',
-    'operationName': 'InputValidation'
+    'operationName': 'Inputs validation'
   },
-  'SuccessfulInputValidation' : {
+  'SuccessfullyValidatedInputs' : {
     'Code' : 30,
-    'Message' : 'Successfully validated the inputs',
-    'operationName': 'InputValidationSuccess'
+    'Message' : 'Successfully validated inputs',
+    'operationName': 'Inputs validation'
   },
   'PreValidationCheck': {
     'Code': 31,
     'Message': 'Validating dependecies',
-    'operationName': 'PreValidationCheck'
+    'operationName': 'Pre-Validation Checks'
   },
   'PreValidationCheckSuccess': {
     'Code': 32,
     'Message': 'Successfully validated dependecies',
-    'operationName': 'PreValidationCheckSuccess'
+    'operationName': 'Pre-Validation Checks'
   },
   'ComparingWithPreviousSettings': {
     'Code': 33,
@@ -184,13 +184,13 @@ rm_extension_status = {
     'Message' : 'Installed Python version is {0}. Minimum required version is 2.6.'
   },
   'SystemdNotFound': {
-    'Code' : Constants.ERROR_CONFIGURATION,
+    'Code' : Constants.ERROR_MISSING_DEPENDENCY,
     'Message': 'Could not find systemd on the machine. Error message: {0}'
   },
   #
   # ArgumentError indicates a problem in the input provided by the user. The message for the error is provided by the specific exception
   #
-  'ArgumentError' : 53,
+  'ArgumentError' : Constants.ERROR_CONFIGURATION,
   'AgentUnConfigureFailWarning' : 'There are some warnings in uninstalling the already existing agent. Check \"Detailed Status\" for more details.'
 }
 

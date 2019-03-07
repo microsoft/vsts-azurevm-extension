@@ -133,7 +133,7 @@ function Confirm-InputsAreValid {
 
     try
     {
-        $invaidPATErrorMessage = "Please make sure that the Personal Access Token entered is valid and has `"Deployment Groups - Read & manage`" scope."
+        $invaidPATErrorMessage = "Please make sure that the Personal Access Token entered is valid and has `"Deployment Groups - Read & manage`" scope"
         $inputsValidationErrorCode = $RM_Extension_Status.ArgumentError
         $unexpectedErrorMessage = "Some unexpected error occured."
 
@@ -141,7 +141,7 @@ function Confirm-InputsAreValid {
         #This is the first validation http call, so using Invoke-WebRequest instead of Invoke-RestMethod, because if the PAT provided is not a token at all(not even an unauthorized one) and some random value, then the call
         #would redirect to sign in page and not throw an exception. So, to handle this case.
 
-        $errorMessageInitialPart = ("Could not verify that the deployment group `"$($config.DeploymentGroup)`" exists in the project `"$($config.TeamProject)`" in the specified organization: {0} {1}. ")
+        $errorMessageInitialPart = ("Could not verify that the deployment group `"$($config.DeploymentGroup)`" exists in the project `"$($config.TeamProject)`" in the specified organization `"$($config.VSTSUrl)`". Status: {0}. Error: {1}")
         $getDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroup, $projectAPIVersion)
         Write-Log "Url to check deployment group exists - $getDeploymentGroupUrl"
         $deploymentGroupData = @{}
@@ -160,11 +160,11 @@ function Confirm-InputsAreValid {
                 }
                 403
                 {
-                    $specificErrorMessage = ("Please ensure that the user has `"View project-level information`" permissions on the project `"{0}`"." -f $config.TeamProject)
+                    $specificErrorMessage = ("Please ensure that the user has `"View project-level information`" permissions on the project `"{0}`"" -f $config.TeamProject)
                 }
                 404
                 {
-                    $specificErrorMessage = "Please make sure that you enter the correct organization name and verify that the project exists in the organization."
+                    $specificErrorMessage = "Please make sure that you enter the correct organization name and verify that the project exists in the organization"
                 }
                 default
                 {
@@ -172,19 +172,19 @@ function Confirm-InputsAreValid {
                     $inputsValidationErrorCode = $RM_Extension_Status.GenericError
                 }
             }
-            throw New-HandlerTerminatingError $inputsValidationErrorCode -Message (($errorMessageInitialPart -f $($_.Exception.Response.StatusCode.value__), $($_.Exception.Response.StatusDescription)) + $specificErrorMessage)
+            throw New-HandlerTerminatingError $inputsValidationErrorCode -Message ($errorMessageInitialPart -f $($_.Exception.Response.StatusCode.value__), $specificErrorMessage)
         }
         $statusCode = $ret.StatusCode
         if($statusCode -eq 302)
         {
             $specificErrorMessage = $invaidPATErrorMessage
-            throw New-HandlerTerminatingError $inputsValidationErrorCode -Message (($errorMessageInitialPart -f $statusCode, "Redirected") + $specificErrorMessage)
+            throw New-HandlerTerminatingError $inputsValidationErrorCode -Message ($errorMessageInitialPart -f $statusCode, $specificErrorMessage)
         }
         $ret = $ret.Content | ConvertFrom-Json
         if($ret.count -eq 0)
         {
-            $specificErrorMessage = ("Please make sure that the deployment group `"{0}`" exists in the project `"{1}`", and the user has `"Manage`" permissions on the deployment group." -f $config.DeploymentGroup, $config.TeamProject)
-            throw New-HandlerTerminatingError $inputsValidationErrorCode -Message (($errorMessageInitialPart -f $statusCode, "Not Found") + $specificErrorMessage)
+            $specificErrorMessage = ("Please make sure that the deployment group `"{0}`" exists in the project `"{1}`", and the user has `"Manage`" permissions on the deployment group" -f $config.DeploymentGroup, $config.TeamProject)
+            throw New-HandlerTerminatingError $inputsValidationErrorCode -Message ($errorMessageInitialPart -f $statusCode, $specificErrorMessage)
         }
 
         $deploymentGroupData = $ret.value[0]
@@ -213,7 +213,7 @@ function Confirm-InputsAreValid {
                     $inputsValidationErrorCode = $RM_Extension_Status.GenericError
                 }
             }
-            throw New-HandlerTerminatingError $inputsValidationErrorCode -Message (($errorMessageInitialPart -f $($_.Exception.Response.StatusCode.value__), $($_.Exception.Response.StatusDescription)) + $specificErrorMessage)
+            throw New-HandlerTerminatingError $inputsValidationErrorCode -Message ($errorMessageInitialPart -f $($_.Exception.Response.StatusCode.value__), $specificErrorMessage)
         }
         Write-Log ("Validated that the user has `"Manage`" permissions on the deployment group {0}" -f $config.DeploymentGroup)
 
@@ -325,7 +325,7 @@ function Format-TagsInput {
     }
     elseif($tagsInput.GetType().Name -eq "String")
     {
-        $tags = $tagsInput.Split(',', [System.StringSplitOptions]::RemoveEmptyEntries).trim()
+        $tags = $tagsInput.Split(',', [System.StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object -Process { $_.Trim() }
     }
     else
     {

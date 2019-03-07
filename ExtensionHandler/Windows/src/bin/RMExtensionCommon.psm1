@@ -51,6 +51,7 @@ function Remove-Agent {
     )
     try
     {
+        . $PSScriptRoot\Constants.ps1
         Write-Log "Remove-Agent command started"
         try{
             Invoke-RemoveAgentScript $config

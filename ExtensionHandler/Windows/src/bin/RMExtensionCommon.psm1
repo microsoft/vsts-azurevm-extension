@@ -132,19 +132,26 @@ function Clean-AgentWorkingFolder {
     #Clean old agent working folder only if other agents are not configured recursively
     if($config.AgentWorkingFolder -eq $agentWorkingFolderOld)
     {
-        if (Test-Path $config.AgentWorkingFolder)
+        try
         {
-            $configuredAgentsIfAny = Get-ChildItem -Path $config.AgentWorkingFolder -Filter ".agent" -Recurse -Force
-            if (!$configuredAgentsIfAny)
+            if (Test-Path $config.AgentWorkingFolder)
             {
-                Write-Log "Trying to remove the agent folder $($config.AgentWorkingFolder)"
-                Remove-Item -Path $config.AgentWorkingFolder -ErrorAction Stop -Recurse -Force
-                Write-Log "Agent folder removed successfully"
+                $configuredAgentsIfAny = Get-ChildItem -Path $config.AgentWorkingFolder -Filter ".agent" -Recurse -Force
+                if (!$configuredAgentsIfAny)
+                {
+                    Write-Log "Trying to remove the agent folder $($config.AgentWorkingFolder)"
+                    Remove-Item -Path $config.AgentWorkingFolder -ErrorAction Stop -Recurse -Force
+                    Write-Log "Agent folder removed successfully"
+                }
+                else
+                {
+                    Write-Log "One or more agents are already configured at $($config.AgentWorkingFolder). Skipping folder removal."
+                }
             }
-            else
-            {
-                Write-Log "One or more agents are already configured at $($config.AgentWorkingFolder). Skipping folder removal."
-            }
+        }
+        catch
+        {
+            Write-Log "Some error occured while removing agent folder $($config.AgentWorkingFolder). More details: $_"
         }
     }
 
@@ -155,8 +162,11 @@ function Clean-AgentWorkingFolder {
         $configuredAgentsIfAny = Get-ChildItem -Path $config.AgentWorkingFolder -Filter ".agent" -Recurse -Force
         if ($configuredAgentsIfAny)
         {
-            throw "Cannot remove the agent folder. One or more agents are already configured at $($config.AgentWorkingFolder).`
-            Unconfigure all the agents from the folder and all its subfolders and then try again."
+            $configuredAgentsPaths = ""
+            $configuredAgentsIfAny | % {$configuredAgentsPaths += " $($_.FullName),"}
+            $configuredAgentsPaths = $configuredAgentsPaths.Trim(',')
+            throw "Cannot remove the folder $($config.AgentWorkingFolder). Agent(s) are already configured at the following folders:$configuredAgentsPaths.`
+            Unconfigure these agents and then try again."
         }
         Write-Log "Trying to remove the agent folder $($config.AgentWorkingFolder)"
         Remove-Item -Path $config.AgentWorkingFolder -ErrorAction Stop -Recurse -Force

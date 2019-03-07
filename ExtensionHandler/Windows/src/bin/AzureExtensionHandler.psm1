@@ -1100,4 +1100,5 @@ Export-ModuleMember `
         Test-ExtensionDisabledMarkup, `
         Set-JsonContent, `
         Set-ExtensionUpdateFile, `
-        Remove-ExtensionUpdateFile
+        Remove-ExtensionUpdateFile, `
+        Test-ExtensionUpdateFile

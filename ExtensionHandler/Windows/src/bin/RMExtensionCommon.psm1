@@ -121,11 +121,29 @@ function Clean-AgentWorkingFolder {
     . $PSScriptRoot\Constants.ps1
     if (Test-Path $config.AgentWorkingFolder)
     {
-        Write-Log "Trying to remove the agent folder"
         $topLevelAgentFile = "$($config.AgentWorkingFolder)\.agent"
         if (Test-Path $topLevelAgentFile)
         {
             Remove-Item -Path $topLevelAgentFile -Force
+        }
+    }
+
+    #Clean old agent working folder only if other agents are not configured recursively
+    if($config.AgentWorkingFolder -eq $agentWorkingFolderOld)
+    {
+        if (Test-Path $config.AgentWorkingFolder)
+        {
+            $configuredAgentsIfAny = Get-ChildItem -Path $config.AgentWorkingFolder -Filter ".agent" -Recurse -Force
+            if (!$configuredAgentsIfAny)
+            {
+                Write-Log "Trying to remove the agent folder $($config.AgentWorkingFolder)"
+                Remove-Item -Path $config.AgentWorkingFolder -ErrorAction Stop -Recurse -Force
+                Write-Log "Agent folder removed successfully"
+            }
+            else
+            {
+                Write-Log "One or more agents are already configured at $($config.AgentWorkingFolder). Skipping folder removal."
+            }
         }
     }
 
@@ -139,7 +157,9 @@ function Clean-AgentWorkingFolder {
             throw "Cannot remove the agent folder. One or more agents are already configured at $($config.AgentWorkingFolder).`
             Unconfigure all the agents from the folder and all its subfolders and then try again."
         }
+        Write-Log "Trying to remove the agent folder $($config.AgentWorkingFolder)"
         Remove-Item -Path $config.AgentWorkingFolder -ErrorAction Stop -Recurse -Force
+        Write-Log "Agent folder removed successfully"
     }
 }
 

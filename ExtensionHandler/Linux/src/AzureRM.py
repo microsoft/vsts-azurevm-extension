@@ -239,7 +239,7 @@ def validate_inputs(operation):
     # This is the first validation http call, so using Invoke-WebRequest instead of Invoke-RestMethod, because if the PAT provided is not a token at all(not even an unauthorized one) and some random value, then the call
     # would redirect to sign in page and not throw an exception. So, to handle this case.
 
-    error_message_initial_part = "Could not verify that the deployment group '" + config['DeploymentGroup'] + "' exists in the project '" + config['TeamProject'] + "' in the specified organization. {0} {1}. "
+    error_message_initial_part = "Could not verify that the deployment group '" + config['DeploymentGroup'] + "' exists in the project '" + config['TeamProject'] + "' in the specified organization '" + config['VSTSUrl'] +"'. Status: {0} Error: {1}. "
     specific_error_message = ""
     deployment_url = "{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}".format(config['VSTSUrl'], config['TeamProject'], config['DeploymentGroup'], Constants.projectAPIVersion)
     

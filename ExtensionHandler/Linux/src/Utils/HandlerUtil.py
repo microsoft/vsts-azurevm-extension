@@ -460,15 +460,16 @@ class HandlerUtility:
             error_sub_status_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(e.message, self._context._log_dir)
         
         handler_status = HandlerStatus(operation_name)
+        handler_status.operation_name = None
         handler_status.operation = operation
         handler_status.code = error_code
         handler_status.message = error_status_message
         handler_status.status = 'error'
         self.set_handler_status(handler_status)
 
+        handler_status = HandlerStatus(operation_name)
         handler_status.sub_status_message = error_sub_status_message
         handler_status.sub_status = 'error'
-        handler_status.operation_name = operation_name
         self.set_handler_status(handler_status)
 
     def get_os_version(self):

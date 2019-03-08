@@ -136,13 +136,13 @@ def pre_validation_checks(operation):
   try:
     validate_os()
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreValidationCheck']['operationName'], operation, Constants.ERROR_UNSUPPORTED_OS)
+    set_error_status_and_error_exit(e, 'PreValidationCheck', operation, Constants.ERROR_UNSUPPORTED_OS)
   
   try:
     check_python_version()
     check_systemd_exists()
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreValidationCheck']['operationName'], operation, Constants.ERROR_MISSING_DEPENDENCY)
+    set_error_status_and_error_exit(e, 'PreValidationCheck', operation, Constants.ERROR_MISSING_DEPENDENCY)
 
   handler_utility.set_handler_status(Util.HandlerStatus('PreValidationCheckSuccess'))
 
@@ -178,7 +178,7 @@ def start_rm_extension_handler(operation):
 
     handler_utility.set_handler_status(Util.HandlerStatus('Initialized'))
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'], operation, 1)
+    set_error_status_and_error_exit(e, 'Initializing', operation, 1)
 
 def parse_account_name(account_name, pat_token): 
   vsts_url = account_name.strip('/')
@@ -299,7 +299,7 @@ def validate_inputs(operation):
     handler_utility.set_handler_status(Util.HandlerStatus('SuccessfullyValidatedInputs'))
 
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ValidatingInputs']['operationName'], operation, Constants.ERROR_CONFIGURATION)
+    set_error_status_and_error_exit(e, 'ValidatingInputs', operation, Constants.ERROR_CONFIGURATION)
 
 def read_configutation_from_settings(operation):
   global config
@@ -374,7 +374,7 @@ def read_configutation_from_settings(operation):
              'ConfigureAgentAsUserName': configure_agent_as_username
           }
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], operation, Constants.ERROR_CONFIGURATION)
+    set_error_status_and_error_exit(e, 'ReadingSettings', operation, Constants.ERROR_CONFIGURATION)
 
 def test_configured_agent_exists(operation):
   global configured_agent_exists, config
@@ -387,7 +387,7 @@ def test_configured_agent_exists(operation):
     
     handler_utility.set_handler_status(Util.HandlerStatus('PreCheckedDeploymentAgent'))
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreCheckingDeploymentAgent']['operationName'], operation, 3)
+    set_error_status_and_error_exit(e, 'PreCheckingDeploymentAgent', operation, 3)
 
 def test_agent_configuration_required():
   global config
@@ -402,7 +402,7 @@ def test_agent_configuration_required():
     handler_utility.log('Done pre-checking for agent re-configuration, AgentReconfigurationRequired : {0}'.format(config_required))
     return config_required
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['CheckingAgentReConfigurationRequired']['operationName'], Constants.ENABLE, 4)
+    set_error_status_and_error_exit(e, 'CheckingAgentReConfigurationRequired', Constants.ENABLE, 4)
 
 def execute_agent_pre_check():
   global configured_agent_exists, agent_configuration_required
@@ -449,7 +449,7 @@ def register_agent():
     handler_status.operation = Constants.ENABLE
     handler_utility.set_handler_status(handler_status)
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ConfiguringDeploymentAgent']['operationName'], Constants.ENABLE, 6)
+    set_error_status_and_error_exit(e, 'ConfiguringDeploymentAgent', Constants.ENABLE, 6)
 
 def remove_existing_agent(operation):
   global config
@@ -473,7 +473,7 @@ def remove_existing_agent(operation):
         raise e
     ConfigureDeploymentAgent.setting_params = {}
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['Uninstalling']['operationName'], operation, 7)
+    set_error_status_and_error_exit(e, 'Uninstalling', operation, 7)
 
 def remove_existing_agent_if_required():
   global configured_agent_exists, agent_configuration_required
@@ -509,7 +509,7 @@ def add_agent_tags():
       handler_status.operation_name = None
       handler_utility.set_handler_status(handler_status)
     except Exception as e:
-      set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['AgentTagsAdded']['operationName'], Constants.ENABLE, 8)
+      set_error_status_and_error_exit(e, 'AgentTagsAdded', Constants.ENABLE, 8)
   else:
     handler_utility.log('No tags provided for agent')
 
@@ -541,7 +541,7 @@ def test_extension_settings_are_same_as_previous_version(operation):
       handler_utility.log('Old extension settings file does not exist in the agent directory. Will continue with enable.')
     return False
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ComparingWithPreviousSettings']['operationName'], operation, 9)
+    set_error_status_and_error_exit(e, 'ComparingWithPreviousSettings', operation, 9)
 
 def enable():
   input_operation = Constants.ENABLE

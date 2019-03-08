@@ -85,6 +85,9 @@ class HandlerStatus:
     sub_status_message = None
 
     def __init__(self, operation):
+        if operation not in RMExtensionStatus.rm_extension_status:
+            return
+
         if type(RMExtensionStatus.rm_extension_status[operation]) is not dict:
             return
 

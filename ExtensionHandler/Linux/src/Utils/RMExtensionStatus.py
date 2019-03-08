@@ -1,8 +1,5 @@
 #!/usr/bin/python
-
-import sys
-sys.path.append('..')
-import Constants as Constants
+import Constants
 
 rm_terminating_error_id = 'RMHandlerTerminatingError'
 

@@ -2,7 +2,7 @@ import os
 import subprocess
 import json
 import platform
-import Constants
+import Utils.Constants as Constants
 import codecs
 import Utils.HandlerUtil as Util
 from pwd import getpwnam

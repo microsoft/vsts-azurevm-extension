@@ -16,7 +16,7 @@
   <PublicConfigurationSchema />
   <PrivateConfigurationSchema />
   <Description>Team Services agent for linux machine group machines</Description>
-  <IsInternalExtension>false</IsInternalExtension>
+  <IsInternalExtension>true</IsInternalExtension>
   <Eula>http://go.microsoft.com/fwlink/?LinkId=828975</Eula> 
   <PrivacyUri>http://www.microsoft.com/privacystatement/en-us/OnlineServices/Default.aspx</PrivacyUri> 
   <HomepageUri>https://www.visualstudio.com/products/visual-studio-team-services-vs</HomepageUri>

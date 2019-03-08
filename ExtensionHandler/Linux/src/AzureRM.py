@@ -465,7 +465,7 @@ def remove_existing_agent(operation):
         agent_name = ConfigureDeploymentAgent.get_agent_setting(config['AgentWorkingFolder'], 'agentName')
         
         handler_status = Util.HandlerStatus('UnConfiguringDeploymentAgentFailed')
-        handler_status.message.format(agent_name)
+        handler_status.sub_status_message.format(agent_name)
         handler_utility.set_handler_status(handler_status)
 
         DownloadDeploymentAgent.clean_agent_folder()

@@ -239,7 +239,7 @@ function Compare-SequenceNumber{
     }
     catch
     {
-        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ComparingWithPreviousSettings.operationName
+        Write-Log "Sequence number check failed" $true
     }
 }
 
@@ -304,7 +304,7 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
             $sequenceNumber = Get-HandlerExecutionSequenceNumber
             $extensionSettingsFilePath = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
             $oldExtensionPublicSettings = (Get-ExtensionDisabledMarkup $config.AgentWorkingFolder | ConvertFrom-Json).runtimeSettings[0].handlerSettings.publicSettings
-            $extensionPublicSettings = (Get-Content($extensionSettingsFilePath) | ConvertFrom-Json).runtimeSettings[0].handlerSettings.publicSettings
+            $extensionPublicSettings = (Get-JsonContent $extensionSettingsFilePath).runtimeSettings[0].handlerSettings.publicSettings
             $oldExtensionPublicSettingsPropertyNames = $oldExtensionPublicSettings.psobject.Properties | % {$_.Name}
             $extensionPublicSettingsPropertyNames = $extensionPublicSettings.psobject.Properties | % {$_.Name}
             $settingsSame = $false
@@ -338,7 +338,8 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
     }
     catch
     {
-        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ComparingWithPreviousSettings.operationName
+        Write-Log "Disabled settings check failed" $true
+        return $false
     }
 }
 

@@ -12,11 +12,10 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
 
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionCommon.psm1 -DisableNameChecking
-Import-Module $PSScriptRoot\Log.psm1
 
-Initialize-ExtensionLogFile
+#Not logging in update, because config settings are not yet received in update, and 
+#the log file logic requrires the sequence number.
 
 $agentWorkingFolder = Get-AgentWorkingFolder
-Write-Log "Agent working folder is $agentWorkingFolder. Placing the extension update file there."
 
 Set-ExtensionUpdateFile $agentWorkingFolder

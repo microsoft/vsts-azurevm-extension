@@ -410,7 +410,7 @@ function Get-LastSequenceNumber
 
     try
     {
-        return Get-Content $lastSeqFile
+        return (Get-Content $lastSeqFile | Out-String)
     }
     catch
     {}
@@ -444,7 +444,7 @@ function Set-ExtensionDisabledMarkup
         try
         {
             Write-Log "Writing contents of $extensionSettingsFile to $markupFile"
-            Get-Content -Path $extensionSettingsFile | Set-Content -Path $markupFile -Force
+            Get-Content -Path $extensionSettingsFile | Out-String | Set-Content -Path $markupFile -Force
         }
         catch
         {
@@ -470,7 +470,7 @@ function Get-ExtensionDisabledMarkup
     try
     {
         Write-Log "Fetching contents of $markupFile"
-        Get-Content -Path $markupFile
+        return (Get-Content -Path $markupFile | Out-String)
     }
     catch
     {

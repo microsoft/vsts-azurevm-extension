@@ -462,7 +462,6 @@ class HandlerUtility:
         handler_status = HandlerStatus(operation_name)
         handler_status.operation_name = None
         handler_status.ss_code = None
-        handler_status.operation_name = None
         handler_status.operation = operation
         handler_status.code = error_code
         handler_status.message = error_status_message

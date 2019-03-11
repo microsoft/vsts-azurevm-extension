@@ -303,16 +303,14 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
             $handlerEnvironment = Get-HandlerEnvironment
             $sequenceNumber = Get-HandlerExecutionSequenceNumber
             $extensionSettingsFilePath = '{0}\{1}.settings' -f $handlerEnvironment.configFolder, $sequenceNumber
-            $oldExtensionPublicSettings = (Get-ExtensionDisabledMarkup $config.AgentWorkingFolder | ConvertFrom-Json).runtimeSettings[0].handlerSettings.publicSettings
+            $oldExtensionPublicSettings = (Get-ExtensionDisabledMarkup $config.AgentWorkingFolder).runtimeSettings[0].handlerSettings.publicSettings
             $extensionPublicSettings = (Get-JsonContent $extensionSettingsFilePath).runtimeSettings[0].handlerSettings.publicSettings
-            $oldExtensionPublicSettingsPropertyNames = $oldExtensionPublicSettings.psobject.Properties | % {$_.Name}
-            $extensionPublicSettingsPropertyNames = $extensionPublicSettings.psobject.Properties | % {$_.Name}
             $settingsSame = $false
-            if($oldExtensionPublicSettingsPropertyNames.Count -eq $extensionPublicSettingsPropertyNames.Count)
+            if($oldExtensionPublicSettings.Keys.Count -eq $extensionPublicSettings.Keys.Count)
             {
                 $settingsSame = $true
-                $oldExtensionPublicSettingsPropertyNames | % {
-                    if(!$extensionPublicSettingsPropertyNames.Contains($_) -or !($oldExtensionPublicSettings.$_ -eq $extensionPublicSettings.$_))
+                $oldExtensionPublicSettings.Keys | % {
+                    if(!$extensionPublicSettings.ContainsKey($_) -or !($oldExtensionPublicSettings.$_ -eq $extensionPublicSettings.$_))
                     {
                         $settingsSame = $false
                     }

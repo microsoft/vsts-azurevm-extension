@@ -470,7 +470,7 @@ function Get-ExtensionDisabledMarkup
     try
     {
         Write-Log "Fetching contents of $markupFile"
-        return (Get-Content -Path $markupFile | Out-String)
+        return (Get-JsonContent -Path $markupFile)
     }
     catch
     {

@@ -25,12 +25,19 @@ ubuntu_distr_name = 'Ubuntu'
 default_agent_work_dir = '_work'
 is_on_prem = False
 
+# Input Arguments
+ENABLE = 'Enable'
+DISABLE = 'Disable'
+UNINSTALL = 'Uninstall'
+UPDATE = 'Update'
+INSTALL = 'Install'
+
 input_arguments_dict = {
-    '-enable': 'Enable',
-    '-disable': 'Disable',
-    '-uninstall': 'Uninstall',
-    '-update': 'Update',
-    '-install': 'Install'
+    '-enable': ENABLE,
+    '-disable': DISABLE,
+    '-uninstall': UNINSTALL,
+    '-update': UPDATE,
+    '-install': INSTALL
 }
 
 ERROR_MESSAGE_LENGTH = 300

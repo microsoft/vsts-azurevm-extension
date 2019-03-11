@@ -17,30 +17,30 @@ Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionCommon.psm1 -DisableNameChecking
 Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\Log.psm1
-. "$PSScriptRoot\Constants.ps1"
+. $PSScriptRoot\AgentSettingsHelper.ps1
+. $PSScriptRoot\Constants.ps1
 
 Initialize-ExtensionLogFile
 
 #Assuming PAT to be null since it would be removed during enable
-$config = @{
-    PATToken = "`"`""
-    AgentWorkingFolder = $agentWorkingFolder
-}
 
-$configuredAgentExists = Test-AgentAlreadyExists $config
-$extensionUpdateFile = "$agentWorkingFolder\$updateFileName"
-$isUpdateExtensionScenario = Test-Path $extensionUpdateFile
-if (!$isUpdateExtensionScenario) 
+$agentWorkingFolder = Get-AgentWorkingFolder
+
+if (!(Test-ExtensionUpdateFile -workingFolder $agentWorkingFolder))
 {
-    if ($configuredAgentExists) 
+    if (Test-ConfiguredAgentExists -workingFolder $agentWorkingFolder -logFunction $global:logger)
     {
+        $config = @{
+            PATToken = "`"`""
+            AgentWorkingFolder = $agentWorkingFolder
+        }
         Remove-Agent $config
     }
 }
 else
 {
-    Write-Log "Extension update scenario. Deleting the file $agentWorkingFolder\$updateFileName."
-    Remove-Item -Path $extensionUpdateFile -Force
+    Write-Log "Extension update scenario. Deleting the update file."
+    Remove-ExtensionUpdateFile $agentWorkingFolder
 }
 Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success
 

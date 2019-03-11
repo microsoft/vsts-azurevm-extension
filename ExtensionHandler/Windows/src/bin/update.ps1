@@ -11,5 +11,11 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
 }
 
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
+Import-Module $PSScriptRoot\RMExtensionCommon.psm1 -DisableNameChecking
 
-Set-ExtensionUpdateFile
+#Not logging in update, because config settings are not yet received in update, and 
+#the log file logic requrires the sequence number.
+
+$agentWorkingFolder = Get-AgentWorkingFolder
+
+Set-ExtensionUpdateFile $agentWorkingFolder

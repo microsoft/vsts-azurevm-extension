@@ -8,9 +8,10 @@ $agentZipName = "agent.zip"
 $configCmd = "config.cmd"
 $configCommonArgs = "--deploymentgroup --runasservice --unattended --replace --auth PAT "
 $removeAgentArgs = " remove --unattended --auth PAT "
-$defaultAgentWorkingFolder = "_work"
+$defaultAgentWorkFolder = "_work"
 $platform = "win-x64"
-$agentWorkingFolder = "$env:SystemDrive\VSTSAgent"
+$agentWorkingFolderOld = "$env:SystemDrive\VSTSAgent"
+$agentWorkingFolderNew = "$env:SystemDrive\AzurePiplinesAgent_Extension"
 $updateFileName = "EXTENSIONUPDATE"
 
 # markup file to detect whether extension has been previously disabled

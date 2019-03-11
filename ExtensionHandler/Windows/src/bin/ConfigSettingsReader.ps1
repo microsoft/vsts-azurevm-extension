@@ -113,7 +113,6 @@ function Get-ConfigurationFromSettings {
             DeploymentGroup    = $deploymentGroupName
             AgentName          = $agentName
             Tags               = $tags
-            AgentWorkingFolder = $agentWorkingFolder
             WindowsLogonAccountName = $windowsLogonAccountName
             WindowsLogonPassword = $windowsLogonPassword
         }
@@ -180,7 +179,7 @@ function Confirm-InputsAreValid {
             $specificErrorMessage = $invaidPATErrorMessage
             throw New-HandlerTerminatingError $inputsValidationErrorCode -Message ($errorMessageInitialPart -f $statusCode, $specificErrorMessage)
         }
-        $ret = $ret.Content | ConvertFrom-Json
+        $ret = $ret.Content | Out-String | ConvertFrom-Json
         if($ret.count -eq 0)
         {
             $specificErrorMessage = ("Please make sure that the deployment group `"{0}`" exists in the project `"{1}`", and the user has `"Manage`" permissions on the deployment group" -f $config.DeploymentGroup, $config.TeamProject)
@@ -288,7 +287,7 @@ function Parse-VSTSUrl
         }
         else
         {
-            $response = ($resp.Content | ConvertFrom-Json)
+            $response = ($resp.Content | Out-String | ConvertFrom-Json)
         }
     }
     if (!$response.deploymentType -or $response.deploymentType -ne "hosted")

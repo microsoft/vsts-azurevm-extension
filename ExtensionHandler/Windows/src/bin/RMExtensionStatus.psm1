@@ -146,13 +146,13 @@ $global:RM_Extension_Status = @{
     }
     Enabled = @{
         Code = 27
-        Message = 'The etension has been enabled successfully.'
+        Message = 'The extension has been enabled successfully.'
         operationName = 'Enable'
     }
 
     Updated = @{
         Code = 28
-        Message = 'The etension has been updated successfully.'
+        Message = 'The extension has been updated successfully.'
         operationName = 'Update'
     }
 
@@ -171,12 +171,6 @@ $global:RM_Extension_Status = @{
         Code = 31
         Message = 'Successfully validated inputs'
         operationName = 'Inputs validation'
-    }
-
-    ComparingWithPreviousSettings = @{
-        Code = 32
-        Message = 'Comparing settings with previous settings'
-        operationName = 'Settings Comparison'
     }
 
     #

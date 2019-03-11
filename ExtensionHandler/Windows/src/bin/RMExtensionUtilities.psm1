@@ -11,6 +11,8 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
     $PSScriptRoot = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
 }
 
+Import-Module $PSScriptRoot\Log.psm1
+
 <#
 .Synopsis
     Recursively walks the given object and converts any PSObjects to Hashtables
@@ -83,16 +85,84 @@ function Get-OSVersion {
 function Get-RESTCallHeader
 {
     param(
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$true)]
     [string]$patToken
     )
 
     $basicAuth = ("{0}:{1}" -f '', $patToken)
     $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
     $basicAuth = [System.Convert]::ToBase64String($basicAuth)
-    $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
+    $header = @{Authorization=("Basic {0}" -f $basicAuth)}
 
-    return $headers
+    return $header
+}
+
+function Invoke-RestCall
+{
+    param(
+    [Parameter(Mandatory=$true)]
+    [string]$uri,
+    [Parameter(Mandatory=$false)]
+    [string]$method = "Get",
+    [Parameter(Mandatory=$false)]
+    [string]$body,
+    [Parameter(Mandatory=$false)]
+    [hashtable]$headers,
+    [Parameter(Mandatory=$true)]
+    [string]$patToken
+    )
+
+    if (!$headers)
+    {
+        $headers = @{}
+    }
+
+    $headers += Get-RESTCallHeader -patToken $patToken
+    return Invoke-RestMethod -Uri $uri -headers $headers -Method $method -Body $body
+}
+
+function Invoke-WithRetry
+{
+    param (
+        [ScriptBlock] $retryBlock,
+        [ScriptBlock] $retryCatchBlock,
+        [ScriptBlock] $finalCatchBlock,
+        [int] $retryInterval = 2,
+        [int] $maxRetries = 30
+    )
+
+    $retryCount = 0
+
+    do
+    {
+        $retryCount++
+        try
+        {
+            $retryBlockOutput = (& $retryBlock)
+            Write-Log "retried $retryCount times"
+            return $retryBlockOutput
+        }
+        catch
+        {
+            if($retryCount -gt $maxRetries)
+            {
+                if($finalCatchBlock)
+                {
+                    & $finalCatchBlock
+                }
+                else
+                {
+                    throw "Exceeded the maximum number of retries"
+                }
+            }
+            if($retryCatchBlock)
+            {
+                & $retryCatchBlock
+            }
+        }
+        Start-Sleep -s $retryInterval
+    }
+    While ($retryCount -le $maxRetries)
 }
 
 function Exit-WithCode
@@ -109,4 +179,6 @@ Export-ModuleMember `
             ConvertTo-Hashtable, `
             Get-OSVersion, `
             Get-RESTCallHeader, `
+            Invoke-RestCall, `
+            Invoke-WithRetry, `
             Exit-WithCode

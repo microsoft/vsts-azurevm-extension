@@ -36,7 +36,7 @@ function Test-AgentReconfigurationRequired {
         Add-HandlerSubStatus $RM_Extension_Status.CheckingAgentReConfigurationRequired.Code $RM_Extension_Status.CheckingAgentReConfigurationRequired.Message -operationName $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
         Write-Log "Invoking script to check existing agent settings with given configuration settings..."
 
-        $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken -logFunction $global:logger)
+        $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken)
     
 
         Write-Log "Done pre-checking for agent re-configuration, AgentReconfigurationRequired : $agentReConfigurationRequired..."
@@ -58,7 +58,7 @@ function Invoke-GetAgentScriptAndExtractAgent {
 
     Clean-AgentWorkingFolder $config
     Create-AgentWorkingFolder $config.AgentWorkingFolder
-    . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $global:logger
+    . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder
     $agentZipFilePath = Join-Path $workingFolder $agentZipName
     $job = Start-Job -ScriptBlock {
         Param(
@@ -163,7 +163,7 @@ function Invoke-ConfigureAgentScript {
     )
 
     . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -deploymentGroupName `
-    $config.DeploymentGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -logFunction $global:logger `
+    $config.DeploymentGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder
     -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword
 }
 
@@ -249,7 +249,7 @@ function Invoke-AddTagsToAgentScript{
     [hashtable] $config
     )
 
-    . $PSScriptRoot\AddTagsToDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -tagsAsJsonString ( $config.Tags | ConvertTo-Json )  -logFunction $global:logger
+    . $PSScriptRoot\AddTagsToDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -tagsAsJsonString ($config.Tags | ConvertTo-Json)
 }
 
 <#
@@ -270,7 +270,7 @@ function Add-AgentTags
 
         Write-Log "Add-AgentTags command started"
 
-        if( ( $config.Tags -ne $null ) -and ( $config.Tags.Count  -gt 0 ) )
+        if(($config.Tags -ne $null) -and ($config.Tags.Count -gt 0))
         {
             Invoke-AddTagsToAgentScript $config
         }
@@ -284,7 +284,7 @@ function Add-AgentTags
     }
     catch
     {
-        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.AgentTagsAdded.operationName
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.AddingAgentTags.operationName
     }
 }
 
@@ -348,7 +348,7 @@ function ExecuteAgentPreCheck
     [hashtable] $config
     )
 
-    $script:configuredAgentExists  = Test-ConfiguredAgentExists -workingFolder $config.AgentWorkingFolder -logFunction $global:logger
+    $script:configuredAgentExists  = Test-ConfiguredAgentExists -workingFolder $config.AgentWorkingFolder
     if($configuredAgentExists)
     {
         $script:agentConfigurationRequired = Test-AgentReconfigurationRequired $config

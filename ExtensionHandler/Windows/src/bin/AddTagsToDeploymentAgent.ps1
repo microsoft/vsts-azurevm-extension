@@ -6,13 +6,14 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$workingFolder, 
     [Parameter(Mandatory=$true)]
-    [string]$tagsAsJsonString,    
-    [scriptblock]$logFunction    
+    [string]$tagsAsJsonString  
 )
 
 $ErrorActionPreference = 'Stop'
 $agentSettingPath = ''
 
+Import-Module $PSScriptRoot\Log.psm1
+Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 . "$PSScriptRoot\Constants.ps1"
 . "$PSScriptRoot\AgentConfigurationManager.ps1"
 
@@ -22,15 +23,7 @@ function WriteAddTagsLog
     [string]$logMessage
     )
     
-    $log = "[AddTags]: " + $logMessage
-    if($logFunction -ne $null)
-    {
-        $logFunction.Invoke($log)
-    }
-    else
-    {
-        write-verbose $log
-    }
+    Write-Log "[AddTags]: " + $logMessage
 }
 
 function GetAgentSettingPath
@@ -56,22 +49,16 @@ function ApplyTagsToAgent
     )
 
     $restCallUrl = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets?api-version={3}" -f $tfsUrl, $projectId, $deploymentGroupId, $targetsAPIVersion)
-
     WriteAddTagsLog "Url for applying tags - $restCallUrl"
-
-    $headers = Get-RESTCallHeader $patToken
-
+    $headers = @{"Content-Type" = "application/json"}
     $requestBody = "[{'id':" + $agentId + ",'tags':" + $tagsAsJsonString + ",'agent':{'id':" + $agentId + "}}]"
-
     WriteAddTagsLog "Add tags request body - $requestBody"
-    try
-    {
-        $response = Invoke-RestMethod -Uri $($restCallUrl) -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
-    }
-    catch
-    {
-        throw "Some error occured while applying tags: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
-    }
+
+    $applyTagsErrorMessageBlock = {"An error occured while applying tags. Status Code: $($_.Exception.Response.StatusCode.value__)"}
+
+    $response = Invoke-WithRetry -retryBlock {Invoke-RestCall -uri $restCallUrl -method "Patch" -body $requestBody -headers $headers -patToken $patToken} `
+                                 -retryCatchBlock {Write-Log (& $applyTagsErrorMessageBlock)} -finalCatchBlock {throw (& $applyTagsErrorMessageBlock)}
+    
     if($response.PSObject.Properties.name -notcontains "value")
     {
         throw "Tags could not be added"
@@ -98,17 +85,12 @@ function AddTagsToAgent
     $restCallUrlToGetExistingTags = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets/{3}?api-version={4}" -f $tfsUrl, $projectId, $deploymentGroupId, $agentId, $targetsAPIVersion)
     WriteAddTagsLog "Url for getting existing tags if any - $restCallUrlToGetExistingTags"
 
-    $headers = Get-RESTCallHeader $patToken
-    try
-    {
-        $target = Invoke-RestMethod -Uri $($restCallUrlToGetExistingTags) -headers $headers -Method Get -ContentType "application/json"
-    }
-    catch
-    {
-        throw "Tags could not be added. Unable to fetch the existing tags or deployment group details: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
-    }
+    $addTagsErrorMessageBlock = {"Tags could not be added. Unable to fetch the existing tags or deployment group details: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"}
+    
+    $target = Invoke-WithRetry -retryBlock {Invoke-RestCall -uri $restCallUrlToGetExistingTags -Method "Get" -patToken $patToken} `
+                               -retryCatchBlock {Write-Log (& $addTagsErrorMessageBlock)} -finalCatchBlock {throw (& $addTagsErrorMessageBlock)}
 
-    $existingTags = $target.tags
+    $existingTags = $target.Tags
     $tags = @()
     [Array]$newTags =  ConvertFrom-Json $tagsAsJsonString
 
@@ -162,7 +144,7 @@ try
     $agentId = $($agentSettings.agentId)
     $projectId = $($agentSettings.projectId)
     $deploymentGroupId = $($agentSettings.deploymentGroupId)
-    WriteAddTagsLog "`t`t` Agent id, Project id, Deployment group id -  $agentId, $projectId, $deploymentGroupId" -logFunction $logFunction
+    WriteAddTagsLog "`t`t` Agent id, Project id, Deployment group id -  $agentId, $projectId, $deploymentGroupId"
     
     if([string]::IsNullOrEmpty($deploymentGroupId) -or [string]::IsNullOrEmpty($agentId) -or [string]::IsNullOrEmpty($projectId))
     {

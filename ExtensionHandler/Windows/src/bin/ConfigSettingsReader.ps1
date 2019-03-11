@@ -135,22 +135,16 @@ function Confirm-InputsAreValid {
         $invaidPATErrorMessage = "Please make sure that the Personal Access Token entered is valid and has `"Deployment Groups - Read & manage`" scope"
         $inputsValidationErrorCode = $RM_Extension_Status.ArgumentError
         $unexpectedErrorMessage = "Some unexpected error occured."
+        $errorMessageInitialPart = ("Could not verify that the deployment group `"$($config.DeploymentGroup)`" exists in the project `"$($config.TeamProject)`" in the specified organization `"$($config.VSTSUrl)`". Status: {0}. Error: {1}")
 
         #Verify the deployment group eixts and the PAT has the required(Deployment Groups - Read & manage) scope
         #This is the first validation http call, so using Invoke-WebRequest instead of Invoke-RestMethod, because if the PAT provided is not a token at all(not even an unauthorized one) and some random value, then the call
         #would redirect to sign in page and not throw an exception. So, to handle this case.
 
-        $errorMessageInitialPart = ("Could not verify that the deployment group `"$($config.DeploymentGroup)`" exists in the project `"$($config.TeamProject)`" in the specified organization `"$($config.VSTSUrl)`". Status: {0}. Error: {1}")
         $getDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroup, $projectAPIVersion)
         Write-Log "Url to check deployment group exists - $getDeploymentGroupUrl"
-        $deploymentGroupData = @{}
         $headers = Get-RESTCallHeader $config.PATToken
-        try
-        {
-            $ret = (Invoke-WebRequest -Uri $getDeploymentGroupUrl -headers $headers -Method Get -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing)
-        }
-        catch
-        {
+        $getDeploymentGroupDataErrorBlock = {
             switch($_.Exception.Response.StatusCode.value__)
             {
                 401
@@ -171,8 +165,13 @@ function Confirm-InputsAreValid {
                     $inputsValidationErrorCode = $RM_Extension_Status.GenericError
                 }
             }
-            throw New-HandlerTerminatingError $inputsValidationErrorCode -Message ($errorMessageInitialPart -f $($_.Exception.Response.StatusCode.value__), $specificErrorMessage)
+            $errorMessage = ($errorMessageInitialPart -f $($_.Exception.Response.StatusCode.value__), $specificErrorMessage)
+            return $inputsValidationErrorCode, $errorMessage
         }
+        $ret = Invoke-WithRetry -retryBlock {Invoke-WebRequest -Uri $getDeploymentGroupUrl -headers $headers -Method Get -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing} `
+                                -retryCatchBlock {$null, $errorMessage = (& $getDeploymentGroupDataErrorBlock); Write-Log $errorMessage} 
+                                -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $getDeploymentGroupDataErrorBlock)(& $getDeploymentGroupDataErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
+
         $statusCode = $ret.StatusCode
         if($statusCode -eq 302)
         {
@@ -191,15 +190,11 @@ function Confirm-InputsAreValid {
 
         #Verify the user has manage permissions on the deployment group
         $deploymentGroupId = $deploymentGroupData.id
+
         $patchDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $deploymentGroupId, $projectAPIVersion)
         Write-Log "Url to check that the user has `"Manage`" permissions on the deployment group - $patchDeploymentGroupUrl"
-        $requestBody = "{'name': '" + $config.DeploymentGroup + "'}"
-        try
-        {
-            $ret = Invoke-RestMethod -Uri $patchDeploymentGroupUrl -headers $headers -Method Patch -ContentType "application/json" -Body $requestBody
-        }
-        catch
-        {
+        $headers = @{"Content-Type" = "application/json"}
+        $patchDeploymentGroupErrorBlock = {
             switch($_.Exception.Response.StatusCode.value__)
             {
                 403
@@ -212,8 +207,14 @@ function Confirm-InputsAreValid {
                     $inputsValidationErrorCode = $RM_Extension_Status.GenericError
                 }
             }
-            throw New-HandlerTerminatingError $inputsValidationErrorCode -Message ($errorMessageInitialPart -f $($_.Exception.Response.StatusCode.value__), $specificErrorMessage)
+            $errorMessage = ($errorMessageInitialPart -f $($_.Exception.Response.StatusCode.value__), $specificErrorMessage)
+            return $inputsValidationErrorCode, $errorMessage
         }
+        
+        $ret = Invoke-WithRetry -retryBlock {Invoke-RestCall -uri $patchDeploymentGroupUrl -Method "Patch" -body $requestBody -headers $headers -patToken $config.PATToken} `
+        -retryCatchBlock {$null, $errorMessage = (& $patchDeploymentGroupErrorBlock); Write-Log $errorMessage} 
+        -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $patchDeploymentGroupErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
+
         Write-Log ("Validated that the user has `"Manage`" permissions on the deployment group {0}" -f $config.DeploymentGroup)
 
         Write-Log "Done validating inputs..."

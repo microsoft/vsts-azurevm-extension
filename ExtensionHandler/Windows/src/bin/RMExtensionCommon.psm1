@@ -16,12 +16,6 @@ Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 Import-Module $PSScriptRoot\Log.psm1
 
-$global:logger = {
-    param([string] $Message)
-
-    Write-Log $Message
-}
-
 function Get-AgentWorkingFolder {
     [CmdletBinding()]
     param()
@@ -29,9 +23,9 @@ function Get-AgentWorkingFolder {
     . $PSScriptRoot\AgentSettingsHelper.ps1
     . $PSScriptRoot\Constants.ps1
 
-    if(!(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderNew -logFunction $global:logger))
+    if(!(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderNew))
     {
-        if(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderOld -logFunction $global:logger)
+        if(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderOld)
         {
             return $agentWorkingFolderOld
         }
@@ -87,7 +81,7 @@ function Invoke-RemoveAgentScript {
     [hashtable] $config
     )
 
-    . $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $global:logger
+    . $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder
 }
 
 function Set-ErrorStatusAndErrorExit {

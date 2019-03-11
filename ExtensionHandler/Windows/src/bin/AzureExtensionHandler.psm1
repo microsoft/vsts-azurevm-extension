@@ -768,7 +768,7 @@ function Get-HandlerStatus()
         throw "Status file for sequence number $SequenceNumber does not exist"
     }
 
-    $status = Get-JsonContent $statusFile
+    $status = Invoke-WithRetry -retryBlock {Get-JsonContent $statusFile} -$finalCatchBlock {Write-Log "Could not fetch the contents of $SequenceNumber.status file."}
 
     if($status -ne $null) {
         $status[0]['SequenceNumber'] = $sequenceNumber
@@ -857,7 +857,7 @@ function Flush-BufferToFile()
 
     $str = BufferToString $script:extensionLogBuffer
 
-    Add-Content -Encoding UTF8 -Path $logFile -Force:$Force.IsPresent -Value $str
+    Invoke-WithRetry -retryBlock{Add-Content -Encoding UTF8 -Path $logFile -Force:$Force.IsPresent -Value $str} -$finalCatchBlock {}
 
     $script:extensionLogBuffer.Clear()
 }
@@ -875,7 +875,7 @@ function Clear-StatusFile()
 
     Write-Log "Clearing status file $statusFile"
     
-    Clear-Content $statusFile -Force
+    Invoke-WithRetry -retryBlock {Clear-Content $statusFile -Force} -finalCatchBlock {Write-Log "Could not clear the file $statusFile."}
 }
 
 function Read-HandlerEnvironmentFile

@@ -1,9 +1,8 @@
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
-Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\RMExtensionCommon.psm1 -DisableNameChecking
 Import-Module $PSScriptRoot\Log.psm1
-
+. "$PSScriptRoot\RMExtensionUtilities.ps1"
 
 <#
 .Synopsis
@@ -145,32 +144,53 @@ function Confirm-InputsAreValid {
         Write-Log "Url to check deployment group exists - $getDeploymentGroupUrl"
         $headers = Get-RESTCallHeader $config.PATToken
         $getDeploymentGroupDataErrorBlock = {
-            switch($_.Exception.Response.StatusCode.value__)
+            $exception = $_
+            $errorMessage = "Deployment group get failed: {0}"
+            $failEarly = $false
+            $inputsValidationErrorCode = $RM_Extension_Status.ArgumentError
+            if($exception.Exception.Response)
             {
-                401
+                switch($exception.Exception.Response.StatusCode.value__)
                 {
-                    $specificErrorMessage = $invaidPATErrorMessage
+                    401
+                    {
+                        $specificErrorMessage = $invaidPATErrorMessage
+                        $failEarly = $true
+                    }
+                    403
+                    {
+                        $specificErrorMessage = ("Please ensure that the user has `"View project-level information`" permissions on the project `"{0}`"" -f $config.TeamProject)
+                        $failEarly = $true
+                    }
+                    404
+                    {
+                        $specificErrorMessage = "Please make sure that you enter the correct organization name and verify that the project exists in the organization"
+                    }
+                    default
+                    {
+                        $specificErrorMessage = $unexpectedErrorMessage
+                        $inputsValidationErrorCode = $RM_Extension_Status.GenericError
+                    }
                 }
-                403
-                {
-                    $specificErrorMessage = ("Please ensure that the user has `"View project-level information`" permissions on the project `"{0}`"" -f $config.TeamProject)
-                }
-                404
-                {
-                    $specificErrorMessage = "Please make sure that you enter the correct organization name and verify that the project exists in the organization"
-                }
-                default
-                {
-                    $specificErrorMessage = $unexpectedErrorMessage
-                    $inputsValidationErrorCode = $RM_Extension_Status.GenericError
-                }
+                $errorMessage = ($errorMessageInitialPart -f $exception.Exception.Response.StatusCode.value__, $specificErrorMessage)
             }
-            $errorMessage = ($errorMessageInitialPart -f $($_.Exception.Response.StatusCode.value__), $specificErrorMessage)
+            else
+            {
+                $inputsValidationErrorCode = $RM_Extension_Status.GenericError
+                $errorMessage = $errorMessage -f $exception.Exception
+                Write-Log $errorMessage $true
+            }
+
+            if($failEarly)
+            {
+                throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage
+            }
+
             return $inputsValidationErrorCode, $errorMessage
         }
         $ret = Invoke-WithRetry -retryBlock {Invoke-WebRequest -Uri $getDeploymentGroupUrl -headers $headers -Method Get -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing} `
-                                -retryCatchBlock {$null, $errorMessage = (& $getDeploymentGroupDataErrorBlock); Write-Log $errorMessage} 
-                                -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $getDeploymentGroupDataErrorBlock)(& $getDeploymentGroupDataErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
+                                -retryCatchBlock {$null, $null = (& $getDeploymentGroupDataErrorBlock)} `
+                                -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $getDeploymentGroupDataErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
 
         $statusCode = $ret.StatusCode
         if($statusCode -eq 302)
@@ -193,27 +213,46 @@ function Confirm-InputsAreValid {
 
         $patchDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $deploymentGroupId, $projectAPIVersion)
         Write-Log "Url to check that the user has `"Manage`" permissions on the deployment group - $patchDeploymentGroupUrl"
-        $headers = @{"Content-Type" = "application/json"}
+        $headers += @{"Content-Type" = "application/json"}
+        $requestBody = "{'name': '" + $config.DeploymentGroup + "'}"
         $patchDeploymentGroupErrorBlock = {
-            switch($_.Exception.Response.StatusCode.value__)
+            $exception = $_
+            $errorMessage = "Deployment group get failed: {0}"
+            $failEarly = $false
+            $inputsValidationErrorCode = $RM_Extension_Status.ArgumentError
+            if($exception.Exception.Response)
             {
-                403
+                switch($exception.Exception.Response.StatusCode.value__)
                 {
-                    $specificErrorMessage = ("Please ensure that the user has `"Manage`" permissions on the deployment group {0}" -f $config.DeploymentGroup)
+                    403
+                    {
+                        $specificErrorMessage = ("Please ensure that the user has `"Manage`" permissions on the deployment group {0}" -f $config.DeploymentGroup)
+                        $failEarly = $true
+                    }
+                    default
+                    {
+                        $specificErrorMessage = $unexpectedErrorMessage
+                        $inputsValidationErrorCode = $RM_Extension_Status.GenericError
+                    }
                 }
-                default
-                {
-                    $specificErrorMessage = $unexpectedErrorMessage
-                    $inputsValidationErrorCode = $RM_Extension_Status.GenericError
-                }
+                $errorMessage = ($errorMessageInitialPart -f $exception.Exception.Response.StatusCode.value__, $specificErrorMessage)
             }
-            $errorMessage = ($errorMessageInitialPart -f $($_.Exception.Response.StatusCode.value__), $specificErrorMessage)
-            return $inputsValidationErrorCode, $errorMessage
+            else
+            {
+                $inputsValidationErrorCode = $RM_Extension_Status.GenericError
+                $errorMessage = $errorMessage -f $exception.Exception
+                Write-Log $errorMessage $true
+            }
+            
+            if($failEarly)
+            {
+                throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage
+            }
         }
-        
-        $ret = Invoke-WithRetry -retryBlock {Invoke-RestCall -uri $patchDeploymentGroupUrl -Method "Patch" -body $requestBody -headers $headers -patToken $config.PATToken} `
-        -retryCatchBlock {$null, $errorMessage = (& $patchDeploymentGroupErrorBlock); Write-Log $errorMessage} 
-        -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $patchDeploymentGroupErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
+
+        $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $patchDeploymentGroupUrl -Method "Patch" -Body $requestBody -Headers $headers} `
+                                -retryCatchBlock {$null, $null = (& $patchDeploymentGroupErrorBlock)} `
+                                -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $patchDeploymentGroupErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
 
         Write-Log ("Validated that the user has `"Manage`" permissions on the deployment group {0}" -f $config.DeploymentGroup)
 
@@ -278,7 +317,12 @@ function Parse-VSTSUrl
     }
     catch
     {
-        Write-Log "Failed to fetch the connection data for the url $restCallUrl : $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"
+        $errorMessage = "Failed to fetch the connection data for the url $restCallUrl."
+        if($_.Exception.Response)
+        {
+            $errorMessage += "Status: $($_.Exception.Response.StatusCode.value__)"
+        }
+        Write-Log $errorMessage
     }
     if($resp)
     {

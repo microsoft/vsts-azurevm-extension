@@ -27,7 +27,7 @@ function WriteConfigurationLog
     [string]$logMessage
     )
     
-    Write-Log "[Configuration]: " + $logMessage
+    Write-Log ("[Configuration]: " + $logMessage)
 }
 
 function GetConfigCmdPath

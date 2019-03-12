@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
-Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 Import-Module $PSScriptRoot\Log.psm1
+. "$PSScriptRoot\RMExtensionUtilities.ps1"
 . "$PSScriptRoot\Constants.ps1"
 
 function Test-ConfiguredAgentExists
@@ -150,9 +150,10 @@ function GetDeploymentGroupDataFromAgentSetting
     )
     
     WriteAgentSettingsHelperLog "`t`t Invoke-rest call for deployment group data"
+    $headers = Get-RESTCallHeader -patToken $patToken
     $detDeploymentGroupDataErrorMessageBlock = {"Unable to fetch the deployment group information from VSTS server: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"}
-    $response = Invoke-WithRetry -retryBlock {Invoke-RestCall -uri $restCallUrl -Method "Get"} `
-                                 -retryCatchBlock {Write-Log (& $detDeploymentGroupDataErrorMessageBlock)} -finalCatchBlock {throw (& $detDeploymentGroupDataErrorMessageBlock)}
+    $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Get" -Headers $headers} `
+                                 -retryCatchBlock {WriteAgentSettingsHelperLog (& $detDeploymentGroupDataErrorMessageBlock)} -finalCatchBlock {throw (& $detDeploymentGroupDataErrorMessageBlock)}
 
     WriteAgentSettingsHelperLog "`t`t Deployment Group Details fetched successfully"
     return $response
@@ -165,7 +166,7 @@ function WriteAgentSettingsHelperLog
     [string]$logMessage
     )
     
-    Write-Log "[Agent Settings Helper]: " + $logMessage
+    Write-Log ("[Agent Settings Helper]: " + $logMessage)
 }
 
 function GetAgentSettingFilePath

@@ -22,7 +22,7 @@ function WriteDownloadLog
     [string]$logMessage
     )
     
-    Write-Log "[Download]: " + $logMessage
+    Write-Log ("[Download]: " + $logMessage)
 }
  
  function GetAgentPackageData
@@ -35,9 +35,21 @@ function WriteDownloadLog
     )
     
     WriteDownloadLog "`t`t Invoke-rest call for packageData"
-    $getAgentPackageDataErrorMessageBlock = {"Error while downloading VSTS agent: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"}
-    $target = Invoke-WithRetry -retryBlock {Invoke-RestCall -uri $restCallUrl -Method "Get" -patToken $patToken} `
-                               -retryCatchBlock {Write-Log (& $getAgentPackageDataErrorMessageBlock)} -finalCatchBlock {throw (& $getAgentPackageDataErrorMessageBlock)}
+    $headers = Get-RESTCallHeader $config.PATToken
+    $getAgentPackageDataErrorMessageBlock = {
+        $exception = $_
+        $message = "An error occured while downloading VSTS agent. {0}"
+        if($exception.Exception.Response)
+        {
+            $message -f "Status: $($exception.Exception.Response.StatusCode.value__)"
+        }
+        else
+        {
+            $message -f "$($exception.Exception)"
+        }
+    }
+    $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Get" -Headers $headers} `
+                               -retryCatchBlock {WriteDownloadLog (& $getAgentPackageDataErrorMessageBlock)} -finalCatchBlock {throw (& $getAgentPackageDataErrorMessageBlock)}
 
     WriteDownloadLog "`t`t Agent PackageData : $response"
     return $response.Value[0]
@@ -79,8 +91,8 @@ function WriteDownloadLog
     }
     
     WriteDownloadLog "`t`t Start DeploymentAgent download"
-    Invoke-WithRetry -retryBlock {(New-Object Net.WebClient).DownloadFile($agentDownloadUrl,$target)}
-                     -retryCatchBlock {Write-Log $_} -finalCatchBlock {throw $_}
+    Invoke-WithRetry -retryBlock {(New-Object Net.WebClient).DownloadFile($agentDownloadUrl,$target)} `
+                     -retryCatchBlock {WriteDownloadLog $_} -finalCatchBlock {throw $_}
     WriteDownloadLog "`t`t DeploymentAgent download done"
  }
 

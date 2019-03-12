@@ -85,7 +85,7 @@ function Get-OSVersion {
 function Get-RESTCallHeader
 {
     param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$patToken
     )
 
@@ -95,30 +95,6 @@ function Get-RESTCallHeader
     $header = @{Authorization=("Basic {0}" -f $basicAuth)}
 
     return $header
-}
-
-function Invoke-RestCall
-{
-    param(
-    [Parameter(Mandatory=$true)]
-    [string]$uri,
-    [Parameter(Mandatory=$false)]
-    [string]$method = "Get",
-    [Parameter(Mandatory=$false)]
-    [string]$body,
-    [Parameter(Mandatory=$false)]
-    [hashtable]$headers,
-    [Parameter(Mandatory=$true)]
-    [string]$patToken
-    )
-
-    if (!$headers)
-    {
-        $headers = @{}
-    }
-
-    $headers += Get-RESTCallHeader -patToken $patToken
-    return Invoke-RestMethod -Uri $uri -headers $headers -Method $method -Body $body
 }
 
 function Invoke-WithRetry
@@ -152,7 +128,7 @@ function Invoke-WithRetry
                 }
                 else
                 {
-                    throw "Exceeded the maximum number of retries"
+                    throw "Exceeded the maximum number of retries. Error: $_"
                 }
             }
             if($retryCatchBlock)
@@ -162,7 +138,7 @@ function Invoke-WithRetry
         }
         Start-Sleep -s $retryInterval
     }
-    While ($retryCount -le $maxRetries)
+    While ($retryCount -le $maxRetries)   
 }
 
 function Exit-WithCode
@@ -173,12 +149,3 @@ function Exit-WithCode
     )
     exit $exitCode
 }
-
-Export-ModuleMember `
-    -Function `
-            ConvertTo-Hashtable, `
-            Get-OSVersion, `
-            Get-RESTCallHeader, `
-            Invoke-RestCall, `
-            Invoke-WithRetry, `
-            Exit-WithCode

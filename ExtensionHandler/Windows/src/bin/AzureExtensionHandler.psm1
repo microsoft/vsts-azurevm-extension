@@ -12,8 +12,8 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
     $PSScriptRoot = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
 }
 
-Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 Import-Module $PSScriptRoot\Log.psm1
+. "$PSScriptRoot\RMExtensionUtilities.ps1"
 
 #
 # Cached values
@@ -768,7 +768,7 @@ function Get-HandlerStatus()
         throw "Status file for sequence number $SequenceNumber does not exist"
     }
 
-    $status = Invoke-WithRetry -retryBlock {Get-JsonContent $statusFile} -$finalCatchBlock {Write-Log "Could not fetch the contents of $SequenceNumber.status file."}
+    $status = Get-JsonContent $statusFile
 
     if($status -ne $null) {
         $status[0]['SequenceNumber'] = $sequenceNumber
@@ -857,7 +857,7 @@ function Flush-BufferToFile()
 
     $str = BufferToString $script:extensionLogBuffer
 
-    Invoke-WithRetry -retryBlock{Add-Content -Encoding UTF8 -Path $logFile -Force:$Force.IsPresent -Value $str} -$finalCatchBlock {}
+    Invoke-WithRetry -retryBlock{Add-Content -Encoding UTF8 -Path $logFile -Force:$Force.IsPresent -Value $str} -finalCatchBlock {}
 
     $script:extensionLogBuffer.Clear()
 }

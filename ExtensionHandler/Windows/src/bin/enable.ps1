@@ -58,7 +58,7 @@ function Invoke-GetAgentScriptAndExtractAgent {
 
     Clean-AgentWorkingFolder $config
     Create-AgentWorkingFolder $config.AgentWorkingFolder
-    . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -userName "" -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder
+    . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder
     $agentZipFilePath = Join-Path $workingFolder $agentZipName
     $job = Start-Job -ScriptBlock {
         Param(
@@ -162,9 +162,8 @@ function Invoke-ConfigureAgentScript {
     [hashtable] $config
     )
 
-    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -deploymentGroupName `
-    $config.DeploymentGroup -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder
-    -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword
+    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup `
+    -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword
 }
 
 <#

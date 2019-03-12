@@ -564,9 +564,12 @@ def enable():
     handler_utility.log('Extension is enabled.')
     handler_utility.log('Removing disable markup file..')
   
-  handler_status = Util.HandlerStatus('Enabled')
+  handler_status = Util.HandlerStatus('')
   handler_status.operation = Constants.ENABLE
-  handler_status.operation_name = None
+  handler_status.code = RMExtensionStatus.rm_extension_status['Enabled']['Code']
+  handler_status.message = RMExtensionStatus.rm_extension_status['Enabled']['Message']
+  handler_status.status = 'success'
+
   handler_utility.set_handler_status(handler_status)
 
   set_last_sequence_number()
@@ -580,8 +583,12 @@ def disable():
   
   handler_status = Util.HandlerStatus('Disabled')
   handler_utility.set_handler_status(handler_status)
-  handler_status.operation_name = None
+
+  handler_status = Util.HandlerStatus('')
   handler_status.operation = Constants.DISABLE
+  handler_status.code = RMExtensionStatus.rm_extension_status['Disabled']['Code']
+  handler_status.message = RMExtensionStatus.rm_extension_status['Disabled']['Message']
+  handler_status.status = 'success'
   handler_utility.set_handler_status(handler_status)
 
 def uninstall():
@@ -598,9 +605,10 @@ def uninstall():
     handler_utility.log('Extension update scenario. Deleting the file {0}/{1}'.format(Constants.agent_working_folder, Constants.update_file_name))
     os.remove(extension_update_file)
 
-  handler_status = Util.HandlerStatus('Uninstalling')
-  handler_status.operation = Constants.DISABLE
-  handler_status.operation_name = None
+  handler_status = Util.HandlerStatus('')
+  handler_status.operation = Constants.UNINSTALL
+  handler_status.code = RMExtensionStatus.rm_extension_status['Uninstalling']['Code']
+  handler_status.message = RMExtensionStatus.rm_extension_status['Uninstalling']['Message']
   handler_status.status = 'success'
   handler_utility.set_handler_status(handler_status)
 

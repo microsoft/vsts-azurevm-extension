@@ -28,7 +28,7 @@ $agentWorkingFolder = Get-AgentWorkingFolder
 
 if (!(Test-ExtensionUpdateFile -workingFolder $agentWorkingFolder))
 {
-    if (Test-ConfiguredAgentExists -workingFolder $agentWorkingFolder -logFunction $global:logger)
+    if (Test-ConfiguredAgentExists -workingFolder $agentWorkingFolder)
     {
         $config = @{
             PATToken = "`"`""

@@ -1,7 +1,7 @@
 ﻿$currentScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 Import-Module "$currentScriptPath\..\bin\AzureExtensionHandler.psm1"
-Import-Module "$currentScriptPath\..\bin\RMExtensionUtilities.psm1"
+. "$currentScriptPath\..\bin\RMExtensionUtilities.ps1"
 
 Describe "Handler environment tests" {
 

@@ -9,22 +9,16 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
-    [string]$extensionName,
-
-    [Parameter(Mandatory=$true)]
-    [string]$publisher,
-
-    [Parameter(Mandatory=$true)]
-    [string]$extensionVersion,
+    [string]$extensionManifestPath,
 
     [Parameter(Mandatory=$false)]
     [string]$location
 )
 
-if($extensionVersion -eq "WILL_BET_SET_AT_RUNTIME")
-{
-    return
-}
+[xml]$content = Get-Content $extensionManifestPath
+$extensionName = $content.ExtensionImage.Type
+$publisher = $content.ExtensionImage.ProviderNameSpace
+$extensionVersion = $content.ExtensionImage.Version
 
 $retryCount = 0
 $isReplicated = $false

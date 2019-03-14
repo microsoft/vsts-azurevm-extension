@@ -173,6 +173,7 @@ function Confirm-InputsAreValid {
                     }
                 }
                 $errorMessage = ($errorMessageInitialPart -f $exception.Exception.Response.StatusCode.value__, $specificErrorMessage)
+                Write-Log $errorMessage
             }
             else
             {
@@ -236,6 +237,7 @@ function Confirm-InputsAreValid {
                     }
                 }
                 $errorMessage = ($errorMessageInitialPart -f $exception.Exception.Response.StatusCode.value__, $specificErrorMessage)
+                Write-Log $errorMessage
             }
             else
             {
@@ -342,7 +344,7 @@ function Parse-VSTSUrl
         $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
         if($subparts.Count -le 1)
         {
-            throw "Invalid value for the input 'VSTS account url'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment."
+            throw "Invalid value for the input 'AzureDevOps account url'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment."
         }
     }
 

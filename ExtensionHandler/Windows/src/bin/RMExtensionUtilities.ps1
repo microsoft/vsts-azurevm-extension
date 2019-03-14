@@ -120,7 +120,14 @@ function Invoke-WithRetry
         }
         catch
         {
-            if($retryCount -gt $maxRetries)
+            if($retryCount -lt $maxRetries)
+            {
+                if($retryCatchBlock)
+                {
+                    & $retryCatchBlock
+                }
+            }
+            else
             {
                 if($finalCatchBlock)
                 {
@@ -131,14 +138,10 @@ function Invoke-WithRetry
                     throw "Exceeded the maximum number of retries. Error: $_"
                 }
             }
-            if($retryCatchBlock)
-            {
-                & $retryCatchBlock
-            }
         }
         Start-Sleep -s $retryInterval
     }
-    While ($retryCount -le $maxRetries)   
+    While ($retryCount -lt $maxRetries)   
 }
 
 function Exit-WithCode

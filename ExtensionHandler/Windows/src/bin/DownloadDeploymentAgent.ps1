@@ -38,7 +38,7 @@ function WriteDownloadLog
     $headers = Get-RESTCallHeader $config.PATToken
     $getAgentPackageDataErrorMessageBlock = {
         $exception = $_
-        $message = "An error occured while downloading VSTS agent. {0}"
+        $message = "An error occured while downloading AzureDevOps agent. {0}"
         if($exception.Exception.Response)
         {
             $message -f "Status: $($exception.Exception.Response.StatusCode.value__)"
@@ -51,7 +51,6 @@ function WriteDownloadLog
     $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Get" -Headers $headers} `
                                -retryCatchBlock {WriteDownloadLog (& $getAgentPackageDataErrorMessageBlock)} -finalCatchBlock {throw (& $getAgentPackageDataErrorMessageBlock)}
 
-    WriteDownloadLog "`t`t Agent PackageData : $response"
     return $response.Value[0]
 }
  

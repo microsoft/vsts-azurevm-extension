@@ -173,7 +173,7 @@ function Create-AgentWorkingFolder {
     param([Parameter(Mandatory=$true, Position=0)]
     [string] $workingFolder)
 
-    Write-Log "Working folder for VSTS agent: $workingFolder"
+    Write-Log "Working folder for AzureDevOps agent: $workingFolder"
     if(!(Test-Path $workingFolder))
     {
         Write-Log "Working folder does not exist. Creating it..."

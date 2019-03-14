@@ -151,7 +151,7 @@ function GetDeploymentGroupDataFromAgentSetting
     
     WriteAgentSettingsHelperLog "`t`t Invoke-rest call for deployment group data"
     $headers = Get-RESTCallHeader -patToken $patToken
-    $detDeploymentGroupDataErrorMessageBlock = {"Unable to fetch the deployment group information from VSTS server: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"}
+    $detDeploymentGroupDataErrorMessageBlock = {"Unable to fetch the deployment group information from AzureDevOps server: $($_.Exception.Response.StatusCode.value__) $($_.Exception.Response.StatusDescription)"}
     $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Get" -Headers $headers} `
                                  -retryCatchBlock {WriteAgentSettingsHelperLog (& $detDeploymentGroupDataErrorMessageBlock)} -finalCatchBlock {throw (& $detDeploymentGroupDataErrorMessageBlock)}
 

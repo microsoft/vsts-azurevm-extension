@@ -66,10 +66,13 @@ function ApplyTagsToAgent
         {
             $message -f "$($exception.Exception)"
         }
+        WriteAddTagsLog $message
+        return $message
     }
 
     $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Patch" -Body $requestBody -Headers $headers} `
-                                 -retryCatchBlock {WriteAddTagsLog (& $applyTagsErrorMessageBlock)} -finalCatchBlock {throw (& $applyTagsErrorMessageBlock)}
+                                 -retryCatchBlock {$null = (& $applyTagsErrorMessageBlock)} `
+                                 -finalCatchBlock {throw (& $applyTagsErrorMessageBlock)}
     
     if($response.PSObject.Properties.name -notcontains "value")
     {
@@ -109,11 +112,13 @@ function AddTagsToAgent
         {
             $message -f "$($exception.Exception)"
         }
-
+        WriteAddTagsLog $message
+        return $message
     }
     
     $target = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrlToGetExistingTags -Method "Get" -Headers $headers} `
-                               -retryCatchBlock {WriteAddTagsLog (& $addTagsErrorMessageBlock)} -finalCatchBlock {throw (& $addTagsErrorMessageBlock)}
+                               -retryCatchBlock {$null = (& $addTagsErrorMessageBlock)} `
+                               -finalCatchBlock {throw (& $addTagsErrorMessageBlock)}
 
     $existingTags = $target.tags
     $tags = @()

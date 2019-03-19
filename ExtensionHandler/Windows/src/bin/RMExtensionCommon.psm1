@@ -63,7 +63,7 @@ function Remove-Agent {
                 Clean-AgentWorkingFolder $config
             }
             else{
-                Write-Log "Some unexpected error occured: $_"
+                Write-Log "An unexpected error occured: $_"
                 throw $_
             }
         }
@@ -145,7 +145,7 @@ function Clean-AgentWorkingFolder {
         }
         catch
         {
-            Write-Log "Some error occured while removing agent folder $($config.AgentWorkingFolder). More details: $_"
+            Write-Log "An error occured while removing agent folder $($config.AgentWorkingFolder). More details: $_"
         }
     }
 

@@ -133,7 +133,7 @@ function Confirm-InputsAreValid {
     {
         $invaidPATErrorMessage = "Please make sure that the Personal Access Token entered is valid and has `"Deployment Groups - Read & manage`" scope"
         $inputsValidationErrorCode = $RM_Extension_Status.ArgumentError
-        $unexpectedErrorMessage = "Some unexpected error occured."
+        $unexpectedErrorMessage = "An unexpected error occured."
         $errorMessageInitialPart = ("Could not verify that the deployment group `"$($config.DeploymentGroup)`" exists in the project `"$($config.TeamProject)`" in the specified organization `"$($config.VSTSUrl)`". Status: {0}. Error: {1}")
 
         #Verify the deployment group eixts and the PAT has the required(Deployment Groups - Read & manage) scope
@@ -165,6 +165,7 @@ function Confirm-InputsAreValid {
                     404
                     {
                         $specificErrorMessage = "Please make sure that you enter the correct organization name and verify that the project exists in the organization"
+                        $failEarly = $true
                     }
                     default
                     {
@@ -218,7 +219,7 @@ function Confirm-InputsAreValid {
         $requestBody = "{'name': '" + $config.DeploymentGroup + "'}"
         $patchDeploymentGroupErrorBlock = {
             $exception = $_
-            $errorMessage = "Deployment group get failed: {0}"
+            $errorMessage = "Deployment group patch failed: {0}"
             $failEarly = $false
             $inputsValidationErrorCode = $RM_Extension_Status.ArgumentError
             if($exception.Exception.Response)

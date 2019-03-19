@@ -47,9 +47,12 @@ function WriteDownloadLog
         {
             $message -f "$($exception.Exception)"
         }
+        WriteDownloadLog $message
+        return $message
     }
     $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Get" -Headers $headers} `
-                               -retryCatchBlock {WriteDownloadLog (& $getAgentPackageDataErrorMessageBlock)} -finalCatchBlock {throw (& $getAgentPackageDataErrorMessageBlock)}
+                                 -retryCatchBlock {$null = (& $getAgentPackageDataErrorMessageBlock)} `
+                                 -finalCatchBlock {throw (& $getAgentPackageDataErrorMessageBlock)}
 
     return $response.Value[0]
 }
@@ -91,7 +94,8 @@ function WriteDownloadLog
     
     WriteDownloadLog "`t`t Start DeploymentAgent download"
     Invoke-WithRetry -retryBlock {(New-Object Net.WebClient).DownloadFile($agentDownloadUrl,$target)} `
-                     -retryCatchBlock {WriteDownloadLog $_} -finalCatchBlock {throw $_}
+                     -retryCatchBlock {WriteDownloadLog $_.Exception} `
+                     -finalCatchBlock {throw $_.Exception}
     WriteDownloadLog "`t`t DeploymentAgent download done"
  }
 

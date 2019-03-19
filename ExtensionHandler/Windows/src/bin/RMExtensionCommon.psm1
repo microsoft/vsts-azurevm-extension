@@ -13,14 +13,8 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
 
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionStatus.psm1
-Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 Import-Module $PSScriptRoot\Log.psm1
-
-$global:logger = {
-    param([string] $Message)
-
-    Write-Log $Message
-}
+. "$PSScriptRoot\RMExtensionUtilities.ps1"
 
 function Get-AgentWorkingFolder {
     [CmdletBinding()]
@@ -29,9 +23,9 @@ function Get-AgentWorkingFolder {
     . $PSScriptRoot\AgentSettingsHelper.ps1
     . $PSScriptRoot\Constants.ps1
 
-    if(!(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderNew -logFunction $global:logger))
+    if(!(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderNew))
     {
-        if(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderOld -logFunction $global:logger)
+        if(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderOld)
         {
             return $agentWorkingFolderOld
         }
@@ -69,7 +63,7 @@ function Remove-Agent {
                 Clean-AgentWorkingFolder $config
             }
             else{
-                Write-Log "Some unexpected error occured: $_"
+                Write-Log "An unexpected error occured: $_"
                 throw $_
             }
         }
@@ -87,7 +81,7 @@ function Invoke-RemoveAgentScript {
     [hashtable] $config
     )
 
-    . $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -logFunction $global:logger
+    . $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder
 }
 
 function Set-ErrorStatusAndErrorExit {
@@ -151,7 +145,7 @@ function Clean-AgentWorkingFolder {
         }
         catch
         {
-            Write-Log "Some error occured while removing agent folder $($config.AgentWorkingFolder). More details: $_"
+            Write-Log "An error occured while removing agent folder $($config.AgentWorkingFolder). More details: $_"
         }
     }
 
@@ -179,7 +173,7 @@ function Create-AgentWorkingFolder {
     param([Parameter(Mandatory=$true, Position=0)]
     [string] $workingFolder)
 
-    Write-Log "Working folder for VSTS agent: $workingFolder"
+    Write-Log "Working folder for AzureDevOps agent: $workingFolder"
     if(!(Test-Path $workingFolder))
     {
         Write-Log "Working folder does not exist. Creating it..."

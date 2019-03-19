@@ -11,13 +11,13 @@ param(
     [string]$workingFolder,
     [string]$windowsLogonAccountName,
     [string]$windowsLogonPassword,
-    [string]$agentName,
-    [scriptblock]$logFunction    
+    [string]$agentName
 )
 
 $ErrorActionPreference = 'Stop'
 $configCmdPath = ''
 
+Import-Module $PSScriptRoot\Log.psm1
 . "$PSScriptRoot\Constants.ps1"
 . "$PSScriptRoot\AgentConfigurationManager.ps1"
 
@@ -27,15 +27,7 @@ function WriteConfigurationLog
     [string]$logMessage
     )
     
-    $log = "[Configuration]: " + $logMessage
-    if($logFunction -ne $null)
-    {
-        $logFunction.Invoke($log)
-    }
-    else
-    {
-        write-verbose $log
-    }
+    Write-Log ("[Configuration]: " + $logMessage)
 }
 
 function GetConfigCmdPath

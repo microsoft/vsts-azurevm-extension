@@ -12,8 +12,8 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
     $PSScriptRoot = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
 }
 
-Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 Import-Module $PSScriptRoot\Log.psm1
+. "$PSScriptRoot\RMExtensionUtilities.ps1"
 
 #
 # Cached values
@@ -325,7 +325,7 @@ function Set-ExtensionUpdateFile
     }
     catch
     {
-        Write-Log "Could not set the extension update file $extensionUpdateFile" $true
+        Write-Log "Could not set the extension update file $extensionUpdateFile. Error details: $($_.Exception)" $true
     }
 }
 
@@ -348,7 +348,7 @@ function Remove-ExtensionUpdateFile
     }
     catch
     {
-        Write-Log "Could not remove the extension update file $extensionUpdateFile" $true
+        Write-Log "Could not remove the extension update file $extensionUpdateFile. Error details: $($_.Exception)" $true
     }
 }
 
@@ -374,7 +374,7 @@ function Test-ExtensionUpdateFile
     }
     catch
     {
-        Write-Log "Could not check existence of the extension update file $extensionUpdateFile" $true
+        Write-Log "Could not check existence of the extension update file $extensionUpdateFile. Error details: $($_.Exception)" $true
     }
 
     return $false
@@ -402,7 +402,7 @@ function Set-LastSequenceNumber
     }
     catch
     {
-        Write-Log "Could not set last sequence number `"$currentSequenceNumber`" to the file $lastSeqFile" $true
+        Write-Log "Could not set last sequence number `"$currentSequenceNumber`" to the file $lastSeqFile. Error details: $($_.Exception)" $true
     }
 }
 
@@ -421,11 +421,14 @@ function Get-LastSequenceNumber
 
     try
     {
-        return (Get-Content $lastSeqFile | Out-String)
+        if(Test-Path $lastSeqFile)
+        {
+            return (Get-Content $lastSeqFile | Out-String)
+        }
     }
     catch
     {
-        Write-Log "Could not get last sequence number from the file $lastSeqFile" $true
+        Write-Log "Could not get last sequence number from the file $lastSeqFile. Error details: $($_.Exception)" $true
     }
 
     return -1
@@ -461,7 +464,7 @@ function Set-ExtensionDisabledMarkup
         }
         catch
         {
-            Write-Log "An error occured while creating disabled markup file $markupFile or writing to it." $true
+            Write-Log "An error occured while creating disabled markup file $markupFile or writing to it. Error details: $($_.Exception)" $true
         }
     }
 }
@@ -487,7 +490,7 @@ function Get-ExtensionDisabledMarkup
     }
     catch
     {
-        Write-Log "An error occured while fetching contents of disabled markup file $markupFile." $true
+        Write-Log "An error occured while fetching contents of disabled markup file $markupFile. Error details: $($_.Exception)" $true
     }
 }
 
@@ -513,7 +516,7 @@ function Remove-ExtensionDisabledMarkup
     }
     catch
     {
-        Write-Log "An error occured while deleting disabled markup file $markupFile." $true
+        Write-Log "An error occured while deleting disabled markup file $markupFile. Error details: $($_.Exception)" $true
     }
 }
 
@@ -539,7 +542,7 @@ function Test-ExtensionDisabledMarkup
     }
     catch
     {
-        Write-Log "An error occured while checking existence of disabled markup file $markupFile." $true
+        Write-Log "An error occured while checking existence of disabled markup file $markupFile. Error details: $($_.Exception)" $true
     }
 
     return $false
@@ -874,7 +877,7 @@ function Flush-BufferToFile()
 
     $str = BufferToString $script:extensionLogBuffer
 
-    Add-Content -Encoding UTF8 -Path $logFile -Force:$Force.IsPresent -Value $str
+    Invoke-WithRetry -retryBlock{Add-Content -Encoding UTF8 -Path $logFile -Force:$Force.IsPresent -Value $str} -finalCatchBlock {}
 
     $script:extensionLogBuffer.Clear()
 }
@@ -892,7 +895,7 @@ function Clear-StatusFile()
 
     Write-Log "Clearing status file $statusFile"
     
-    Clear-Content $statusFile -Force
+    Invoke-WithRetry -retryBlock {Clear-Content $statusFile -Force} -finalCatchBlock {Write-Log "Could not clear the file $statusFile."}
 }
 
 function Read-HandlerEnvironmentFile

@@ -11,6 +11,8 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
     $PSScriptRoot = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
 }
 
+Import-Module $PSScriptRoot\Log.psm1
+
 <#
 .Synopsis
     Recursively walks the given object and converts any PSObjects to Hashtables
@@ -90,9 +92,56 @@ function Get-RESTCallHeader
     $basicAuth = ("{0}:{1}" -f '', $patToken)
     $basicAuth = [System.Text.Encoding]::UTF8.GetBytes($basicAuth)
     $basicAuth = [System.Convert]::ToBase64String($basicAuth)
-    $headers = @{Authorization=("Basic {0}" -f $basicAuth)}
+    $header = @{Authorization=("Basic {0}" -f $basicAuth)}
 
-    return $headers
+    return $header
+}
+
+function Invoke-WithRetry
+{
+    param (
+        [ScriptBlock] $retryBlock,
+        [ScriptBlock] $retryCatchBlock,
+        [ScriptBlock] $finalCatchBlock,
+        [int] $retryInterval = 2,
+        [int] $maxRetries = 30
+    )
+
+    $retryCount = 0
+
+    do
+    {
+        $retryCount++
+        try
+        {
+            $retryBlockOutput = (& $retryBlock)
+            Write-Log "retried $retryCount times"
+            return $retryBlockOutput
+        }
+        catch
+        {
+            if($retryCount -lt $maxRetries)
+            {
+                if($retryCatchBlock)
+                {
+                    & $retryCatchBlock
+                }
+            }
+            else
+            {
+                if($finalCatchBlock)
+                {
+                    & $finalCatchBlock
+                }
+                else
+                {
+                    throw "Exceeded the maximum number of retries. Error: $($_.Exception)"
+                }
+            }
+        }
+        Start-Sleep -s $retryInterval
+    }
+    While ($retryCount -lt $maxRetries)   
 }
 
 function Exit-WithCode
@@ -103,10 +152,3 @@ function Exit-WithCode
     )
     exit $exitCode
 }
-
-Export-ModuleMember `
-    -Function `
-            ConvertTo-Hashtable, `
-            Get-OSVersion, `
-            Get-RESTCallHeader, `
-            Exit-WithCode

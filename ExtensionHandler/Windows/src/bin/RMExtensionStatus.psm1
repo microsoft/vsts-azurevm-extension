@@ -12,8 +12,8 @@ if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot i
 }
 
 Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
-Import-Module $PSScriptRoot\RMExtensionUtilities.psm1
 Import-Module $PSScriptRoot\Log.psm1
+. "$PSScriptRoot\RMExtensionUtilities.ps1"
 
 #region Status codes and messages
 
@@ -96,7 +96,7 @@ $global:RM_Extension_Status = @{
     }
     Disabled = @{
         Code = 16
-        Message = 'Disabled extension. However, Team services agent would continue to be registered with VSTS and will keep running.'
+        Message = 'Disabled extension. However, Team services agent would continue to be registered with AzureDevOps and will keep running.'
         operationName = 'Disable'
     }
     Uninstalling = @{
@@ -136,7 +136,7 @@ $global:RM_Extension_Status = @{
     }
     UnConfiguringDeploymentAgentFailed = @{
         Code = 25
-        Message = '[WARNING] The deployment agent {0} could not be uninstalled. Ensure to remove it manually from its deployment group in VSTS'
+        Message = '[WARNING] The deployment agent {0} could not be uninstalled. Ensure to remove it manually from its deployment group in AzureDevOps'
         operationName = 'Unconfigure existing agent'
     }
     ExtractAgentPackage = @{

@@ -314,7 +314,6 @@ Describe "AgentReconfigurationRequired tests" {
         DeploymentGroup = "DeploymentGroup"
         PATToken = "PATToken"
     }
-    $global:logger = {}
 
     Context "Should set error status if exception happens" {
 

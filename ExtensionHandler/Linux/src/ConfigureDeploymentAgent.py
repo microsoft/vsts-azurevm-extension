@@ -2,7 +2,7 @@ import os
 import subprocess
 import json
 import platform
-import Constants
+import Utils.Constants as Constants
 import codecs
 import Utils.HandlerUtil as Util
 from pwd import getpwnam
@@ -195,12 +195,12 @@ def _get_deployment_group_data(vsts_url, project_id, deployment_group_id, user_n
   deployment_group_data_url = vsts_url + deployment_group_data_address
 
   response = Util.make_http_call(deployment_group_data_url, 'GET', None, None, pat_token)
-  if(response.status == 200):
+  if(response.status == Constants.HTTP_OK):
     val = json.loads(response.read())
     _write_log('\t\t Deployment group details fetched successfully')
     return val
   else:
-    raise Exception('Unable to fetch the deployment group information from VSTS server.')
+    raise Exception('Unable to fetch the deployment group information from VSTS server: {0} {1}'.format(str(response.status), response.reason))
 
 def _get_deployment_group_data_from_setting(vsts_url, pat_token):
   global setting_params
@@ -258,16 +258,16 @@ def _apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id,
   request_body = json.dumps([{'id' : json.loads(agent_id), 'tags' : json.loads(tags_string), 'agent' : {'id' : json.loads(agent_id)}}])
   _write_add_tags_log('Add tags request body : {0}'.format(request_body))
   response = Util.make_http_call(tags_url, 'PATCH', request_body, headers, pat_token)
-  if(response.status == 200):
+  if(response.status == Constants.HTTP_OK):
     _write_add_tags_log('Patch call for tags succeeded')
   else:
-    raise Exception('Tags could not be added. Please make sure that you enter correct details.')
+    raise Exception('Tags could not be added.')
 
 def _add_tags_to_agent_internal(vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string):
   target_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets/{2}?api-version={3}'.format(quote(project_name), deployment_group_id, agent_id, Constants.targets_api_version)
   target_url = vsts_url + target_address
   response = Util.make_http_call(target_url, 'GET', None, None, pat_token)
-  if(response.status == 200):
+  if(response.status == Constants.HTTP_OK):
     val = {}
     response_string = response.read()
     val = json.loads(response_string)
@@ -278,7 +278,7 @@ def _add_tags_to_agent_internal(vsts_url, pat_token, project_name, deployment_gr
         existing_tags.append(x)
     tags = existing_tags
   else:
-    raise Exception('Tags could not be added. Unable to fetch the existing tags.')
+    raise Exception('Tags could not be added. Unable to fetch the existing tags or deployment group details: {0} {1}'.format(str(response.status), response.reason))
   _write_add_tags_log('Updating the tags for agent target - {0}'.format(agent_id))
   _apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, json.dumps(agent_id), json.dumps(tags, ensure_ascii = False))
 

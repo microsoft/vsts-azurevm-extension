@@ -215,8 +215,9 @@ function Remove-ProtectedSettingsFromConfigFile
     {
         Set-JsonContent -Path $handlerSettingsFile -Value $handlerSettings -Force
     }
-    catch{
-        Write-Log "[Warning]: could not delete the PAT from the settings file. More details : $_"
+    catch
+    {
+        Write-Log "[Warning]: could not delete the PAT from the settings file. More details : $_" $true
     }
 }
 
@@ -317,12 +318,15 @@ function Set-ExtensionUpdateFile
     [string] $workingFolder)
 
     . $PSScriptRoot\Constants.ps1
+    $extensionUpdateFile = "$workingFolder\$updateFileName"
     try
     {
-        New-Item -ItemType File -Path "$workingFolder\$updateFileName" -Value "" -Force  > $null
+        New-Item -ItemType File -Path $extensionUpdateFile -Value "" -Force  > $null
     }
     catch
-    {}
+    {
+        Write-Log "Could not set the extension update file $extensionUpdateFile" $true
+    }
 }
 
 <#
@@ -337,12 +341,15 @@ function Remove-ExtensionUpdateFile
     [string] $workingFolder)
 
     . $PSScriptRoot\Constants.ps1
+    $extensionUpdateFile = "$workingFolder\$updateFileName"
     try
     {
-        Remove-Item -Path "$workingFolder\$updateFileName" -Force
+        Remove-Item -Path $extensionUpdateFile -Force
     }
     catch
-    {}
+    {
+        Write-Log "Could not remove the extension update file $extensionUpdateFile" $true
+    }
 }
 
 <#
@@ -357,16 +364,18 @@ function Test-ExtensionUpdateFile
     [string] $workingFolder)
 
     . $PSScriptRoot\Constants.ps1
-    $updateFile = "$workingFolder\$updateFileName"
+    $extensionUpdateFile = "$workingFolder\$updateFileName"
 
-    Write-Log "Testing whether extension update file exists: $updateFile"
+    Write-Log "Testing whether extension update file exists: $extensionUpdateFile"
 
     try
     {
-        return Test-Path $updateFile
+        return Test-Path $extensionUpdateFile
     }
     catch
-    {}
+    {
+        Write-Log "Could not check existence of the extension update file $extensionUpdateFile" $true
+    }
 
     return $false
 }
@@ -392,7 +401,9 @@ function Set-LastSequenceNumber
         New-Item -ItemType File -Path $lastSeqFile -Value $currentSequenceNumber -Force > $null
     }
     catch
-    {}
+    {
+        Write-Log "Could not set last sequence number `"$currentSequenceNumber`" to the file $lastSeqFile" $true
+    }
 }
 
 <#
@@ -413,7 +424,9 @@ function Get-LastSequenceNumber
         return (Get-Content $lastSeqFile | Out-String)
     }
     catch
-    {}
+    {
+        Write-Log "Could not get last sequence number from the file $lastSeqFile" $true
+    }
 
     return -1
 }
@@ -448,7 +461,7 @@ function Set-ExtensionDisabledMarkup
         }
         catch
         {
-            Write-Log "Error while creating $markupFile or writing to it."
+            Write-Log "An error occured while creating disabled markup file $markupFile or writing to it." $true
         }
     }
 }
@@ -474,7 +487,7 @@ function Get-ExtensionDisabledMarkup
     }
     catch
     {
-        Write-Log "Error while fetching contents of  $markupFile."
+        Write-Log "An error occured while fetching contents of disabled markup file $markupFile." $true
     }
 }
 
@@ -499,7 +512,9 @@ function Remove-ExtensionDisabledMarkup
         Remove-Item -Path $markupFile -Force
     }
     catch
-    {}
+    {
+        Write-Log "An error occured while deleting disabled markup file $markupFile." $true
+    }
 }
 
 <#
@@ -516,14 +531,16 @@ function Test-ExtensionDisabledMarkup
     . $PSScriptRoot\Constants.ps1
     $markupFile = "$workingFolder\$disabledMarkupFile"
 
-    Write-Log "Testing whether deleted markup file exists: $markupFile"
+    Write-Log "Testing whether disabled markup file exists: $markupFile"
 
     try
     {
         return Test-Path $markupFile
     }
     catch
-    {}
+    {
+        Write-Log "An error occured while checking existence of disabled markup file $markupFile." $true
+    }
 
     return $false
 }

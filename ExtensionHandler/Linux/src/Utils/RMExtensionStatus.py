@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import Constants
 
 rm_terminating_error_id = 'RMHandlerTerminatingError'
 
@@ -123,7 +124,7 @@ rm_extension_status = {
   },
   'Enabled' : {
     'Code' : 26,
-    'Message' : 'The etension has been enabled successfully.',
+    'Message' : 'The extension has been enabled successfully.',
     'operationName' : 'Enable'
   },
   'Updated' : {
@@ -136,6 +137,32 @@ rm_extension_status = {
     'Message' : 'The extension settings are the same as the previous version. Skipping extension enable.',
     'operationName' : 'Skip enable'
   },
+  'ValidatingInputs': {
+    'Code' : 29,
+    'Message': 'Validating Inputs',
+    'operationName': 'Inputs validation'
+  },
+  'SuccessfullyValidatedInputs' : {
+    'Code' : 30,
+    'Message' : 'Successfully validated inputs',
+    'operationName': 'Inputs validation'
+  },
+  'PreValidationCheck': {
+    'Code': 31,
+    'Message': 'Validating dependecies',
+    'operationName': 'Pre-Validation Checks'
+  },
+  'PreValidationCheckSuccess': {
+    'Code': 32,
+    'Message': 'Successfully validated dependecies',
+    'operationName': 'Pre-Validation Checks'
+  },
+  'ComparingWithPreviousSettings': {
+    'Code': 33,
+    'Message': 'Comparing settings with previous settings',
+    'operationName': 'Settings Comparison'
+  },
+
   #
   # Warnings
   #
@@ -146,21 +173,21 @@ rm_extension_status = {
   'GenericError' : 1000, # The message for this error is provided by the specific exception
   'InstallError' : 1001, # The message for this error is provided by the specific exception
   'ArchitectureNotSupported' : {
-    'Code' : 1002,
+    'Code' : Constants.ERROR_UNSUPPORTED_OS,
     'Message' : 'The current CPU architecture is not supported. Deployment agent requires x64 architecture.'
   },
   'PythonVersionNotSupported' : {
-    'Code' : 1003,
+    'Code' : Constants.ERROR_MISSING_DEPENDENCY,
     'Message' : 'Installed Python version is {0}. Minimum required version is 2.6.'
   },
-  'LinuxDistributionNotSupported' : {
-    'Code' : 1004,
-    'Message' : 'Linux distribution {0} {1} not supported.'
+  'SystemdNotFound': {
+    'Code' : Constants.ERROR_MISSING_DEPENDENCY,
+    'Message': 'Could not find systemd on the machine. Error message: {0}'
   },
   #
   # ArgumentError indicates a problem in the input provided by the user. The message for the error is provided by the specific exception
   #
-  'ArgumentError' : 1100,
+  'ArgumentError' : Constants.ERROR_CONFIGURATION,
   'AgentUnConfigureFailWarning' : 'There are some warnings in uninstalling the already existing agent. Check \"Detailed Status\" for more details.'
 }
 

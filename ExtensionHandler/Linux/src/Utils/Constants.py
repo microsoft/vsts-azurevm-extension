@@ -6,6 +6,7 @@ update_file_name = 'EXTENSIONUPDATE'
 disable_markup_file_name = 'EXTENSIONDISABLED'
 
 targets_api_version = '4.1-preview.1'
+projectAPIVersion = '5.0-preview.1'
 agent_target_name = 'agent.tar.gz'
 agent_listener = 'bin/Agent.Listener'
 agent_service = 'svc.sh'
@@ -23,3 +24,33 @@ ubuntu_distr_name = 'Ubuntu'
 
 default_agent_work_dir = '_work'
 is_on_prem = False
+
+# Input Arguments
+ENABLE = 'Enable'
+DISABLE = 'Disable'
+UNINSTALL = 'Uninstall'
+UPDATE = 'Update'
+INSTALL = 'Install'
+
+input_arguments_dict = {
+    '-enable': ENABLE,
+    '-disable': DISABLE,
+    '-uninstall': UNINSTALL,
+    '-update': UPDATE,
+    '-install': INSTALL
+}
+
+ERROR_MESSAGE_LENGTH = 300
+
+# Http Respose Codes
+HTTP_OK = 200
+HTTP_FOUND = 302
+HTTP_UNAUTHORIZED = 401
+HTTP_FORBIDDEN = 403
+HTTP_NOTFOUND = 404
+
+
+# Error Codes
+ERROR_UNSUPPORTED_OS = 51
+ERROR_MISSING_DEPENDENCY = 52
+ERROR_CONFIGURATION = 53

@@ -309,9 +309,47 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
             {
                 $settingsSame = $true
                 $oldExtensionPublicSettings.Keys | % {
-                    if(!$extensionPublicSettings.ContainsKey($_) -or !($oldExtensionPublicSettings.$_ -eq $extensionPublicSettings.$_))
+                    if(!$extensionPublicSettings.ContainsKey($_))
                     {
                         $settingsSame = $false
+                    }
+                    else
+                    {
+                        if($_ -eq "Tags")
+                        {
+                            $oldTags = Format-TagsInput $oldExtensionPublicSettings.$_
+                            if(!$oldTags)
+                            {
+                                $oldTags = @()
+                            }
+                            $tags = Format-TagsInput $extensionPublicSettings.$_
+                            if(!$tags)
+                            {
+                                $tags = @()
+                            }
+                            if($oldTags.Count -ne $tags.Count)
+                            {
+                                $settingsSame = $false
+                            }
+                            else
+                            {
+                                for ($i = 0; $i -lt $oldTags.Count; $i++)
+                                {
+                                    if($oldTags[$i] -ne $tags[$i])
+                                    {
+                                        $settingsSame = $false
+                                        break
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if($oldExtensionPublicSettings.$_ -ne $extensionPublicSettings.$_)
+                            {
+                                $settingsSame = $false
+                            }
+                        }
                     }
                 }
             }
@@ -322,9 +360,9 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
             }
             else
             {
-                Write-Log "Old and new extension version settings are not same."
-                Write-Log "Old extension version settings: $oldExtensionPublicSettings"
-                Write-Log "New extension version settings: $extensionPublicSettings"
+                Write-Log "Old and new extension version settings are not same." $true
+                Write-Log "Old extension version settings: $($oldExtensionPublicSettings | ConvertTo-Json)" $true
+                Write-Log "New extension version settings: $($extensionPublicSettings | ConvertTo-Json)" $true
             }
         }
         else

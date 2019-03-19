@@ -1,7 +1,7 @@
 import urllib
 import tarfile
 import json
-import Constants
+import Utils.Constants as Constants
 import os
 import platform
 import shutil

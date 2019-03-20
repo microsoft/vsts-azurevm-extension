@@ -322,6 +322,7 @@ function Set-ExtensionUpdateFile
     try
     {
         New-Item -ItemType File -Path $extensionUpdateFile -Value "" -Force  > $null
+        Write-Log "Created the update marker file at $extensionUpdateFile" $true
     }
     catch
     {
@@ -345,6 +346,7 @@ function Remove-ExtensionUpdateFile
     try
     {
         Remove-Item -Path $extensionUpdateFile -Force
+        Write-Log "Removed the update marker file: $extensionUpdateFile" $true
     }
     catch
     {
@@ -461,11 +463,15 @@ function Set-ExtensionDisabledMarkup
         {
             Write-Log "Writing contents of $extensionSettingsFile to $markupFile"
             Get-Content -Path $extensionSettingsFile | Out-String | Set-Content -Path $markupFile -Force
+            Write-Log "Created the disabled markup file: $extensionSettingsFile" $true
         }
         catch
         {
             Write-Log "An error occured while creating disabled markup file $markupFile or writing to it. Error details: $($_.Exception)" $true
         }
+    }
+    else {
+        Write-Log "Skipping the creation of the markup file since last successful seq number is not latest." $true
     }
 }
 

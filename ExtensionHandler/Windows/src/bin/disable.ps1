@@ -24,7 +24,7 @@ $agentWorkingFolder = Get-AgentWorkingFolder
 
 Write-Log "Disable command is no-op for agent"
 
-Write-Log "Disabling extension handler. Creating a markup file.."
+Write-Log "Disabling extension handler. Creating a markup file.." $true
 Set-ExtensionDisabledMarkup $agentWorkingFolder
 
 Add-HandlerSubStatus $RM_Extension_Status.Disabled.Code $RM_Extension_Status.Disabled.Message -operationName $RM_Extension_Status.Disabled.operationName

@@ -318,15 +318,7 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
                         if($_ -eq "Tags")
                         {
                             $oldTags = Format-TagsInput $oldExtensionPublicSettings.$_
-                            if(!$oldTags)
-                            {
-                                $oldTags = @()
-                            }
                             $tags = Format-TagsInput $extensionPublicSettings.$_
-                            if(!$tags)
-                            {
-                                $tags = @()
-                            }
                             if($oldTags.Count -ne $tags.Count)
                             {
                                 $settingsSame = $false

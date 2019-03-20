@@ -87,7 +87,7 @@ function Get-ConfigurationFromSettings {
         }
         $tagsString = $tagsInput | Out-String
         Write-Log "Tags: $tagsString"
-        $tags = @(Format-TagsInput $tagsInput)
+        $tags = Format-TagsInput $tagsInput
 
         $windowsLogonAccountName = ""
         if($publicSettings.Contains('UserName'))
@@ -382,7 +382,12 @@ function Format-TagsInput {
 
     $uniqueTags = $tags | Sort-Object -Unique | Where { -not [string]::IsNullOrWhiteSpace($_) }
 
-    return $uniqueTags
+    #To handle null check, since ,$null does not return an array; and ',' in return statement for single element arrays
+    if($null -eq $uniqueTags)
+    {
+        $uniqueTags = @()
+    }
+    return ,$uniqueTags
 }
 
 function Verify-InputNotNull {

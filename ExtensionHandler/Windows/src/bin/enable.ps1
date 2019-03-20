@@ -365,7 +365,7 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
     }
     catch
     {
-        Write-Log "Disabled settings check failed. Error: $($_.Exception)" $true
+        Write-Log "Disabled settings check failed. Error: $_" $true
         return $false
     }
 }

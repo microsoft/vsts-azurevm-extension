@@ -318,15 +318,7 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
                         if($_ -eq "Tags")
                         {
                             $oldTags = Format-TagsInput $oldExtensionPublicSettings.$_
-                            if(!$oldTags)
-                            {
-                                $oldTags = @()
-                            }
                             $tags = Format-TagsInput $extensionPublicSettings.$_
-                            if(!$tags)
-                            {
-                                $tags = @()
-                            }
                             if($oldTags.Count -ne $tags.Count)
                             {
                                 $settingsSame = $false
@@ -373,7 +365,7 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
     }
     catch
     {
-        Write-Log "Disabled settings check failed. Error: $($_.Exception)" $true
+        Write-Log "Disabled settings check failed. Error: $_" $true
         return $false
     }
 }

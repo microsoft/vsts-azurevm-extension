@@ -326,7 +326,7 @@ function Set-ExtensionUpdateFile
     }
     catch
     {
-        Write-Log "Could not set the extension update file $extensionUpdateFile. Error details: $($_.Exception)" $true
+        Write-Log "Could not set the extension update file $extensionUpdateFile. Error details: $_" $true
     }
 }
 
@@ -350,7 +350,7 @@ function Remove-ExtensionUpdateFile
     }
     catch
     {
-        Write-Log "Could not remove the extension update file $extensionUpdateFile. Error details: $($_.Exception)" $true
+        Write-Log "Could not remove the extension update file $extensionUpdateFile. Error details: $_" $true
     }
 }
 
@@ -376,7 +376,7 @@ function Test-ExtensionUpdateFile
     }
     catch
     {
-        Write-Log "Could not check existence of the extension update file $extensionUpdateFile. Error details: $($_.Exception)" $true
+        Write-Log "Could not check existence of the extension update file $extensionUpdateFile. Error details: $_" $true
     }
 
     return $false
@@ -404,7 +404,7 @@ function Set-LastSequenceNumber
     }
     catch
     {
-        Write-Log "Could not set last sequence number `"$currentSequenceNumber`" to the file $lastSeqFile. Error details: $($_.Exception)" $true
+        Write-Log "Could not set last sequence number `"$currentSequenceNumber`" to the file $lastSeqFile. Error details: $_" $true
     }
 }
 
@@ -430,7 +430,7 @@ function Get-LastSequenceNumber
     }
     catch
     {
-        Write-Log "Could not get last sequence number from the file $lastSeqFile. Error details: $($_.Exception)" $true
+        Write-Log "Could not get last sequence number from the file $lastSeqFile. Error details: $_" $true
     }
 
     return -1
@@ -467,7 +467,7 @@ function Set-ExtensionDisabledMarkup
         }
         catch
         {
-            Write-Log "An error occured while creating disabled markup file $markupFile or writing to it. Error details: $($_.Exception)" $true
+            Write-Log "An error occured while creating disabled markup file $markupFile or writing to it. Error details: $_" $true
         }
     }
     else {
@@ -496,7 +496,7 @@ function Get-ExtensionDisabledMarkup
     }
     catch
     {
-        Write-Log "An error occured while fetching contents of disabled markup file $markupFile. Error details: $($_.Exception)" $true
+        Write-Log "An error occured while fetching contents of disabled markup file $markupFile. Error details: $_" $true
     }
 }
 
@@ -522,7 +522,7 @@ function Remove-ExtensionDisabledMarkup
     }
     catch
     {
-        Write-Log "An error occured while deleting disabled markup file $markupFile. Error details: $($_.Exception)" $true
+        Write-Log "An error occured while deleting disabled markup file $markupFile. Error details: $_" $true
     }
 }
 
@@ -548,7 +548,7 @@ function Test-ExtensionDisabledMarkup
     }
     catch
     {
-        Write-Log "An error occured while checking existence of disabled markup file $markupFile. Error details: $($_.Exception)" $true
+        Write-Log "An error occured while checking existence of disabled markup file $markupFile. Error details: $_" $true
     }
 
     return $false

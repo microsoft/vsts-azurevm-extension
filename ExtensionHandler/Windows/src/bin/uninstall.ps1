@@ -39,7 +39,7 @@ if (!(Test-ExtensionUpdateFile -workingFolder $agentWorkingFolder))
 }
 else
 {
-    Write-Log "Extension update scenario. Deleting the update file."
+    Write-Log "Extension update scenario. Deleting the update file." $true
     Remove-ExtensionUpdateFile $agentWorkingFolder
 }
 Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message -Status success

@@ -230,7 +230,7 @@ function Compare-SequenceNumber{
         if(($sequenceNumber -eq $lastSequenceNumber) -and (!(Test-ExtensionDisabledMarkup $config.AgentWorkingFolder)))
         {
             Write-Log $RM_Extension_Status.SkippedInstallation.Message
-            Write-Log "Current seq number: $sequenceNumber, last seq number: $lastSequenceNumber"
+            Write-Log "Skipping enable since seq numbers match. Seq number: $sequenceNumber." $true
             Add-HandlerSubStatus $RM_Extension_Status.SkippedInstallation.Code $RM_Extension_Status.SkippedInstallation.Message -operationName $RM_Extension_Status.SkippedInstallation.operationName
             Exit-WithCode 0
         }
@@ -355,7 +355,7 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
             }
             if($settingsSame)
             {
-                Write-Log "Old and new extension version settings are same."
+                Write-Log "Old and new extension version settings are same." $true
                 return $true
             }
             else
@@ -373,7 +373,7 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
     }
     catch
     {
-        Write-Log "Disabled settings check failed" $true
+        Write-Log "Disabled settings check failed. Error: $($_.Exception)" $true
         return $false
     }
 }

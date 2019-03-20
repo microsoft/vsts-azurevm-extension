@@ -29,12 +29,12 @@ function Write-Log
 
         [Parameter(Mandatory=$false, Position=1, ValueFromPipeline=$true)]
         [bool]
-        $IsError=$false
+        $LogToVerbose=$false
     )
 
     $formattedMessage = '[{0:s}] {1}' -f (Get-Date), $Message
 
-    if($IsError) {
+    if($LogToVerbose) {
         Write-Verbose -Verbose "${formattedMessage}`r`n"
     }
 

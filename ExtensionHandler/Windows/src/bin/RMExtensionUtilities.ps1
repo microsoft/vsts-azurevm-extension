@@ -103,8 +103,8 @@ function Invoke-WithRetry
         [ScriptBlock] $retryBlock,
         [ScriptBlock] $retryCatchBlock,
         [ScriptBlock] $finalCatchBlock,
-        [int] $retryInterval = 2,
-        [int] $maxRetries = 30
+        [int] $retryInterval = 5,
+        [int] $maxRetries = 5
     )
 
     $retryCount = 0

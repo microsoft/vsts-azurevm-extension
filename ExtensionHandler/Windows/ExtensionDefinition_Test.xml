@@ -2,7 +2,7 @@
   <ExtensionImage xmlns="http://schemas.microsoft.com/windowsazure" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">   
   <ProviderNameSpace>Test3.Microsoft.VisualStudio.Services</ProviderNameSpace>
   <Type>TeamServicesAgent</Type>
-  <Version>1.49.0.0</Version>
+  <Version>1.50.0.0</Version>
   <Label>Team Services Agent</Label>
   <HostingResources>VmRole</HostingResources>
   <MediaLink>https://vstsvmextensiontest.blob.core.windows.net/agentextension/vstsagentextension.zip</MediaLink>

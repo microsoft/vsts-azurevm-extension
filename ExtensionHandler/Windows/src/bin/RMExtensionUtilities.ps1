@@ -135,7 +135,7 @@ function Invoke-WithRetry
                 }
                 else
                 {
-                    throw "Exceeded the maximum number of retries. Error: $($_.Exception)"
+                    throw "Exceeded the maximum number of retries. Error: $_"
                 }
             }
         }

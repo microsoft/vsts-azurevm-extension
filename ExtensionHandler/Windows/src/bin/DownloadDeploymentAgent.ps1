@@ -41,11 +41,11 @@ function WriteDownloadLog
         $message = "An error occured while downloading AzureDevOps agent. {0}"
         if($exception.Exception.Response)
         {
-            $message -f "Status: $($exception.Exception.Response.StatusCode.value__)"
+            $message = $message -f "Status: $($exception.Exception.Response.StatusCode.value__). More details: $($exception.ErrorDetails)"
         }
         else
         {
-            $message -f "$($exception.Exception)"
+            $message = $message -f $exception
         }
         WriteDownloadLog $message
         return $message
@@ -94,8 +94,8 @@ function WriteDownloadLog
     
     WriteDownloadLog "`t`t Start DeploymentAgent download"
     Invoke-WithRetry -retryBlock {(New-Object Net.WebClient).DownloadFile($agentDownloadUrl,$target)} `
-                     -retryCatchBlock {WriteDownloadLog $_.Exception} `
-                     -finalCatchBlock {throw $_.Exception}
+                     -retryCatchBlock {WriteDownloadLog $_} `
+                     -finalCatchBlock {throw $_}
     WriteDownloadLog "`t`t DeploymentAgent download done"
  }
 

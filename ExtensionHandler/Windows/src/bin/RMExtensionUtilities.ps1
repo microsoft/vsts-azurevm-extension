@@ -103,8 +103,8 @@ function Invoke-WithRetry
         [ScriptBlock] $retryBlock,
         [ScriptBlock] $retryCatchBlock,
         [ScriptBlock] $finalCatchBlock,
-        [int] $retryInterval = 2,
-        [int] $maxRetries = 30
+        [int] $retryInterval = 5,
+        [int] $maxRetries = 5
     )
 
     $retryCount = 0
@@ -135,7 +135,7 @@ function Invoke-WithRetry
                 }
                 else
                 {
-                    throw "Exceeded the maximum number of retries. Error: $($_.Exception)"
+                    throw "Exceeded the maximum number of retries. Error: $_"
                 }
             }
         }

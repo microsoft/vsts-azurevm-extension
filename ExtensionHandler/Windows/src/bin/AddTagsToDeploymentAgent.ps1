@@ -60,11 +60,11 @@ function ApplyTagsToAgent
         $message = "An error occured while applying tags. {0}"
         if($exception.Exception.Response)
         {
-            $message -f "Status: $($exception.Exception.Response.StatusCode.value__)"
+            $message = $message -f "Status: $($exception.Exception.Response.StatusCode.value__). More details: $($exception.ErrorDetails)"
         }
         else
         {
-            $message -f "$($exception.Exception)"
+            $message = $message -f "$($exception.Exception)"
         }
         WriteAddTagsLog $message
         return $message
@@ -106,11 +106,11 @@ function AddTagsToAgent
         $message = "Tags could not be added. Unable to fetch the existing tags or deployment group details. {0}"
         if($exception.Exception.Response)
         {
-            $message -f "Status: $($exception.Exception.Response.StatusCode.value__)"
+            $message = $message -f "Status: $($exception.Exception.Response.StatusCode.value__). More details: $($exception.ErrorDetails)"
         }
         else
         {
-            $message -f "$($exception.Exception)"
+            $message = $message -f "$($exception.Exception)"
         }
         WriteAddTagsLog $message
         return $message

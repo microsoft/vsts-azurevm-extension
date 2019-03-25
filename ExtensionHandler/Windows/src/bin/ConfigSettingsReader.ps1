@@ -179,7 +179,7 @@ function Confirm-InputsAreValid {
             else
             {
                 $inputsValidationErrorCode = $RM_Extension_Status.GenericError
-                $errorMessage = $errorMessage -f $exception.Exception
+                $errorMessage = $errorMessage -f $exception
                 Write-Log $errorMessage $true
             }
 
@@ -243,7 +243,7 @@ function Confirm-InputsAreValid {
             else
             {
                 $inputsValidationErrorCode = $RM_Extension_Status.GenericError
-                $errorMessage = $errorMessage -f $exception.Exception
+                $errorMessage = $errorMessage -f $exception
                 Write-Log $errorMessage $true
             }
             

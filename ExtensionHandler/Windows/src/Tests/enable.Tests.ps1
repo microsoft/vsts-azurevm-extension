@@ -26,7 +26,7 @@ Describe "Enable RM extension tests" {
         Mock Set-HandlerStatus {}
         Mock Write-Log {}
         Mock Set-LastSequenceNumber {}
-        Mock Remove-ExtensionDisabledMarkup {}
+        Mock Test-ExtensionDisabledMarkup {}
         Mock Add-AgentTags {}
         Mock Confirm-InputsAreValid {}
         
@@ -34,7 +34,7 @@ Describe "Enable RM extension tests" {
 
         It "should call clean up functions" {
             Assert-MockCalled Set-LastSequenceNumber -Times 1
-            Assert-MockCalled Remove-ExtensionDisabledMarkup -Times 1
+            Assert-MockCalled Test-ExtensionDisabledMarkup -Times 1
         }
     }
 

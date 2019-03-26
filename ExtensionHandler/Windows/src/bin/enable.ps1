@@ -113,11 +113,11 @@ function Get-Agent {
     try
     {
         Add-HandlerSubStatus $RM_Extension_Status.DownloadingDeploymentAgent.Code $RM_Extension_Status.DownloadingDeploymentAgent.Message -operationName $RM_Extension_Status.DownloadingDeploymentAgent.operationName
-        Write-Log "Invoking script to download Deployment agent package..."
+        Write-Log "Invoking script to download and extract Deployment agent package..."
 
         Invoke-GetAgentScriptAndExtractAgent $config
 
-        Write-Log "Done downloading Deployment agent package..."
+        Write-Log "Done downloading and extracting agent package" $true
         Add-HandlerSubStatus $RM_Extension_Status.DownloadedDeploymentAgent.Code $RM_Extension_Status.DownloadedDeploymentAgent.Message -operationName $RM_Extension_Status.DownloadedDeploymentAgent.operationName
     }
     catch
@@ -200,7 +200,8 @@ function Start-RMExtensionHandler {
 
         #Ensure tls1.2 support is added
         $securityProtocolString = [string][Net.ServicePointManager]::SecurityProtocol
-        if ($securityProtocolString -notlike "*Tls12*") {
+        if ($securityProtocolString -notlike "*Tls12*")
+        {
             $securityProtocolString += ", Tls12"
             [Net.ServicePointManager]::SecurityProtocol = $securityProtocolString
         }
@@ -234,11 +235,11 @@ function Compare-SequenceNumber{
             Add-HandlerSubStatus $RM_Extension_Status.SkippedInstallation.Code $RM_Extension_Status.SkippedInstallation.Message -operationName $RM_Extension_Status.SkippedInstallation.operationName
             Exit-WithCode 0
         }
-        Write-Log "Sequence Number: $sequenceNumber"
+        Write-Log "Sequence Number: $sequenceNumber" $true
     }
     catch
     {
-        Write-Log "Sequence number check failed" $true
+        Write-Log "Sequence number check failed: $_" $true
     }
 }
 
@@ -272,10 +273,11 @@ function Add-AgentTags
         if(($config.Tags -ne $null) -and ($config.Tags.Count -gt 0))
         {
             Invoke-AddTagsToAgentScript $config
+            Write-Log "Done adding tags" $true
         }
         else
         {
-            Write-Log "No tags provided for agent"
+            Write-Log "No tags provided for agent" $true
         }
 
         Add-HandlerSubStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -operationName $RM_Extension_Status.AgentTagsAdded.operationName
@@ -347,19 +349,20 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
             }
             if($settingsSame)
             {
-                Write-Log "Old and new extension version settings are same." $true
+                Write-Log "Disabled version and new version settings are same." $true
                 return $true
             }
             else
             {
-                Write-Log "Old and new extension version settings are not same." $true
-                Write-Log "Old extension version settings: $($oldExtensionPublicSettings | ConvertTo-Json)" $true
-                Write-Log "New extension version settings: $($extensionPublicSettings | ConvertTo-Json)" $true
+                Write-Log "Disabled version and new version settings are not same." $true
+                Write-Log "Disabled version settings: $($oldExtensionPublicSettings | ConvertTo-Json)" $true
+                Write-Log "New version settings: $($extensionPublicSettings | ConvertTo-Json)" $true
             }
         }
         else
         {
-            Write-Log "Old extension settings file does not exist in the agent directory. Will continue with enable."
+            Write-Log "Disabled version settings file does not exist in the agent directory. Will continue with enable."
+            Write-Log "Disabled settings absent, continue with enable." $true
         }
         return $false
     }
@@ -378,10 +381,12 @@ function ExecuteAgentPreCheck
     )
 
     $script:configuredAgentExists  = Test-ConfiguredAgentExists -workingFolder $config.AgentWorkingFolder
+    Write-Log "configuredAgentExists: $configuredAgentExists" $true
     if($configuredAgentExists)
     {
         $script:agentConfigurationRequired = Test-AgentReconfigurationRequired $config
     }
+    Write-Log "agentConfigurationRequired: $agentConfigurationRequired" $true
 }
 
 function DownloadAgentIfRequired
@@ -397,7 +402,8 @@ function DownloadAgentIfRequired
     }
     else
     {
-        Write-Log "Skipping agent download as a configured agent already exists."
+        Write-Log "A configured agent already exists."
+        Write-Log "Skipping agent download." $true
         Add-HandlerSubStatus $RM_Extension_Status.SkippingDownloadDeploymentAgent.Code $RM_Extension_Status.SkippingDownloadDeploymentAgent.Message -operationName $RM_Extension_Status.SkippingDownloadDeploymentAgent.operationName
     }
 }
@@ -411,8 +417,9 @@ function RemoveExistingAgentIfRequired
 
     if($configuredAgentExists -and $agentConfigurationRequired)
     {
-        Write-Log "Remove existing configured agent"
+        Write-Log "Removing existing configured agent"
         Remove-Agent $config
+        Write-Log "Removed existing agent" $true
 
         #Execution has reached till here means that either the agent was removed successfully.
         $script:configuredAgentExists = $false
@@ -432,7 +439,8 @@ function ConfigureAgentIfRequired
     }
     else
     {
-        Write-Log "Skipping agent configuration. Agent is already configured with given set of parameters"
+        Write-Log "Agent is already configured with given set of parameters"
+        Write-Log "Skipping agent configuration." $true
         Add-HandlerSubStatus $RM_Extension_Status.SkippingAgentConfiguration.Code $RM_Extension_Status.SkippingAgentConfiguration.Message -operationName $RM_Extension_Status.SkippingAgentConfiguration.operationName
         Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message
     }
@@ -471,8 +479,11 @@ function Enable
 
     Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
     Set-LastSequenceNumber
-    Write-Log "Removing disable markup file.."
-    Remove-ExtensionDisabledMarkup $config.AgentWorkingFolder
+    if(Test-ExtensionDisabledMarkup $config.AgentWorkingFolder)
+    {
+        Write-Log "Removing disabled markup file" $true
+        Remove-ExtensionDisabledMarkup $config.AgentWorkingFolder
+    }
 }
 
 Enable

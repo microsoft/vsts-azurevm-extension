@@ -1,8 +1,7 @@
 ## Agent
 $agentSetting = ".agent"
 $downloadAPIVersion = "3.0-preview.2"
-$targetsAPIVersion = "4.1-preview.1"
-$projectAPIVersion = "5.0-preview.1"
+$apiVersion = "5.0-preview.1"
 
 $agentZipName = "agent.zip"
 $configCmd = "config.cmd"

@@ -544,7 +544,7 @@ function Test-ExtensionDisabledMarkup
 
     try
     {
-        return Test-Path $markupFile
+        return (Test-Path $markupFile)
     }
     catch
     {
@@ -883,7 +883,8 @@ function Flush-BufferToFile()
 
     $str = BufferToString $script:extensionLogBuffer
 
-    Invoke-WithRetry -retryBlock{Add-Content -Encoding UTF8 -Path $logFile -Force:$Force.IsPresent -Value $str} -finalCatchBlock {}
+    Invoke-WithRetry -retryBlock{Add-Content -Encoding UTF8 -Path $logFile -Force:$Force.IsPresent -Value $str} `
+                     -finalCatchBlock {Write-Log "Could not write to the file $statusFile." $true}
 
     $script:extensionLogBuffer.Clear()
 }
@@ -901,7 +902,8 @@ function Clear-StatusFile()
 
     Write-Log "Clearing status file $statusFile"
     
-    Invoke-WithRetry -retryBlock {Clear-Content $statusFile -Force} -finalCatchBlock {Write-Log "Could not clear the file $statusFile."}
+    Invoke-WithRetry -retryBlock {Clear-Content $statusFile -Force} `
+                     -finalCatchBlock {Write-Log "Could not clear the file $statusFile." $true}
 }
 
 function Read-HandlerEnvironmentFile

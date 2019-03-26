@@ -20,7 +20,7 @@ function Get-ConfigurationFromSettings {
 
         #Retrieve settings from file
         $settings = Get-HandlerSettings
-        Write-Log "Read config settings from file. Now validating inputs"
+        Write-Log "Read config settings from file. Now extracting inputs and doing basic validations."
 
         $publicSettings = $settings['publicSettings']
         $protectedSettings = $settings['protectedSettings']
@@ -140,12 +140,12 @@ function Confirm-InputsAreValid {
         #This is the first validation http call, so using Invoke-WebRequest instead of Invoke-RestMethod, because if the PAT provided is not a token at all(not even an unauthorized one) and some random value, then the call
         #would redirect to sign in page and not throw an exception. So, to handle this case.
 
-        $getDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroup, $projectAPIVersion)
-        Write-Log "Url to check deployment group exists - $getDeploymentGroupUrl"
+        $getDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroup, $apiVersion)
+        Write-Log "GET deployment group get url - $getDeploymentGroupUrl"
         $headers = Get-RESTCallHeader $config.PATToken
         $getDeploymentGroupDataErrorBlock = {
             $exception = $_
-            $errorMessage = "Deployment group get failed: {0}"
+            $errorMessage = "GET deployment group failed: {0}"
             $failEarly = $false
             $inputsValidationErrorCode = $RM_Extension_Status.ArgumentError
             if($exception.Exception.Response)
@@ -191,7 +191,7 @@ function Confirm-InputsAreValid {
             return $inputsValidationErrorCode, $errorMessage
         }
         $ret = Invoke-WithRetry -retryBlock {Invoke-WebRequest -Uri $getDeploymentGroupUrl -headers $headers -Method Get -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing} `
-                                -retryCatchBlock {$null, $null = (& $getDeploymentGroupDataErrorBlock)} `
+                                -retryCatchBlock {$null, $null = (& $getDeploymentGroupDataErrorBlock)} -retryName "GET DG" `
                                 -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $getDeploymentGroupDataErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
 
         $statusCode = $ret.StatusCode
@@ -213,13 +213,13 @@ function Confirm-InputsAreValid {
         #Verify the user has manage permissions on the deployment group
         $deploymentGroupId = $deploymentGroupData.id
 
-        $patchDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $deploymentGroupId, $projectAPIVersion)
-        Write-Log "Url to check that the user has `"Manage`" permissions on the deployment group - $patchDeploymentGroupUrl"
+        $patchDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $deploymentGroupId, $apiVersion)
+        Write-Log "PATCH deployment group url - $patchDeploymentGroupUrl"
         $headers += @{"Content-Type" = "application/json"}
         $requestBody = "{'name': '" + $config.DeploymentGroup + "'}"
         $patchDeploymentGroupErrorBlock = {
             $exception = $_
-            $errorMessage = "Deployment group patch failed: {0}"
+            $errorMessage = "PATCH Deployment group failed: {0}"
             $failEarly = $false
             $inputsValidationErrorCode = $RM_Extension_Status.ArgumentError
             if($exception.Exception.Response)
@@ -254,7 +254,7 @@ function Confirm-InputsAreValid {
         }
 
         $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $patchDeploymentGroupUrl -Method "Patch" -Body $requestBody -Headers $headers} `
-                                -retryCatchBlock {$null, $null = (& $patchDeploymentGroupErrorBlock)} `
+                                -retryCatchBlock {$null, $null = (& $patchDeploymentGroupErrorBlock)} -retryName "PATCH DG" `
                                 -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $patchDeploymentGroupErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
 
         Write-Log ("Validated that the user has `"Manage`" permissions on the deployment group {0}" -f $config.DeploymentGroup)
@@ -340,7 +340,7 @@ function Parse-VSTSUrl
     }
     if (!$response.deploymentType -or $response.deploymentType -ne "hosted")
     {
-        Write-Log "The Azure Devops server is onpremises"
+        Write-Log "The Azure Devops server is onpremises" $true
         $global:isOnPrem = $true
         $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
         if($subparts.Count -le 1)

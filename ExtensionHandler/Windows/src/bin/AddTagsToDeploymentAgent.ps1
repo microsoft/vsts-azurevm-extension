@@ -28,7 +28,7 @@ function WriteAddTagsLog
 
 function GetAgentSettingPath
 {        
-    return Join-Path $workingFolder $agentSetting
+    return (Join-Path $workingFolder $agentSetting)
 }
 
 function ApplyTagsToAgent
@@ -48,7 +48,7 @@ function ApplyTagsToAgent
     [string]$tagsAsJsonString
     )
 
-    $restCallUrl = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets?api-version={3}" -f $tfsUrl, $projectId, $deploymentGroupId, $targetsAPIVersion)
+    $restCallUrl = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets?api-version={3}" -f $tfsUrl, $projectId, $deploymentGroupId, $apiVersion)
     WriteAddTagsLog "Url for applying tags - $restCallUrl"
     $headers = @{"Content-Type" = "application/json"}
     $headers += Get-RESTCallHeader -patToken $patToken
@@ -70,9 +70,8 @@ function ApplyTagsToAgent
         return $message
     }
 
-    $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Patch" -Body $requestBody -Headers $headers} `
-                                 -retryCatchBlock {$null = (& $applyTagsErrorMessageBlock)} `
-                                 -finalCatchBlock {throw (& $applyTagsErrorMessageBlock)}
+    $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Patch" -Body $requestBody -Headers $headers} -retryName "PATCH target" `
+                                 -retryCatchBlock {$null = (& $applyTagsErrorMessageBlock)} -finalCatchBlock {throw (& $applyTagsErrorMessageBlock)}
     
     if($response.PSObject.Properties.name -notcontains "value")
     {
@@ -97,7 +96,7 @@ function AddTagsToAgent
     [string]$tagsAsJsonString
     )
 
-    $restCallUrlToGetExistingTags = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets/{3}?api-version={4}" -f $tfsUrl, $projectId, $deploymentGroupId, $agentId, $targetsAPIVersion)
+    $restCallUrlToGetExistingTags = ( "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/Targets/{3}?api-version={4}" -f $tfsUrl, $projectId, $deploymentGroupId, $agentId, $apiVersion)
     WriteAddTagsLog "Url for getting existing tags if any - $restCallUrlToGetExistingTags"
     $headers = Get-RESTCallHeader -patToken $patToken
 
@@ -116,9 +115,8 @@ function AddTagsToAgent
         return $message
     }
     
-    $target = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrlToGetExistingTags -Method "Get" -Headers $headers} `
-                               -retryCatchBlock {$null = (& $addTagsErrorMessageBlock)} `
-                               -finalCatchBlock {throw (& $addTagsErrorMessageBlock)}
+    $target = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrlToGetExistingTags -Method "Get" -Headers $headers} -retryName "GET target" `
+                               -retryCatchBlock {$null = (& $addTagsErrorMessageBlock)} -finalCatchBlock {throw (& $addTagsErrorMessageBlock)}
 
     $existingTags = $target.tags
     $tags = @()

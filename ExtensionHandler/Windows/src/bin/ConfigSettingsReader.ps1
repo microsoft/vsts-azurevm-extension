@@ -51,15 +51,23 @@ function Get-ConfigurationFromSettings {
         }
         
         #Extract and verify public settings
-        $vstsAccountUrl = $publicSettings['VSTSAccountUrl']
-        if(-not $vstsAccountUrl)
+        $vstsAccountUrl = ""
+        if($publicSettings.Contains('AzureDevOpsOrganizationUrl'))
+        {
+            $vstsAccountUrl = $publicSettings['AzureDevOpsOrganizationUrl']
+        }
+        elseif($publicSettings.Contains('VSTSAccountUrl'))
+        {
+            $vstsAccountUrl = $publicSettings['VSTSAccountUrl']
+        }
+        elseif($publicSettings.Contains('VSTSAccountName'))
         {
             $vstsAccountUrl = $publicSettings['VSTSAccountName']
         }
-        Verify-InputNotNull "VSTSAccountUrl" $vstsAccountUrl
+        Verify-InputNotNull "Azure DevOps Organization Url" $vstsAccountUrl
         $vstsUrl = $vstsAccountUrl.ToLower()
         $vstsUrl = Parse-VSTSUrl -vstsAccountUrl $vstsAccountUrl -patToken $patToken
-        Write-Log "VSTS service URL: $vstsUrl"
+        Write-Log "Azure DevOps Organization Url: $vstsUrl"
 
         $teamProjectName = $publicSettings['TeamProject']
         Verify-InputNotNull "TeamProject" $teamProjectName
@@ -345,7 +353,7 @@ function Parse-VSTSUrl
         $subparts = $urlWithoutProtocol.Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
         if($subparts.Count -le 1)
         {
-            throw "Invalid value for the input 'AzureDevOps account url'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment."
+            throw "Invalid value for the input 'Azure DevOps Organization Url'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment."
         }
     }
 

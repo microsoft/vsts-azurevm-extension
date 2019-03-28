@@ -206,6 +206,7 @@ function Start-RMExtensionHandler {
             [Net.ServicePointManager]::SecurityProtocol = $securityProtocolString
         }
 
+        Set-HandlerStatus $RM_Extension_Status.Installing.Code $RM_Extension_Status.Installing.Message
         Add-HandlerSubStatus $RM_Extension_Status.Initialized.Code $RM_Extension_Status.Initialized.Message -operationName $RM_Extension_Status.Initialized.operationName
     }
     catch
@@ -460,8 +461,6 @@ function Enable
     }
     else
     {
-        Set-HandlerStatus $RM_Extension_Status.Installing.Code $RM_Extension_Status.Installing.Message
-
         Confirm-InputsAreValid $config
 
         ExecuteAgentPreCheck $config

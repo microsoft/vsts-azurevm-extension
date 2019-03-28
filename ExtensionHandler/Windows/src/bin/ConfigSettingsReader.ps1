@@ -64,7 +64,7 @@ function Get-ConfigurationFromSettings {
         {
             $vstsAccountUrl = $publicSettings['VSTSAccountName']
         }
-        Verify-InputNotNull "Azure DevOps Organization Url" $vstsAccountUrl
+        Verify-InputNotNull "AzureDevOpsOrganizationUrl" $vstsAccountUrl
         $vstsUrl = $vstsAccountUrl.ToLower()
         $vstsUrl = Parse-VSTSUrl -vstsAccountUrl $vstsAccountUrl -patToken $patToken
         Write-Log "Azure DevOps Organization Url: $vstsUrl"

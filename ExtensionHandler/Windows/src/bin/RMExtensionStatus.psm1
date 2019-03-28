@@ -263,9 +263,9 @@ function Set-HandlerErrorStatus
     # Log to command execution log file.
     [string]$exceptionMessage = $ErrorRecord.Exception
     # For unhandled exceptions that we might have missed to catch and specify error message.
-    if($exceptionMessage.Length -gt 300)
+    if($exceptionMessage.Length -gt 400)
     {
-        $exceptionMessage = $exceptionMessage.Substring(0,300)
+        $exceptionMessage = $exceptionMessage.Substring(0,400)
     }
     Write-Log "Error occured during $operationName" $true
     Write-Log $exceptionMessage $true

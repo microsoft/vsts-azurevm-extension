@@ -89,8 +89,8 @@ def exit_with_code_zero():
 def exit_with_non_zero_code(code):
   sys.exit(code)
 
-def set_error_status_and_error_exit(e, operation_name, operation, code):
-  handler_utility.set_handler_error_status(e, operation_name, operation)
+def set_error_status_and_error_exit(e, operation_name, code):
+  handler_utility.set_handler_error_status(e, operation_name)
   # Log to command execution log file.
   handler_utility._set_log_file_to_command_execution_log()
   error_message = getattr(e,'message')
@@ -132,17 +132,17 @@ def validate_os():
     message = RMExtensionStatus.rm_extension_status['ArchitectureNotSupported']['Message']
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
-def pre_validation_checks(operation):
+def pre_validation_checks():
   try:
     validate_os()
   except Exception as e:
-    set_error_status_and_error_exit(e, 'PreValidationCheck', operation, Constants.ERROR_UNSUPPORTED_OS)
+    set_error_status_and_error_exit(e, 'PreValidationCheck', Constants.ERROR_UNSUPPORTED_OS)
   
   try:
     check_python_version()
     check_systemd_exists()
   except Exception as e:
-    set_error_status_and_error_exit(e, 'PreValidationCheck', operation, Constants.ERROR_MISSING_DEPENDENCY)
+    set_error_status_and_error_exit(e, 'PreValidationCheck', Constants.ERROR_MISSING_DEPENDENCY)
 
   handler_utility.set_handler_status(Util.HandlerStatus('PreValidationCheckSuccess'))
 
@@ -193,7 +193,7 @@ def parse_account_name(account_name, pat_token):
     vsts_url_without_prefix = vsts_url[len(account_name_prefix):]
     parts = filter(lambda x: x!='', vsts_url_without_prefix.split('/'))
     if(len(parts) <= 1):
-      raise Exception("Invalid value for the input 'VSTS account url'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment.")
+      raise Exception("Invalid value for the input 'Azure DevOps Organization url'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment.")
 
   return vsts_url
 
@@ -320,16 +320,18 @@ def read_configutation_from_settings(operation):
       pat_token = public_settings['PATToken']
 
     vsts_account_url = ''
-    if(public_settings.has_key('VSTSAccountUrl')):
+    if(public_settings.has_key('AzureDevOpsOrganizationUrl')):
+      vsts_account_url = public_settings['AzureDevOpsOrganizationUrl'].strip('/')
+    elif(public_settings.has_key('VSTSAccountUrl')):
       vsts_account_url = public_settings['VSTSAccountUrl'].strip('/')
     elif(public_settings.has_key('VSTSAccountName')):
       vsts_account_url = public_settings['VSTSAccountName'].strip('/')
-    handler_utility.verify_input_not_null('VSTSAccountUrl', vsts_account_url)
+    handler_utility.verify_input_not_null('AzureDevOpsOrganizationUrl', vsts_account_url)
     vsts_url = vsts_account_url
 
     if(operation == Constants.ENABLE):
       vsts_url = parse_account_name(vsts_account_url, pat_token)
-    handler_utility.log('VSTS service URL : {0}'.format(vsts_url))
+    handler_utility.log('Azure DevOps Organization Url : {0}'.format(vsts_url))
 
     team_project_name = ''
     if(public_settings.has_key('TeamProject')):
@@ -465,7 +467,7 @@ def remove_existing_agent(operation):
         agent_name = ConfigureDeploymentAgent.get_agent_setting(config['AgentWorkingFolder'], 'agentName')
         
         handler_status = Util.HandlerStatus('UnConfiguringDeploymentAgentFailed')
-        handler_status.sub_status_message.format(agent_name)
+        handler_status.ss_message.format(agent_name)
         handler_utility.set_handler_status(handler_status)
 
         DownloadDeploymentAgent.clean_agent_folder()
@@ -617,22 +619,22 @@ def update():
 
 def main():
   waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
-  waagent.Log('VSTS deployment group extension handler started.')
   if(len(sys.argv) == 2):
     global handler_utility
     handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
     operation = sys.argv[1]
+    #Settings are read from file in do_parse_context, and protected settings are also removed from the file in this function
     handler_utility.do_parse_context(operation)
     try:
       global root_dir
       root_dir = os.getcwd()
       
       if(sys.argv[1] not in Constants.input_arguments_dict):
-        raise("Internal Error: Invalid argument provided to the script")
+        raise Exception("Internal Error: Invalid argument provided to the script")
 
       input_operation = Constants.input_arguments_dict[sys.argv[1]]
       
-      pre_validation_checks(input_operation)
+      pre_validation_checks()
 
       if(input_operation == Constants.ENABLE):
         enable()

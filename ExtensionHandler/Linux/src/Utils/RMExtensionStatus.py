@@ -79,7 +79,7 @@ rm_extension_status = {
   },
   'Disabled' : {
     'Code' : 16,
-    'Message' : 'Disabled extension. However, Team services agent would continue to be registered with VSTS and will keep running.',
+    'Message' : 'Disabled extension. However, Team services agent would continue to be registered with Azure DevOps and will keep running.',
     'operationName' : 'Disable'
   },
   'Uninstalling' : {
@@ -119,7 +119,7 @@ rm_extension_status = {
   },
   'UnConfiguringDeploymentAgentFailed' : {
     'Code' : 25,
-    'Message' : '[WARNING] The deployment agent {0} could not be uninstalled. Ensure to remove it manually from its deployment group in VSTS.',
+    'Message' : '[WARNING] The deployment agent {0} could not be uninstalled. Ensure to remove it manually from its deployment group in Azure DevOps.',
     'operationName' : 'Unconfigure existing agent'
   },
   'Enabled' : {

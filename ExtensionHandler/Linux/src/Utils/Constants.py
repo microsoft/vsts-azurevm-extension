@@ -40,7 +40,7 @@ input_arguments_dict = {
     '-install': INSTALL
 }
 
-ERROR_MESSAGE_LENGTH = 300
+ERROR_MESSAGE_LENGTH = 400
 
 # Http Respose Codes
 HTTP_OK = 200

@@ -367,19 +367,19 @@ class HandlerUtility:
     #status can be either one of 'transitioning', 'error', 'success' or 'warning'
     def set_handler_status(self, status_code, status_message, status = 'transitioning'):
         global include_warning_status
+        if(include_warning_status):
+            status_message = status_message + '. ' + RMExtensionStatus.rm_extension_status['AgentUnConfigureFailWarning']
         status_file = '{0}/{1}.status'.format(self._context._status_dir, self._context._seq_no)
-        if(status_code != None and include_warning_status):
-            status_message = status_message + RMExtensionStatus.rm_extension_status['AgentUnConfigureFailWarning']
         timestamp_utc = time.strftime(DateTimeFormat, time.gmtime())
         if(os.path.isfile(status_file) and os.stat(status_file).st_size != 0):
             status_file_contents = waagent.GetFileContents(status_file)
             status_list = json.loads(status_file_contents)
             status_object = status_list[0]
-            self.log("Setting handler message to '{0}'".format(status_message))
+            self.log("Setting handler message as '{0}'".format(status_message))
             status_object['status']['formattedMessage']['message'] = status_message
-            self.log("Setting handler status to '{0}'".format(status))
+            self.log("Setting handler status as '{0}'".format(status))
             status_object['status']['status'] = status
-            self.log("Setting handler code to '{0}'".format(status_code))
+            self.log("Setting handler code as '{0}'".format(status_code))
             status_object['status']['code'] = status_code
             status_object['timestampUTC'] = timestamp_utc
             status_object['status']['configurationAppliedTime'] = timestamp_utc
@@ -405,19 +405,17 @@ class HandlerUtility:
         status_file = '{0}/{1}.status'.format(self._context._status_dir, self._context._seq_no)
         timestamp_utc = time.strftime(DateTimeFormat, time.gmtime())
         new_msg = {'lang' : 'eng-US', 'message' : sub_status_message}
-        new_item = {'name' : operation_name, 'code' : sub_status_code, 'status' : sub_status, 'formattedMessage' : new_msg}
+        new_sub_status = {'name' : operation_name, 'code' : sub_status_code, 'status' : sub_status, 'formattedMessage' : new_msg}
         if(os.path.isfile(status_file) and os.stat(status_file).st_size != 0):
             status_file_contents = waagent.GetFileContents(status_file)
             status_list = json.loads(status_file_contents)
             status_object = status_list[0]
             sub_status_list = status_object['status']['substatus']
-            self.log("Appending sub status")
-            sub_status_list.append(new_item)
+            sub_status_list.append(new_sub_status)
         else:
             status_list = [{
                 'status' : {
-                    'substatus' : new_item,
-                    'configurationAppliedTime' : timestamp_utc
+                    'substatus' : new_sub_status
                 },
                 'version' : self._context._version,
                 'timestampUTC' : timestamp_utc
@@ -432,23 +430,19 @@ class HandlerUtility:
             error_code = getattr(e,'Code')
         else:
             error_code = RMExtensionStatus.rm_extension_status['GenericError']
+        
         if(error_code == RMExtensionStatus.rm_extension_status['InstallError']):
-            error_status_message = 'The Extension failed to install: {0}'.format(error_message)
-            error_ss_message = 'The Extension failed to install: {0} More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.'.format(e.message, self._context._log_dir)
+            error_status_message = 'The Extension failed to install: {0} More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.'.format(error_message, self._context._log_dir)
         elif(error_code == RMExtensionStatus.rm_extension_status['ArgumentError']):
-            error_status_message = 'Incorrect VSTS account credentials'
-            error_ss_message = e.message
+            error_status_message = 'The extension received an incorrect input. Please correct the input and try again. More details: {0}.'.format(error_message)
         else:
-            error_status_message = 'The Extension failed to execute: {0}'.format(e.message)
-            error_ss_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(e.message, self._context._log_dir)
+            error_status_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(error_message, self._context._log_dir)
         
         #setting substatus
-        handler_status = HandlerStatus(ss_operation_name = operation_name)
-        self.set_handler_status(handler_status)
+        self.add_handler_sub_status(error_code, error_status_message, operation_name, 'error')
 
         #setting status
-        handler_status = HandlerStatus(status_object = [error_code, error_status_message, 'error'])
-        self.set_handler_status(handler_status)
+        self.set_handler_status(error_code, error_status_message, 'error')
 
     def get_os_version(self):
         value = platform.uname()[4]

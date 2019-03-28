@@ -22,15 +22,15 @@ rm_extension_status = {
     'Message' : 'Initialized extension successfully.',
     'operationName' : 'Initialization'
   },
-  'PreCheckingDeploymentAgent' : {
-    'Code' : 5,
-    'Message' : 'Checking whether an agent is already existing.',
-    'operationName' : 'Check existing Agent'
+  'PreCheckingDeploymentAgent': {
+    'Code': 5,
+    'Message': 'Checking whether an agent is already existing, and if re-configuration is required for existing agent by comparing agent settings',
+    'operationName': 'Agent PreCheck'
   },
-  'PreCheckedDeploymentAgent' : {
-    'Code' : 6,
-    'Message' : 'Checked for existing deployment agent.',
-    'operationName' : 'Check existing agent'
+  'PreCheckedDeploymentAgent': {
+    'Code': 6,
+    'Message': 'Checked for existing deployment agent, and if re-configuration is required for existing agent',
+    'operationName': 'Agent PreCheck'
   },
   'SkippingDownloadDeploymentAgent' : {
     'Code' : 7,
@@ -91,16 +91,6 @@ rm_extension_status = {
     'Code' : 18,
     'Message' : 'Removed deployment agent successfully from deployment group.',
     'operationName' : 'Uninstall'
-  },
-  'CheckingAgentReConfigurationRequired' : {
-    'Code' : 19,
-    'Message' : 'Checking if re-configuration is required for existing agent by comparing agent settings.',
-    'operationName' : 'Agent configuration'
-  },
-  'AgentReConfigurationRequiredChecked' : {
-    'Code' : 20,
-    'Message' : 'Checked if re-configuration is required for existing agent.',
-    'operationName' : 'Agent configuration'
   },
   'SkippingAgentConfiguration' : {
     'Code' : 21,

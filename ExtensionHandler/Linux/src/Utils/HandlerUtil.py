@@ -433,7 +433,7 @@ class HandlerUtility:
         
         if(error_code == RMExtensionStatus.rm_extension_status['InstallError']):
             error_status_message = 'The Extension failed to install: {0} More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.'.format(error_message, self._context._log_dir)
-        elif(error_code == RMExtensionStatus.rm_extension_status['ArgumentError']):
+        elif(error_code == RMExtensionStatus.rm_extension_status['InputConfigurationError']):
             error_status_message = 'The extension received an incorrect input. Please correct the input and try again. More details: {0}.'.format(error_message)
         else:
             error_status_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(error_message, self._context._log_dir)
@@ -454,13 +454,13 @@ class HandlerUtility:
     def verify_input_not_null(self, input_key, input_value = None):
         if((input_value == None) or (input_value == '')):
             message ='{0} should be specified'.format(input_key) 
-            excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['ArgumentError'], message)
+            excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['InputConfigurationError'], message)
             raise excep
 
     def verify_public_settings_is_dict(self, public_settings):
         if((public_settings == None) or (public_settings.__class__.__name__ != 'dict')):
             message ='Public settings should be a dictionary.' 
-            excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['ArgumentError'], message)
+            excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['InputConfigurationError'], message)
             raise excep
 
 def get_account_name_prefix(account_name):

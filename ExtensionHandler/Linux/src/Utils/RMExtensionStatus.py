@@ -162,22 +162,15 @@ rm_extension_status = {
   #
   'GenericError' : 1000, # The message for this error is provided by the specific exception
   'InstallError' : 1001, # The message for this error is provided by the specific exception
-  'ArchitectureNotSupported' : {
-    'Code' : Constants.ERROR_UNSUPPORTED_OS,
-    'Message' : 'The current CPU architecture is not supported. Deployment agent requires x64 architecture.'
-  },
-  'PythonVersionNotSupported' : {
-    'Code' : Constants.ERROR_MISSING_DEPENDENCY,
-    'Message' : 'Installed Python version is {0}. Minimum required version is 2.6.'
-  },
-  'SystemdNotFound': {
-    'Code' : Constants.ERROR_MISSING_DEPENDENCY,
-    'Message': 'Could not find systemd on the machine. Error message: {0}'
-  },
-  #
-  # ArgumentError indicates a problem in the input provided by the user. The message for the error is provided by the specific exception
-  #
-  'ArgumentError' : Constants.ERROR_CONFIGURATION,
+  
+  ## Whitelisting error codes
+  # UnSupportedOS: The extension is not supported on this OS
+  'UnSupportedOS': 51,
+  # MissingDependency: The extension failed due to a missing dependency
+  'MissingDependency': 52,
+  # InputConfigurationError: The extension failed due to missing or wrong configuration parameters
+  'InputConfigurationError': 53,
+
   'AgentUnConfigureFailWarning' : 'There are some warnings in uninstalling the already existing agent. Check \"Detailed Status\" for more details.'
 }
 

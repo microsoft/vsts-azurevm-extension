@@ -152,6 +152,11 @@ rm_extension_status = {
     'Message': 'Comparing settings with previous settings',
     'operationName': 'Settings Comparison'
   },
+  'InstalledDependencies': {
+    'Code': 34,
+    'Message': 'Installed the required dependencies',
+    'operationName': 'InstallDependencies'
+  },
 
   #
   # Warnings

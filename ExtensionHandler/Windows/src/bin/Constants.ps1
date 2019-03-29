@@ -11,10 +11,10 @@ $defaultAgentWorkFolder = "_work"
 $platform = "win-x64"
 $agentWorkingFolderOld = "$env:SystemDrive\VSTSAgent"
 $agentWorkingFolderNew = "$env:SystemDrive\AzurePiplinesAgent_Extension"
-$updateFileName = "EXTENSIONUPDATE"
 
-# markup file to detect whether extension has been previously disabled
+# markup files
 $disabledMarkupFile = "EXTENSIONDISABLED"
+$updateFileName = "EXTENSIONUPDATE"
 
 ## PS Version
 $minPSVersionSupported = 3
@@ -25,3 +25,6 @@ $agentDownloadRequiredVarName = "downloadAgentZip"
 
 ## ReturnCodes
 $returnSuccess = 0
+
+#Maximum length for exception messages, beyond which it will get truncated
+$maximumExceptionMessageLength = 400

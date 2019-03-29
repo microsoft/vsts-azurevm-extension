@@ -29,15 +29,15 @@ $global:RM_Extension_Status = @{
         Code = 2
         Message = 'Configured deployment agent successfully' 
     }
-    Initializing = @{
+    PreValidationCheck = @{
         Code = 3
-        Message = 'Initializing extension'
-        operationName = 'Initialization'
+        Message = 'Validating dependecies'
+        operationName = 'Pre-Validation Checks'
     }
-    Initialized = @{
+    PreValidationCheckSuccess = @{
         Code = 4
-        Message = 'Initialized extension successfully'
-        operationName = 'Initialization'
+        Message = 'Successfully validated dependecies'
+        operationName = 'Pre-Validation Checks'
     }
     CheckingExistingAgent = @{
         Code = 5
@@ -109,15 +109,15 @@ $global:RM_Extension_Status = @{
         Message = 'Removed deployment agent successfully from deployment group'
         operationName = 'Uninstall'
     }
-    CheckingAgentReConfigurationRequired = @{
+    PreCheckingDeploymentAgent = @{
         Code = 19
-        Message = 'Checking if re-configuration is required for existing agent by comparing agent settings'
-        operationName = 'Agent configuration'
+        Message = 'Checking whether an agent is already existing, and if re-configuration is required for existing agent by comparing agent settings'
+        operationName = 'Agent PreCheck'
     }
-    AgentReConfigurationRequiredChecked = @{
+    PreCheckedDeploymentAgent = @{
         Code = 20
-        Message = 'Checked if re-configuration is required for existing agent'
-        operationName = 'Agent configuration'
+        Message = 'Checked for existing deployment agent, and if re-configuration is required for existing agent'
+        operationName = 'Agent PreCheck'
     }
     SkippingAgentConfiguration = @{
         Code = 21
@@ -260,12 +260,13 @@ function Set-HandlerErrorStatus
         [string] $operationName
     )
     
+    . $PSScriptRoot\Constants.ps1
     # Log to command execution log file.
     [string]$exceptionMessage = $ErrorRecord.Exception
     # For unhandled exceptions that we might have missed to catch and specify error message.
-    if($exceptionMessage.Length -gt 400)
+    if($exceptionMessage.Length -gt $maximumExceptionMessageLength)
     {
-        $exceptionMessage = $exceptionMessage.Substring(0,400)
+        $exceptionMessage = $exceptionMessage.Substring(0,$maximumExceptionMessageLength)
     }
     Write-Log "Error occured during $operationName" $true
     Write-Log $exceptionMessage $true

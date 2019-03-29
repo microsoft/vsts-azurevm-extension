@@ -18,7 +18,8 @@ Describe "Enable RM extension tests" {
 
     Context "Should save last sequence number file and remove disable mockup file" {
 
-        Mock Start-RMExtensionHandler {}
+        Mock Initialize-ExtensionLogFile {}
+        Mock Invoke-PreValidationChecks {}
         Mock Get-ConfigurationFromSettings { return $config }
         Mock Get-Agent {}
         Mock Register-Agent {}
@@ -40,7 +41,8 @@ Describe "Enable RM extension tests" {
 
     Context "If exceptiopn happens during agent configuration, Should not save last sequence number file or should not remove disable mockup file" {
         
-        Mock Start-RMExtensionHandler {}
+        Mock Initialize-ExtensionLogFile {}
+        Mock Invoke-PreValidationChecks {}
         Mock Get-ConfigurationFromSettings { return $config }
         Mock Get-Agent {}
         Mock Register-Agent { throw }
@@ -66,7 +68,8 @@ Describe "Enable RM extension tests" {
     
     Context "If existing agent is already running with same configuration, Should not call Re-Configuration again" {
         
-        Mock Start-RMExtensionHandler {}
+        Mock Initialize-ExtensionLogFile {}
+        Mock Invoke-PreValidationChecks {}
         Mock Get-ConfigurationFromSettings { return $config }
         Mock Test-ConfiguredAgentExists { return $true}
         Mock Test-AgentReconfigurationRequired { return $false}
@@ -93,7 +96,8 @@ Describe "Enable RM extension tests" {
     
     Context "If existing agent is running with different configuration, Should Call Re-Configuration again" {
         
-        Mock Start-RMExtensionHandler {}
+        Mock Initialize-ExtensionLogFile {}
+        Mock Invoke-PreValidationChecks {}
         Mock Get-ConfigurationFromSettings { return $config }
         Mock Test-ConfiguredAgentExists { return $true}
         Mock Test-AgentReconfigurationRequired { return $true}
@@ -120,7 +124,8 @@ Describe "Enable RM extension tests" {
     
     Context "If no existing agent is present should download the agent and call configuration" {
         
-        Mock Start-RMExtensionHandler {}
+        Mock Initialize-ExtensionLogFile {}
+        Mock Invoke-PreValidationChecks {}
         Mock Get-ConfigurationFromSettings { return $config }
         Mock Test-AgentReconfigurationRequired { return $false}
         Mock Get-Agent {}
@@ -150,7 +155,8 @@ Describe "Enable RM extension tests" {
             Tags = @("Tag1")
         }
         
-        Mock Start-RMExtensionHandler {}
+        Mock Initialize-ExtensionLogFile {}
+        Mock Invoke-PreValidationChecks {}
         Mock Get-ConfigurationFromSettings { return $configWithTags }
         Mock Test-AgentReconfigurationRequired { return $false}
         Mock Get-Agent {}
@@ -177,17 +183,12 @@ Describe "Start RM extension tests" {
 
     Context "Should clear up things properly" {
         
-        Mock Initialize-ExtensionLogFile {}
         Mock Add-HandlerSubStatus {}
         
-        Start-RMExtensionHandler
-
-        It "should call clean up functions" {
-            Assert-MockCalled Initialize-ExtensionLogFile -Times 1
-        }
+        Invoke-PreValidationChecks
 
         It "should set handler status as Initilized" {
-            Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.Initialized.Code}
+            Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.PreValidationCheckSuccess.Code}
         }
     }
 
@@ -220,7 +221,6 @@ Describe "Start RM extension tests" {
         Mock Clear-StatusFile {}
         Mock Clear-HandlerCache {}
         Mock Clear-HandlerSubStatusMessage {}
-        Mock Initialize-ExtensionLogFile {}
         Mock Add-HandlerSubStatus {}
         Mock Set-HandlerStatus {}
         Mock Write-Log {}
@@ -229,7 +229,7 @@ Describe "Start RM extension tests" {
         Mock Test-ExtensionSettingsAreSameAsDisabledVersion {return $true}
         Mock Confirm-InputsAreValid {}
 
-        Start-RMExtensionHandler
+        Invoke-PreValidationChecks
 
         It "should call clean up functions" {
             Assert-MockCalled Exit-WithCode -Times 0
@@ -237,7 +237,7 @@ Describe "Start RM extension tests" {
 
         It "should set handler status as Initilized" {
             Assert-MockCalled Add-HandlerSubStatus -Times 0 -ParameterFilter { $Code -eq $RM_Extension_Status.SkippedInstallation.Code}
-            Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.Initialized.Code}
+            Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.PreValidationCheckSuccess.Code}
         }
     }
 }
@@ -320,9 +320,10 @@ Describe "AgentReconfigurationRequired tests" {
         Mock Write-Log{}
         Mock Set-ErrorStatusAndErrorExit {}
         Mock Add-HandlerSubStatus {}
+        Mock Test-ConfiguredAgentExists {return $true}
         Mock Test-AgentSettingsAreSame { throw New-Object System.Exception("some error")}
 
-        Test-AgentReconfigurationRequired @{}
+        ExecuteAgentPreCheck $config
 
         It "should call clean up functions" {
             Assert-MockCalled Set-ErrorStatusAndErrorExit -Times 1 #-ParameterFilter { $ErrorRecord.Exception.Message -eq "some error"}
@@ -336,10 +337,10 @@ Describe "AgentReconfigurationRequired tests" {
         Mock Test-AgentSettingsAreSame { return $true}
         Mock Set-HandlerStatus
         
-        Test-AgentReconfigurationRequired $config
+        ExecuteAgentPreCheck $config
 
         It "should call clean up functions" {
-            Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.CheckingAgentReConfigurationRequired.Code}
+            Assert-MockCalled Add-HandlerSubStatus -Times 2
         }
     }
 }

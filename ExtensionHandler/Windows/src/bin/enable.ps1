@@ -31,22 +31,10 @@ function Test-AgentReconfigurationRequired {
     [hashtable] $config
     )
 
-    try
-    {
-        Add-HandlerSubStatus $RM_Extension_Status.CheckingAgentReConfigurationRequired.Code $RM_Extension_Status.CheckingAgentReConfigurationRequired.Message -operationName $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
-        Write-Log "Invoking script to check existing agent settings with given configuration settings..."
-
-        $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken)
-    
-
-        Write-Log "Done pre-checking for agent re-configuration, AgentReconfigurationRequired : $agentReConfigurationRequired..."
-        Add-HandlerSubStatus $RM_Extension_Status.AgentReConfigurationRequiredChecked.Code $RM_Extension_Status.AgentReConfigurationRequiredChecked.Message -operationName $RM_Extension_Status.AgentReConfigurationRequiredChecked.operationName
-        $agentReConfigurationRequired
-    }
-    catch
-    {
-        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.CheckingAgentReConfigurationRequired.operationName
-    }
+    Write-Log "Invoking script to check existing agent settings with given configuration settings..."
+    $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken)
+    Write-Log "Checked existing settings with given settings. AgentReconfigurationRequired : $agentReConfigurationRequired..."
+    return $agentReConfigurationRequired
 }
 
 function Invoke-GetAgentScriptAndExtractAgent {
@@ -148,7 +136,6 @@ function Register-Agent {
         Write-Log "Done configuring Deployment agent"
 
         Add-HandlerSubStatus $RM_Extension_Status.ConfiguredDeploymentAgent.Code $RM_Extension_Status.ConfiguredDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguredDeploymentAgent.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message
     }
     catch
     {
@@ -168,21 +155,17 @@ function Invoke-ConfigureAgentScript {
 
 <#
 .Synopsis
-   Initializes RM extension handler.
-    - Clears status file, handler cache and handler status message
-    - defines log file to be used for diagnostic logging
-    - sets up proper status and sub-status
-
-   This should be used when extension handler is getting enabled
+   Performs pre-validation checks
+   - minimum supported powershell version is 3; fail otherwise
+   - fail if the os is not x64(#todo: should this check be reomved?)
+   - add tls1.2 to the security protocol if not present
 #>
-function Start-RMExtensionHandler {
+function Invoke-PreValidationChecks {
     [CmdletBinding()]
     param()
 
     try
     {
-        Initialize-ExtensionLogFile
-
         #Fail if powershell version not supported
         $psVersion = $PSVersionTable.PSVersion.Major
         if(!($psVersion -ge $minPSVersionSupported))
@@ -206,12 +189,11 @@ function Start-RMExtensionHandler {
             [Net.ServicePointManager]::SecurityProtocol = $securityProtocolString
         }
 
-        Set-HandlerStatus $RM_Extension_Status.Installing.Code $RM_Extension_Status.Installing.Message
-        Add-HandlerSubStatus $RM_Extension_Status.Initialized.Code $RM_Extension_Status.Initialized.Message -operationName $RM_Extension_Status.Initialized.operationName
+        Add-HandlerSubStatus $RM_Extension_Status.PreValidationCheckSuccess.Code $RM_Extension_Status.PreValidationCheckSuccess.Message -operationName $RM_Extension_Status.PreValidationCheckSuccess.operationName
     }
     catch
     {
-        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.Initializing.operationName
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.PreValidationCheck.operationName
     }
 }
 
@@ -282,7 +264,6 @@ function Add-AgentTags
         }
 
         Add-HandlerSubStatus $RM_Extension_Status.AgentTagsAdded.Code $RM_Extension_Status.AgentTagsAdded.Message -operationName $RM_Extension_Status.AgentTagsAdded.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message
     }
     catch
     {
@@ -381,13 +362,22 @@ function ExecuteAgentPreCheck
     [hashtable] $config
     )
 
-    $script:configuredAgentExists  = Test-ConfiguredAgentExists -workingFolder $config.AgentWorkingFolder
-    Write-Log "configuredAgentExists: $configuredAgentExists" $true
-    if($configuredAgentExists)
+    try
     {
-        $script:agentConfigurationRequired = Test-AgentReconfigurationRequired $config
+        Add-HandlerSubStatus $RM_Extension_Status.PreCheckingDeploymentAgent.Code $RM_Extension_Status.PreCheckingDeploymentAgent.Message -operationName $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
+        $script:configuredAgentExists  = Test-ConfiguredAgentExists -workingFolder $config.AgentWorkingFolder
+        Write-Log "configuredAgentExists: $configuredAgentExists" $true
+        if($configuredAgentExists)
+        {
+            $script:agentConfigurationRequired = Test-AgentReconfigurationRequired $config
+        }
+        Write-Log "agentConfigurationRequired: $agentConfigurationRequired" $true
+        Add-HandlerSubStatus $RM_Extension_Status.PreCheckedDeploymentAgent.Code $RM_Extension_Status.PreCheckedDeploymentAgent.Message -operationName $RM_Extension_Status.PreCheckedDeploymentAgent.operationName
     }
-    Write-Log "agentConfigurationRequired: $agentConfigurationRequired" $true
+    catch
+    {
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.PreCheckingDeploymentAgent.operationName
+    }
 }
 
 function DownloadAgentIfRequired
@@ -443,13 +433,14 @@ function ConfigureAgentIfRequired
         Write-Log "Agent is already configured with given set of parameters"
         Write-Log "Skipping agent configuration." $true
         Add-HandlerSubStatus $RM_Extension_Status.SkippingAgentConfiguration.Code $RM_Extension_Status.SkippingAgentConfiguration.Message -operationName $RM_Extension_Status.SkippingAgentConfiguration.operationName
-        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message
     }
 }
 
 function Enable
 {
-    Start-RMExtensionHandler
+    Initialize-ExtensionLogFile
+    Set-HandlerStatus $RM_Extension_Status.Installing.Code $RM_Extension_Status.Installing.Message
+    Invoke-PreValidationChecks
     $config = Get-ConfigurationFromSettings
     $config.AgentWorkingFolder = Get-AgentWorkingFolder
     Compare-SequenceNumber $config
@@ -470,9 +461,10 @@ function Enable
         DownloadAgentIfRequired $config
 
         ConfigureAgentIfRequired $config
+        Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message
 
         Add-AgentTags $config
-        
+
         Write-Log "Extension is enabled."
     }
 

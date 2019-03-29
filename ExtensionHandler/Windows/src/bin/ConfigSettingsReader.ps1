@@ -140,7 +140,7 @@ function Confirm-InputsAreValid {
     try
     {
         $invaidPATErrorMessage = "Please make sure that the Personal Access Token entered is valid and has `"Deployment Groups - Read & manage`" scope"
-        $inputsValidationErrorCode = $RM_Extension_Status.ArgumentError
+        $inputsValidationErrorCode = $RM_Extension_Status.InputConfigurationError
         $unexpectedErrorMessage = "An unexpected error occured."
         $errorMessageInitialPart = ("Could not verify that the deployment group `"$($config.DeploymentGroup)`" exists in the project `"$($config.TeamProject)`" in the specified organization `"$($config.VSTSUrl)`". Status: {0}. Error: {1}")
 
@@ -155,7 +155,7 @@ function Confirm-InputsAreValid {
             $exception = $_
             $errorMessage = "GET deployment group failed: {0}"
             $failEarly = $false
-            $inputsValidationErrorCode = $RM_Extension_Status.ArgumentError
+            $inputsValidationErrorCode = $RM_Extension_Status.InputConfigurationError
             if($exception.Exception.Response)
             {
                 switch($exception.Exception.Response.StatusCode.value__)
@@ -186,8 +186,8 @@ function Confirm-InputsAreValid {
             }
             else
             {
-                $inputsValidationErrorCode = $RM_Extension_Status.GenericError
-                $errorMessage = $errorMessage -f $exception
+                $inputsValidationErrorCode = $RM_Extension_Status.MissingDependency
+                $errorMessage = ($errorMessage -f $exception) + ". Please make sure that virtual machine has Internet access."
                 Write-Log $errorMessage $true
             }
 
@@ -229,7 +229,7 @@ function Confirm-InputsAreValid {
             $exception = $_
             $errorMessage = "PATCH Deployment group failed: {0}"
             $failEarly = $false
-            $inputsValidationErrorCode = $RM_Extension_Status.ArgumentError
+            $inputsValidationErrorCode = $RM_Extension_Status.InputConfigurationError
             if($exception.Exception.Response)
             {
                 switch($exception.Exception.Response.StatusCode.value__)
@@ -250,8 +250,8 @@ function Confirm-InputsAreValid {
             }
             else
             {
-                $inputsValidationErrorCode = $RM_Extension_Status.GenericError
-                $errorMessage = $errorMessage -f $exception
+                $inputsValidationErrorCode = $RM_Extension_Status.MissingDependency
+                $errorMessage = ($errorMessage -f $exception) + ". Please make sure that virtual machine has Internet access."
                 Write-Log $errorMessage $true
             }
             
@@ -385,7 +385,7 @@ function Format-TagsInput {
     else
     {
         $message = "Tags input should either be a string, or an array of strings, or an object containing key-value pairs"
-        throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message
+        throw New-HandlerTerminatingError $RM_Extension_Status.InputConfigurationError -Message $message
     }
 
     $uniqueTags = $tags | Sort-Object -Unique | Where { -not [string]::IsNullOrWhiteSpace($_) }
@@ -414,6 +414,6 @@ function Verify-InputNotNull {
     if(-not $inputValue)
         {
             $message = "$inputKey should be specified"
-            throw New-HandlerTerminatingError $RM_Extension_Status.ArgumentError -Message $message
+            throw New-HandlerTerminatingError $RM_Extension_Status.InputConfigurationError -Message $message
         }
 }

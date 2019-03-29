@@ -32,7 +32,7 @@ Describe "Handler error status tests" {
 
         try
         {
-            throw New-HandlerTerminatingError $RM_Extension_Status.ArchitectureNotSupported.Code -Message $RM_Extension_Status.ArchitectureNotSupported.Message
+            throw New-HandlerTerminatingError $RM_Extension_Status.UnSupportedOS -Message "The current CPU architecture is not supported. Deployment agent requires x64 architecture"
         }
         catch 
         {
@@ -42,7 +42,7 @@ Describe "Handler error status tests" {
         $status = Get-HandlerStatus -SequenceNumber 1
 
         It "should have correct error details" {
-            $status.status.code | Should Be $RM_Extension_Status.ArchitectureNotSupported.Code
+            $status.status.code | Should Be $RM_Extension_Status.UnSupportedOS
             $status.status.Status | Should Be error
         }
 

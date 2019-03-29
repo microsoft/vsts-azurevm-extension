@@ -185,20 +185,14 @@ $global:RM_Extension_Status = @{
 
     InstallError = 1001 # The message for this error is provided by the specific exception
 
-    ArchitectureNotSupported = @{
-        Code = 51
-        Message = 'The current CPU architecture is not supported. Deployment agent requires x64 architecture'
-    }
+    ## Whitelisting error codes
+    # UnSupportedOS: The extension is not supported on this OS
+    UnSupportedOS = 51
+    # MissingDependency: The extension failed due to a missing dependency
+    MissingDependency = 52
+    # InputConfigurationError: The extension failed due to missing or wrong configuration parameters
+    InputConfigurationError = 53
 
-    PowershellVersionNotSupported = @{
-        Code = 52
-        Message = 'Installed PowerShell version is {0}. Minimum required version is 3.0'
-    }
-
-    #
-    # ArgumentError indicates a problem in the user input. The message for the error is provided by the specific exception
-    #
-    ArgumentError = 53 
     AgentUnConfigureFailWarning = 'There are some warnings in uninstalling the already existing agent. Check "Detailed Status" for more details.'
 }
 
@@ -315,7 +309,7 @@ To retry install, please remove the extension from the VM first.
             break
         } 
 
-        $RM_Extension_Status.ArgumentError {
+        $RM_Extension_Status.InputConfigurationError {
             $errorMessage = 'The extension received an incorrect input. Please correct the input and try again. More details: {0}.' -f $ErrorRecord.Exception.Message
             break
         }

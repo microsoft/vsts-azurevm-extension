@@ -170,15 +170,16 @@ function Invoke-PreValidationChecks {
         $psVersion = $PSVersionTable.PSVersion.Major
         if(!($psVersion -ge $minPSVersionSupported))
         {
-            $message = $RM_Extension_Status.PowershellVersionNotSupported.Message -f $psVersion
-            throw New-HandlerTerminatingError $RM_Extension_Status.PowershellVersionNotSupported.Code -Message $message
+            $message = "Installed PowerShell version is {0}. Minimum required version is 3.0" -f $psVersion
+            throw New-HandlerTerminatingError $RM_Extension_Status.MissingDependency -Message $message
         }
 
         #Fail if os version is not x64
         $osVersion = Get-OSVersion
         if (!$osVersion.IsX64)
         {
-            throw New-HandlerTerminatingError $RM_Extension_Status.ArchitectureNotSupported.Code -Message $RM_Extension_Status.ArchitectureNotSupported.Message
+            $message = "The current CPU architecture is not supported. Deployment agent requires x64 architecture"
+            throw New-HandlerTerminatingError $RM_Extension_Status.UnSupportedOS -Message $message
         }
 
         #Ensure tls1.2 support is added

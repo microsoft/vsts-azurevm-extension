@@ -135,13 +135,13 @@ def pre_validation_checks():
   try:
     validate_os()
   except Exception as e:
-    set_error_status_and_error_exit(e, 'PreValidationCheck', Constants.ERROR_UNSUPPORTED_OS)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreValidationCheck']['operationName'], Constants.ERROR_UNSUPPORTED_OS)
   
   try:
     check_python_version()
     check_systemd_exists()
   except Exception as e:
-    set_error_status_and_error_exit(e, 'PreValidationCheck', Constants.ERROR_MISSING_DEPENDENCY)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreValidationCheck']['operationName'], Constants.ERROR_MISSING_DEPENDENCY)
 
   handler_utility.add_handler_sub_status(RMExtensionStatus.rm_extension_status['PreValidationCheckSuccess']['Code'], \
                                      RMExtensionStatus.rm_extension_status['PreValidationCheckSuccess']['Message'], \
@@ -162,24 +162,20 @@ def install_dependencies():
   else:
     raise Exception('Installing dependencies failed with error : {0}'.format(install_err))
   
-def start_rm_extension_handler(operation):
+def compare_sequence_number():
   try:
     sequence_number = int(handler_utility._context._seq_no)
     last_sequence_number = get_last_sequence_number()
     if((sequence_number == last_sequence_number) and not(test_extension_disabled_markup())):
       handler_utility.log(RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'])
-      handler_utility.log('Current sequence number : {0}, last sequence number : {1}'.format(sequence_number, last_sequence_number))
+      handler_utility.log('Skipping enable since seq numbers match. Seq number: {0}.'.format(sequence_number))
       handler_utility.add_handler_sub_status(RMExtensionStatus.rm_extension_status['SkippedInstallation']['Code'], \
                                      RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'], \
                                      RMExtensionStatus.rm_extension_status['SkippedInstallation']['operationName'])
       exit_with_code_zero()
-    
-    handler_utility.clear_status_file()
 
-    handler_utility.set_handler_status(RMExtensionStatus.rm_extension_status['Initialized']['Code'], \
-                                     RMExtensionStatus.rm_extension_status['Initialized']['Message'])
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['Initializing']['operationName'], 1)
+    handler_utility.log('Sequence number check failed: {0}.'.format(e.message))
 
 def parse_account_name(account_name, pat_token): 
   vsts_url = account_name.strip('/')
@@ -304,7 +300,7 @@ def validate_inputs(operation):
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreValidationCheckSuccess']['operationName'], Constants.ERROR_CONFIGURATION)
 
-def read_configutation_from_settings(operation):
+def get_configutation_from_settings(operation):
   global config
   try:
     public_settings = handler_utility.get_public_settings()
@@ -509,7 +505,7 @@ def add_agent_tags():
   except Exception as e:
       set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['AddingAgentTags']['operationName'], 8)
 
-def test_extension_settings_are_same_as_previous_version(operation):
+def test_extension_settings_are_same_as_disabled_version(operation):
   try:
     old_extension_settings_file_path = "{0}/{1}".format(Constants.agent_working_folder, Constants.disable_markup_file_name)
     old_extension_settings_file_exists = os.path.isfile(old_extension_settings_file_path)
@@ -527,27 +523,31 @@ def test_extension_settings_are_same_as_previous_version(operation):
         extension_public_settings = extension_public_settings['runtimeSettings'][0]['handlerSettings']['publicSettings']
 
       if(Util.ordered_json_object(old_extension_public_settings) == Util.ordered_json_object(extension_public_settings)):
-        handler_utility.log('Old and new extension version settings are same.')
+        handler_utility.log('Disabled version and new extension version settings are same.')
         return True
       else:
-        handler_utility.log('Old and new extension version settings are not same.')
-        handler_utility.log('Old extension version settings: {0}'.format(old_extension_public_settings))
-        handler_utility.log('New extension version settings: {0}'.format(extension_public_settings))
+        handler_utility.log('Disabled version and new extension version settings are not same.')
+        handler_utility.log('Disabled version settings: {0}'.format(old_extension_public_settings))
+        handler_utility.log('New version settings: {0}'.format(extension_public_settings))
     else:
-      handler_utility.log('Old extension settings file does not exist in the agent directory. Will continue with enable.')
+      handler_utility.log('Disabled version settings file does not exist in the agent directory. Will continue with enable.')
     return False
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['operationName'], 9)
+    handler_utility.log('Disabled settings check failed. Error: {0}'.format(e.message))
+    return False
 
 def enable():
   input_operation = Constants.ENABLE
-  start_rm_extension_handler(input_operation)
-  read_configutation_from_settings(input_operation)
-  if(test_extension_settings_are_same_as_previous_version(input_operation)):
+  handler_utility.clear_status_file()
+  handler_utility.set_handler_status(RMExtensionStatus.rm_extension_status['Initialized']['Code'], \
+                                     RMExtensionStatus.rm_extension_status['Initialized']['Message'])
+  get_configutation_from_settings(input_operation)
+  compare_sequence_number()
+  if(test_extension_settings_are_same_as_disabled_version(input_operation)):
     handler_utility.log("Skipping extension enable.")
-    handler_utility.add_handler_sub_status(RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Code'], \
-                                     RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['Message'], \
-                                     RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsPreviousVersion']['operationName'])
+    handler_utility.add_handler_sub_status(RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsDisabledVersion']['Code'], \
+                                     RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsDisabledVersion']['Message'], \
+                                     RMExtensionStatus.rm_extension_status['SkippingEnableSameSettingsAsDisabledVersion']['operationName'])
   else:
     validate_inputs(input_operation)
     ConfigureDeploymentAgent.set_logger(handler_utility.log)
@@ -583,7 +583,7 @@ def disable():
 def uninstall():
   global config, configured_agent_exists
   operation = Constants.UNINSTALL
-  read_configutation_from_settings(operation)
+  get_configutation_from_settings(operation)
   configured_agent_exists = ConfigureDeploymentAgent.is_agent_configured(config['AgentWorkingFolder'])
   extension_update_file = '{0}/{1}'.format(Constants.agent_working_folder, Constants.update_file_name)
   is_udpate_scenario = os.path.isfile(extension_update_file)

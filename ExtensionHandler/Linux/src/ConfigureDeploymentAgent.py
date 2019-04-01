@@ -92,7 +92,7 @@ def add_agent_tags(vsts_url, project_name, pat_token, working_folder, tags_strin
     if(agent_id == '' or project_id == '' or deployment_group_id == ''):
       raise Exception('Unable to get one or more of the project id, deployment group id, or the agent id. Ensure that the agent is configured before addding tags.')
 
-    _add_tags_to_agent_internal(vsts_url, pat_token, project_name, project_id, agent_id, tags_string)
+    _add_tags_to_agent_internal(vsts_url, pat_token, project_id, deployment_group_id, agent_id, tags_string)
     return Constants.return_success 
   except Exception as e:
     _write_add_tags_log(e.args[0])

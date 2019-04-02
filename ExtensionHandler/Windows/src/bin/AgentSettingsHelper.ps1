@@ -74,8 +74,7 @@ function Test-AgentSettingsAreSame
         }
         catch
         {
-            $errorMsg = $_.Exception.Message.ToString()
-            WriteAgentSettingsHelperLog "`t`t`t Unable to get the deployment group data - $errorMsg"
+            WriteAgentSettingsHelperLog "`t`t`t Unable to get the deployment group data: $_"
         }
 
         $tfsUrl = if ($tfsUrl.StartsWith($agentUrl, "CurrentCultureIgnoreCase")) {$agentUrl} else {$tfsUrl}
@@ -131,7 +130,7 @@ function GetDeploymentGroupDataFromAgentSetting
     
     if(![string]::IsNullOrEmpty($deploymentGroupId) -and ![string]::IsNullOrEmpty($projectId))
     {
-        $restCallUrl = $tfsUrl + ("/{0}/_apis/distributedtask/deploymentgroups/{1}" -f $projectId, $deploymentGroupId)
+        $restCallUrl = $tfsUrl + ("/{0}/_apis/distributedtask/deploymentgroups/{1}?api-version={2}" -f $projectId, $deploymentGroupId, $apiVersion)
         WriteAgentSettingsHelperLog "`t`t REST call Url -  $restCallUrl"
         
         return (InvokeRestURlToGetDeploymentGroupData -restCallUrl $restCallUrl -patToken $patToken)
@@ -167,10 +166,9 @@ function GetDeploymentGroupDataFromAgentSetting
         return $message
     }
                                 
-    $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Get" -Headers $headers} `
-                                 -retryCatchBlock {$null = (& $detDeploymentGroupDataErrorMessageBlock)} `
-                                 -finalCatchBlock {throw (& $detDeploymentGroupDataErrorMessageBlock)}
-                            
+    $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Get" -Headers $headers} -actionName "Get deploymentgroup" `
+                                 -retryCatchBlock {$null = (& $detDeploymentGroupDataErrorMessageBlock)} -finalCatchBlock {throw (& $detDeploymentGroupDataErrorMessageBlock)}
+
 
     WriteAgentSettingsHelperLog "`t`t Deployment Group Details fetched successfully"
     return $response

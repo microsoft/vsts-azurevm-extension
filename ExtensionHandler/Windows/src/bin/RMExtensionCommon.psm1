@@ -67,7 +67,6 @@ function Remove-Agent {
                 throw $_
             }
         }
-        Set-HandlerStatus $RM_Extension_Status.Uninstalling.Code $RM_Extension_Status.Uninstalling.Message
     }
     catch
     {
@@ -81,7 +80,7 @@ function Invoke-RemoveAgentScript {
     [hashtable] $config
     )
 
-    . $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder
+    $null = (. $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder)
 }
 
 function Set-ErrorStatusAndErrorExit {

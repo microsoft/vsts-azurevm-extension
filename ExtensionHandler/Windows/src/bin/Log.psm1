@@ -29,13 +29,13 @@ function Write-Log
 
         [Parameter(Mandatory=$false, Position=1, ValueFromPipeline=$true)]
         [bool]
-        $LogToVerbose=$false
+        $LogToOutput=$false
     )
 
     $formattedMessage = '[{0:s}] {1}' -f (Get-Date), $Message
 
-    if($LogToVerbose) {
-        Write-Verbose -Verbose "${formattedMessage}`r`n"
+    if($LogToOutput) {
+        Write-Host "${formattedMessage}`r`n"
     }
 
     foreach ($replicator in $script:logReplicators.Values) {
@@ -44,7 +44,7 @@ function Write-Log
                 & $replicator $formattedMessage
             }
             catch {
-                Write-Verbose -Verbose @"
+                Write-Host @"
 [ERROR] Failed to invoke log replicator.
 Error: $_
 Replicator: $($replicator.ToString())

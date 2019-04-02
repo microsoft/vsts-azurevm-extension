@@ -15,7 +15,6 @@ Describe "remove agent tests" {
 
         It "should set proper status" {
             Assert-MockCalled -ModuleName RMExtensionCommon Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.RemovedAgent.Code}
-            Assert-MockCalled -ModuleName RMExtensionCommon Set-HandlerStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.Uninstalling.Code}
         }
     }
 }

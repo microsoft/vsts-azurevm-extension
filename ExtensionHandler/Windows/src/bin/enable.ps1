@@ -31,9 +31,9 @@ function Test-AgentReconfigurationRequired {
     [hashtable] $config
     )
 
-    Write-Log "Invoking script to check existing agent settings with given configuration settings..."
+    Write-Log "Checking existing agent settings with given configuration settings..."
     $agentReConfigurationRequired = !(Test-AgentSettingsAreSame -workingFolder $config.AgentWorkingFolder -tfsUrl $config.VSTSUrl -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -patToken $config.PATToken)
-    Write-Log "Checked existing settings with given settings. AgentReconfigurationRequired : $agentReConfigurationRequired..."
+    Write-Log "Checked existing settings with given settings. AgentReconfigurationRequired : $agentReConfigurationRequired"
     return $agentReConfigurationRequired
 }
 
@@ -46,7 +46,7 @@ function Invoke-GetAgentScriptAndExtractAgent {
 
     Clean-AgentWorkingFolder $config
     Create-AgentWorkingFolder $config.AgentWorkingFolder
-    . $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder
+    $null = (. $PSScriptRoot\DownloadDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -workingFolder $config.AgentWorkingFolder)
     $agentZipFilePath = Join-Path $workingFolder $agentZipName
     $job = Start-Job -ScriptBlock {
         Param(
@@ -105,7 +105,7 @@ function Get-Agent {
 
         Invoke-GetAgentScriptAndExtractAgent $config
 
-        Write-Log "Done downloading and extracting agent package" $true
+        Write-Log "Agent package downloaded and extracted" $true
         Add-HandlerSubStatus $RM_Extension_Status.DownloadedDeploymentAgent.Code $RM_Extension_Status.DownloadedDeploymentAgent.Message -operationName $RM_Extension_Status.DownloadedDeploymentAgent.operationName
     }
     catch
@@ -129,11 +129,11 @@ function Register-Agent {
     try
     {
         Add-HandlerSubStatus $RM_Extension_Status.ConfiguringDeploymentAgent.Code $RM_Extension_Status.ConfiguringDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
-        Write-Log "Configuring Deployment agent..."
+        Write-Log "Configuring agent..."
 
         Invoke-ConfigureAgentScript $config
 
-        Write-Log "Done configuring Deployment agent"
+        Write-Log "Agent configured successfully" $true
 
         Add-HandlerSubStatus $RM_Extension_Status.ConfiguredDeploymentAgent.Code $RM_Extension_Status.ConfiguredDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguredDeploymentAgent.operationName
     }
@@ -149,8 +149,8 @@ function Invoke-ConfigureAgentScript {
     [hashtable] $config
     )
 
-    . $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup `
-    -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword
+    $null = (. $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup `
+    -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword)
 }
 
 <#
@@ -233,7 +233,7 @@ function Invoke-AddTagsToAgentScript{
     [hashtable] $config
     )
 
-    . $PSScriptRoot\AddTagsToDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -tagsAsJsonString ($config.Tags | ConvertTo-Json)
+    $null = (. $PSScriptRoot\AddTagsToDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder -tagsAsJsonString ($config.Tags | ConvertTo-Json))
 }
 
 <#
@@ -257,7 +257,7 @@ function Add-AgentTags
         if(($config.Tags -ne $null) -and ($config.Tags.Count -gt 0))
         {
             Invoke-AddTagsToAgentScript $config
-            Write-Log "Done adding tags" $true
+            Write-Log "Tags added" $true
         }
         else
         {
@@ -431,7 +431,7 @@ function ConfigureAgentIfRequired
     }
     else
     {
-        Write-Log "Agent is already configured with given set of parameters"
+        Write-Log "Agent is already configured with given set of parameters."
         Write-Log "Skipping agent configuration." $true
         Add-HandlerSubStatus $RM_Extension_Status.SkippingAgentConfiguration.Code $RM_Extension_Status.SkippingAgentConfiguration.Message -operationName $RM_Extension_Status.SkippingAgentConfiguration.operationName
     }

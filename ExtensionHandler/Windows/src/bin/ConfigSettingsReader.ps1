@@ -144,16 +144,16 @@ function Confirm-InputsAreValid {
         $unexpectedErrorMessage = "An unexpected error occured."
         $errorMessageInitialPart = ("Could not verify that the deployment group `"$($config.DeploymentGroup)`" exists in the project `"$($config.TeamProject)`" in the specified organization `"$($config.VSTSUrl)`". Status: {0}. Error: {1}")
 
-        #Verify the deployment group eixts and the PAT has the required(Deployment Groups - Read & manage) scope
+        #Verify the deployment group exists and the PAT has the required(Deployment Groups - Read & manage) scope
         #This is the first validation http call, so using Invoke-WebRequest instead of Invoke-RestMethod, because if the PAT provided is not a token at all(not even an unauthorized one) and some random value, then the call
         #would redirect to sign in page and not throw an exception. So, to handle this case.
 
         $getDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroup, $apiVersion)
-        Write-Log "GET deployment group get url - $getDeploymentGroupUrl"
+        Write-Log "Get deployment group url - $getDeploymentGroupUrl"
         $headers = Get-RESTCallHeader $config.PATToken
         $getDeploymentGroupDataErrorBlock = {
             $exception = $_
-            $errorMessage = "GET deployment group failed: {0}"
+            $errorMessage = "Get deployment group failed: {0}"
             $failEarly = $false
             $inputsValidationErrorCode = $RM_Extension_Status.InputConfigurationError
             if($exception.Exception.Response)
@@ -187,7 +187,7 @@ function Confirm-InputsAreValid {
             else
             {
                 $inputsValidationErrorCode = $RM_Extension_Status.MissingDependency
-                $errorMessage = ($errorMessage -f $exception) + ". Please make sure that virtual machine has Internet access."
+                $errorMessage = ($errorMessage -f $exception) + ". Please make sure that the virtual machine can access the Azure DevOps services."
                 Write-Log $errorMessage $true
             }
 
@@ -198,8 +198,8 @@ function Confirm-InputsAreValid {
 
             return $inputsValidationErrorCode, $errorMessage
         }
-        $ret = Invoke-WithRetry -retryBlock {Invoke-WebRequest -Uri $getDeploymentGroupUrl -headers $headers -Method Get -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing} `
-                                -retryCatchBlock {$null, $null = (& $getDeploymentGroupDataErrorBlock)} -retryName "GET DG" `
+        $ret = Invoke-WithRetry -retryBlock {Invoke-WebRequest -Uri $getDeploymentGroupUrl -headers $headers -Method "Get" -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing} `
+                                -retryCatchBlock {$null, $null = (& $getDeploymentGroupDataErrorBlock)} -actionName "Get deploymentgroup" `
                                 -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $getDeploymentGroupDataErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
 
         $statusCode = $ret.StatusCode
@@ -222,12 +222,12 @@ function Confirm-InputsAreValid {
         $deploymentGroupId = $deploymentGroupData.id
 
         $patchDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $deploymentGroupId, $apiVersion)
-        Write-Log "PATCH deployment group url - $patchDeploymentGroupUrl"
+        Write-Log "Patch deployment group url - $patchDeploymentGroupUrl"
         $headers += @{"Content-Type" = "application/json"}
         $requestBody = "{'name': '" + $config.DeploymentGroup + "'}"
         $patchDeploymentGroupErrorBlock = {
             $exception = $_
-            $errorMessage = "PATCH Deployment group failed: {0}"
+            $errorMessage = "Patch Deployment group failed: {0}"
             $failEarly = $false
             $inputsValidationErrorCode = $RM_Extension_Status.InputConfigurationError
             if($exception.Exception.Response)
@@ -251,7 +251,7 @@ function Confirm-InputsAreValid {
             else
             {
                 $inputsValidationErrorCode = $RM_Extension_Status.MissingDependency
-                $errorMessage = ($errorMessage -f $exception) + ". Please make sure that virtual machine has Internet access."
+                $errorMessage = ($errorMessage -f $exception) + ". Please make sure that the virtual machine can access the Azure DevOps services."
                 Write-Log $errorMessage $true
             }
             
@@ -262,7 +262,7 @@ function Confirm-InputsAreValid {
         }
 
         $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $patchDeploymentGroupUrl -Method "Patch" -Body $requestBody -Headers $headers} `
-                                -retryCatchBlock {$null, $null = (& $patchDeploymentGroupErrorBlock)} -retryName "PATCH DG" `
+                                -retryCatchBlock {$null, $null = (& $patchDeploymentGroupErrorBlock)} -actionName "Patch deploymentgroup" `
                                 -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $patchDeploymentGroupErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
 
         Write-Log ("Validated that the user has `"Manage`" permissions on the deployment group {0}" -f $config.DeploymentGroup)

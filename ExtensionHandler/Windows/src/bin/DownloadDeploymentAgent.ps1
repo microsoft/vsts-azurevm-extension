@@ -50,7 +50,7 @@ function WriteDownloadLog
         WriteDownloadLog $message
         return $message
     }
-    $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Get" -Headers $headers} -retryName "GET packagedata" `
+    $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Get" -Headers $headers} -actionName "Get packagedata" `
                                  -retryCatchBlock {$null = (& $getAgentPackageDataErrorMessageBlock)} -finalCatchBlock {throw (& $getAgentPackageDataErrorMessageBlock)}
 
     return $response.Value[0]

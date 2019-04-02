@@ -106,7 +106,7 @@ $global:RM_Extension_Status = @{
     }
     RemovedAgent = @{
         Code = 18
-        Message = 'Removed deployment agent successfully from deployment group'
+        Message = 'Unconfigured the deployment group agent successfully.'
         operationName = 'Uninstall'
     }
     PreCheckingDeploymentAgent = @{

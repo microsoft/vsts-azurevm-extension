@@ -166,7 +166,7 @@ function GetDeploymentGroupDataFromAgentSetting
         return $message
     }
                                 
-    $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Get" -Headers $headers} -retryName "GET DG" `
+    $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Get" -Headers $headers} -actionName "Get deploymentgroup" `
                                  -retryCatchBlock {$null = (& $detDeploymentGroupDataErrorMessageBlock)} -finalCatchBlock {throw (& $detDeploymentGroupDataErrorMessageBlock)}
 
 

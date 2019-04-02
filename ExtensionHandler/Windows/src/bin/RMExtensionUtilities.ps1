@@ -105,7 +105,7 @@ function Invoke-WithRetry
         [ScriptBlock] $finalCatchBlock,
         [int] $retryInterval = 5,
         [int] $maxRetries = 5,
-        [string] $retryName
+        [string] $actionName
     )
 
     $retryCount = 0
@@ -117,9 +117,9 @@ function Invoke-WithRetry
         {
             $retryBlockOutput = (& $retryBlock)
             $successMessage = "retried $retryCount times"
-            if($retryName)
+            if($actionName)
             {
-                Write-Log ($retryName + " " + $successMessage) $true
+                Write-Log ($actionName + " " + $successMessage) $true
             }
             else
             {

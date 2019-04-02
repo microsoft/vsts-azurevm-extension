@@ -89,10 +89,7 @@ def remove_extension_disabled_markup():
   if(os.path.isfile(markup_file)):
     os.remove(markup_file)
 
-def exit_with_code_zero():
-  sys.exit(0)
-
-def exit_with_non_zero_code(code):
+def exit_with_code(code):
   sys.exit(code)
 
 def set_error_status_and_error_exit(e, operation_name, code = -1):
@@ -104,7 +101,7 @@ def set_error_status_and_error_exit(e, operation_name, code = -1):
   if(len(error_message) > Constants.ERROR_MESSAGE_LENGTH):
     error_message = error_message[:Constants.ERROR_MESSAGE_LENGTH]
   handler_utility.error('Error occured during {0}. {1}'.format(operation_name, error_message))
-  exit_with_non_zero_code(code)
+  exit_with_code(code)
 
 def check_python_version():
   version_info = sys.version_info
@@ -185,7 +182,10 @@ def compare_sequence_number():
       handler_utility.add_handler_sub_status(RMExtensionStatus.rm_extension_status['SkippedInstallation']['Code'], \
                                      RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'], \
                                      RMExtensionStatus.rm_extension_status['SkippedInstallation']['operationName'])
-      exit_with_code_zero()
+      handler_utility.set_handler_status(RMExtensionStatus.rm_extension_status['Enabled']['Code'], \
+                                     RMExtensionStatus.rm_extension_status['Enabled']['Message'], \
+                                     'success')
+      exit_with_code(0)
 
   except Exception as e:
     handler_utility.log('Sequence number check failed: {0}.'.format(getattr(e,'message')))
@@ -543,9 +543,9 @@ def test_extension_settings_are_same_as_disabled_version():
     return False
 
 def enable():
-  handler_utility.clear_status_file()
   handler_utility.set_handler_status(RMExtensionStatus.rm_extension_status['Installing']['Code'], \
                                      RMExtensionStatus.rm_extension_status['Installing']['Message'])
+  pre_validation_checks()
   config = get_configutation_from_settings()
   compare_sequence_number()
   settings_are_same = test_extension_settings_are_same_as_disabled_version()
@@ -628,8 +628,6 @@ def main():
         raise Exception("Internal Error: Invalid argument provided to the script")
 
       input_operation = Constants.input_arguments_dict[sys.argv[1]]
-      
-      pre_validation_checks()
 
       if(input_operation == Constants.ENABLE):
         enable()
@@ -640,7 +638,7 @@ def main():
       elif(input_operation == Constants.UPDATE):
         update()
 
-      exit_with_code_zero()
+      exit_with_code(0)
     except Exception as e:
       set_error_status_and_error_exit(e, 'main', 9)
 

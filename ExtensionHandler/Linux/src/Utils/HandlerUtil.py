@@ -415,7 +415,7 @@ class HandlerUtility:
         else:
             status_list = [{
                 'status' : {
-                    'substatus' : new_sub_status
+                    'substatus' : [new_sub_status]
                 },
                 'version' : self._context._version,
                 'timestampUTC' : timestamp_utc

@@ -198,6 +198,7 @@ Describe "Start RM extension tests" {
         Mock Get-HandlerExecutionSequenceNumber { return 2 }
         Mock Get-LastSequenceNumber { return 2 }
         Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
         Mock Write-Log {}
         Mock Exit-WithCode {}
         Mock Test-ExtensionDisabledMarkup {return $false}

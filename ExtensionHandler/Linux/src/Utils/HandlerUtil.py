@@ -80,6 +80,48 @@ class HandlerContext:
         self._version = '0.0'
         return
 
+class HandlerSubStatus:
+    operation_name = None
+    sub_status = None
+    sub_status_code = None
+    sub_status_message = None
+
+    def __init__(self, operation_key, sub_status = 'success'):
+        self.sub_status = sub_status
+        if operation_key not in RMExtensionStatus.rm_extension_status:
+            return
+
+        if type(RMExtensionStatus.rm_extension_status[operation_key]) is not dict:
+            return
+
+        if 'Code' in RMExtensionStatus.rm_extension_status[operation_key]:
+            self.sub_status_code = RMExtensionStatus.rm_extension_status[operation_key]['Code']
+        
+        if 'Message' in RMExtensionStatus.rm_extension_status[operation_key]:
+            self.sub_status_message = RMExtensionStatus.rm_extension_status[operation_key]['Message']
+        
+        if 'operationName' in RMExtensionStatus.rm_extension_status[operation_key]:
+            self.operation_name = RMExtensionStatus.rm_extension_status[operation_key]['operationName']
+
+class HandlerStatus:
+    status = None
+    status_code = None
+    status_message = None
+
+    def __init__(self, operation_key, status = 'transitioning'):
+        self.status = status
+        if operation_key not in RMExtensionStatus.rm_extension_status:
+            return
+
+        if type(RMExtensionStatus.rm_extension_status[operation_key]) is not dict:
+            return
+
+        if 'Code' in RMExtensionStatus.rm_extension_status[operation_key]:
+            self.status_code = RMExtensionStatus.rm_extension_status[operation_key]['Code']
+        
+        if 'Message' in RMExtensionStatus.rm_extension_status[operation_key]:
+            self.status_message = RMExtensionStatus.rm_extension_status[operation_key]['Message']
+
 class HandlerUtility:
     def __init__(self, log, error, s_name=None, l_name=None, extension_version=None):
         self._log = log
@@ -365,33 +407,31 @@ class HandlerUtility:
         open(status_file, 'w').close()
 
     #status can be either one of 'transitioning', 'error', 'success' or 'warning'
-    def set_handler_status(self, status_code, status_message, status = 'transitioning'):
+    def set_handler_status(self, handler_status):
         global include_warning_status
         if(include_warning_status):
-            status_message = status_message + '. ' + RMExtensionStatus.rm_extension_status['AgentUnConfigureFailWarning']
+            handler_status.status_message = handler_status.status_message + '. ' + RMExtensionStatus.rm_extension_status['AgentUnConfigureFailWarning']
         status_file = '{0}/{1}.status'.format(self._context._status_dir, self._context._seq_no)
         timestamp_utc = time.strftime(DateTimeFormat, time.gmtime())
         if(os.path.isfile(status_file) and os.stat(status_file).st_size != 0):
             status_file_contents = waagent.GetFileContents(status_file)
             status_list = json.loads(status_file_contents)
             status_object = status_list[0]
-            self.log("Setting handler message as '{0}'".format(status_message))
-            status_object['status']['formattedMessage']['message'] = status_message
-            self.log("Setting handler status as '{0}'".format(status))
-            status_object['status']['status'] = status
-            self.log("Setting handler code as '{0}'".format(status_code))
-            status_object['status']['code'] = status_code
+            self.log("Setting handler status, code and message as '{0}', '{1}' and '{2}' respectively".format(handler_status.status, handler_status.status_code, handler_status.status_message))
+            status_object['status']['formattedMessage']['message'] = handler_status.status_message
+            status_object['status']['status'] = handler_status.status
+            status_object['status']['code'] = handler_status.status_code
             status_object['timestampUTC'] = timestamp_utc
             status_object['status']['configurationAppliedTime'] = timestamp_utc
         else:
             status_list = [{
                 'status' : {
                     'formattedMessage' : {
-                        'message' : status_message,
+                        'message' : handler_status.status_message,
                         'lang' : 'en-US'
                     },
-                    'status' : status,
-                    'code' : status_code,
+                    'status' : handler_status.status,
+                    'code' : handler_status.status_code,
                     'substatus' : []
                 },
                 'version' : self._context._version,
@@ -401,11 +441,16 @@ class HandlerUtility:
         waagent.SetFileContents(status_file, new_contents)
 
     #substatus can be either one of 'transitioning', 'error', 'success' or 'warning'
-    def add_handler_sub_status(self, sub_status_code, sub_status_message, operation_name, sub_status = 'success'):
+    def add_handler_sub_status(self, handler_sub_status):
         status_file = '{0}/{1}.status'.format(self._context._status_dir, self._context._seq_no)
         timestamp_utc = time.strftime(DateTimeFormat, time.gmtime())
-        new_msg = {'lang' : 'eng-US', 'message' : sub_status_message}
-        new_sub_status = {'name' : operation_name, 'code' : sub_status_code, 'status' : sub_status, 'formattedMessage' : new_msg}
+        new_msg = {'lang' : 'eng-US', 'message' : handler_sub_status.sub_status_message}
+        new_sub_status = {
+                           'name' : handler_sub_status.operation_name, 
+                           'code' : handler_sub_status.sub_status_code, 
+                           'status' : handler_sub_status.sub_status, 
+                           'formattedMessage' : new_msg
+                        }
         if(os.path.isfile(status_file) and os.stat(status_file).st_size != 0):
             status_file_contents = waagent.GetFileContents(status_file)
             status_list = json.loads(status_file_contents)
@@ -432,17 +477,27 @@ class HandlerUtility:
             error_code = RMExtensionStatus.rm_extension_status['GenericError']
         
         if(error_code == RMExtensionStatus.rm_extension_status['InstallError']):
-            error_status_message = 'The Extension failed to install: {0} More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.'.format(error_message, self._context._log_dir)
+            error_status_message = 'The Extension failed to install: {0}'.format(error_message)
+            error_sub_status_message = 'The Extension failed to install: {0} More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.'.format(e.message, self._context._log_dir)
         elif(error_code == RMExtensionStatus.rm_extension_status['InputConfigurationError']):
-            error_status_message = 'The extension received an incorrect input. Please correct the input and try again. More details: {0}.'.format(error_message)
+            error_status_message = 'Incorrect VSTS account credentials'
+            error_sub_status_message = e.message
         else:
-            error_status_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(error_message, self._context._log_dir)
+            error_status_message = 'The Extension failed to execute: {0}'.format(e.message)
+            error_sub_status_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(e.message, self._context._log_dir)
         
         #setting substatus
-        self.add_handler_sub_status(error_code, error_status_message, operation_name, 'error')
+        handler_sub_status = HandlerSubStatus('', 'error')
+        handler_sub_status.operation_name = operation_name
+        handler_sub_status.sub_status_code = error_code
+        handler_sub_status.sub_status_message = error_sub_status_message
+        self.add_handler_sub_status(handler_sub_status)
 
         #setting status
-        self.set_handler_status(error_code, error_status_message, 'error')
+        handler_status = HandlerStatus('', 'error')
+        handler_status.status_code = error_code
+        handler_status.status_message = error_status_message
+        self.set_handler_status(handler_status)
 
     def get_os_version(self):
         value = platform.uname()[4]

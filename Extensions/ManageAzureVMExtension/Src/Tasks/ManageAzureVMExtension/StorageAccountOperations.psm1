@@ -157,6 +157,7 @@ function Create-NewContainer {
     $url = "https://${storageAccountName}.blob.core.windows.net/${containerName}" + "?" + $queryParameterString
     $xmsdate = Get-UTCDateTimeNow
     $headers.Add("x-ms-date", $xmsdate)
+    $headers.Add("x-ms-blob-public-access", "container")
     $resourceComponents = @($storageAccountName, $containerName)
     $signature = Get-SharedKeySignature -method $method -headers $headers -resourceComponents $resourceComponents -queryParameterString $queryParameterString -storageAccountKey $storageAccountKey
     $headers.Add("Authorization", "SharedKey " + $storageAccountName + ":" + $signature)
@@ -181,12 +182,16 @@ function Get-SharedKeySignature {
     # to do : url decode query parameters
     $headers.Keys | sort | % {if ($_.ToLower().StartsWith("x-ms-")) {$signatureString += "$($_.Trim(@("`t", " ", "`n"))):$($headers[$_] -replace "\s+", " ")`n"}}
     $resourceComponents | % {$signatureString += "/$_"}
+    if($resourceComponents.Count -eq 1)
+    {
+        $signatureString += "/"
+    }
     $queryParameters = @{}
     # to do : refine this
     if ($queryParameterString) {
         $queryParameterString.Split("&") | % {$qp = $($_.Split("=")); $queryParameters[$qp[0]] = $qp[1]}
     }
-    $queryParameters.Keys | % {$signatureString += "`n$($_):$($queryParameters[$_])"}
+    $queryParameters.Keys | sort | % {$signatureString += "`n$($_):$($queryParameters[$_])"}
     $signatureStringBytes = [System.Text.Encoding]::UTF8.GetBytes($signatureString)
     $accountKeyBytes = [System.Convert]::FromBase64String($storageAccountKey)
     $hmac = new-object System.Security.Cryptography.HMACSHA256((, $accountKeyBytes))

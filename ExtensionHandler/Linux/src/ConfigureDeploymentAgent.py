@@ -26,7 +26,6 @@ def set_logger(log_func):
 
 def is_agent_configured(working_folder):
   try:
-    _write_log('Initialization for deployment agent started.')
     _write_log('Checking if existing agent is running from {0}'.format(working_folder))
     agent_path = os.path.join(working_folder, Constants.agent_setting)
     agent_setting_file_exists = os.path.isfile(agent_path)
@@ -87,26 +86,19 @@ def add_agent_tags(vsts_url, project_name, pat_token, working_folder, tags_strin
       raise Exception('Unable to find the .agent file {0}. Ensure that the agent is configured before adding tags.'.format(agent_setting_file_path))
 
     agent_id = get_agent_setting(working_folder, 'agentId')
-    deployment_group_id = ''
-    try:
-      #Back compat
-      if(setting_params.has_key('deploymentGroupId')):
-        deployment_group_id = setting_params['deploymentGroupId']
-      elif(setting_params.has_key('machineGroupId')):
-        deployment_group_id = setting_params['machineGroupId']
-    except Exception as e:
-      pass
+    project_id = get_agent_setting(working_folder, 'projectId')
+    deployment_group_id = get_agent_setting(working_folder, 'deploymentGroupId')
+    
+    if(agent_id == '' or project_id == '' or deployment_group_id == ''):
+      raise Exception('Unable to get one or more of the project id, deployment group id, or the agent id. Ensure that the agent is configured before addding tags.')
 
-    if(agent_id == '' or deployment_group_id == ''):
-      raise Exception('Unable to get the deployment group id or agent id. Ensure that the agent is configured before adding tags.')
-
-    _add_tags_to_agent_internal(vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string)
+    _add_tags_to_agent_internal(vsts_url, pat_token, project_id, deployment_group_id, agent_id, tags_string)
     return Constants.return_success 
   except Exception as e:
     _write_add_tags_log(e.args[0])
     raise
 
-def remove_existing_agent(pat_token, working_folder):
+def remove_existing_agent(working_folder):
   try:
     global agent_listener_path, agent_service_path, setting_params
     _set_agent_listener_path(working_folder)
@@ -134,20 +126,6 @@ def remove_existing_agent(pat_token, working_folder):
     if(not (return_code == 0)):
       raise Exception('Service uninstall failed with error : {0}'.format(std_err))
 
-    remove_command_args = ['--auth', 'PAT',
-                           '--token', pat_token]
-    remove_agent_proc = subprocess.Popen('{0} remove --unattended'.format(agent_listener_path).split(' ') + remove_command_args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-    std_out, std_err = remove_agent_proc.communicate()
-    return_code = remove_agent_proc.returncode
-
-    _write_configuration_log('RemoveAgentProcess exit code : {0}'.format(return_code))
-    _write_configuration_log('stdout : {0}'.format(std_out))
-    _write_configuration_log('srderr : {0}'.format(std_err))
-
-    if(not (return_code == 0)):
-      e = Exception('Agent removal failed with error : {0}'.format(std_err))
-      setattr(e, 'Reason', 'UnConfigFailed')
-      raise e
   except Exception as e:
     _write_configuration_log(e.args[0])
     raise
@@ -190,46 +168,20 @@ def _write_add_tags_log(log_message):
   if(log_function is not None):
     log_function(log)
 
-def _get_deployment_group_data(vsts_url, project_id, deployment_group_id, user_name, pat_token):
-  deployment_group_data_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}'.format(project_id, deployment_group_id)
-  deployment_group_data_url = vsts_url + deployment_group_data_address
-
-  response = Util.make_http_call(deployment_group_data_url, 'GET', None, None, pat_token)
-  if(response.status == Constants.HTTP_OK):
-    val = json.loads(response.read())
-    _write_log('\t\t Deployment group details fetched successfully')
-    return val
-  else:
-    raise Exception('Unable to fetch the deployment group information from VSTS server: {0} {1}'.format(str(response.status), response.reason))
-
 def _get_deployment_group_data_from_setting(vsts_url, pat_token):
   global setting_params
-  deployment_group_id = ''
-  project_id = ''
+  project_id = str(setting_params['projectId'])
+  deployment_group_id = str(setting_params['deploymentGroupId'])
+  _write_log('\t\t Project id, Deployment group id - {0}, {1}'.format(project_id, deployment_group_id))
+  if(project_id != '' and deployment_group_id != ''):
+    deployment_group_data_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}?api-version={2}'.format(project_id, deployment_group_id, Constants.targets_api_version)
+    deployment_group_data_url = vsts_url + deployment_group_data_address
 
-  try:
-    if(setting_params.has_key('deploymentGroupId')):
-      deployment_group_id = str(setting_params['deploymentGroupId'])
-      _write_log('\t\t Deployment group id - {0}'.format(deployment_group_id))
-    elif (setting_params.has_key('machineGroupId')):
-      deployment_group_id = str(setting_params['machineGroupId'])
-      _write_log('\t\t Machine group id - {0}'.format(deployment_group_id))
-  except Exception:
-    pass
-
-  if(deployment_group_id != ''):
-    if(setting_params.has_key('projectId')):
-      project_id = str(setting_params['projectId'])
-      _write_log('\t\t Deployment group projectId - {0}'.format(project_id))
-    else:
-      _write_log('\t\t Project Id is not available in agent settings file, trying to read the project name.')
-      if(setting_params.has_key('projectName')):
-        project_id = quote(str(setting_params['projectName']))
-        _write_log('\t\t Deployment group projectName - {0}'.format(project_id))
-
-    if(project_id != ''):
-      deployment_group_data = _get_deployment_group_data(vsts_url, project_id, deployment_group_id, '', pat_token)
-      return deployment_group_data
+    response = Util.make_http_call(deployment_group_data_url, 'GET', None, None, pat_token)
+    if(response.status == Constants.HTTP_OK):
+      val = json.loads(response.read())
+      _write_log('\t\t Deployment group details fetched successfully')
+      return val
   return {}
 
 def _set_agent_listener_path(working_folder):
@@ -249,8 +201,8 @@ def _agent_listener_exists(working_folder):
   _write_configuration_log('\t\t Agent listener file exists : {0}'.format(agent_listener_exists))
   return agent_listener_exists
 
-def _apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string):
-  tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets?api-version={2}'.format(quote(project_name), deployment_group_id, Constants.targets_api_version)
+def _apply_tags_to_agent(vsts_url, pat_token, project_id, deployment_group_id, agent_id, tags_string):
+  tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets?api-version={2}'.format(quote(project_id), deployment_group_id, Constants.targets_api_version)
   tags_url = vsts_url + tags_address
   headers = {
               'Content-Type' : 'application/json'
@@ -263,8 +215,8 @@ def _apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id,
   else:
     raise Exception('Tags could not be added.')
 
-def _add_tags_to_agent_internal(vsts_url, pat_token, project_name, deployment_group_id, agent_id, tags_string):
-  target_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets/{2}?api-version={3}'.format(quote(project_name), deployment_group_id, agent_id, Constants.targets_api_version)
+def _add_tags_to_agent_internal(vsts_url, pat_token, project_id, deployment_group_id, agent_id, tags_string):
+  target_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets/{2}?api-version={3}'.format(quote(project_id), deployment_group_id, agent_id, Constants.targets_api_version)
   target_url = vsts_url + target_address
   response = Util.make_http_call(target_url, 'GET', None, None, pat_token)
   if(response.status == Constants.HTTP_OK):
@@ -280,7 +232,7 @@ def _add_tags_to_agent_internal(vsts_url, pat_token, project_name, deployment_gr
   else:
     raise Exception('Tags could not be added. Unable to fetch the existing tags or deployment group details: {0} {1}'.format(str(response.status), response.reason))
   _write_add_tags_log('Updating the tags for agent target - {0}'.format(agent_id))
-  _apply_tags_to_agent(vsts_url, pat_token, project_name, deployment_group_id, json.dumps(agent_id), json.dumps(tags, ensure_ascii = False))
+  _apply_tags_to_agent(vsts_url, pat_token, project_id, deployment_group_id, json.dumps(agent_id), json.dumps(tags, ensure_ascii = False))
 
 def _set_folder_owner(folder, username):
   user_info = getpwnam(username)

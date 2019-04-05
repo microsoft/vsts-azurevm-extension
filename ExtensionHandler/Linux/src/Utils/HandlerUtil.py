@@ -81,10 +81,10 @@ class HandlerContext:
         return
 
 class HandlerSubStatus:
-    operation_name = None
-    sub_status = None
-    sub_status_code = None
-    sub_status_message = None
+    operation_name = ''
+    sub_status = ''
+    sub_status_code = ''
+    sub_status_message = ''
 
     def __init__(self, operation_key, sub_status = 'success'):
         self.sub_status = sub_status
@@ -104,9 +104,9 @@ class HandlerSubStatus:
             self.operation_name = RMExtensionStatus.rm_extension_status[operation_key]['operationName']
 
 class HandlerStatus:
-    status = None
-    status_code = None
-    status_message = None
+    status = ''
+    status_code = ''
+    status_message = ''
 
     def __init__(self, operation_key, status = 'transitioning'):
         self.status = status

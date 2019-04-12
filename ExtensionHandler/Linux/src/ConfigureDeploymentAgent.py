@@ -202,7 +202,7 @@ def _agent_listener_exists(working_folder):
   return agent_listener_exists
 
 def _apply_tags_to_agent(vsts_url, pat_token, project_id, deployment_group_id, agent_id, tags_string):
-  tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets?api-version={2}'.format(quote(project_id), deployment_group_id, Constants.targets_api_version)
+  tags_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets?api-version={2}'.format(project_id, deployment_group_id, Constants.targets_api_version)
   tags_url = vsts_url + tags_address
   headers = {
               'Content-Type' : 'application/json'
@@ -216,7 +216,7 @@ def _apply_tags_to_agent(vsts_url, pat_token, project_id, deployment_group_id, a
     raise Exception('Tags could not be added.')
 
 def _add_tags_to_agent_internal(vsts_url, pat_token, project_id, deployment_group_id, agent_id, tags_string):
-  target_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets/{2}?api-version={3}'.format(quote(project_id), deployment_group_id, agent_id, Constants.targets_api_version)
+  target_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets/{2}?api-version={3}'.format(project_id, deployment_group_id, agent_id, Constants.targets_api_version)
   target_url = vsts_url + target_address
   response = Util.make_http_call(target_url, 'GET', None, None, pat_token)
   if(response.status == Constants.HTTP_OK):

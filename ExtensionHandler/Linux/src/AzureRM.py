@@ -15,10 +15,11 @@ import DownloadDeploymentAgent
 import ConfigureDeploymentAgent
 import json
 import time
+import shutil
 from Utils.WAAgentUtil import waagent
 from distutils.version import LooseVersion
 from time import sleep
-import shutil
+from urllib2 import quote
 
 configured_agent_exists = False
 agent_configuration_required = True
@@ -139,7 +140,7 @@ def pre_validation_checks():
     check_python_version()
     check_systemd_exists()
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreValidationCheck']['operationName'], getattr(e,'message'))
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreValidationCheck']['operationName'], getattr(e,'Code'))
 
   handler_utility.add_handler_sub_status(Util.HandlerSubStatus('PreValidationCheckSuccess'))
 
@@ -241,7 +242,7 @@ def validate_inputs(config):
     # would redirect to sign in page and not throw an exception. So, to handle this case.
 
     specific_error_message = ""
-    get_deployment_group_url = "{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}".format(config['VSTSUrl'], config['TeamProject'], config['DeploymentGroup'], Constants.projectAPIVersion)
+    get_deployment_group_url = "{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}".format(config['VSTSUrl'], quote(config['TeamProject']), quote(config['DeploymentGroup']), Constants.projectAPIVersion)
     
     handler_utility.log("Get deployment group url - {0}".format(get_deployment_group_url))
 
@@ -276,7 +277,7 @@ def validate_inputs(config):
     headers = {}
     headers['Content-Type'] = 'application/json'
     body = "{'name': '" + config['DeploymentGroup'] + "'}"
-    patch_deployment_group_url = "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}".format(config['VSTSUrl'], config['TeamProject'], deployment_group_id, Constants.projectAPIVersion) 
+    patch_deployment_group_url = "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}".format(config['VSTSUrl'], quote(config['TeamProject']), deployment_group_id, Constants.projectAPIVersion) 
     
     handler_utility.log("Patch deployment group url - {0}".format(patch_deployment_group_url))
     response = Util.make_http_call(patch_deployment_group_url, 'PATCH', body, headers, config['PATToken'])
@@ -296,7 +297,7 @@ def validate_inputs(config):
     handler_utility.add_handler_sub_status(Util.HandlerSubStatus('SuccessfullyValidatedInputs'))
 
   except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ValidatingInputs']['operationName'], getattr(e,'message'))
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ValidatingInputs']['operationName'], getattr(e,'Code'))
 
 def get_configutation_from_settings():
   try:

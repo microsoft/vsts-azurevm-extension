@@ -149,8 +149,7 @@ function Invoke-ConfigureAgentScript {
     [hashtable] $config
     )
 
-    $null = (. $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup `
-    -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword)
+    $null = (. $PSScriptRoot\ConfigureDeploymentAgent.ps1 -config $config -workingFolder $config.AgentWorkingFolder -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword)
 }
 
 <#

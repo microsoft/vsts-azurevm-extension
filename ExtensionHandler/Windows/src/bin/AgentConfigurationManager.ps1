@@ -1,5 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
+Import-Module $PSScriptRoot\Log.psm1
 . "$PSScriptRoot\Constants.ps1"
 
 function WriteConfigurationLog
@@ -9,6 +10,24 @@ function WriteConfigurationLog
     )
     
     Write-Log ("[Configuration]: " + $logMessage)
+}
+
+function GetConfigCmdPath
+{
+     if([string]::IsNullOrEmpty($configCmdPath))
+     {
+        $configCmdPath = Join-Path $workingFolder $configCmd
+        WriteConfigurationLog "`t`t Configuration cmd path: $configCmdPath"
+     }
+     return $configCmdPath
+}
+
+function ConfigCmdExists
+{
+    $configCmdExists = Test-Path $(GetConfigCmdPath)
+    WriteConfigurationLog "`t`t Configuration cmd file exists: $configCmdExists"  
+    
+    return $configCmdExists    
 }
 
 function GetProcessStartInfo
@@ -31,7 +50,7 @@ function ConfigureAgent
     [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$workingFolder,
+    [string]$workFolder,
     [Parameter(Mandatory=$true)]
     [string]$projectName,
     [Parameter(Mandatory=$true)]
@@ -50,7 +69,7 @@ function ConfigureAgent
         $collectionName = $tfsUrl.Substring($tfsUrl.LastIndexOf('/')+1, $tfsUrl.Length-$tfsUrl.LastIndexOf('/')-1)
         $tfsUrl = $tfsUrl.Substring(0,$tfsUrl.LastIndexOf('/'))
     }
-    $processStartInfo.Arguments = CreateConfigCmdArgs -tfsUrl $tfsUrl -patToken $patToken -workingFolder $workingFolder `
+    $processStartInfo.Arguments = CreateConfigCmdArgs -tfsUrl $tfsUrl -patToken $patToken -workFolder $workFolder `
                                  -projectName $projectName -deploymentGroupName $deploymentGroupName -agentName $agentName `
                                  -windowsLogonAccountName $windowsLogonAccountName -windowsLogonPassword $windowsLogonPassword
     if($global:isOnPrem){
@@ -82,6 +101,12 @@ function RemoveExistingAgent
     [string]$configCmdPath
     )
 
+    WriteConfigurationLog "Starting Deployment agent removal."
+    if(!$(ConfigCmdExists))
+    {
+        throw "Unable to find the configuration cmd: $configCmdPath, ensure to download the agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
+    }
+
     $processStartInfo = GetProcessStartInfo
     $processStartInfo.FileName = $configCmdPath
     $processStartInfo.Arguments = "$removeAgentArgs --token $patToken"
@@ -112,7 +137,7 @@ function CreateConfigCmdArgs
         [Parameter(Mandatory=$false)]
         [string]$patToken,
         [Parameter(Mandatory=$true)]
-        [string]$workingFolder,
+        [string]$workFolder,
         [Parameter(Mandatory=$true)]
         [string]$projectName,
         [Parameter(Mandatory=$true)]
@@ -123,7 +148,7 @@ function CreateConfigCmdArgs
         [string]$windowsLogonPassword
     )
 
-    $configCmdArgs = "$configCommonArgs --agent `"$agentName`" --url `"$tfsUrl`" --token `"$patToken`" --work `"$workingFolder`" --projectname `"$projectName`" --deploymentgroupname `"$deploymentGroupName`""
+    $configCmdArgs = "$configCommonArgs --agent `"$agentName`" --url `"$tfsUrl`" --token `"$patToken`" --work `"$workFolder`" --projectname `"$projectName`" --deploymentgroupname `"$deploymentGroupName`""
     if($windowsLogonAccountName){
         $configCmdArgs += " --windowsLogonAccount `"$windowsLogonAccountName`" --windowsLogonPassword `"$windowsLogonPassword`""
     }

@@ -1,5 +1,7 @@
 param(
     [Parameter(Mandatory=$true)]
+    [hashtable]$config,
+    [Parameter(Mandatory=$true)]
     [string]$tfsUrl,
     [Parameter(Mandatory=$false)]
     [string]$patToken,
@@ -21,33 +23,7 @@ Import-Module $PSScriptRoot\Log.psm1
 . "$PSScriptRoot\Constants.ps1"
 . "$PSScriptRoot\AgentConfigurationManager.ps1"
 
-function WriteConfigurationLog
-{
-    param(
-    [string]$logMessage
-    )
-    
-    Write-Log ("[Configuration]: " + $logMessage)
-}
 
-function GetConfigCmdPath
-{
-     if([string]::IsNullOrEmpty($configCmdPath))
-     {
-        $configCmdPath = Join-Path $workingFolder $configCmd
-        WriteConfigurationLog "`t`t Configuration cmd path: $configCmdPath"
-     }
-         
-     return $configCmdPath
-}
-
-function ConfigCmdExists
-{
-    $configCmdExists = Test-Path $( GetConfigCmdPath )
-    WriteConfigurationLog "`t`t Configuration cmd file exists: $configCmdExists"  
-    
-    return $configCmdExists    
-}
 
 try
 {
@@ -55,7 +31,8 @@ try
     
     if( ! $(ConfigCmdExists) )
     {
-        throw "Unable to find the configuration cmd: $configCmdPath, ensure to download the agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
+        throw "Unable to find the configuration cmd: $configCmdPath, ensure to download the `
+        agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
     }
     
     if([string]::IsNullOrEmpty($agentName))
@@ -66,14 +43,15 @@ try
     
     WriteConfigurationLog "Configure agent"
     
-    ConfigureAgent -tfsUrl $tfsUrl -patToken $patToken -workingFolder $defaultAgentWorkFolder -projectName $projectName `
-    -deploymentGroupName $deploymentGroupName -agentName $agentName -configCmdPath $(GetConfigCmdPath) `
-    -windowsLogonAccountName $windowsLogonAccountName -windowsLogonPassword $windowsLogonPassword
+    ConfigureAgent -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workFolder $defaultAgentWorkFolder `
+    -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -agentName $config.AgentName `
+    -configCmdPath $(GetConfigCmdPath) -windowsLogonAccountName $windowsLogonAccountName `
+    -windowsLogonPassword $windowsLogonPassword
     
     return $returnSuccess 
 }
 catch
 {  
-    WriteConfigurationLog $_.Exception
-    throw $_.Exception
+    WriteConfigurationLog $_
+    throw $_
 }

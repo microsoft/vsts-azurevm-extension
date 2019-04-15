@@ -118,7 +118,7 @@ function AddTagsToAgent
     $target = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrlToGetExistingTags -Method "Get" -Headers $headers} -actionName "Get target" `
                                -retryCatchBlock {$null = (& $addTagsErrorMessageBlock)} -finalCatchBlock {throw (& $addTagsErrorMessageBlock)}
 
-    $existingTags = $target.tags
+    $existingTags = if($target.Contains('tags'){$target.tags}else{@()}
     $tags = @()
     [Array]$newTags =  ConvertFrom-Json $tagsAsJsonString
 
@@ -185,6 +185,6 @@ try
 }
 catch
 {  
-    WriteAddTagsLog $_.Exception
-    throw $_.Exception
+    WriteAddTagsLog $_
+    throw $_
 }

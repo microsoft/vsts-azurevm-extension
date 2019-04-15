@@ -21,8 +21,8 @@ function Test-ConfiguredAgentExists
     }
     catch
     {  
-        WriteAgentSettingsHelperLog $_.Exception
-        throw $_.Exception
+        WriteAgentSettingsHelperLog $_
+        throw $_
     }
 }
 
@@ -99,8 +99,8 @@ function Test-AgentSettingsAreSame
     }
     catch
     {  
-        WriteAgentSettingsHelperLog $_.Exception
-        throw $_.Exception
+        WriteAgentSettingsHelperLog $_
+        throw $_
     }
 }
 

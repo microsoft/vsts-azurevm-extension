@@ -188,7 +188,7 @@ function Confirm-InputsAreValid {
             {
                 $inputsValidationErrorCode = $RM_Extension_Status.MissingDependency
                 $errorMessage = ($errorMessage -f $exception) + ". Please make sure that the virtual machine can access the Azure DevOps services."
-                Write-Log $errorMessage $true
+                Write-Log $errorMessage
             }
 
             if($failEarly)
@@ -254,13 +254,14 @@ function Confirm-InputsAreValid {
             {
                 $inputsValidationErrorCode = $RM_Extension_Status.MissingDependency
                 $errorMessage = ($errorMessage -f $exception) + ". Please make sure that the virtual machine can access the Azure DevOps services."
-                Write-Log $errorMessage $true
+                Write-Log $errorMessage
             }
             
             if($failEarly)
             {
                 throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage
             }
+            return $inputsValidationErrorCode, $errorMessage
         }
 
         $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $patchDeploymentGroupUrl -Method "Patch" -Body $requestBody -Headers $headers} `
@@ -270,38 +271,49 @@ function Confirm-InputsAreValid {
         Write-Log ("Validated that the user has `"Manage`" permissions on the deployment group {0}" -f $config.DeploymentGroup)
 
         #If agentname input not provided, append '-DG' to machine name as agentname
-        #Check if the deployment group already contains a running agent with the name. If so, append a 4 char guid. Don't fail here
+        $agentNameIsInput = $true
         if([string]::IsNullOrEmpty($config.AgentName))
         {
             $config.AgentName = $env:COMPUTERNAME + "-DG"
-            Write-Log "Agent name not provided"
+            Write-Log "Agent name not provided as input" $true
+            $agentNameIsInput = $false
+        }
+        else
+        {
+            if(($config.AgentName.Length -gt $agentNameCharacterLimit) -or ($config.AgentName -match "[`"/:<>\\|*?]+"))
+            {
+                $message = "Agent Name should be less than 64 characters in length and should not include '`"', '/', ':', '<', '>', '\', '|', '*' and '?'"
+                throw New-HandlerTerminatingError $RM_Extension_Status.InputConfigurationError -Message $message
+            }
         }
 
-        try
-        {
-            $errorMessageInitialPart = ("Could not verify that the deployment group `"$($config.DeploymentGroup)`"  already contains a running agent with the name {0} . Status: {1}. Error: {2}")
-            $listTargetsUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/targets?name={3}api-version={4}" `
-            -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroupId, $config.AgentName, $apiVersion)
-            Write-Log "List targets url - $listTargetsUrl"
-            $patchDeploymentGroupErrorBlock = {
-                $exception = $_
-                $errorMessage = "List targets failed: {0}"
-                if($exception.Exception.Response)
-                {
-                    $specificErrorMessage = $unexpectedErrorMessage
-                    $errorMessage = ($errorMessageInitialPart -f $exception.Exception.Response.StatusCode.value__, $specificErrorMessage)
-                    Write-Log $errorMessage
-                }
-                else
-                {
-                    $errorMessage = ($errorMessage -f $exception) + ". Please make sure that the virtual machine can access the Azure DevOps services."
-                    Write-Log $errorMessage $true
-                }
+        #Check if the deployment group already contains a running agent with the name. If so, append a 4 char guid. Don't fail here
+        $errorMessageInitialPart = ("Could not verify that the deployment group `"$($config.DeploymentGroup)`"  already contains a running agent with the name {0} . Status: {1}. Error: {2}")
+        $listTargetsUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/targets?name={3}api-version={4}" `
+        -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroupId, $config.AgentName, $apiVersion)
+        Write-Log "List targets url - $listTargetsUrl"
+        $patchDeploymentGroupErrorBlock = {
+            $exception = $_
+            $errorMessage = "List targets failed: {0}"
+            if($exception.Exception.Response)
+            {
+                $specificErrorMessage = $unexpectedErrorMessage
+                $errorMessage = ($errorMessageInitialPart -f $exception.Exception.Response.StatusCode.value__, $specificErrorMessage)
+                Write-Log $errorMessage
             }
+            else
+            {
+                $errorMessage = ($errorMessage -f $exception) + ". Please make sure that the virtual machine can access the Azure DevOps services."
+                Write-Log $errorMessage
+            }
+            return $errorMessage
+        }
 
-            $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $listTargetsUrl -Method "Get" -Headers $headers} `
-                                    -retryCatchBlock {(& $patchDeploymentGroupErrorBlock)} -actionName "List targets" `
-                                    -finalCatchBlock {(& $patchDeploymentGroupErrorBlock)}
+        $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $listTargetsUrl -Method "Get" -Headers $headers} `
+                                -retryCatchBlock {$null = (& $patchDeploymentGroupErrorBlock)} -actionName "List targets" `
+                                -finalCatchBlock {Write-Log (& $patchDeploymentGroupErrorBlock) $true}
+        if($ret)
+        {
             if($ret.count -eq 0)
             {
                 Write-Log ("Deployment group does not contain the target") $true
@@ -313,17 +325,27 @@ function Confirm-InputsAreValid {
                 Write-Log ("Deployment group already contains target with status '$targetStatus'. ") $true
                 if($targetStatus -eq "online")
                 {
-                    $randomSuffix = (-join ((65..90) + (97..122) | Get-Random -Count 4 | % {[char]$_}))
-                    Write-Log ("Appending '-$randomSuffix' to agent name") $true
+                    if($agentNameIsInput)
+                    {
+                        $message = ("The deployment group {0} already contains a healthy target with name {1}. Please provide a unique target name." -f $config.DeploymentGroup, $config.AgentName)
+                        throw New-HandlerTerminatingError $RM_Extension_Status.InputConfigurationError -Message $message
+                    }
+                    else
+                    {
+                        $randomSuffixLength = 4
+                        $randomSuffix = (-join ((65..90) + (97..122) | Get-Random -Count $randomSuffixLength | % {[char]$_}))
+                        Write-Log ("Appending '$randomSuffix' to agent name") $true
+                        if($config.AgentName.Length -gt ($agentNameCharacterLimit - $randomSuffixLength))
+                        {
+                            $config.AgentName = $config.AgentName.Substring(0, ($agentNameCharacterLimit - $randomSuffixLength))
+                        }
+                        $config.AgentName += $randomSuffix
+                    }
                 }
             }
-            Write-Log ("Agent name: $($config.AgentName)") $true
+        }
 
-        }
-        catch
-        {
-            Write-Log "Error checking whether deployment group contains running agent: $_" $true
-        }
+        Write-Log ("Agent name: $($config.AgentName)") $true
 
         Write-Log "Done validating inputs..."
         Add-HandlerSubStatus $RM_Extension_Status.SuccessfullyValidatedInputs.Code $RM_Extension_Status.SuccessfullyValidatedInputs.Message -operationName $RM_Extension_Status.SuccessfullyValidatedInputs.operationName

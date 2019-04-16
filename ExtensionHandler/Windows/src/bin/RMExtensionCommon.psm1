@@ -54,7 +54,7 @@ function Remove-Agent {
             {
                 throw "Unable to find the configuration cmd, ensure to download the agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
             }
-            RemoveExistingAgent -patToken $config.PATToken -configCmdPath $(GetConfigCmdPath $config.AgentWorkingFolder)
+            RemoveExistingAgent -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder
             Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
             Clean-AgentWorkingFolder $config
         }

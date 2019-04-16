@@ -18,6 +18,7 @@ Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionCommon.psm1 -DisableNameChecking
 Import-Module $PSScriptRoot\Log.psm1
 . $PSScriptRoot\AgentSettingsHelper.ps1
+. $PSScriptRoot\AgentConfigurationManager.ps1
 . $PSScriptRoot\ConfigSettingsReader.ps1
 . $PSScriptRoot\Constants.ps1
 
@@ -137,10 +138,8 @@ function Register-Agent {
             agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
         }
         
-        ConfigureAgent -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workFolder $defaultAgentWorkFolder `
-        -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -agentName $config.AgentName `
-        -configCmdPath (GetConfigCmdPath $config.AgentWorkingFolder) -windowsLogonAccountName $windowsLogonAccountName `
-        -windowsLogonPassword $windowsLogonPassword
+        ConfigureAgent -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workFolder $defaultAgentWorkFolder -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -agentName $config.AgentName `
+        -configCmdPath (GetConfigCmdPath $config.AgentWorkingFolder) -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword
 
         Write-Log "Agent configured successfully" $true
 

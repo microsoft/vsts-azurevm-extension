@@ -105,15 +105,16 @@ function RemoveExistingAgent
     [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$configCmdPath
+    [string]$workingFolder
     )
 
     WriteConfigurationLog "Starting Deployment agent removal."
-    if(!$(ConfigCmdExists))
+    if(!$(ConfigCmdExists $workingFolder))
     {
-        throw "Unable to find the configuration cmd: $configCmdPath, ensure to download the agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
+        throw "Unable to find the configuration cmd, ensure to download the agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
     }
 
+    $configCmdPath = GetConfigCmdPath $workingFolder
     $processStartInfo = GetProcessStartInfo
     $processStartInfo.FileName = $configCmdPath
     $processStartInfo.Arguments = "$removeAgentArgs --token $patToken"

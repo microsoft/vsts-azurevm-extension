@@ -20,10 +20,11 @@ Import-Module $PSScriptRoot\Log.psm1
 function WriteAddTagsLog
 {
     param(
-    [string]$logMessage
+    [string]$logMessage,
+    [bool]$logToOutput=$false
     )
     
-    Write-Log ("[AddTags]: " + $logMessage)
+    Write-Log ("[AddTags]: " + $logMessage) $logToOutput
 }
 
 function GetAgentSettingPath
@@ -118,7 +119,16 @@ function AddTagsToAgent
     $target = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrlToGetExistingTags -Method "Get" -Headers $headers} -actionName "Get target" `
                                -retryCatchBlock {$null = (& $addTagsErrorMessageBlock)} -finalCatchBlock {throw (& $addTagsErrorMessageBlock)}
 
-    $existingTags = if($target.Contains('tags'){$target.tags}else{@()}
+    try
+    {
+        $existingTags = $target.tags
+    }
+    catch
+    {
+        WriteAddTagsLog "Error occured while fetching existing tags: $_" $true
+        $existingTags = @()
+    }
+
     $tags = @()
     [Array]$newTags =  ConvertFrom-Json $tagsAsJsonString
 

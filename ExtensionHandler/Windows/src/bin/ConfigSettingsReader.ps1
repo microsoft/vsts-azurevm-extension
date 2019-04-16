@@ -220,8 +220,10 @@ function Confirm-InputsAreValid {
 
         #Verify the user has manage permissions on the deployment group
         $deploymentGroupId = $deploymentGroupData.id
+        $config.DeploymentGroupId = $deploymentGroupId
 
-        $patchDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}" -f $config.VSTSUrl, $config.TeamProject, $deploymentGroupId, $apiVersion)
+        $patchDeploymentGroupUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}" `
+        -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroupId, $apiVersion)
         Write-Log "Patch deployment group url - $patchDeploymentGroupUrl"
         $headers += @{"Content-Type" = "application/json"}
         $requestBody = "{'name': '" + $config.DeploymentGroup + "'}"
@@ -267,9 +269,64 @@ function Confirm-InputsAreValid {
 
         Write-Log ("Validated that the user has `"Manage`" permissions on the deployment group {0}" -f $config.DeploymentGroup)
 
+        #If agentname input not provided, append '-DG' to machine name as agentname
+        #Check if the deployment group already contains a running agent with the name. If so, append a 4 char guid. Don't fail here
+        if([string]::IsNullOrEmpty($config.AgentName))
+        {
+            $config.AgentName = $env:COMPUTERNAME + "-DG"
+            Write-Log "Agent name not provided"
+        }
+
+        try
+        {
+            $errorMessageInitialPart = ("Could not verify that the deployment group `"$($config.DeploymentGroup)`"  already contains a running agent with the name {0} . Status: {1}. Error: {2}")
+            $listTargetsUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/targets?name={3}api-version={4}" `
+            -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroupId, $config.AgentName, $apiVersion)
+            Write-Log "List targets url - $listTargetsUrl"
+            $patchDeploymentGroupErrorBlock = {
+                $exception = $_
+                $errorMessage = "List targets failed: {0}"
+                if($exception.Exception.Response)
+                {
+                    $specificErrorMessage = $unexpectedErrorMessage
+                    $errorMessage = ($errorMessageInitialPart -f $exception.Exception.Response.StatusCode.value__, $specificErrorMessage)
+                    Write-Log $errorMessage
+                }
+                else
+                {
+                    $errorMessage = ($errorMessage -f $exception) + ". Please make sure that the virtual machine can access the Azure DevOps services."
+                    Write-Log $errorMessage $true
+                }
+            }
+
+            $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $listTargetsUrl -Method "Get" -Headers $headers} `
+                                    -retryCatchBlock {(& $patchDeploymentGroupErrorBlock)} -actionName "List targets" `
+                                    -finalCatchBlock {(& $patchDeploymentGroupErrorBlock)}
+            if($ret.count -eq 0)
+            {
+                Write-Log ("Deployment group does not contain the target") $true
+            }
+            else
+            {
+                $targetData = $ret.value[0]
+                $targetStatus = $targetData.agent.status
+                Write-Log ("Deployment group already contains target with status '$targetStatus'. ") $true
+                if($targetStatus -eq "online")
+                {
+                    $randomSuffix = (-join ((65..90) + (97..122) | Get-Random -Count 4 | % {[char]$_}))
+                    Write-Log ("Appending '-$randomSuffix' to agent name") $true
+                }
+            }
+            Write-Log ("Agent name: $($config.AgentName)") $true
+
+        }
+        catch
+        {
+            Write-Log "Error checking whether deployment group contains running agent: $_" $true
+        }
+
         Write-Log "Done validating inputs..."
         Add-HandlerSubStatus $RM_Extension_Status.SuccessfullyValidatedInputs.Code $RM_Extension_Status.SuccessfullyValidatedInputs.Message -operationName $RM_Extension_Status.SuccessfullyValidatedInputs.operationName
-
     }
     catch
     {

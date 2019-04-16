@@ -137,14 +137,6 @@ function Register-Agent {
             agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
         }
         
-        if([string]::IsNullOrEmpty($agentName))
-        {
-            $agentName = $env:COMPUTERNAME + "-DG"
-            WriteConfigurationLog "Agent name not provided, agent name will be set as $agentName"
-        }
-        
-        WriteConfigurationLog "Configure agent"
-        
         ConfigureAgent -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workFolder $defaultAgentWorkFolder `
         -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -agentName $config.AgentName `
         -configCmdPath (GetConfigCmdPath $config.AgentWorkingFolder) -windowsLogonAccountName $windowsLogonAccountName `

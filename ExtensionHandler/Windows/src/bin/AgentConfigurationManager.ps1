@@ -14,17 +14,24 @@ function WriteConfigurationLog
 
 function GetConfigCmdPath
 {
-     if([string]::IsNullOrEmpty($configCmdPath))
-     {
-        $configCmdPath = Join-Path $workingFolder $configCmd
-        WriteConfigurationLog "`t`t Configuration cmd path: $configCmdPath"
-     }
-     return $configCmdPath
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [string]$workingFolder
+    )
+    
+    $configCmdPath = Join-Path $workingFolder $configCmd
+    WriteConfigurationLog "`t`t Configuration cmd path: $configCmdPath"
+    return $configCmdPath
 }
 
 function ConfigCmdExists
 {
-    $configCmdExists = Test-Path $(GetConfigCmdPath)
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [string]$workingFolder
+    )
+
+    $configCmdExists = Test-Path $(GetConfigCmdPath $workingFolder)
     WriteConfigurationLog "`t`t Configuration cmd file exists: $configCmdExists"  
     
     return $configCmdExists    

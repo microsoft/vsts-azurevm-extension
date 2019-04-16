@@ -281,7 +281,6 @@ Describe "configure agent tests" {
         Mock Write-Log{}
         Mock Set-ErrorStatusAndErrorExit {}
         Mock Add-HandlerSubStatus {}
-        Mock Invoke-ConfigureAgentScript { throw New-Object System.Exception("some error")}
 
         Register-Agent @{}
 
@@ -294,7 +293,6 @@ Describe "configure agent tests" {
 
         Mock Write-Log{}
         Mock Add-HandlerSubStatus {}
-        Mock Invoke-ConfigureAgentScript {}
         Mock Set-HandlerStatus
         
         Register-Agent @{}

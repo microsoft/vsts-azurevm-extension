@@ -48,16 +48,18 @@ function Remove-Agent {
         . $PSScriptRoot\Constants.ps1
         . $PSScriptRoot\AgentConfigurationManager.ps1
         Write-Log "Remove-Agent command started"
-        try{
-            if(!$(ConfigCmdExists))
+        try
+        {
+            if(!$(ConfigCmdExists $config.AgentWorkingFolder))
             {
-                throw "Unable to find the configuration cmd: $configCmdPath, ensure to download the agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
+                throw "Unable to find the configuration cmd, ensure to download the agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
             }
-            RemoveExistingAgent -patToken $config.PATToken -configCmdPath $(GetConfigCmdPath)
+            RemoveExistingAgent -patToken $config.PATToken -configCmdPath $(GetConfigCmdPath $config.AgentWorkingFolder)
             Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
             Clean-AgentWorkingFolder $config
         }
-        catch{
+        catch
+        {
             if(($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder))
             {
                 $agentSettingPath = Join-Path $config.AgentWorkingFolder $agentSetting	

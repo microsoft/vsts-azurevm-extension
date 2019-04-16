@@ -131,7 +131,24 @@ function Register-Agent {
         Add-HandlerSubStatus $RM_Extension_Status.ConfiguringDeploymentAgent.Code $RM_Extension_Status.ConfiguringDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
         Write-Log "Configuring agent..."
 
-        Invoke-ConfigureAgentScript $config
+        if(!$(ConfigCmdExists $config.AgentWorkingFolder))
+        {
+            throw "Unable to find the configuration cmd, ensure to download the `
+            agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
+        }
+        
+        if([string]::IsNullOrEmpty($agentName))
+        {
+            $agentName = $env:COMPUTERNAME + "-DG"
+            WriteConfigurationLog "Agent name not provided, agent name will be set as $agentName"
+        }
+        
+        WriteConfigurationLog "Configure agent"
+        
+        ConfigureAgent -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workFolder $defaultAgentWorkFolder `
+        -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -agentName $config.AgentName `
+        -configCmdPath (GetConfigCmdPath $config.AgentWorkingFolder) -windowsLogonAccountName $windowsLogonAccountName `
+        -windowsLogonPassword $windowsLogonPassword
 
         Write-Log "Agent configured successfully" $true
 
@@ -141,15 +158,6 @@ function Register-Agent {
     {
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
     }
-}
-
-function Invoke-ConfigureAgentScript {
-    [CmdletBinding()]
-    param(
-    [hashtable] $config
-    )
-
-    $null = (. $PSScriptRoot\ConfigureDeploymentAgent.ps1 -config $config -workingFolder $config.AgentWorkingFolder -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword)
 }
 
 <#

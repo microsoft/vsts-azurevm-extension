@@ -274,7 +274,15 @@ function Confirm-InputsAreValid {
         $agentNameIsInput = $true
         if([string]::IsNullOrEmpty($config.AgentName))
         {
-            $config.AgentName = $env:COMPUTERNAME.Substring(0, ($agentNameCharacterLimit - 3)) + "-DG"
+            $agentNameSuffix = "-DG"
+            if($env:COMPUTERNAME.Length -gt ($agentNameCharacterLimit - $agentNameSuffix.Length))
+            {
+                $config.AgentName = $env:COMPUTERNAME.Substring(0, ($agentNameCharacterLimit - $agentNameSuffix.Length)) + $agentNameSuffix
+            }
+            else
+            {
+                $config.AgentName = $env:COMPUTERNAME + $agentNameSuffix
+            }
             Write-Log "Agent name not provided as input" $true
             $agentNameIsInput = $false
         }
@@ -282,14 +290,14 @@ function Confirm-InputsAreValid {
         {
             if(($config.AgentName.Length -gt $agentNameCharacterLimit) -or ($config.AgentName -match "[`"/:<>\\|*?]+"))
             {
-                $message = "Agent Name should be less than 64 characters in length and should not include '`"', '/', ':', '<', '>', '\', '|', '*' and '?'"
+                $message = ("Agent Name should be less than {0} characters in length and should not include '`"', '/', ':', '<', '>', '\', '|', '*' and '?'" -f $agentNameCharacterLimit)
                 throw New-HandlerTerminatingError $RM_Extension_Status.InputConfigurationError -Message $message
             }
         }
 
         #Check if the deployment group already contains a running agent with the name. If so, append a 4 char guid. Don't fail here
         $errorMessageInitialPart = ("Could not verify that the deployment group `"$($config.DeploymentGroup)`"  already contains a running agent with the name {0} . Status: {1}. Error: {2}")
-        $listTargetsUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/targets?name={3}api-version={4}" `
+        $listTargetsUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/targets?name={3}&api-version={4}" `
         -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroupId, $config.AgentName, $apiVersion)
         Write-Log "List targets url - $listTargetsUrl"
         $patchDeploymentGroupErrorBlock = {

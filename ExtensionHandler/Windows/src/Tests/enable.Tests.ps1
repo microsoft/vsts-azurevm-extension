@@ -293,9 +293,21 @@ Describe "configure agent tests" {
 
         Mock Write-Log{}
         Mock Add-HandlerSubStatus {}
-        Mock Set-HandlerStatus
+        Mock Set-HandlerStatus {}
+        Mock ConfigCmdExists {return $true}
+        Mock ConfigureAgent {}
+        Mock GetConfigCmdPath {return "GetConfigCmdPath"}
         
-        Register-Agent @{}
+        Register-Agent @{
+            AgentWorkingFolder = "AgentWorkingFolder"
+            VSTSUrl = "VSTSUrl"
+            PATToken = "PATToken"
+            TeamProject = "TeamProject"
+            DeploymentGroup = "DeploymentGroup"
+            AgentName = "AgentName"
+            WindowsLogonAccountName = "WindowsLogonAccountName"
+            WindowsLogonPassword = "WindowsLogonPassword"
+        }
 
         It "should call clean up functions" {
             Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.ConfiguredDeploymentAgent.Code}

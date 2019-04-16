@@ -96,7 +96,7 @@ function WriteDownloadLog
     Invoke-WithRetry -retryBlock {(New-Object Net.WebClient).DownloadFile($agentDownloadUri,$target)} `
                      -retryCatchBlock {WriteDownloadLog $_} `
                      -finalCatchBlock {
-                         $message = "An error occured while downloading the agent package. More details: $_. Please ensure `
+                         $message = "An error occured while downloading the agent package. More details: $_.`n Please ensure `
                          that the host $($agentDownloadUri.Host) is accessible and not blocked by a proxy."
                          throw New-HandlerTerminatingError $RM_Extension_Status.MissingDependency -Message $message
                         }

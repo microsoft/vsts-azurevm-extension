@@ -15,6 +15,7 @@ Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\Log.psm1
 . "$PSScriptRoot\RMExtensionUtilities.ps1"
+. "$PSScriptRoot\AgentConfigurationManager.ps1"
 
 function Get-AgentWorkingFolder {
     [CmdletBinding()]
@@ -46,7 +47,6 @@ function Remove-Agent {
     try
     {
         . $PSScriptRoot\Constants.ps1
-        . $PSScriptRoot\AgentConfigurationManager.ps1
         Write-Log "Remove-Agent command started"
         try
         {

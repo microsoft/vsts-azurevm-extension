@@ -274,7 +274,7 @@ function Confirm-InputsAreValid {
         $agentNameIsInput = $true
         if([string]::IsNullOrEmpty($config.AgentName))
         {
-            $config.AgentName = $env:COMPUTERNAME + "-DG"
+            $config.AgentName = $env:COMPUTERNAME.Substring(0, ($agentNameCharacterLimit - 3)) + "-DG"
             Write-Log "Agent name not provided as input" $true
             $agentNameIsInput = $false
         }

@@ -307,7 +307,7 @@ function Validate-AgentName
     {
         if(($config.AgentName.Length -gt $agentNameCharacterLimit) -or ($config.AgentName -match "[`"/:<>\\|*?]+"))
         {
-            $message = ("Agent Name should be less than {0} characters in length and should not include '`"', '/', ':', '<', '>', '\', '|', '*' and '?'" -f $agentNameCharacterLimit)
+            $message = ("Agent Name should be less than or equal to {0} characters in length and should not include '`"', '/', ':', '<', '>', '\', '|', '*' and '?'" -f $agentNameCharacterLimit)
             throw New-HandlerTerminatingError $RM_Extension_Status.InputConfigurationError -Message $message
         }
     }
@@ -318,7 +318,8 @@ function Validate-AgentName
     $listTargetsUrl = ("{0}/{1}/_apis/distributedtask/deploymentgroups/{2}/targets?name={3}&api-version={4}" `
     -f $config.VSTSUrl, $config.TeamProject, $config.DeploymentGroupId, $config.AgentName, $apiVersion)
     Write-Log "List targets url - $listTargetsUrl"
-    $patchDeploymentGroupErrorBlock = {
+    $headers = Get-RESTCallHeader $config.PATToken
+    $listTargetsErrorBlock = {
         $exception = $_
         $errorMessage = "List targets failed: {0}"
         if($exception.Exception.Response)
@@ -336,8 +337,8 @@ function Validate-AgentName
     }
 
     $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $listTargetsUrl -Method "Get" -Headers $headers} `
-                            -retryCatchBlock {$null = (& $patchDeploymentGroupErrorBlock)} -actionName "List targets" `
-                            -finalCatchBlock {Write-Log (& $patchDeploymentGroupErrorBlock) $true}
+                            -retryCatchBlock {$null = (& $listTargetsErrorBlock)} -actionName "List targets" `
+                            -finalCatchBlock {Write-Log (& $listTargetsErrorBlock) $true}
     if($ret)
     {
         if($ret.count -eq 0)

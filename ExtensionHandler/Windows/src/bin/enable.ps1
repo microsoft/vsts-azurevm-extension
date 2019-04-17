@@ -132,6 +132,7 @@ function Register-Agent {
         Add-HandlerSubStatus $RM_Extension_Status.ConfiguringDeploymentAgent.Code $RM_Extension_Status.ConfiguringDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
         Write-Log "Configuring agent..."
         
+        Validate-AgentName $config
         ConfigureAgent -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workFolder $defaultAgentWorkFolder -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -agentName $config.AgentName `
         -workingFolder $config.AgentWorkingFolder -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword
 
@@ -420,7 +421,6 @@ function ConfigureAgentIfRequired
 
     if($agentConfigurationRequired)
     {
-        Validate-AgentName $config
         Register-Agent $config
     }
     else

@@ -131,15 +131,9 @@ function Register-Agent {
     {
         Add-HandlerSubStatus $RM_Extension_Status.ConfiguringDeploymentAgent.Code $RM_Extension_Status.ConfiguringDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
         Write-Log "Configuring agent..."
-
-        if(!$(ConfigCmdExists $config.AgentWorkingFolder))
-        {
-            throw "Unable to find the configuration cmd, ensure to download the `
-            agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
-        }
         
         ConfigureAgent -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workFolder $defaultAgentWorkFolder -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -agentName $config.AgentName `
-        -configCmdPath (GetConfigCmdPath $config.AgentWorkingFolder) -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword
+        -workingFolder $config.AgentWorkingFolder -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword
 
         Write-Log "Agent configured successfully" $true
 
@@ -426,6 +420,7 @@ function ConfigureAgentIfRequired
 
     if($agentConfigurationRequired)
     {
+        Validate-AgentName $config
         Register-Agent $config
     }
     else

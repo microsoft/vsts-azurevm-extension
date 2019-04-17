@@ -1,9 +1,6 @@
 ﻿<#
 .Synopsis
     This script will uninstall Team services extension. 
-    
-    Currently, uninstall is no-op for team services agent. It will still keep running and will still be registered to deployment group.
-    The purpose here is to just inform user about this.
 #>
 
 $ErrorActionPreference = 'stop'

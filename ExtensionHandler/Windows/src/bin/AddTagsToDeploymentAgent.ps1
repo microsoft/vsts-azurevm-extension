@@ -135,7 +135,7 @@ function AddTagsToAgent
     if($existingTags.count -gt 0)
     {
         $tags = $existingTags    ## Append new tags to existing tags, this will ensure existing tags are not modified due to case change
-        WriteAddTagsLog "Found existing tags for agent - $existingTags"
+        WriteAddTagsLog "Found existing tags for target - $existingTags"
 
         foreach( $newTag in $newTags)
         {
@@ -152,7 +152,7 @@ function AddTagsToAgent
 
     $newTagsJsonString = ConvertTo-Json $tags
 
-    WriteAddTagsLog "Updating the tags for agent target - $agentId"
+    WriteAddTagsLog "Updating the tags for target - $agentId"
     ApplyTagsToAgent -tfsUrl $tfsUrl -projectId $projectId -patToken $patToken -deploymentGroupId $deploymentGroupId -agentId $agentId -tagsAsJsonString $newTagsJsonString
 }
 

@@ -12,29 +12,19 @@ function WriteConfigurationLog
     Write-Log ("[Configuration]: " + $logMessage)
 }
 
-function GetConfigCmdPath
+function EnsureConfigCmdExists
 {
     param(
     [Parameter(Mandatory=$true, Position=0)]
     [string]$workingFolder
     )
-    
+
     $configCmdPath = Join-Path $workingFolder $configCmd
-    WriteConfigurationLog "`t`t Configuration cmd path: $configCmdPath"
+    if(!$(Test-Path $configCmdPath))
+    {
+        throw "Unable to find the configuration cmd, ensure to download the agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
+    }
     return $configCmdPath
-}
-
-function ConfigCmdExists
-{
-    param(
-    [Parameter(Mandatory=$true, Position=0)]
-    [string]$workingFolder
-    )
-
-    $configCmdExists = Test-Path $(GetConfigCmdPath $workingFolder)
-    WriteConfigurationLog "`t`t Configuration cmd file exists: $configCmdExists"  
-    
-    return $configCmdExists    
 }
 
 function GetProcessStartInfo
@@ -65,11 +55,14 @@ function ConfigureAgent
     [Parameter(Mandatory=$true)]
     [string]$agentName,
     [Parameter(Mandatory=$true)]
-    [string]$configCmdPath,
+    [string]$workingFolder,
+    [Parameter(Mandatory=$false)]
     [string]$windowsLogonAccountName,
+    [Parameter(Mandatory=$false)]
     [string]$windowsLogonPassword
     )
 
+    $configCmdPath = EnsureConfigCmdExists $workingFolder
     $processStartInfo = GetProcessStartInfo
     $processStartInfo.FileName = $configCmdPath
     if($global:isOnPrem){
@@ -109,12 +102,7 @@ function RemoveExistingAgent
     )
 
     WriteConfigurationLog "Starting Deployment agent removal."
-    if(!$(ConfigCmdExists $workingFolder))
-    {
-        throw "Unable to find the configuration cmd, ensure to download the agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
-    }
-
-    $configCmdPath = GetConfigCmdPath $workingFolder
+    $configCmdPath = EnsureConfigCmdExists $workingFolder
     $processStartInfo = GetProcessStartInfo
     $processStartInfo.FileName = $configCmdPath
     $processStartInfo.Arguments = "$removeAgentArgs --token $patToken"

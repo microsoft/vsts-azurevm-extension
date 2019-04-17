@@ -30,6 +30,7 @@ Describe "Enable RM extension tests" {
         Mock Test-ExtensionDisabledMarkup {}
         Mock Add-AgentTags {}
         Mock Confirm-InputsAreValid {}
+        Mock Validate-AgentName {}
         
         Enable
 
@@ -111,6 +112,7 @@ Describe "Enable RM extension tests" {
         Mock Remove-ExtensionDisabledMarkup {}
         Mock Add-AgentTags {}
         Mock Confirm-InputsAreValid {}
+        Mock Validate-AgentName {}
         
         Enable
 
@@ -138,6 +140,7 @@ Describe "Enable RM extension tests" {
         Mock Remove-ExtensionDisabledMarkup {}
         Mock Add-AgentTags {}
         Mock Confirm-InputsAreValid {}
+        Mock Validate-AgentName {}
         
         Enable
 
@@ -169,6 +172,7 @@ Describe "Enable RM extension tests" {
         Mock Remove-ExtensionDisabledMarkup {}
         Mock Add-AgentTags {}
         Mock Confirm-InputsAreValid {}
+        Mock Validate-AgentName {}
         
         Enable
 
@@ -294,9 +298,7 @@ Describe "configure agent tests" {
         Mock Write-Log{}
         Mock Add-HandlerSubStatus {}
         Mock Set-HandlerStatus {}
-        Mock ConfigCmdExists {return $true}
         Mock ConfigureAgent {}
-        Mock GetConfigCmdPath {return "GetConfigCmdPath"}
         
         Register-Agent @{
             AgentWorkingFolder = "AgentWorkingFolder"

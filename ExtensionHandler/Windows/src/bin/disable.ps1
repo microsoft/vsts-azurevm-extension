@@ -2,7 +2,7 @@
 .Synopsis
     This script will disable RM extension. 
     
-    Currently, disable is no-op for team services agent. It will still keep running and will still be registered to deployment group.
+    Currently, disable is no-op for team services agent extension. It will still keep running and will still be registered to deployment group.
     The purpose here is to just inform user about this.
 #>
 
@@ -22,7 +22,7 @@ Initialize-ExtensionLogFile
 
 $agentWorkingFolder = Get-AgentWorkingFolder
 
-Write-Log "Disable command is no-op for agent"
+Write-Log "Disable command is no-op for the extension"
 
 Write-Log "Disabling extension handler. Creating a markup file.." $true
 Set-ExtensionDisabledMarkup $agentWorkingFolder

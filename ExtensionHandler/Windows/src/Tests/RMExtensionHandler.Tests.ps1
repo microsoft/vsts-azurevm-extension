@@ -10,7 +10,6 @@ Describe "remove agent tests" {
         Mock -ModuleName RMExtensionCommon Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionCommon Set-HandlerStatus {}
         Mock -ModuleName RMExtensionCommon Clean-AgentWorkingFolder {}
-        Mock -ModuleName RMExtensionCommon ConfigCmdExists {return $true}
         Mock -ModuleName RMExtensionCommon RemoveExistingAgent {}
         Remove-Agent @{
             AgentWorkingFolder = "AgentWorkingFolder"

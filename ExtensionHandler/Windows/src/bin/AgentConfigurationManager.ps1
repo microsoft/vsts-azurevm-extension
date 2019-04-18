@@ -1,5 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
+Import-Module $PSScriptRoot\Log.psm1
 . "$PSScriptRoot\Constants.ps1"
 
 function WriteConfigurationLog
@@ -9,6 +10,21 @@ function WriteConfigurationLog
     )
     
     Write-Log ("[Configuration]: " + $logMessage)
+}
+
+function EnsureConfigCmdExists
+{
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [string]$workingFolder
+    )
+
+    $configCmdPath = Join-Path $workingFolder $configCmd
+    if(!$(Test-Path $configCmdPath))
+    {
+        throw "Unable to find the configuration cmd, ensure to download the agent using 'DownloadDeploymentAgent.ps1' before starting the agent configuration"
+    }
+    return $configCmdPath
 }
 
 function GetProcessStartInfo
@@ -31,7 +47,7 @@ function ConfigureAgent
     [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$workingFolder,
+    [string]$workFolder,
     [Parameter(Mandatory=$true)]
     [string]$projectName,
     [Parameter(Mandatory=$true)]
@@ -39,18 +55,21 @@ function ConfigureAgent
     [Parameter(Mandatory=$true)]
     [string]$agentName,
     [Parameter(Mandatory=$true)]
-    [string]$configCmdPath,
+    [string]$workingFolder,
+    [Parameter(Mandatory=$false)]
     [string]$windowsLogonAccountName,
+    [Parameter(Mandatory=$false)]
     [string]$windowsLogonPassword
     )
 
+    $configCmdPath = EnsureConfigCmdExists $workingFolder
     $processStartInfo = GetProcessStartInfo
     $processStartInfo.FileName = $configCmdPath
     if($global:isOnPrem){
         $collectionName = $tfsUrl.Substring($tfsUrl.LastIndexOf('/')+1, $tfsUrl.Length-$tfsUrl.LastIndexOf('/')-1)
         $tfsUrl = $tfsUrl.Substring(0,$tfsUrl.LastIndexOf('/'))
     }
-    $processStartInfo.Arguments = CreateConfigCmdArgs -tfsUrl $tfsUrl -patToken $patToken -workingFolder $workingFolder `
+    $processStartInfo.Arguments = CreateConfigCmdArgs -tfsUrl $tfsUrl -patToken $patToken -workFolder $workFolder `
                                  -projectName $projectName -deploymentGroupName $deploymentGroupName -agentName $agentName `
                                  -windowsLogonAccountName $windowsLogonAccountName -windowsLogonPassword $windowsLogonPassword
     if($global:isOnPrem){
@@ -79,9 +98,11 @@ function RemoveExistingAgent
     [Parameter(Mandatory=$false)]
     [string]$patToken,
     [Parameter(Mandatory=$true)]
-    [string]$configCmdPath
+    [string]$workingFolder
     )
 
+    WriteConfigurationLog "Starting Deployment agent removal."
+    $configCmdPath = EnsureConfigCmdExists $workingFolder
     $processStartInfo = GetProcessStartInfo
     $processStartInfo.FileName = $configCmdPath
     $processStartInfo.Arguments = "$removeAgentArgs --token $patToken"
@@ -112,7 +133,7 @@ function CreateConfigCmdArgs
         [Parameter(Mandatory=$false)]
         [string]$patToken,
         [Parameter(Mandatory=$true)]
-        [string]$workingFolder,
+        [string]$workFolder,
         [Parameter(Mandatory=$true)]
         [string]$projectName,
         [Parameter(Mandatory=$true)]
@@ -123,7 +144,7 @@ function CreateConfigCmdArgs
         [string]$windowsLogonPassword
     )
 
-    $configCmdArgs = "$configCommonArgs --agent `"$agentName`" --url `"$tfsUrl`" --token `"$patToken`" --work `"$workingFolder`" --projectname `"$projectName`" --deploymentgroupname `"$deploymentGroupName`""
+    $configCmdArgs = "$configCommonArgs --agent `"$agentName`" --url `"$tfsUrl`" --token `"$patToken`" --work `"$workFolder`" --projectname `"$projectName`" --deploymentgroupname `"$deploymentGroupName`""
     if($windowsLogonAccountName){
         $configCmdArgs += " --windowsLogonAccount `"$windowsLogonAccountName`" --windowsLogonPassword `"$windowsLogonPassword`""
     }

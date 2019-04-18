@@ -18,6 +18,7 @@ Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionCommon.psm1 -DisableNameChecking
 Import-Module $PSScriptRoot\Log.psm1
 . $PSScriptRoot\AgentSettingsHelper.ps1
+. $PSScriptRoot\AgentConfigurationManager.ps1
 . $PSScriptRoot\ConfigSettingsReader.ps1
 . $PSScriptRoot\Constants.ps1
 
@@ -130,8 +131,10 @@ function Register-Agent {
     {
         Add-HandlerSubStatus $RM_Extension_Status.ConfiguringDeploymentAgent.Code $RM_Extension_Status.ConfiguringDeploymentAgent.Message -operationName $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
         Write-Log "Configuring agent..."
-
-        Invoke-ConfigureAgentScript $config
+        
+        Validate-AgentName $config
+        ConfigureAgent -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workFolder $defaultAgentWorkFolder -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -agentName $config.AgentName `
+        -workingFolder $config.AgentWorkingFolder -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword
 
         Write-Log "Agent configured successfully" $true
 
@@ -141,16 +144,6 @@ function Register-Agent {
     {
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ConfiguringDeploymentAgent.operationName
     }
-}
-
-function Invoke-ConfigureAgentScript {
-    [CmdletBinding()]
-    param(
-    [hashtable] $config
-    )
-
-    $null = (. $PSScriptRoot\ConfigureDeploymentAgent.ps1 -tfsUrl $config.VSTSUrl -patToken  $config.PATToken -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup `
-    -agentName $config.AgentName -workingFolder $config.AgentWorkingFolder -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword)
 }
 
 <#

@@ -76,7 +76,7 @@ function WriteDownloadLog
    
  }
 
- function DowloadDeploymentAgent
+ function DownloadDeploymentAgent
  {
     Param(
     [Parameter(Mandatory=$true)]
@@ -92,9 +92,14 @@ function WriteDownloadLog
     }
     
     WriteDownloadLog "`t`t Start DeploymentAgent download"
-    Invoke-WithRetry -retryBlock {(New-Object Net.WebClient).DownloadFile($agentDownloadUrl,$target)} `
+    $agentDownloadUri = [System.Uri]$agentDownloadUrl
+    Invoke-WithRetry -retryBlock {(New-Object Net.WebClient).DownloadFile($agentDownloadUri,$target)} `
                      -retryCatchBlock {WriteDownloadLog $_} `
-                     -finalCatchBlock {throw $_}
+                     -finalCatchBlock {
+                         $message = "An error occured while downloading the agent package. More details: $_.`n Please ensure `
+                         that the host $($agentDownloadUri.Host) is accessible and not blocked by a proxy."
+                         throw New-HandlerTerminatingError $RM_Extension_Status.MissingDependency -Message $message
+                        }
     WriteDownloadLog "`t`t DeploymentAgent download done"
  }
 
@@ -132,7 +137,7 @@ function DownloadAgentZipRequired
     }
     catch
     {
-        Write-Verbose -Verbose $_.Exception
+        Write-Verbose -Verbose $_
         
         WriteDownloadLog "Unable to get variable: $agentDownloadRequiredVarName"
     } 
@@ -142,7 +147,7 @@ function DownloadAgentZipRequired
 
 try
 {
-    WriteDownloadLog "Starting the DowloadDeploymentAgent script"
+    WriteDownloadLog "Starting the DownloadDeploymentAgent script"
      
     WriteDownloadLog "Get the url for downloading the agent"
     $agentDownloadUrl = GetAgentDownloadUrl -tfsUrl $tfsUrl -patToken $patToken
@@ -152,13 +157,13 @@ try
     WriteDownloadLog "`t`t Deployment agent will be downloaded at - $agentZipFilePath"
 
     WriteDownloadLog "Downloading deploymentAgent"
-    DowloadDeploymentAgent -agentDownloadUrl $agentDownloadUrl -target $agentZipFilePath
-    WriteDownloadLog "Done with DowloadDeploymentAgent script"
+    DownloadDeploymentAgent -agentDownloadUrl $agentDownloadUrl -target $agentZipFilePath
+    WriteDownloadLog "Done with DownloadDeploymentAgent script"
     
     return $returnSuccess
 }
 catch
 {  
-    WriteDownloadLog $_.Exception
-    throw $_.Exception
+    WriteDownloadLog $_
+    throw $_
 }

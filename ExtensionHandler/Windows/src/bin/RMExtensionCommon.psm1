@@ -15,6 +15,7 @@ Import-Module $PSScriptRoot\AzureExtensionHandler.psm1
 Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\Log.psm1
 . "$PSScriptRoot\RMExtensionUtilities.ps1"
+. "$PSScriptRoot\AgentConfigurationManager.ps1"
 
 function Get-AgentWorkingFolder {
     [CmdletBinding()]
@@ -47,12 +48,14 @@ function Remove-Agent {
     {
         . $PSScriptRoot\Constants.ps1
         Write-Log "Remove-Agent command started"
-        try{
-            Invoke-RemoveAgentScript $config
+        try
+        {
+            RemoveExistingAgent -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder
             Add-HandlerSubStatus $RM_Extension_Status.RemovedAgent.Code $RM_Extension_Status.RemovedAgent.Message -operationName $RM_Extension_Status.RemovedAgent.operationName
             Clean-AgentWorkingFolder $config
         }
-        catch{
+        catch
+        {
             if(($_.Exception.Data['Reason'] -eq "UnConfigFailed") -and (Test-Path $config.AgentWorkingFolder))
             {
                 $agentSettingPath = Join-Path $config.AgentWorkingFolder $agentSetting	
@@ -72,15 +75,6 @@ function Remove-Agent {
     {
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.Uninstalling.operationName
     }
-}
-
-function Invoke-RemoveAgentScript {
-    [CmdletBinding()]
-    param(
-    [hashtable] $config
-    )
-
-    $null = (. $PSScriptRoot\RemoveDeploymentAgent.ps1 -patToken $config.PATToken -workingFolder $config.AgentWorkingFolder)
 }
 
 function Set-ErrorStatusAndErrorExit {

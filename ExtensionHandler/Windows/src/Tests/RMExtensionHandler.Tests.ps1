@@ -9,9 +9,12 @@ Describe "remove agent tests" {
         Mock -ModuleName RMExtensionCommon Write-Log{}
         Mock -ModuleName RMExtensionCommon Add-HandlerSubStatus {}
         Mock -ModuleName RMExtensionCommon Set-HandlerStatus {}
-        Mock -ModuleName RMExtensionCommon Invoke-RemoveAgentScript {}
         Mock -ModuleName RMExtensionCommon Clean-AgentWorkingFolder {}
-        Remove-Agent @{AgentWorkingFolder = "AgentWorkingFolder"}
+        Mock -ModuleName RMExtensionCommon RemoveExistingAgent {}
+        Remove-Agent @{
+            AgentWorkingFolder = "AgentWorkingFolder"
+            PATToken = "PATToken"
+        }
 
         It "should set proper status" {
             Assert-MockCalled -ModuleName RMExtensionCommon Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.RemovedAgent.Code}

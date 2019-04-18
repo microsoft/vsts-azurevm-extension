@@ -20,10 +20,11 @@ Import-Module $PSScriptRoot\Log.psm1
 function WriteAddTagsLog
 {
     param(
-    [string]$logMessage
+    [string]$logMessage,
+    [bool]$logToOutput=$false
     )
     
-    Write-Log ("[AddTags]: " + $logMessage)
+    Write-Log ("[AddTags]: " + $logMessage) $logToOutput
 }
 
 function GetAgentSettingPath
@@ -118,14 +119,23 @@ function AddTagsToAgent
     $target = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrlToGetExistingTags -Method "Get" -Headers $headers} -actionName "Get target" `
                                -retryCatchBlock {$null = (& $addTagsErrorMessageBlock)} -finalCatchBlock {throw (& $addTagsErrorMessageBlock)}
 
-    $existingTags = $target.tags
+    try
+    {
+        $existingTags = $target.tags
+    }
+    catch
+    {
+        WriteAddTagsLog "Error occured while fetching existing tags: $_" $true
+        $existingTags = @()
+    }
+
     $tags = @()
     [Array]$newTags =  ConvertFrom-Json $tagsAsJsonString
 
     if($existingTags.count -gt 0)
     {
         $tags = $existingTags    ## Append new tags to existing tags, this will ensure existing tags are not modified due to case change
-        WriteAddTagsLog "Found existing tags for agent - $existingTags"
+        WriteAddTagsLog "Found existing tags for target - $existingTags"
 
         foreach( $newTag in $newTags)
         {
@@ -142,7 +152,7 @@ function AddTagsToAgent
 
     $newTagsJsonString = ConvertTo-Json $tags
 
-    WriteAddTagsLog "Updating the tags for agent target - $agentId"
+    WriteAddTagsLog "Updating the tags for target - $agentId"
     ApplyTagsToAgent -tfsUrl $tfsUrl -projectId $projectId -patToken $patToken -deploymentGroupId $deploymentGroupId -agentId $agentId -tagsAsJsonString $newTagsJsonString
 }
 
@@ -185,6 +195,6 @@ try
 }
 catch
 {  
-    WriteAddTagsLog $_.Exception
-    throw $_.Exception
+    WriteAddTagsLog $_
+    throw $_
 }

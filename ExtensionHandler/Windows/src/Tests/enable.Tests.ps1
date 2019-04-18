@@ -30,6 +30,7 @@ Describe "Enable RM extension tests" {
         Mock Test-ExtensionDisabledMarkup {}
         Mock Add-AgentTags {}
         Mock Confirm-InputsAreValid {}
+        Mock Validate-AgentName {}
         
         Enable
 
@@ -111,6 +112,7 @@ Describe "Enable RM extension tests" {
         Mock Remove-ExtensionDisabledMarkup {}
         Mock Add-AgentTags {}
         Mock Confirm-InputsAreValid {}
+        Mock Validate-AgentName {}
         
         Enable
 
@@ -138,6 +140,7 @@ Describe "Enable RM extension tests" {
         Mock Remove-ExtensionDisabledMarkup {}
         Mock Add-AgentTags {}
         Mock Confirm-InputsAreValid {}
+        Mock Validate-AgentName {}
         
         Enable
 
@@ -169,6 +172,7 @@ Describe "Enable RM extension tests" {
         Mock Remove-ExtensionDisabledMarkup {}
         Mock Add-AgentTags {}
         Mock Confirm-InputsAreValid {}
+        Mock Validate-AgentName {}
         
         Enable
 
@@ -281,7 +285,6 @@ Describe "configure agent tests" {
         Mock Write-Log{}
         Mock Set-ErrorStatusAndErrorExit {}
         Mock Add-HandlerSubStatus {}
-        Mock Invoke-ConfigureAgentScript { throw New-Object System.Exception("some error")}
 
         Register-Agent @{}
 
@@ -294,10 +297,20 @@ Describe "configure agent tests" {
 
         Mock Write-Log{}
         Mock Add-HandlerSubStatus {}
-        Mock Invoke-ConfigureAgentScript {}
-        Mock Set-HandlerStatus
+        Mock Set-HandlerStatus {}
+        Mock ConfigureAgent {}
         
-        Register-Agent @{}
+        Register-Agent @{
+            AgentWorkingFolder = "AgentWorkingFolder"
+            VSTSUrl = "VSTSUrl"
+            PATToken = "PATToken"
+            TeamProject = "TeamProject"
+            DeploymentGroup = "DeploymentGroup"
+            DeploymentGroupId = "DeploymentGroupId"
+            AgentName = "AgentName"
+            WindowsLogonAccountName = "WindowsLogonAccountName"
+            WindowsLogonPassword = "WindowsLogonPassword"
+        }
 
         It "should call clean up functions" {
             Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.ConfiguredDeploymentAgent.Code}

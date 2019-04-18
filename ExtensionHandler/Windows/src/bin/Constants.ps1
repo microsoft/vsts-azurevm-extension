@@ -11,6 +11,7 @@ $defaultAgentWorkFolder = "_work"
 $platform = "win-x64"
 $agentWorkingFolderOld = "$env:SystemDrive\VSTSAgent"
 $agentWorkingFolderNew = "$env:SystemDrive\AzurePiplinesAgent_Extension"
+$agentNameCharacterLimit = 64
 
 # markup files
 $disabledMarkupFile = "EXTENSIONDISABLED"

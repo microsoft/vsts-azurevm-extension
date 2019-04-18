@@ -306,6 +306,7 @@ Describe "configure agent tests" {
             PATToken = "PATToken"
             TeamProject = "TeamProject"
             DeploymentGroup = "DeploymentGroup"
+            DeploymentGroupId = "DeploymentGroupId"
             AgentName = "AgentName"
             WindowsLogonAccountName = "WindowsLogonAccountName"
             WindowsLogonPassword = "WindowsLogonPassword"

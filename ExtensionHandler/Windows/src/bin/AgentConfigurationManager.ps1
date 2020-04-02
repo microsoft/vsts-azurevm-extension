@@ -59,7 +59,11 @@ function ConfigureAgent
     [Parameter(Mandatory=$false)]
     [string]$windowsLogonAccountName,
     [Parameter(Mandatory=$false)]
-    [string]$windowsLogonPassword
+    [string]$windowsLogonPassword,
+    [Parameter(Mandatory=$false)]
+    [bool]$isBYOSAgent,
+    [Parameter(Mandatory=$false)]
+    [string]$byosPool
     )
 
     $configCmdPath = EnsureConfigCmdExists $workingFolder
@@ -71,7 +75,8 @@ function ConfigureAgent
     }
     $processStartInfo.Arguments = CreateConfigCmdArgs -tfsUrl $tfsUrl -patToken $patToken -workFolder $workFolder `
                                  -projectName $projectName -deploymentGroupName $deploymentGroupName -agentName $agentName `
-                                 -windowsLogonAccountName $windowsLogonAccountName -windowsLogonPassword $windowsLogonPassword
+                                 -windowsLogonAccountName $windowsLogonAccountName -windowsLogonPassword $windowsLogonPassword `
+                                 -isBYOSAgent $isBYOSAgent -byosPool $byosPool
     if($global:isOnPrem){
         $processStartInfo.Arguments += " --collectionName $collectionName"
     }
@@ -141,10 +146,20 @@ function CreateConfigCmdArgs
         [Parameter(Mandatory=$true)]
         [string]$agentName,
         [string]$windowsLogonAccountName,
-        [string]$windowsLogonPassword
+        [string]$windowsLogonPassword,
+        [bool]$isBYOSAgent,
+        [string]$byosPool
     )
 
-    $configCmdArgs = "$configCommonArgs --agent `"$agentName`" --url `"$tfsUrl`" --token `"$patToken`" --work `"$workFolder`" --projectname `"$projectName`" --deploymentgroupname `"$deploymentGroupName`""
+    $configCmdArgs = "$configCommonArgs --agent `"$agentName`" --url `"$tfsUrl`" --token `"$patToken`" --work `"$workFolder`" "
+    
+    if($isBYOSAgent){
+        $configCmdArgs += "--norestart --pool `"$byosPool`""
+    }
+    else {
+        $configCmdArgs += "--deploymentgroup --runasservice --projectname `"$projectName`" --deploymentgroupname `"$deploymentGroupName`""
+    }
+    
     if($windowsLogonAccountName){
         $configCmdArgs += " --windowsLogonAccount `"$windowsLogonAccountName`" --windowsLogonPassword `"$windowsLogonPassword`""
     }

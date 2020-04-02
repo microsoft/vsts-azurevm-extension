@@ -420,3 +420,51 @@ Describe "parse tags settings tests" {
         }
     }
 }
+
+Describe "BYOS mode should have independent settings from regular deployment" {
+    Context "When BYOS mode is enabled, pool name is validated and deployment group is not" {
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
+        Mock Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        IsBYOSAgent = $true
+                        BYOSPool = "pool"
+                        VSTSAccountName = "tycjfchsdabvdsb"
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                        Password = "password"
+                }
+            }
+            return $inputSettings 
+        }
+
+        { Get-ConfigurationFromSettings } | Should -Not -Throw
+    }
+
+    Context "When BYOS mode is not enabled, pool name is not validated" {
+        Mock Write-Log{}
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
+        Mock Get-HandlerSettings { 
+            $inputSettings = @{
+                publicSettings =  @{ 
+                        IsBYOSAgent = $false
+                        VSTSAccountName = "tycjfchsdabvdsb"
+                        TeamProject = "project"
+                        DeploymentGroup = "group"
+                        Tags = @()
+                        AgentName = "name" 
+                    };
+                protectedSettings = @{
+                        PATToken = "hash"
+                }
+            }
+            return $inputSettings }
+
+        { Get-ConfigurationFromsettings } | Should -Not -Throw
+    }
+}

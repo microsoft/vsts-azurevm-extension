@@ -51,7 +51,24 @@ function Get-ConfigurationFromSettings {
             $windowsLogonPassword = $protectedSettings['Password']
         }
         
-        #Extract and verify public settings
+        #Extract and verify public 
+        $isBYOSAgent = $false;
+        if($publicSettings.Contains('IsBYOSAgent'))
+        {
+            $isBYOSAgent = $publicSettings['IsBYOSAgent']
+        }
+
+        $byosPool = ""
+        if($publicSettings.Contains('BYOSPool'))
+        {
+            $byosPool = $publicSettings['BYOSPool']
+        }
+        if($isBYOSAgent)
+        {
+            Write-Log "Configured as a BYOS Agent"
+            Verify-InputNotNull "BYOSPool" $byosPool
+        }
+
         $vstsAccountUrl = ""
         if($publicSettings.Contains('AzureDevOpsOrganizationUrl'))
         {
@@ -71,16 +88,22 @@ function Get-ConfigurationFromSettings {
         Write-Log "Azure DevOps Organization Url: $vstsUrl"
 
         $teamProjectName = $publicSettings['TeamProject']
-        Verify-InputNotNull "TeamProject" $teamProjectName
-        Write-Log "Team Project: $teamProjectName"
+        if(-not $isBYOSAgent)
+        {
+            Verify-InputNotNull "TeamProject" $teamProjectName
+            Write-Log "Team Project: $teamProjectName"
+        }
 
         $deploymentGroupName = $publicSettings['DeploymentGroup']
         if(-not $deploymentGroupName)
         {
             $deploymentGroupName = $publicSettings['MachineGroup']
         }
-        Verify-InputNotNull "DeploymentGroup" $deploymentGroupName
-        Write-Log "Deployment Group: $deploymentGroupName"
+        if(-not $isBYOSAgent)
+        {
+            Verify-InputNotNull "DeploymentGroup" $deploymentGroupName
+            Write-Log "Deployment Group: $deploymentGroupName"
+        }
 
         $agentName = ""
         if($publicSettings.Contains('AgentName'))
@@ -123,6 +146,8 @@ function Get-ConfigurationFromSettings {
             Tags               = $tags
             WindowsLogonAccountName = $windowsLogonAccountName
             WindowsLogonPassword = $windowsLogonPassword
+            IsBYOSAgent = $isBYOSAgent
+            BYOSPool = $byosPool
         }
     }
     catch
@@ -137,6 +162,13 @@ function Confirm-InputsAreValid {
     [Parameter(Mandatory=$true, Position=0)]
     [hashtable] $config
     )
+
+    #If the agent is being added as a BYOS agent, then no deployment group will be specified.
+    #It is not necessary to validate the deployment group inputs.
+    if ($config.IsBYOSAgent)
+    {
+        return;
+    }
 
     try
     {

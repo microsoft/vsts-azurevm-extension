@@ -301,6 +301,8 @@ Describe "configure agent tests" {
         Mock ConfigureAgent {}
         
         Register-Agent @{
+            IsBYOSAgent = $false
+            BYOSPool = ""
             AgentWorkingFolder = "AgentWorkingFolder"
             VSTSUrl = "VSTSUrl"
             PATToken = "PATToken"

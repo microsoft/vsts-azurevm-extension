@@ -442,7 +442,7 @@ Describe "BYOS mode should have independent settings from regular deployment" {
             return $inputSettings 
         }
 
-        { Get-ConfigurationFromSettings } | Should -Not -Throw
+        { Get-ConfigurationFromSettings } | Should Not Throw
     }
 
     Context "When BYOS mode is not enabled, pool name is not validated" {
@@ -465,6 +465,6 @@ Describe "BYOS mode should have independent settings from regular deployment" {
             }
             return $inputSettings }
 
-        { Get-ConfigurationFromsettings } | Should -Not -Throw
+        { Get-ConfigurationFromsettings } | Should Not Throw
     }
 }

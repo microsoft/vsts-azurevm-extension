@@ -231,6 +231,9 @@ def format_tags_input(tags_input):
   return ret_val
 
 def validate_inputs(config):
+  # If we are installing an agent for BYOS, we do not need to verify deployment group settings.
+  if(config['IsBYOSAgent']):
+    return
   try:
     invalid_pat_error_message = "Please make sure that the Personal Access Token entered is valid and has 'Deployment Groups - Read & manage' scope."
     inputs_validation_error_code = RMExtensionStatus.rm_extension_status['InputConfigurationError']
@@ -310,6 +313,19 @@ def get_configutation_from_settings():
     if(protected_settings == None):
       protected_settings = {}
 
+    is_byos = False
+    if(public_settings.has_key('IsBYOSAgent')):
+      is_byos = public_settings['IsBYOSAgent']
+
+    byos_pool = ''
+    if(public_settings.has_key('BYOSPool')):
+      byos_pool = public_settings['BYOSPool']
+
+    if(is_byos):
+      handler_utility.log('Configured as a BYOS agent')
+      handler_utility.verify_input_not_null('BYOSPool', byos_pool)
+      handler_utility.log('BYOS Pool : {0}'.format(byos_pool))
+
     pat_token = ''
     if((protected_settings.__class__.__name__ == 'dict') and protected_settings.has_key('PATToken')):
       pat_token = protected_settings['PATToken']
@@ -332,16 +348,18 @@ def get_configutation_from_settings():
     team_project_name = ''
     if(public_settings.has_key('TeamProject')):
       team_project_name = public_settings['TeamProject']
-    handler_utility.verify_input_not_null('TeamProject', team_project_name)
-    handler_utility.log('Team Project : {0}'.format(team_project_name))
+    if(not is_byos):
+      handler_utility.verify_input_not_null('TeamProject', team_project_name)
+      handler_utility.log('Team Project : {0}'.format(team_project_name))
 
     deployment_group_name = ''
     if(public_settings.has_key('DeploymentGroup')):
       deployment_group_name = public_settings['DeploymentGroup']
     elif(public_settings.has_key('MachineGroup')):
       deployment_group_name = public_settings['MachineGroup']
-    handler_utility.verify_input_not_null('DeploymentGroup', deployment_group_name)
-    handler_utility.log('Deployment Group : {0}'.format(deployment_group_name))
+    if(not is_byos):
+      handler_utility.verify_input_not_null('DeploymentGroup', deployment_group_name)
+      handler_utility.log('Deployment Group : {0}'.format(deployment_group_name))
 
     agent_name = ''
     if(public_settings.has_key('AgentName')):
@@ -368,7 +386,9 @@ def get_configutation_from_settings():
              'AgentName':agent_name, 
              'Tags' : tags,
              'AgentWorkingFolder':Constants.agent_working_folder,
-             'ConfigureAgentAsUserName': configure_agent_as_username
+             'ConfigureAgentAsUserName': configure_agent_as_username,
+             'IsBYOSAgent' : is_byos,
+             'BYOSPool' : byos_pool
           }
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], RMExtensionStatus.rm_extension_status['InputConfigurationError'])
@@ -418,7 +438,8 @@ def register_agent(config):
     handler_utility.add_handler_sub_status(Util.HandlerSubStatus('ConfiguringDeploymentAgent'))
     handler_utility.log('Configuring agent...')
     ConfigureDeploymentAgent.configure_agent(config['VSTSUrl'], config['PATToken'], config['TeamProject'], \
-      config['DeploymentGroup'], config['ConfigureAgentAsUserName'], config['AgentName'], config['AgentWorkingFolder'])
+      config['DeploymentGroup'], config['ConfigureAgentAsUserName'], config['AgentName'], config['AgentWorkingFolder'], \
+      config['IsBYOSAgent'], config['BYOSPool'])
     handler_utility.log('Agent configured successfully')
     
     handler_utility.add_handler_sub_status(Util.HandlerSubStatus('ConfiguredDeploymentAgent'))

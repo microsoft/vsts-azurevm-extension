@@ -130,7 +130,7 @@ def remove_existing_agent(working_folder):
     _write_configuration_log(e.args[0])
     raise
 
-def configure_agent(vsts_url, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder):
+def configure_agent(vsts_url, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder, is_byos_agent, byos_pool):
   global agent_listener_path
   global log_function
   try:
@@ -142,7 +142,7 @@ def configure_agent(vsts_url, pat_token, project_name, deployment_group_name, co
       _write_configuration_log('Agent name not provided, agent name will be set as ' + agent_name)
 
     _write_configuration_log('Configuring agent')
-    _configure_agent_internal(vsts_url, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder)
+    _configure_agent_internal(vsts_url, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder, is_byos_agent, byos_pool)
     return Constants.return_success
   except Exception as e:
     _write_configuration_log(e.args[0])
@@ -242,7 +242,7 @@ def _set_folder_owner(folder, username):
     for filename in filenames:
       os.chown(os.path.join(dirpath, filename), u_id, g_id)
 
-def _configure_agent_internal(vsts_url, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder):
+def _configure_agent_internal(vsts_url, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder, is_byos_agent, byos_pool):
   global agent_listener_path, agent_service_path
   _set_agent_listener_path(working_folder)
   _set_agent_service_path(working_folder)
@@ -253,17 +253,31 @@ def _configure_agent_internal(vsts_url, pat_token, project_name, deployment_grou
     config_url = vsts_url[0:vsts_url.rfind('/')]
     collection = vsts_url[vsts_url.rfind('/'):]
 
-  configure_command_args = ['--url', config_url,
+  if(is_byos_agent)
+  {
+    configure_command_args = ['--url', config_url,
+                            '--auth', 'PAT',
+                            '--token', pat_token,
+                            '--agent', agent_name,
+                            '--work', Constants.default_agent_work_dir,
+                            '--pool', byos_pool,
+                            '--norestart']
+  }
+  else
+  {
+    configure_command_args = ['--url', config_url,
                             '--auth', 'PAT',
                             '--token', pat_token,
                             '--agent', agent_name,
                             '--work', Constants.default_agent_work_dir,
                             '--projectname', project_name,
+                            '--deploymentgroup',
                             '--deploymentgroupname', deployment_group_name]
+  }
   if(Constants.is_on_prem):
     configure_command_args += ['--collectionname', collection]
 
-  config_agent_proc = subprocess.Popen('{0} configure --unattended --acceptteeeula --deploymentgroup --replace'.format(agent_listener_path).split(' ') + configure_command_args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+  config_agent_proc = subprocess.Popen('{0} configure --unattended --acceptteeeula --replace'.format(agent_listener_path).split(' ') + configure_command_args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   std_out, std_err = config_agent_proc.communicate()
   return_code = config_agent_proc.returncode
 

@@ -67,6 +67,7 @@ function Get-ConfigurationFromSettings {
         {
             Write-Log "Configured as a BYOS Agent"
             Verify-InputNotNull "BYOSPool" $byosPool
+            Write-Log "BYOS Pool: $byosPool"
         }
 
         $vstsAccountUrl = ""

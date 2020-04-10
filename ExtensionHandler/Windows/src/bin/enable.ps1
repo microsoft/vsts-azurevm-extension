@@ -135,7 +135,7 @@ function Register-Agent {
         Validate-AgentName $config
         ConfigureAgent -tfsUrl $config.VSTSUrl -patToken $config.PATToken -workFolder $defaultAgentWorkFolder -projectName $config.TeamProject -deploymentGroupName $config.DeploymentGroup -agentName $config.AgentName `
         -workingFolder $config.AgentWorkingFolder -windowsLogonAccountName $config.WindowsLogonAccountName -windowsLogonPassword $config.WindowsLogonPassword `
-        -isBYOSAgent $config.IsBYOSAgent -byosPool $config.BYOSPool
+        -IsPipelinesAgent $config.IsPipelinesAgent -PoolName $config.PoolName
 
         Write-Log "Agent configured successfully" $true
 

@@ -429,8 +429,8 @@ Describe "BYOS mode should have independent settings from regular deployment" {
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
-                        IsBYOSAgent = $true
-                        BYOSPool = "pool"
+                        IsPipelinesAgent = $true
+                        PoolName = "pool"
                         VSTSAccountName = "tycjfchsdabvdsb"
                         AgentName = "name" 
                     };
@@ -452,7 +452,7 @@ Describe "BYOS mode should have independent settings from regular deployment" {
         Mock Get-HandlerSettings { 
             $inputSettings = @{
                 publicSettings =  @{ 
-                        IsBYOSAgent = $false
+                        IsPipelinesAgent = $false
                         VSTSAccountName = "tycjfchsdabvdsb"
                         TeamProject = "project"
                         DeploymentGroup = "group"

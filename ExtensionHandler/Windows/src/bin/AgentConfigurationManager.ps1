@@ -61,9 +61,9 @@ function ConfigureAgent
     [Parameter(Mandatory=$false)]
     [string]$windowsLogonPassword,
     [Parameter(Mandatory=$false)]
-    [bool]$isBYOSAgent,
+    [bool]$IsPipelinesAgent,
     [Parameter(Mandatory=$false)]
-    [string]$byosPool
+    [string]$PoolName
     )
 
     $configCmdPath = EnsureConfigCmdExists $workingFolder
@@ -76,7 +76,7 @@ function ConfigureAgent
     $processStartInfo.Arguments = CreateConfigCmdArgs -tfsUrl $tfsUrl -patToken $patToken -workFolder $workFolder `
                                  -projectName $projectName -deploymentGroupName $deploymentGroupName -agentName $agentName `
                                  -windowsLogonAccountName $windowsLogonAccountName -windowsLogonPassword $windowsLogonPassword `
-                                 -isBYOSAgent $isBYOSAgent -byosPool $byosPool
+                                 -IsPipelinesAgent $IsPipelinesAgent -PoolName $PoolName
     if($global:isOnPrem){
         $processStartInfo.Arguments += " --collectionName $collectionName"
     }
@@ -147,14 +147,14 @@ function CreateConfigCmdArgs
         [string]$agentName,
         [string]$windowsLogonAccountName,
         [string]$windowsLogonPassword,
-        [bool]$isBYOSAgent,
-        [string]$byosPool
+        [bool]$IsPipelinesAgent,
+        [string]$PoolName
     )
 
     $configCmdArgs = "$configCommonArgs --agent `"$agentName`" --url `"$tfsUrl`" --token `"$patToken`" --work `"$workFolder`" "
     
-    if($isBYOSAgent){
-        $configCmdArgs += "--norestart --pool `"$byosPool`""
+    if($IsPipelinesAgent){
+        $configCmdArgs += "--norestart --pool `"$PoolName`""
     }
     else {
         $configCmdArgs += "--deploymentgroup --runasservice --projectname `"$projectName`" --deploymentgroupname `"$deploymentGroupName`""

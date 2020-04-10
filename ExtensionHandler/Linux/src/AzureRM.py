@@ -232,7 +232,8 @@ def format_tags_input(tags_input):
 
 def validate_inputs(config):
   # If we are installing an agent for BYOS, we do not need to verify deployment group settings.
-  if(config['IsBYOSAgent']):
+  if(config['IsPipelinesAgent']):
+    handler_utility.log("Skipping input validation because this is a BYOS agent.")
     return
   try:
     invalid_pat_error_message = "Please make sure that the Personal Access Token entered is valid and has 'Deployment Groups - Read & manage' scope."
@@ -314,16 +315,16 @@ def get_configutation_from_settings():
       protected_settings = {}
 
     is_byos = False
-    if(public_settings.has_key('IsBYOSAgent')):
-      is_byos = public_settings['IsBYOSAgent']
+    if(public_settings.has_key('IsPipelinesAgent')):
+      is_byos = public_settings['IsPipelinesAgent']
 
     byos_pool = ''
-    if(public_settings.has_key('BYOSPool')):
-      byos_pool = public_settings['BYOSPool']
+    if(public_settings.has_key('PoolName')):
+      byos_pool = public_settings['PoolName']
 
     if(is_byos):
       handler_utility.log('Configured as a BYOS agent')
-      handler_utility.verify_input_not_null('BYOSPool', byos_pool)
+      handler_utility.verify_input_not_null('PoolName', byos_pool)
       handler_utility.log('BYOS Pool : {0}'.format(byos_pool))
 
     pat_token = ''
@@ -387,8 +388,8 @@ def get_configutation_from_settings():
              'Tags' : tags,
              'AgentWorkingFolder':Constants.agent_working_folder,
              'ConfigureAgentAsUserName': configure_agent_as_username,
-             'IsBYOSAgent' : is_byos,
-             'BYOSPool' : byos_pool
+             'IsPipelinesAgent' : is_byos,
+             'PoolName' : byos_pool
           }
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], RMExtensionStatus.rm_extension_status['InputConfigurationError'])
@@ -439,7 +440,7 @@ def register_agent(config):
     handler_utility.log('Configuring agent...')
     ConfigureDeploymentAgent.configure_agent(config['VSTSUrl'], config['PATToken'], config['TeamProject'], \
       config['DeploymentGroup'], config['ConfigureAgentAsUserName'], config['AgentName'], config['AgentWorkingFolder'], \
-      config['IsBYOSAgent'], config['BYOSPool'])
+      config['IsPipelinesAgent'], config['PoolName'])
     handler_utility.log('Agent configured successfully')
     
     handler_utility.add_handler_sub_status(Util.HandlerSubStatus('ConfiguredDeploymentAgent'))

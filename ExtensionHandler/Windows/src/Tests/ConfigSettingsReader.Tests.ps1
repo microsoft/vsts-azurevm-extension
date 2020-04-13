@@ -442,7 +442,9 @@ Describe "BYOS mode should have independent settings from regular deployment" {
             return $inputSettings 
         }
 
-        { Get-ConfigurationFromSettings } | Should Not Throw
+        It "should not throw when DeploymentGroup and TeamProject are not provided when IsPipelinesAgent is true" {
+            { Get-ConfigurationFromSettings } | Should Not Throw
+        }
     }
 
     Context "When BYOS mode is not enabled, pool name is not validated" {
@@ -465,6 +467,8 @@ Describe "BYOS mode should have independent settings from regular deployment" {
             }
             return $inputSettings }
 
-        { Get-ConfigurationFromsettings } | Should Not Throw
+        It "should not throw when PoolName is not provided when IsPipelinesAgent is false" {
+            { Get-ConfigurationFromsettings } | Should Not Throw
+        }
     }
 }

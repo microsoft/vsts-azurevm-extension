@@ -20,4 +20,12 @@ Describe "Agent Configuration Manager Tests" {
             $ret | Should be $expectedArgs
         }
     }
+
+    Context "Agent config command in Pipelines Agent mode" {
+        It "should emit different command-line arguments when Pipelines mode is enabled" {
+            $expectedArgs = "--unattended --replace --auth PAT  --agent `"my agent`" --url `"https://acccount.visualstudio.com`" --token `"pat`" --work `"C:\work folder`" --norestart --pool `"pool`"" 
+            $ret = CreateConfigCmdArgs -tfsUrl "https://acccount.visualstudio.com" -patToken "pat" -workFolder "C:\work folder" -projectName "my proj" -deploymentGroupName "my dg" -agentName "my agent" -isPipelinesAgent $true -poolName "pool"
+            $ret | Should be $expectedArgs
+        }
+    }
 }

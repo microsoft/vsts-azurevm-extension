@@ -52,22 +52,22 @@ function Get-ConfigurationFromSettings {
         }
         
         #Extract and verify public settings
-        $IsPipelinesAgent = $false;
+        $isPipelinesAgent = $false;
         if($publicSettings.Contains('IsPipelinesAgent'))
         {
             Write-Log "Configured as a Pipelines Agent"
-            $IsPipelinesAgent = $publicSettings['IsPipelinesAgent']
+            $isPipelinesAgent = $publicSettings['IsPipelinesAgent']
         }
 
-        $PoolName = ""
+        $poolName = ""
         if($publicSettings.Contains('PoolName'))
         {
-            $PoolName = $publicSettings['PoolName']
+            $poolName = $publicSettings['PoolName']
         }
-        if($IsPipelinesAgent)
+        if($isPipelinesAgent)
         {
-            Verify-InputNotNull "PoolName" $PoolName
-            Write-Log "Pool Name: $PoolName"
+            Verify-InputNotNull "PoolName" $poolName
+            Write-Log "Pool Name: $poolName"
         }
 
         $vstsAccountUrl = ""
@@ -89,7 +89,7 @@ function Get-ConfigurationFromSettings {
         Write-Log "Azure DevOps Organization Url: $vstsUrl"
 
         $teamProjectName = $publicSettings['TeamProject']
-        if(-not $IsPipelinesAgent)
+        if(-not $isPipelinesAgent)
         {
             Verify-InputNotNull "TeamProject" $teamProjectName
             Write-Log "Team Project: $teamProjectName"
@@ -100,7 +100,7 @@ function Get-ConfigurationFromSettings {
         {
             $deploymentGroupName = $publicSettings['MachineGroup']
         }
-        if(-not $IsPipelinesAgent)
+        if(-not $isPipelinesAgent)
         {
             Verify-InputNotNull "DeploymentGroup" $deploymentGroupName
             Write-Log "Deployment Group: $deploymentGroupName"
@@ -147,8 +147,8 @@ function Get-ConfigurationFromSettings {
             Tags               = $tags
             WindowsLogonAccountName = $windowsLogonAccountName
             WindowsLogonPassword = $windowsLogonPassword
-            IsPipelinesAgent = $IsPipelinesAgent
-            PoolName = $PoolName
+            IsPipelinesAgent = $isPipelinesAgent
+            PoolName = $poolName
         }
     }
     catch

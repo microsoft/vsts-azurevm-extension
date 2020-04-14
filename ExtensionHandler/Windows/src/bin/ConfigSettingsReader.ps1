@@ -55,7 +55,7 @@ function Get-ConfigurationFromSettings {
         $IsPipelinesAgent = $false;
         if($publicSettings.Contains('IsPipelinesAgent'))
         {
-            Write-Log "Configured as a BYOS Agent"
+            Write-Log "Configured as a Pipelines Agent"
             $IsPipelinesAgent = $publicSettings['IsPipelinesAgent']
         }
 
@@ -67,7 +67,7 @@ function Get-ConfigurationFromSettings {
         if($IsPipelinesAgent)
         {
             Verify-InputNotNull "PoolName" $PoolName
-            Write-Log "BYOS Pool: $PoolName"
+            Write-Log "Pool Name: $PoolName"
         }
 
         $vstsAccountUrl = ""
@@ -164,11 +164,11 @@ function Confirm-InputsAreValid {
     [hashtable] $config
     )
 
-    #If the agent is being added as a BYOS agent, then no deployment group will be specified.
+    #If the agent is being added as a Pipelines agent, then no deployment group will be specified.
     #It is not necessary to validate the deployment group inputs.
     if ($config.IsPipelinesAgent)
     {
-        Write-Log "Skipping input validation because this is a BYOS agent."
+        Write-Log "Skipping input validation because this is a Pipelines agent."
         return;
     }
 

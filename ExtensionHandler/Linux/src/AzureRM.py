@@ -231,9 +231,9 @@ def format_tags_input(tags_input):
   return ret_val
 
 def validate_inputs(config):
-  # If we are installing an agent for BYOS, we do not need to verify deployment group settings.
+  # If we are installing an agent for Pipelines, we do not need to verify deployment group settings.
   if(config['IsPipelinesAgent']):
-    handler_utility.log("Skipping input validation because this is a BYOS agent.")
+    handler_utility.log("Skipping input validation because this is a Pipelines agent.")
     return
   try:
     invalid_pat_error_message = "Please make sure that the Personal Access Token entered is valid and has 'Deployment Groups - Read & manage' scope."
@@ -314,18 +314,18 @@ def get_configutation_from_settings():
     if(protected_settings == None):
       protected_settings = {}
 
-    is_byos = False
+    is_pipelines_agent = False
     if(public_settings.has_key('IsPipelinesAgent')):
-      is_byos = public_settings['IsPipelinesAgent']
+      is_pipelines_agent = public_settings['IsPipelinesAgent']
 
-    byos_pool = ''
+    pool_name = ''
     if(public_settings.has_key('PoolName')):
-      byos_pool = public_settings['PoolName']
+      pool_name = public_settings['PoolName']
 
-    if(is_byos):
-      handler_utility.log('Configured as a BYOS agent')
-      handler_utility.verify_input_not_null('PoolName', byos_pool)
-      handler_utility.log('BYOS Pool : {0}'.format(byos_pool))
+    if(is_pipelines_agent):
+      handler_utility.log('Configured as a Pipelines agent')
+      handler_utility.verify_input_not_null('PoolName', pool_name)
+      handler_utility.log('Pool Name : {0}'.format(pool_name))
 
     pat_token = ''
     if((protected_settings.__class__.__name__ == 'dict') and protected_settings.has_key('PATToken')):
@@ -349,7 +349,7 @@ def get_configutation_from_settings():
     team_project_name = ''
     if(public_settings.has_key('TeamProject')):
       team_project_name = public_settings['TeamProject']
-    if(not is_byos):
+    if(not is_pipelines_agent):
       handler_utility.verify_input_not_null('TeamProject', team_project_name)
       handler_utility.log('Team Project : {0}'.format(team_project_name))
 
@@ -358,7 +358,7 @@ def get_configutation_from_settings():
       deployment_group_name = public_settings['DeploymentGroup']
     elif(public_settings.has_key('MachineGroup')):
       deployment_group_name = public_settings['MachineGroup']
-    if(not is_byos):
+    if(not is_pipelines_agent):
       handler_utility.verify_input_not_null('DeploymentGroup', deployment_group_name)
       handler_utility.log('Deployment Group : {0}'.format(deployment_group_name))
 
@@ -388,8 +388,8 @@ def get_configutation_from_settings():
              'Tags' : tags,
              'AgentWorkingFolder':Constants.agent_working_folder,
              'ConfigureAgentAsUserName': configure_agent_as_username,
-             'IsPipelinesAgent' : is_byos,
-             'PoolName' : byos_pool
+             'IsPipelinesAgent' : is_pipelines_agent,
+             'PoolName' : pool_name
           }
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], RMExtensionStatus.rm_extension_status['InputConfigurationError'])

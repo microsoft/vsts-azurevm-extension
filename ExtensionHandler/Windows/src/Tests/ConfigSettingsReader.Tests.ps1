@@ -421,8 +421,8 @@ Describe "parse tags settings tests" {
     }
 }
 
-Describe "BYOS mode should have independent settings from regular deployment" {
-    Context "When BYOS mode is enabled, pool name is validated and deployment group is not" {
+Describe "Pipelines mode should have independent settings from regular deployment" {
+    Context "When Pipelines mode is enabled, pool name is validated and deployment group is not" {
         Mock Write-Log{}
         Mock Add-HandlerSubStatus {}
         Mock Set-HandlerStatus {}
@@ -447,7 +447,7 @@ Describe "BYOS mode should have independent settings from regular deployment" {
         }
     }
 
-    Context "When BYOS mode is not enabled, pool name is not validated" {
+    Context "When Pipelines mode is not enabled, pool name is not validated" {
         Mock Write-Log{}
         Mock Add-HandlerSubStatus {}
         Mock Set-HandlerStatus {}

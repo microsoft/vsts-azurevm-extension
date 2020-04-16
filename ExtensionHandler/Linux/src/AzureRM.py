@@ -500,7 +500,7 @@ def add_agent_tags(config):
   except Exception as e:
       set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['AddingAgentTags']['operationName'], 8)
 
-def test_extension_settings_are_same_as_disabled_version():
+def test_extension_settings_do_not_permit_enable():
   try:
     old_extension_settings_file_path = "{0}/{1}".format(Constants.agent_working_folder, Constants.disable_markup_file_name)
     old_extension_settings_file_exists = os.path.isfile(old_extension_settings_file_path)
@@ -516,6 +516,20 @@ def test_extension_settings_are_same_as_disabled_version():
         extension_settings_file_contents = f.read()
         extension_public_settings = json.loads(extension_settings_file_contents)
         extension_public_settings = extension_public_settings['runtimeSettings'][0]['handlerSettings']['publicSettings']
+
+      #A deployment agent should not be reconfigured as a Pipelines agent, and vice-versa.
+      #Therefore, check if the settings are the same between both copies of the public settings
+      #(with not present = False) and return True (do not enable) if their values do not match.
+      old_extension_is_pipelines_agent = False
+      if(old_extension_public_settings.has_key('IsPipelinesAgent')):
+        old_extension_is_pipelines_agent = old_extension_public_settings['IsPipelinesAgent']
+      
+      new_extension_is_pipelines_agent = False
+      if(new_extension_is_pipelines_agent.has_key('IsPipelinesAgent')):
+        new_extension_is_pipelines_agent = new_extension_is_pipelines_agent['IsPipelinesAgent']
+
+      if(old_extension_public_settings != new_extension_is_pipelines_agent):
+        return True
 
       if(Util.ordered_json_object(old_extension_public_settings) == Util.ordered_json_object(extension_public_settings)):
         handler_utility.log('Disabled version and new extension version settings are same.')
@@ -536,8 +550,8 @@ def enable():
   pre_validation_checks()
   config = get_configutation_from_settings()
   compare_sequence_number()
-  settings_are_same = test_extension_settings_are_same_as_disabled_version()
-  if(settings_are_same):
+  skip_enable = test_extension_settings_do_not_permit_enable()
+  if(skip_enable):
     handler_utility.log("Skipping extension enable.")
     handler_utility.add_handler_sub_status(Util.HandlerSubStatus('SkippingEnableSameSettingsAsDisabledVersion'))
   else:

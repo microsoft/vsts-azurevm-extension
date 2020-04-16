@@ -267,7 +267,7 @@ function Add-AgentTags
     }
 }
 
-function Test-ExtensionSettingsAreSameAsDisabledVersion
+function Test-ExtensionSettingsDoNotPermitEnable
 {
     [CmdletBinding()]
     param(
@@ -285,6 +285,27 @@ function Test-ExtensionSettingsAreSameAsDisabledVersion
             $oldExtensionPublicSettings = (Get-ExtensionDisabledMarkup $config.AgentWorkingFolder).runtimeSettings[0].handlerSettings.publicSettings
             $extensionPublicSettings = (Get-JsonContent $extensionSettingsFilePath).runtimeSettings[0].handlerSettings.publicSettings
             $settingsSame = $false
+
+            #A deployment agent should not be reconfigured as a Pipelines agent, and vice-versa.
+            #Therefore, check if the settings are the same between both copies of the public settings
+            #(with not present = $false) and return true (do not enable) if their values do not match.
+            $oldIsPipelinesAgent = $false
+            if($oldExtensionPublicSettings.Contains('IsPipelinesAgent'))
+            {
+                $oldIsPipelinesAgent = $oldExtensionPublicSettings['IsPipelinesAgent']
+            }
+
+            $newIsPipelinesAgent = $false
+            if($extensionPublicSettings.Contains('IsPipelinesAgent'))
+            {
+                $newIsPipelinesAgent = $extensionPublicSettings['IsPipelinesAgent']
+            }
+
+            if($oldIsPipelinesAgent -ne $newIsPipelinesAgent)
+            {
+                return $true
+            }
+
             if($oldExtensionPublicSettings.Keys.Count -eq $extensionPublicSettings.Keys.Count)
             {
                 $settingsSame = $true
@@ -440,8 +461,8 @@ function Enable
     $config = Get-ConfigurationFromSettings
     $config.AgentWorkingFolder = Get-AgentWorkingFolder
     Compare-SequenceNumber $config
-    $settingsAreSame = Test-ExtensionSettingsAreSameAsDisabledVersion $config
-    if($settingsAreSame)
+    $skipEnable = Test-ExtensionSettingsDoNotPermitEnable $config
+    if($skipEnable)
     {
         Write-Log "Skipping extension enable."
         Add-HandlerSubStatus $RM_Extension_Status.SkippingEnableSameSettingsAsDisabledVersion.Code $RM_Extension_Status.SkippingEnableSameSettingsAsDisabledVersion.Message -operationName $RM_Extension_Status.SkippingEnableSameSettingsAsDisabledVersion.operationName

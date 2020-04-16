@@ -76,7 +76,7 @@ function ConfigureAgent
     $processStartInfo.Arguments = CreateConfigCmdArgs -tfsUrl $tfsUrl -patToken $patToken -workFolder $workFolder `
                                  -projectName $projectName -deploymentGroupName $deploymentGroupName -agentName $agentName `
                                  -windowsLogonAccountName $windowsLogonAccountName -windowsLogonPassword $windowsLogonPassword `
-                                 -IsPipelinesAgent $isPipelinesAgent -PoolName $poolName
+                                 -isPipelinesAgent $isPipelinesAgent -poolName $poolName
     if($global:isOnPrem){
         $processStartInfo.Arguments += " --collectionName $collectionName"
     }

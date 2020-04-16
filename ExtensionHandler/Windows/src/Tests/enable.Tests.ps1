@@ -231,7 +231,7 @@ Describe "Start RM extension tests" {
         Mock Write-Log {}
         Mock Exit-WithCode {}
         Mock Get-ConfigurationFromSettings {}
-        Mock Test-ExtensionSettingsAreSameAsDisabledVersion {return $true}
+        Mock Test-ExtensionSettingsDoNotPermitEnable {return $true}
         Mock Confirm-InputsAreValid {}
 
         Invoke-PreValidationChecks

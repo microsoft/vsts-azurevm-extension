@@ -303,6 +303,10 @@ function Test-ExtensionSettingsDoNotPermitEnable
 
             if($oldIsPipelinesAgent -ne $newIsPipelinesAgent)
             {
+                Write-Log "Disabled version settings and new version settings differ on IsPipelinesAgent setting." $true
+                Write-Log "Switching between Deployment and Pipelines Agent is not permitted." $true
+                Write-Log "Disabled version settings: $($oldExtensionPublicSettings | ConvertTo-Json)" $true
+                Write-Log "New version settings: $($extensionPublicSettings | ConvertTo-Json)" $true
                 return $true
             }
 

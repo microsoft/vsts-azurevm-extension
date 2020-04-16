@@ -529,6 +529,10 @@ def test_extension_settings_do_not_permit_enable():
         new_extension_is_pipelines_agent = new_extension_is_pipelines_agent['IsPipelinesAgent']
 
       if(old_extension_public_settings != new_extension_is_pipelines_agent):
+        handler_utility.log('Disabled version settings and new version settings differ on IsPipelinesAgent setting.')
+        handler_utility.log('Switching between Deployment and Pipelines Agent is not permitted.')
+        handler_utility.log('Disabled version settings: {0}'.format(old_extension_public_settings))
+        handler_utility.log('New version settings: {0}'.format(extension_public_settings))
         return True
 
       if(Util.ordered_json_object(old_extension_public_settings) == Util.ordered_json_object(extension_public_settings)):

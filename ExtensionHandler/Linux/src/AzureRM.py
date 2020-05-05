@@ -549,7 +549,9 @@ def enable():
     download_agent_if_required(config)
     configure_agent_if_required(config)
     handler_utility.set_handler_status(Util.HandlerStatus('Installed'))
-    add_agent_tags(config)
+
+    if(not config.IsPipelinesAgent):
+      add_agent_tags(config)
     handler_utility.log('Extension is enabled.')
   
   handler_utility.set_handler_status(Util.HandlerStatus('Enabled', 'success'))

@@ -14,6 +14,7 @@ Describe "Enable RM extension tests" {
 
         $config = @{
             Tags = @()
+            IsPipelinesAgent = $false
         }
 
     Context "Should save last sequence number file and remove disable mockup file" {
@@ -156,6 +157,7 @@ Describe "Enable RM extension tests" {
         
         $configWithTags = @{
             Tags = @("Tag1")
+            IsPipelinesAgent = $false
         }
         
         Mock Initialize-ExtensionLogFile {}

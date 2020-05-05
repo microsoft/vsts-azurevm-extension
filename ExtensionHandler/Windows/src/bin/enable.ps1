@@ -459,7 +459,10 @@ function Enable
         ConfigureAgentIfRequired $config
         Set-HandlerStatus $RM_Extension_Status.Installed.Code $RM_Extension_Status.Installed.Message
 
-        Add-AgentTags $config
+        if(-not $config.IsPipelinesAgent)
+        {
+            Add-AgentTags $config
+        }
 
         Write-Log "Extension is enabled."
     }

@@ -200,7 +200,10 @@ Describe "Start RM extension tests" {
 
     Context "Should skip enable if current seq number is same as last seq number" {
         
-        $config = @{AgentWorkingFolder = "AgentWorkingFolder"}
+        $config = @{
+            AgentWorkingFolder = "AgentWorkingFolder"
+            IsPipelinesAgent = $false
+        }
         Mock Get-HandlerExecutionSequenceNumber { return 2 }
         Mock Get-LastSequenceNumber { return 2 }
         Mock Add-HandlerSubStatus {}
@@ -245,6 +248,54 @@ Describe "Start RM extension tests" {
         It "should set handler status as Initilized" {
             Assert-MockCalled Add-HandlerSubStatus -Times 0 -ParameterFilter { $Code -eq $RM_Extension_Status.SkippedInstallation.Code}
             Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.PreValidationCheckSuccess.Code}
+        }
+    }
+
+    Context "Should skip enable if current seq number is larger than the last seq number and IsPipelinesAgent is enabled" {
+        $config = @{
+            AgentWorkingFolder = "AgentWorkingFolder"
+            IsPipelinesAgent = $true
+        }
+        Mock Get-HandlerExecutionSequenceNumber { return 2 }
+        Mock Get-LastSequenceNumber { return 2 }
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
+        Mock Write-Log {}
+        Mock Exit-WithCode {}
+        Mock Test-ExtensionDisabledMarkup {return $false}
+
+        Compare-SequenceNumber $config
+
+        It "should call clean up functions" {
+            Assert-MockCalled Exit-WithCode -Times 1
+        }
+
+        It "should set handler status as Initilized" {
+            Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.SkippedInstallation.Code}
+        }
+    }
+
+    Context "Should not skip enable if IsPipelinesAgent is enabled and current seq number is larger than last seq number, but last seq number is -1 (no prior installation)" {
+        $config = @{
+            AgentWorkingFolder = "AgentWorkingFolder"
+            IsPipelinesAgent = $true
+        }
+        Mock Get-HandlerExecutionSequenceNumber { return 2 }
+        Mock Get-LastSequenceNumber { return -1 }
+        Mock Add-HandlerSubStatus {}
+        Mock Set-HandlerStatus {}
+        Mock Write-Log {}
+        Mock Exit-WithCode {}
+        Mock Test-ExtensionDisabledMarkup {return $false}
+
+        Compare-SequenceNumber $config
+
+        It "should call clean up functions" {
+            Assert-MockCalled Exit-WithCode -Times 0
+        }
+
+        It "should set handler status as Initilized" {
+            Assert-MockCalled Add-HandlerSubStatus -Times 0 -ParameterFilter { $Code -eq $RM_Extension_Status.SkippedInstallation.Code}
         }
     }
 }

@@ -168,10 +168,16 @@ def install_dependencies(config):
     sleep(sleep_interval_in_sec)
   handler_utility.add_handler_sub_status(Util.HandlerSubStatus('InstalledDependencies'))
   
-def compare_sequence_number():
+def compare_sequence_number(config):
   try:
     sequence_number = int(handler_utility._context._seq_no)
     last_sequence_number = get_last_sequence_number()
+    if(config.IsPipelinesAgent and (last_sequence_number != -1) and (sequence_number > last_sequence_number)):
+      handler_utility.log(RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'])
+      handler_utility.log('Skipping enable since a Pipelines Agent may only install once. Seq number: {0}. Last Seq Number: {1}.'.format(sequence_number, last_sequence_number))
+      handler_utility.add_handler_sub_status(Util.HandlerSubStatus('SkippedInstallation'))
+      handler_utility.set_handler_status(Util.HandlerStatus('Enabled', 'success'))
+      exit_with_code(0)
     if((sequence_number == last_sequence_number) and not(test_extension_disabled_markup())):
       handler_utility.log(RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'])
       handler_utility.log('Skipping enable since seq numbers match. Seq number: {0}.'.format(sequence_number))
@@ -535,7 +541,7 @@ def enable():
   handler_utility.set_handler_status(Util.HandlerStatus('Installing'))
   pre_validation_checks()
   config = get_configutation_from_settings()
-  compare_sequence_number()
+  compare_sequence_number(config)
   settings_are_same = test_extension_settings_are_same_as_disabled_version()
   if(settings_are_same):
     handler_utility.log("Skipping extension enable.")

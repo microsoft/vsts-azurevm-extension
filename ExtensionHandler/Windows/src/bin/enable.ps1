@@ -206,6 +206,16 @@ function Compare-SequenceNumber{
         #
         $sequenceNumber = Get-HandlerExecutionSequenceNumber
         $lastSequenceNumber = Get-LastSequenceNumber
+
+        if($config.IsPipelinesAgent -and ($lastSequenceNumber -ne -1) -and ($sequenceNumber -gt $lastSequenceNumber))
+        {
+            Write-Log $RM_Extension_Status.SkippedInstallation.Message
+            Write-Log "Skipping enable since a Pipelines Agent may only install once. Seq number: $sequenceNumber. Last Seq Number: $lastSequenceNumber."
+            Add-HandlerSubStatus $RM_Extension_Status.SkippedInstallation.Code $RM_Extension_Status.SkippedInstallation.Message -operationName $RM_Extension_Status.SkippedInstallation.operationName
+            Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
+            Exit-WithCode 0
+        }
+
         if(($sequenceNumber -eq $lastSequenceNumber) -and (!(Test-ExtensionDisabledMarkup $config.AgentWorkingFolder)))
         {
             Write-Log $RM_Extension_Status.SkippedInstallation.Message

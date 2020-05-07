@@ -383,6 +383,11 @@ def get_configutation_from_settings():
     if(public_settings.has_key('UserName')):
       configure_agent_as_username = public_settings['UserName']
 
+    if(is_pipelines_agent):
+      working_folder = Constants.agent_working_folder_pipelines
+    else:
+      working_folder = Constants.agent_working_folder
+
     handler_utility.log('Done reading config settings from file...')
     handler_utility.add_handler_sub_status(Util.HandlerSubStatus('SuccessfullyReadSettings'))
     return {
@@ -392,7 +397,7 @@ def get_configutation_from_settings():
              'DeploymentGroup':deployment_group_name, 
              'AgentName':agent_name, 
              'Tags' : tags,
-             'AgentWorkingFolder':Constants.agent_working_folder,
+             'AgentWorkingFolder':working_folder,
              'ConfigureAgentAsUserName': configure_agent_as_username,
              'IsPipelinesAgent' : is_pipelines_agent,
              'PoolName' : pool_name

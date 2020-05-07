@@ -2,6 +2,7 @@ agent_setting = '.agent'
 last_seq_num_file = 'LASTSEQNUM'
 download_api_version = '3.0-preview.2'
 agent_working_folder = '/VSTSAgent'
+agent_working_folder_pipelines = '/ElasticPoolAgent'
 update_file_name = 'EXTENSIONUPDATE'
 disable_markup_file_name = 'EXTENSIONDISABLED'
 

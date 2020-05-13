@@ -237,77 +237,121 @@ def format_tags_input(tags_input):
   return ret_val
 
 def validate_inputs(config):
-  # If we are installing an agent for Pipelines, we do not need to verify deployment group settings.
   if(config['IsPipelinesAgent']):
-    handler_utility.log("Skipping input validation because this is a Pipelines agent.")
-    return
-  try:
-    invalid_pat_error_message = "Please make sure that the Personal Access Token entered is valid and has 'Deployment Groups - Read & manage' scope."
-    inputs_validation_error_code = RMExtensionStatus.rm_extension_status['InputConfigurationError']
-    unexpected_error_message = "Some unexpected error occured. Status code : {0}"
-    error_message_initial_part = "Could not verify that the deployment group '" + config['DeploymentGroup'] + "' exists in the project '" + config['TeamProject'] + "' in the specified organization '" + config['VSTSUrl'] +"'. Status: {0} Error: {1}. "
+    try:
+      invalid_pat_error_message = "Please make sure that the Personal Access Token entered is valid and has 'Agent Pools - Read & manage' scope."
+      inputs_validation_error_code = RMExtensionStatus.rm_extension_status['InputConfigurationError']
+      unexpected_error_message = "Some unexpected error occured. Status code : {0}"
+      error_message_initial_part = "Could not verify that the agent pool '" + config['PoolName'] + "' exists in the specified organization '" + config['VSTSUrl'] +"'. Status: {0} Error: {1}. "
 
-    # Verify the deployment group exists and the PAT has the required(Deployment Groups - Read & manage) scope
-    # This is the first validation http call, so using Invoke-WebRequest instead of Invoke-RestMethod, because if the PAT provided is not a token at all(not even an unauthorized one) and some random value, then the call
-    # would redirect to sign in page and not throw an exception. So, to handle this case.
+      # Verify the agent pool exists and the PAT has the required(Agent Pools - Read & manage) scope
+      # This is the first validation http call, so using Invoke-WebRequest instead of Invoke-RestMethod, because if the PAT provided is not a token at all(not even an unauthorized one) and some random value, then the call
+      # would redirect to sign in page and not throw an exception. So, to handle this case.
 
-    specific_error_message = ""
-    get_deployment_group_url = "{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}".format(config['VSTSUrl'], quote(config['TeamProject']), quote(config['DeploymentGroup']), Constants.projectAPIVersion)
-    
-    handler_utility.log("Get deployment group url - {0}".format(get_deployment_group_url))
-
-    response = Util.make_http_call(get_deployment_group_url, 'GET', None, None, config['PATToken'])
-
-    if(response.status != Constants.HTTP_OK):
-      if(response.status == Constants.HTTP_FOUND):
-        specific_error_message = invalid_pat_error_message
-      elif(response.status == Constants.HTTP_UNAUTHORIZED):
-        specific_error_message = invalid_pat_error_message
-      elif(response.status == Constants.HTTP_FORBIDDEN):
-        specific_error_message = "Please ensure that the user has 'View project-level information' permissions on the project '{0}'.".format(config['TeamProject'])
-      elif(response.status == Constants.HTTP_NOTFOUND):
-        specific_error_message = "Please make sure that you enter the correct organization name and verify that the project exists in the organization."
-      else:
-        specific_error_message = unexpected_error_message.format(response.status)
-        inputs_validation_error_code = RMExtensionStatus.rm_extension_status['GenericError']
-      error_message = error_message_initial_part.format(response.status, specific_error_message)
+      specific_error_message = ""
+      get_deployment_group_url = "{0}/_apis/distributedtask/deploymentgroups/pools?poolname={1}&api-version={2}".format(config['VSTSUrl'], quote(config['DeploymentGroup']), Constants.projectAPIVersion)
       
-      raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message)
+      handler_utility.log("Get deployment group url - {0}".format(get_deployment_group_url))
 
+      response = Util.make_http_call(get_deployment_group_url, 'GET', None, None, config['PATToken'])
 
-    deployment_group_data = json.loads(response.read())
+      if(response.status != Constants.HTTP_OK):
+        if(response.status == Constants.HTTP_FOUND):
+          specific_error_message = invalid_pat_error_message
+        elif(response.status == Constants.HTTP_UNAUTHORIZED):
+          specific_error_message = invalid_pat_error_message
+        elif(response.status == Constants.HTTP_FORBIDDEN):
+          specific_error_message = "Please ensure that the user has 'View organization-level information' permissions on the organization '{0}'.".format(config['VSTSUrl'])
+        elif(response.status == Constants.HTTP_NOTFOUND):
+          specific_error_message = "Please make sure that you enter the correct organization name and verify that the project exists in the organization."
+        else:
+          specific_error_message = unexpected_error_message.format(response.status)
+          inputs_validation_error_code = RMExtensionStatus.rm_extension_status['GenericError']
+        error_message = error_message_initial_part.format(response.status, specific_error_message)
+        
+        raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message)
 
-    if(('value' not in deployment_group_data) or len(deployment_group_data['value']) == 0):
-      specific_error_message = "Please make sure that the deployment group {0} exists in the project {1}, and the user has 'Manage' permissions on the deployment group.".format(config['DeploymentGroup'], config['TeamProject'])
-      raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message_initial_part.format(response.status, specific_error_message))
+      deployment_group_data = json.loads(response.read())
 
-    deployment_group_id = deployment_group_data['value'][0]['id']
-    handler_utility.log("Validated that the deployment group {0} exists".format(config['DeploymentGroup']))
-    
-    headers = {}
-    headers['Content-Type'] = 'application/json'
-    body = "{'name': '" + config['DeploymentGroup'] + "'}"
-    patch_deployment_group_url = "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}".format(config['VSTSUrl'], quote(config['TeamProject']), deployment_group_id, Constants.projectAPIVersion) 
-    
-    handler_utility.log("Patch deployment group url - {0}".format(patch_deployment_group_url))
-    response = Util.make_http_call(patch_deployment_group_url, 'PATCH', body, headers, config['PATToken'])
+      if(('value' not in deployment_group_data) or len(deployment_group_data['value']) == 0):
+        specific_error_message = "Please make sure that the agent pool {0} exists in the organization {1}, and the user has 'Manage' permissions on the agent pool.".format(config['VSTSUrl'], config['PoolName'])
+        raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message_initial_part.format(response.status, specific_error_message))
 
-    if(response.status != Constants.HTTP_OK):
-      if(response.status == Constants.HTTP_FORBIDDEN):
-        specific_error_message = "Please ensure that the user has 'Manage' permissions on the deployment group {0}".format(config['DeploymentGroup'])
-      else:
-        specific_error_message = unexpected_error_message.format(str(response.status))
-        inputs_validation_error_code = RMExtensionStatus.rm_extension_status['GenericError']
-
-      raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message_initial_part.format(response.status, response.reason) + specific_error_message)
+      handler_utility.log("Validated that the agent pool {0} exists".format(config['PoolName']))
       
+      handler_utility.log("Done validating inputs...")
+      handler_utility.add_handler_sub_status(Util.HandlerSubStatus('SuccessfullyValidatedInputs'))
 
-    handler_utility.log("Validated that the user has 'Manage' permissions on the deployment group '{0}'".format(config['DeploymentGroup']))
-    handler_utility.log("Done validating inputs...")
-    handler_utility.add_handler_sub_status(Util.HandlerSubStatus('SuccessfullyValidatedInputs'))
+    except Exception as e:
+      set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ValidatingInputs']['operationName'], getattr(e,'Code'))
+  else:
+    try:
+      invalid_pat_error_message = "Please make sure that the Personal Access Token entered is valid and has 'Deployment Groups - Read & manage' scope."
+      inputs_validation_error_code = RMExtensionStatus.rm_extension_status['InputConfigurationError']
+      unexpected_error_message = "Some unexpected error occured. Status code : {0}"
+      error_message_initial_part = "Could not verify that the deployment group '" + config['DeploymentGroup'] + "' exists in the project '" + config['TeamProject'] + "' in the specified organization '" + config['VSTSUrl'] +"'. Status: {0} Error: {1}. "
 
-  except Exception as e:
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ValidatingInputs']['operationName'], getattr(e,'Code'))
+      # Verify the deployment group exists and the PAT has the required(Deployment Groups - Read & manage) scope
+      # This is the first validation http call, so using Invoke-WebRequest instead of Invoke-RestMethod, because if the PAT provided is not a token at all(not even an unauthorized one) and some random value, then the call
+      # would redirect to sign in page and not throw an exception. So, to handle this case.
+
+      specific_error_message = ""
+      get_deployment_group_url = "{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}".format(config['VSTSUrl'], quote(config['TeamProject']), quote(config['DeploymentGroup']), Constants.projectAPIVersion)
+      
+      handler_utility.log("Get deployment group url - {0}".format(get_deployment_group_url))
+
+      response = Util.make_http_call(get_deployment_group_url, 'GET', None, None, config['PATToken'])
+
+      if(response.status != Constants.HTTP_OK):
+        if(response.status == Constants.HTTP_FOUND):
+          specific_error_message = invalid_pat_error_message
+        elif(response.status == Constants.HTTP_UNAUTHORIZED):
+          specific_error_message = invalid_pat_error_message
+        elif(response.status == Constants.HTTP_FORBIDDEN):
+          specific_error_message = "Please ensure that the user has 'View project-level information' permissions on the project '{0}'.".format(config['TeamProject'])
+        elif(response.status == Constants.HTTP_NOTFOUND):
+          specific_error_message = "Please make sure that you enter the correct organization name and verify that the project exists in the organization."
+        else:
+          specific_error_message = unexpected_error_message.format(response.status)
+          inputs_validation_error_code = RMExtensionStatus.rm_extension_status['GenericError']
+        error_message = error_message_initial_part.format(response.status, specific_error_message)
+        
+        raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message)
+
+
+      deployment_group_data = json.loads(response.read())
+
+      if(('value' not in deployment_group_data) or len(deployment_group_data['value']) == 0):
+        specific_error_message = "Please make sure that the deployment group {0} exists in the project {1}, and the user has 'Manage' permissions on the deployment group.".format(config['DeploymentGroup'], config['TeamProject'])
+        raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message_initial_part.format(response.status, specific_error_message))
+
+      deployment_group_id = deployment_group_data['value'][0]['id']
+      handler_utility.log("Validated that the deployment group {0} exists".format(config['DeploymentGroup']))
+      
+      headers = {}
+      headers['Content-Type'] = 'application/json'
+      body = "{'name': '" + config['DeploymentGroup'] + "'}"
+      patch_deployment_group_url = "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}".format(config['VSTSUrl'], quote(config['TeamProject']), deployment_group_id, Constants.projectAPIVersion) 
+      
+      handler_utility.log("Patch deployment group url - {0}".format(patch_deployment_group_url))
+      response = Util.make_http_call(patch_deployment_group_url, 'PATCH', body, headers, config['PATToken'])
+
+      if(response.status != Constants.HTTP_OK):
+        if(response.status == Constants.HTTP_FORBIDDEN):
+          specific_error_message = "Please ensure that the user has 'Manage' permissions on the deployment group {0}".format(config['DeploymentGroup'])
+        else:
+          specific_error_message = unexpected_error_message.format(str(response.status))
+          inputs_validation_error_code = RMExtensionStatus.rm_extension_status['GenericError']
+
+        raise RMExtensionStatus.new_handler_terminating_error(inputs_validation_error_code, error_message_initial_part.format(response.status, response.reason) + specific_error_message)
+        
+
+      handler_utility.log("Validated that the user has 'Manage' permissions on the deployment group '{0}'".format(config['DeploymentGroup']))
+      handler_utility.log("Done validating inputs...")
+      handler_utility.add_handler_sub_status(Util.HandlerSubStatus('SuccessfullyValidatedInputs'))
+
+    except Exception as e:
+      set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ValidatingInputs']['operationName'], getattr(e,'Code'))
 
 def get_configutation_from_settings():
   try:

@@ -57,7 +57,8 @@ def set_last_sequence_number():
     pass
 
 def set_extension_disabled_markup():
-  markup_file = '{0}/{1}'.format(Constants.agent_working_folder, Constants.disable_markup_file_name)
+  config = get_configutation_from_settings()
+  markup_file = '{0}/{1}'.format(config['AgentWorkingFolder'], Constants.disable_markup_file_name)
   extension_settings_file_path = '{0}/{1}.settings'.format(handler_utility._context._config_dir , handler_utility._context._seq_no)
   handler_utility.log('Writing contents of {0} to {1}'.format(extension_settings_file_path, markup_file))
   try:
@@ -68,23 +69,24 @@ def set_extension_disabled_markup():
 def create_extension_update_file():
   handler_utility.log('Creating extension update file.')
   try:
-    extension_update_file = '{0}/{1}'.format(Constants.agent_working_folder, Constants.update_file_name)
+    config = config['AgentWorkingFolder']
+    extension_update_file = '{0}/{1}'.format(config['AgentWorkingFolder'], Constants.update_file_name)
     with open(extension_update_file, 'w') as f:
       f.write('')
       f.close()
   except Exception as e:
     pass
 
-def test_extension_disabled_markup():
-  markup_file = '{0}/{1}'.format(Constants.agent_working_folder, Constants.disable_markup_file_name)
+def test_extension_disabled_markup(config):
+  markup_file = '{0}/{1}'.format(config['AgentWorkingFolder'], Constants.disable_markup_file_name)
   handler_utility.log('Testing whether disabled markup file exists: ' + markup_file)
   if(os.path.isfile(markup_file)):
     return True
   else:
     return False
 
-def remove_extension_disabled_markup():
-  markup_file = '{0}/{1}'.format(Constants.agent_working_folder, Constants.disable_markup_file_name)
+def remove_extension_disabled_markup(config):
+  markup_file = '{0}/{1}'.format(config['AgentWorkingFolder'], Constants.disable_markup_file_name)
   handler_utility.log('Deleting disabled markup file if it exists' + markup_file)
   if(os.path.isfile(markup_file)):
     os.remove(markup_file)
@@ -178,7 +180,7 @@ def compare_sequence_number(config):
       handler_utility.add_handler_sub_status(Util.HandlerSubStatus('SkippedInstallation'))
       handler_utility.set_handler_status(Util.HandlerStatus('Enabled', 'success'))
       exit_with_code(0)
-    if((sequence_number == last_sequence_number) and not(test_extension_disabled_markup())):
+    if((sequence_number == last_sequence_number) and not(test_extension_disabled_markup(config))):
       handler_utility.log(RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'])
       handler_utility.log('Skipping enable since seq numbers match. Seq number: {0}.'.format(sequence_number))
       handler_utility.add_handler_sub_status(Util.HandlerSubStatus('SkippedInstallation'))
@@ -555,9 +557,9 @@ def add_agent_tags(config):
   except Exception as e:
       set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['AddingAgentTags']['operationName'], 8)
 
-def test_extension_settings_are_same_as_disabled_version():
+def test_extension_settings_are_same_as_disabled_version(config):
   try:
-    old_extension_settings_file_path = "{0}/{1}".format(Constants.agent_working_folder, Constants.disable_markup_file_name)
+    old_extension_settings_file_path = "{0}/{1}".format(config['AgentWorkingFolder'], Constants.disable_markup_file_name)
     old_extension_settings_file_exists = os.path.isfile(old_extension_settings_file_path)
     if(old_extension_settings_file_exists):
       extension_settings_file_path = '{0}/{1}.settings'.format(handler_utility._context._config_dir , handler_utility._context._seq_no)
@@ -591,7 +593,7 @@ def enable():
   pre_validation_checks()
   config = get_configutation_from_settings()
   compare_sequence_number(config)
-  settings_are_same = test_extension_settings_are_same_as_disabled_version()
+  settings_are_same = test_extension_settings_are_same_as_disabled_version(config)
   if(settings_are_same):
     handler_utility.log("Skipping extension enable.")
     handler_utility.add_handler_sub_status(Util.HandlerSubStatus('SkippingEnableSameSettingsAsDisabledVersion'))
@@ -599,8 +601,10 @@ def enable():
     validate_inputs(config)
     ConfigureDeploymentAgent.set_logger(handler_utility.log)
     DownloadDeploymentAgent.set_logger(handler_utility.log)
-    execute_agent_pre_check(config)
-    remove_existing_agent_if_required(config)
+    if(not config.IsPipelinesAgent):
+      execute_agent_pre_check(config)
+    if(not config.IsPipelinesAgent):
+      remove_existing_agent_if_required(config)
     download_agent_if_required(config)
     configure_agent_if_required(config)
     handler_utility.set_handler_status(Util.HandlerStatus('Installed'))
@@ -613,7 +617,7 @@ def enable():
 
   set_last_sequence_number()
   handler_utility.log('Removing disable markup file..')
-  remove_extension_disabled_markup()
+  remove_extension_disabled_markup(config)
 
 def disable():
   ConfigureDeploymentAgent.set_logger(handler_utility.log)
@@ -627,17 +631,15 @@ def disable():
 
 def uninstall():
   global configured_agent_exists
-  configured_agent_exists = ConfigureDeploymentAgent.is_agent_configured(Constants.agent_working_folder)
-  extension_update_file = '{0}/{1}'.format(Constants.agent_working_folder, Constants.update_file_name)
+  config = get_configutation_from_settings()
+  configured_agent_exists = ConfigureDeploymentAgent.is_agent_configured(config['AgentWorkingFolder'])
+  extension_update_file = '{0}/{1}'.format(config['AgentWorkingFolder'], Constants.update_file_name)
   is_udpate_scenario = os.path.isfile(extension_update_file)
   if(not(is_udpate_scenario)):  
     if(configured_agent_exists == True):
-      config = {
-             'AgentWorkingFolder':Constants.agent_working_folder,
-          }
       remove_existing_agent(config)
   else:
-    handler_utility.log('Extension update scenario. Deleting the file {0}/{1}'.format(Constants.agent_working_folder, Constants.update_file_name))
+    handler_utility.log('Extension update scenario. Deleting the file {0}/{1}'.format(config['AgentWorkingFolder'], Constants.update_file_name))
     os.remove(extension_update_file)
   
   handler_utility.set_handler_status(Util.HandlerStatus('Uninstalling', 'success'))

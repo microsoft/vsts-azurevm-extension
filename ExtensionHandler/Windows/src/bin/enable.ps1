@@ -460,10 +460,16 @@ function Enable
     {
         Confirm-InputsAreValid $config
 
-        ExecuteAgentPreCheck $config
+        if(-not $config.IsPipelinesAgent)
+        {
+            ExecuteAgentPreCheck $config
+        }
 
-        RemoveExistingAgentIfRequired $config
-
+        if(-not $config.IsPipelinesAgent)
+        {
+            RemoveExistingAgentIfRequired $config
+        }
+        
         DownloadAgentIfRequired $config
 
         ConfigureAgentIfRequired $config

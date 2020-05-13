@@ -16,31 +16,6 @@ Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\Log.psm1
 . "$PSScriptRoot\RMExtensionUtilities.ps1"
 . "$PSScriptRoot\AgentConfigurationManager.ps1"
-. "$PSScriptRoot\ConfigSettingsReader.ps1"
-
-function Get-AgentWorkingFolder {
-    [CmdletBinding()]
-    param()
-
-    . $PSScriptRoot\AgentSettingsHelper.ps1
-    . $PSScriptRoot\Constants.ps1
-
-    $config = Get-ConfigurationFromSettings
-
-    if($config.IsPipelinesAgent)
-    {
-        return $agentWorkingFolderPipelines
-    }
-
-    if(!(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderNew))
-    {
-        if(Test-ConfiguredAgentExists -workingFolder $agentWorkingFolderOld)
-        {
-            return $agentWorkingFolderOld
-        }
-    }
-    return $agentWorkingFolderNew
-}
 
 <#
 .Synopsis

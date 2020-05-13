@@ -16,6 +16,7 @@ Import-Module $PSScriptRoot\RMExtensionStatus.psm1
 Import-Module $PSScriptRoot\Log.psm1
 . $PSScriptRoot\AgentSettingsHelper.ps1
 . $PSScriptRoot\Constants.ps1
+. $PSScriptRoot\ConfigSettingsReader.ps1
 
 Initialize-ExtensionLogFile
 

@@ -173,6 +173,12 @@ $global:RM_Extension_Status = @{
         operationName = 'Inputs validation'
     }
 
+    ScheduledRunFailed = @{
+        Code = 32
+        Message = 'Failed to schedule run'
+        operationName = 'Schedule Run'
+    }
+
     #
     # Warnings
     #

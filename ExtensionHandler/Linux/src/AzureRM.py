@@ -594,17 +594,21 @@ def test_extension_settings_are_same_as_disabled_version(config):
     return False
 
 def schedule_run_agent(config):
-  handler_utility.log(' creating AzDevOps account')
-  os.system('sudo useradd -m AzDevOps')
-  os.system('sudo usermod -a -G sudo AzDevOps')
-  os.system('sudo usermod -a -G adm AzDevOps')
-  os.system('echo \'AzDevOps ALL=NOPASSWD: ALL\' >> /etc/sudoers')
+  try:
+    handler_utility.log(' creating AzDevOps account')
+    os.system('sudo useradd -m AzDevOps')
+    os.system('sudo usermod -a -G sudo AzDevOps')
+    os.system('sudo usermod -a -G adm AzDevOps')
+    os.system('echo \'AzDevOps ALL=NOPASSWD: ALL\' >> /etc/sudoers')
 
-  runArgs = ''
-  if(config.SingleUse):
-    runArgs = '--once'
-  
-  os.system('echo "sudo runuser AzDevOps -c \"/bin/bash {0}/run.sh {1}\"" | at now'.format(config.AgentWorkingFolder, runArgs))
+    runArgs = ''
+    if(config.SingleUse):
+      runArgs = '--once'
+    
+    os.system('echo "sudo runuser AzDevOps -c \"/bin/bash {0}/run.sh {1}\"" | at now'.format(config.AgentWorkingFolder, runArgs))
+  except Exception as e:
+    handler_utility.log('Failed to schedule Run for Pipelines Agent. Error: {0}'.format(getattr(e,'message')))
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ScheduleRun']['operationName'], RMExtensionStatus.rm_extension_status['ScheduleRun']['Code'])
 
 def enable():
   handler_utility.set_handler_status(Util.HandlerStatus('Installing'))

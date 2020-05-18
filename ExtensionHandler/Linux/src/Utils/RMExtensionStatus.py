@@ -157,6 +157,11 @@ rm_extension_status = {
     'Message': 'Installed the required dependencies',
     'operationName': 'InstallDependencies'
   },
+  'ScheduleRun': {
+    'Code':35,
+    'Message': 'Failed to schedule run',
+    'operationName': 'Schedule Run'
+  }
 
   #
   # Warnings

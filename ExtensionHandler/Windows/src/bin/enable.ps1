@@ -454,42 +454,50 @@ function Start-PipelinesRunAgent
     # for as long as any process it creates is running.
     # Therefore, we schedule a task to start up the agent after the installer has finished.
 
-    $start1 = (Get-Date).AddSeconds(15)
-    $time1 = New-ScheduledTaskTrigger -At $start1 -Once 
+    try {
 
-    $runArgs = ''
-    if($config.SingleUse)
-    {
-        $runArgs = '--once'
+        $start1 = (Get-Date).AddSeconds(15)
+        $time1 = New-ScheduledTaskTrigger -At $start1 -Once 
+
+        $runArgs = ''
+        if($config.SingleUse)
+        {
+            $runArgs = '--once'
+        }
+
+        $workingFolder = $config.AgentWorkingFolder
+
+        if([string]::IsNullOrEmpty($runArgs))
+        {  
+            $cmd1 = New-ScheduledTaskAction -Execute "$workingFolder\run.cmd" -WorkingDirectory $workingFolder 
+        }
+        else
+        {  
+            $cmd1 = New-ScheduledTaskAction -Execute "$workingFolder\run.cmd" -WorkingDirectory $workingFolder $runArgs 
+        }
+
+        $windows = Get-WindowsEdition -Online
+
+        if ($windows.Edition -like '*datacenter*' -or
+            $windows.Edition -like '*server*' )
+        {
+            # create administrator account
+            $username = 'AzDevOps'
+            $password = (New-Guid).ToString()
+            net user $username /delete
+            net user $username $password /add /y
+            net localgroup Administrators $username /add
+            Register-ScheduledTask -TaskName "BuildAgent" -User $username -Password $password -Trigger $time1 -Action $cmd1 -Force
+        }
+        else
+        {
+            Register-ScheduledTask -TaskName "BuildAgent" -User System -Trigger $time1 -Action $cmd1 -Force
+        }
     }
-
-    $workingFolder = $config.AgentWorkingFolder
-
-    if([string]::IsNullOrEmpty($runArgs))
-    {  
-        $cmd1 = New-ScheduledTaskAction -Execute "$workingFolder\run.cmd" -WorkingDirectory $workingFolder 
-    }
-    else
-    {  
-        $cmd1 = New-ScheduledTaskAction -Execute "$workingFolder\run.cmd" -WorkingDirectory $workingFolder $runArgs 
-    }
-
-    $windows = Get-WindowsEdition -Online
-
-    if ($windows.Edition -like '*datacenter*' -or
-        $windows.Edition -like '*server*' )
-    {
-        # create administrator account
-        $username = 'AzDevOps'
-        $password = (New-Guid).ToString()
-        net user $username /delete
-        net user $username $password /add /y
-        net localgroup Administrators $username /add
-        Register-ScheduledTask -TaskName "BuildAgent" -User $username -Password $password -Trigger $time1 -Action $cmd1 -Force
-    }
-    else
-    {
-        Register-ScheduledTask -TaskName "BuildAgent" -User System -Trigger $time1 -Action $cmd1 -Force
+    catch{
+        Write-Log "Failed to schedule Run for Pipelines Agent: $_" $true
+        Add-HandlerSubStatus $RM_Extension_Status.ScheduledRunFailed.Code $RM_Extension_Status.ScheduledRunFailed.Message -operationName $RM_Extension_Status.ScheduledRunFailed.operationName
+        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.ScheduledRunFailed.operationName
     }
 }
 

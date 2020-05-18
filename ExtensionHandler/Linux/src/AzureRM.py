@@ -374,6 +374,10 @@ def get_configutation_from_settings():
     if(public_settings.has_key('PoolName')):
       pool_name = public_settings['PoolName']
 
+    single_use = False
+    if(public_settings.has_key('SingleUse')):
+      single_use = True
+
     if(is_pipelines_agent):
       handler_utility.log('Configured as a Pipelines agent')
       handler_utility.verify_input_not_null('PoolName', pool_name)
@@ -446,7 +450,8 @@ def get_configutation_from_settings():
              'AgentWorkingFolder':working_folder,
              'ConfigureAgentAsUserName': configure_agent_as_username,
              'IsPipelinesAgent' : is_pipelines_agent,
-             'PoolName' : pool_name
+             'PoolName' : pool_name,
+             'SingleUse' : single_use
           }
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ReadingSettings']['operationName'], RMExtensionStatus.rm_extension_status['InputConfigurationError'])
@@ -588,6 +593,19 @@ def test_extension_settings_are_same_as_disabled_version(config):
     handler_utility.log('Disabled settings check failed. Error: {0}'.format(getattr(e,'message')))
     return False
 
+def schedule_run_agent(config):
+  handler_utility.log(' creating AzDevOps account')
+  os.system('sudo useradd -m AzDevOps')
+  os.system('sudo usermod -a -G sudo AzDevOps')
+  os.system('sudo usermod -a -G adm AzDevOps')
+  os.system('echo \'AzDevOps ALL=NOPASSWD: ALL\' >> /etc/sudoers')
+
+  runArgs = ''
+  if(config.SingleUse):
+    runArgs = '--once'
+  
+  os.system('echo "sudo runuser AzDevOps -c \"/bin/bash {0}/run.sh {1}\"" | at now'.format(config.AgentWorkingFolder, runArgs))
+
 def enable():
   handler_utility.set_handler_status(Util.HandlerStatus('Installing'))
   pre_validation_checks()
@@ -611,6 +629,8 @@ def enable():
 
     if(not config.IsPipelinesAgent):
       add_agent_tags(config)
+    if(config.IsPipelinesAgent):
+      schedule_run_agent(config)
     handler_utility.log('Extension is enabled.')
   
   handler_utility.set_handler_status(Util.HandlerStatus('Enabled', 'success'))

@@ -442,6 +442,57 @@ function ConfigureAgentIfRequired
     }
 }
 
+function Start-PipelinesRunAgent
+{
+    param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [hashtable] $config
+    )
+
+    # Schedule a task that will execute run.cmd from its installed location after 15 seconds.
+    # This is necessary for the BYOS / Pipelines Agent case because we cannot restart the machine (it may be single-use), and Azure considers the installer to be running
+    # for as long as any process it creates is running.
+    # Therefore, we schedule a task to start up the agent after the installer has finished.
+
+    $start1 = (Get-Date).AddSeconds(15)
+    $time1 = New-ScheduledTaskTrigger -At $start1 -Once 
+
+    $runArgs = ''
+    if($config.SingleUse)
+    {
+        $runArgs = '--once'
+    }
+
+    $workingFolder = $config.AgentWorkingFolder
+
+    if([string]::IsNullOrEmpty($runArgs))
+    {  
+        $cmd1 = New-ScheduledTaskAction -Execute "$workingFolder\run.cmd" -WorkingDirectory $workingFolder 
+    }
+    else
+    {  
+        $cmd1 = New-ScheduledTaskAction -Execute "$workingFolder\run.cmd" -WorkingDirectory $workingFolder $runArgs 
+    }
+
+    $windows = Get-WindowsEdition -Online
+
+    if ($windows.Edition -like '*datacenter*' -or
+        $windows.Edition -like '*server*' )
+    {
+        # create administrator account
+        $username = 'AzDevOps'
+        $password = (New-Guid).ToString()
+        net user $username /delete
+        net user $username $password /add /y
+        net localgroup Administrators $username /add
+        Register-ScheduledTask -TaskName "BuildAgent" -User $username -Password $password -Trigger $time1 -Action $cmd1 -Force
+    }
+    else
+    {
+        Register-ScheduledTask -TaskName "BuildAgent" -User System -Trigger $time1 -Action $cmd1 -Force
+    }
+}
+
 function Enable
 {
     Initialize-ExtensionLogFile
@@ -478,6 +529,11 @@ function Enable
         if(-not $config.IsPipelinesAgent)
         {
             Add-AgentTags $config
+        }
+
+        if($config.IsPipelinesAgent)
+        {
+            Start-PipelinesRunAgent $config
         }
 
         Write-Log "Extension is enabled."

@@ -70,6 +70,12 @@ function Get-ConfigurationFromSettings {
             Write-Log "Pool Name: $poolName"
         }
 
+        $singleUse = $false
+        if($publicSettings.Contains('SingleUse'))
+        {
+            $singleUse = $publicSettings['SingleUse']
+        }
+
         $vstsAccountUrl = ""
         if($publicSettings.Contains('AzureDevOpsOrganizationUrl'))
         {
@@ -149,6 +155,7 @@ function Get-ConfigurationFromSettings {
             WindowsLogonPassword = $windowsLogonPassword
             IsPipelinesAgent = $isPipelinesAgent
             PoolName = $poolName
+            SingleUse = $singleUse
         }
     }
     catch

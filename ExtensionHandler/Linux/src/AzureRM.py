@@ -599,6 +599,16 @@ def schedule_run_agent(config):
     os.system('sudo useradd -m AzDevOps')
     os.system('sudo usermod -a -G sudo AzDevOps')
     os.system('sudo usermod -a -G adm AzDevOps')
+    os.system('sudo usermod -a -G docker AzDevOps')
+
+    os.system('echo "Giving AzDevOps user access to the \'/home\', \'/usr/share\', and \'/opt\' directories."')
+    os.system('sudo chmod -R 777 /home')
+    os.system('setfacl -Rdm "u:AzDevOps:rwX" /home')
+    os.system('setfacl -Rb /home/AzDevOps')
+    os.system('sudo chmod -R 777 /usr/share')
+    os.system('setfacl -Rdm "u:AzDevOps:rwX" /usr/share')
+    os.system('sudo chmod -R 777 /opt')
+    os.system('setfacl -Rdm "u:AzDevOps:rwX" /opt')
     os.system('echo \'AzDevOps ALL=NOPASSWD: ALL\' >> /etc/sudoers')
 
     runArgs = ''

@@ -57,7 +57,7 @@ def set_last_sequence_number():
     pass
 
 def set_extension_disabled_markup():
-  config = get_configutation_from_settings()
+  config = get_configuration_from_settings()
   markup_file = '{0}/{1}'.format(config['AgentWorkingFolder'], Constants.disable_markup_file_name)
   extension_settings_file_path = '{0}/{1}.settings'.format(handler_utility._context._config_dir , handler_utility._context._seq_no)
   handler_utility.log('Writing contents of {0} to {1}'.format(extension_settings_file_path, markup_file))
@@ -355,7 +355,7 @@ def validate_inputs(config):
     except Exception as e:
       set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ValidatingInputs']['operationName'], getattr(e,'Code'))
 
-def get_configutation_from_settings():
+def get_configuration_from_settings():
   try:
     public_settings = handler_utility.get_public_settings()
     if(public_settings == None):
@@ -623,7 +623,7 @@ def schedule_run_agent(config):
 def enable():
   handler_utility.set_handler_status(Util.HandlerStatus('Installing'))
   pre_validation_checks()
-  config = get_configutation_from_settings()
+  config = get_configuration_from_settings()
   compare_sequence_number(config)
   settings_are_same = test_extension_settings_are_same_as_disabled_version(config)
   if(settings_are_same):
@@ -665,7 +665,7 @@ def disable():
 
 def uninstall():
   global configured_agent_exists
-  config = get_configutation_from_settings()
+  config = get_configuration_from_settings()
   configured_agent_exists = ConfigureDeploymentAgent.is_agent_configured(config['AgentWorkingFolder'])
   extension_update_file = '{0}/{1}'.format(config['AgentWorkingFolder'], Constants.update_file_name)
   is_udpate_scenario = os.path.isfile(extension_update_file)

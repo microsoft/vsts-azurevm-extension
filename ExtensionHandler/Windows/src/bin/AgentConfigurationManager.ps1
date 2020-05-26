@@ -151,13 +151,13 @@ function CreateConfigCmdArgs
         [string]$poolName
     )
 
-    $configCmdArgs = "$configCommonArgs --agent `"$agentName`" --url `"$tfsUrl`" --token `"$patToken`" --work `"$workFolder`" "
+    $configCmdArgs = "$configCommonArgs --url `"$tfsUrl`" --token `"$patToken`" --work `"$workFolder`" "
     
     if($isPipelinesAgent){
         $configCmdArgs += "--norestart --pool `"$poolName`""
     }
     else {
-        $configCmdArgs += "--deploymentgroup --runasservice --projectname `"$projectName`" --deploymentgroupname `"$deploymentGroupName`""
+        $configCmdArgs += "--deploymentgroup --runasservice --agent `"$agentName`" --projectname `"$projectName`" --deploymentgroupname `"$deploymentGroupName`""
     }
     
     if($windowsLogonAccountName){

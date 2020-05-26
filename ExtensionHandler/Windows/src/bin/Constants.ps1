@@ -11,7 +11,7 @@ $defaultAgentWorkFolder = "_work"
 $platform = "win-x64"
 $agentWorkingFolderOld = "$env:SystemDrive\VSTSAgent"
 $agentWorkingFolderNew = "$env:SystemDrive\AzurePiplinesAgent_Extension"
-$agentWorkingFolderPipelines = "$env:SystemDrive\ElasticPoolAgent"
+$agentWorkingFolderPipelines = "$env:SystemDrive\Agent"
 $agentNameCharacterLimit = 64
 
 # markup files

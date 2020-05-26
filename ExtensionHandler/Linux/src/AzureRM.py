@@ -69,7 +69,7 @@ def set_extension_disabled_markup():
 def create_extension_update_file():
   handler_utility.log('Creating extension update file.')
   try:
-    config = config['AgentWorkingFolder']
+    config = get_configuration_from_settings()
     extension_update_file = '{0}/{1}'.format(config['AgentWorkingFolder'], Constants.update_file_name)
     with open(extension_update_file, 'w') as f:
       f.write('')

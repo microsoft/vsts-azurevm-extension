@@ -431,6 +431,16 @@ function ConfigureAgentIfRequired
     }
 }
 
+function ConfigurePipelinesAgent
+{
+    param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [hashtable] $config
+    )
+
+    
+}
+
 function Enable
 {
     Initialize-ExtensionLogFile
@@ -438,6 +448,11 @@ function Enable
     Invoke-PreValidationChecks
     $config = Get-ConfigurationFromSettings
     $config.AgentWorkingFolder = Get-AgentWorkingFolder
+    if($config.IsPipelinesAgent)
+    {
+        ConfigurePipelinesAgent $config
+        return
+    }
     Compare-SequenceNumber $config
     $settingsAreSame = Test-ExtensionSettingsAreSameAsDisabledVersion $config
     if($settingsAreSame)

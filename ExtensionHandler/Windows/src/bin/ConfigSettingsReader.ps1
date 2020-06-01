@@ -52,6 +52,62 @@ function Get-ConfigurationFromSettings {
         }
         
         #Extract and verify public settings
+        $isPipelinesAgent = $false;
+        if($publicSettings.Contains('IsPipelinesAgent'))
+        {
+            Write-Log "Configured as a Pipelines Agent"
+            $isPipelinesAgent = $publicSettings['IsPipelinesAgent']
+        }
+
+        $poolName = ""
+        $singleUse = $false
+        $agentLocation = ""
+        $installScriptLocation = ""
+        $installScriptParameters = ""
+        $runScriptLocation = ""
+        $runScriptParameters = ""
+        
+        if($isPipelinesAgent)
+        {
+            if($publicSettings.Contains('PoolName'))
+            {
+                $poolName = $publicSettings['PoolName']
+            }
+            Verify-InputNotNull "PoolName" $poolName
+
+            if($publicSettings.Contains('SingleUse'))
+            {
+                $singleUse = $publicSettings['SingleUse']
+            }
+
+            if($protectedSettings.Contains('AgentLocation'))
+            {
+                $agentLocation = $protectedSettings['AgentLocation']
+            }
+
+            if($protectedSettings.Contains('InstallScriptLocation'))
+            {
+                $installScriptLocation = $protectedSettings['InstallScriptLocation']
+            }
+            Verify-InputNotNull "InstallScriptLocation" $installScriptLocation
+            
+            if($protectedSettings.Contains('InstallScriptParameters'))
+            {
+                $installScriptParameters = $protectedSettings['InstallScriptParameters']
+            }
+
+            if($protectedSettings.Contains('RunScriptLocation'))
+            {
+                $runScriptLocation = $protectedSettings['RunScriptLocation']
+            }
+            Verify-InputNotNull "RunScriptLocation" $runScriptLocation
+            
+            if($protectedSettings.Contains('RunScriptParameters'))
+            {
+                $runScriptParameters = $protectedSettings['RunScriptParameters']
+            }
+        }
+
         $vstsAccountUrl = ""
         if($publicSettings.Contains('AzureDevOpsOrganizationUrl'))
         {
@@ -71,16 +127,22 @@ function Get-ConfigurationFromSettings {
         Write-Log "Azure DevOps Organization Url: $vstsUrl"
 
         $teamProjectName = $publicSettings['TeamProject']
-        Verify-InputNotNull "TeamProject" $teamProjectName
-        Write-Log "Team Project: $teamProjectName"
+        if(-not $isPipelinesAgent)
+        {
+            Verify-InputNotNull "TeamProject" $teamProjectName
+            Write-Log "Team Project: $teamProjectName"
+        }
 
         $deploymentGroupName = $publicSettings['DeploymentGroup']
         if(-not $deploymentGroupName)
         {
             $deploymentGroupName = $publicSettings['MachineGroup']
         }
-        Verify-InputNotNull "DeploymentGroup" $deploymentGroupName
-        Write-Log "Deployment Group: $deploymentGroupName"
+        if(-not $isPipelinesAgent)
+        {
+            Verify-InputNotNull "DeploymentGroup" $deploymentGroupName
+            Write-Log "Deployment Group: $deploymentGroupName"
+        }
 
         $agentName = ""
         if($publicSettings.Contains('AgentName'))
@@ -123,6 +185,14 @@ function Get-ConfigurationFromSettings {
             Tags               = $tags
             WindowsLogonAccountName = $windowsLogonAccountName
             WindowsLogonPassword = $windowsLogonPassword
+            IsPipelinesAgent   = $isPipelinesAgent
+            PoolName           = $poolName
+            SingleUse          = $singleUse
+            AgentLocation      = $agentLocation
+            InstallScriptLocation = $installScriptLocation
+            InstallScriptParameters = $installScriptParameters
+            RunScriptLocation  = $runScriptLocation
+            RunScriptParameters = $runScriptParameters
         }
     }
     catch

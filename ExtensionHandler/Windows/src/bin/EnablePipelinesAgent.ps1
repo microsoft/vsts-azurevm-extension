@@ -7,10 +7,6 @@
 $ErrorActionPreference = 'stop'
 Set-StrictMode -Version latest
 
-if (!(Test-Path variable:PSScriptRoot) -or !($PSScriptRoot)) { # $PSScriptRoot is not defined in 2.0
-    $PSScriptRoot = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
-}
-
 Import-Module $PSScriptRoot\Log.psm1
 
 function EnablePipelinesAgent
@@ -75,7 +71,7 @@ function EnablePipelinesAgent
 
         # Download the enable script
         Write-Log ("Downloading enable script from " + $config.EnableScriptDownloadUrl)
-        Add-HandlerSubStatus $RM_Extension_Status.DownloadPipelinesZip.Code $RM_Extension_Status.DownloadPipelinesScript.Message -operationName $config.EnableScriptDownloadUrl
+        Add-HandlerSubStatus $RM_Extension_Status.DownloadPipelinesScript.Code $RM_Extension_Status.DownloadPipelinesScript.Message -operationName $config.EnableScriptDownloadUrl
         $fileName = [System.IO.Path]::GetFileName($config.EnableScriptDownloadUrl)
         $enableFileName = Join-Path -Path $config.AgentFolder -ChildPath $fileName
         $webclient.DownloadFile($config.EnableScriptDownloadUrl, $enableFileName)
@@ -99,10 +95,15 @@ function EnablePipelinesAgent
 
         # We can't use -Wait here and instead need to poll for the powershell process to exit.
         # We want to wait for the powershell script to exit, but we don't want to wait for the process that it spawns to exit.
-        # So poll ourselves.
+        # So poll ourselves for 30 minutes.
         $process = Start-Process -FilePath PowerShell.exe -Verb RunAs -PassThru -ArgumentList $argList
-        do {Start-Sleep -Milliseconds 1000}
-        until ($process.HasExited)
+        $loops = 0
+        do 
+        {
+            $loops++
+            Start-Sleep -Milliseconds 1000
+        }
+        until ($process.HasExited -or ($loops -gt 1800))
 
         Write-Log "Enable script completed" 
         $log = Get-Content -Raw $logFileName

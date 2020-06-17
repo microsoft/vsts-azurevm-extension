@@ -125,7 +125,7 @@ function Get-ConfigurationFromSettings {
         }
         Verify-InputNotNull "DeploymentGroup" $deploymentGroupName
         Write-Log "Deployment Group: $deploymentGroupName"
-        
+
         $agentName = ""
         if($publicSettings.Contains('AgentName'))
         {

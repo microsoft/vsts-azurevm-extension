@@ -335,7 +335,6 @@ def get_configuration_from_settings():
       elif(protected_settings.has_key('enableScriptParameters')):
         handler_utility.log("using protected enableScriptParameters")
         enableScriptParameters = protected_settings['enableScriptParameters']
-      handler_utility.verify_input_not_null('enableScriptParameters', enableScriptParameters)
 
       return {
               'IsPipelinesAgent': 'true',
@@ -550,6 +549,9 @@ def enable_pipelines_agent(config):
   try:
     handler_utility.log('Enable Pipelines Agent')
 
+    # verify we have the enable script parameters here.
+    handler_utility.verify_input_not_null('enableScriptParameters', config["EnableScriptParameters"])
+
     handler_utility.add_handler_sub_status(Util.HandlerSubStatus('DownloadPipelinesAgent'))
     agentFolder = config["AgentFolder"]
     handler_utility.log(agentFolder)
@@ -593,7 +595,7 @@ def enable_pipelines_agent(config):
     enableParameters = config["EnableScriptParameters"]
 
     # run the script and wait for it to complete
-    handler_utility.log("running script");
+    handler_utility.log("running script")
     argList =  ['/bin/bash', enableFile] + shlex.split(enableParameters)
     enableProcess = subprocess.Popen(argList)
     enableProcess.communicate()

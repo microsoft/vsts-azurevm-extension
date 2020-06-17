@@ -21,6 +21,7 @@ Import-Module $PSScriptRoot\Log.psm1
 . $PSScriptRoot\AgentConfigurationManager.ps1
 . $PSScriptRoot\ConfigSettingsReader.ps1
 . $PSScriptRoot\Constants.ps1
+. $PSScriptRoot\EnablePipelinesAgent.ps1
 
 $configuredAgentExists = $false
 $agentConfigurationRequired = $true
@@ -437,6 +438,11 @@ function Enable
     Set-HandlerStatus $RM_Extension_Status.Installing.Code $RM_Extension_Status.Installing.Message
     Invoke-PreValidationChecks
     $config = Get-ConfigurationFromSettings
+    if($config.ContainsKey('IsPipelinesAgent'))
+    {
+        EnablePipelinesAgent $config
+        return
+    }
     $config.AgentWorkingFolder = Get-AgentWorkingFolder
     Compare-SequenceNumber $config
     $settingsAreSame = Test-ExtensionSettingsAreSameAsDisabledVersion $config

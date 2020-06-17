@@ -20,6 +20,8 @@ from Utils.WAAgentUtil import waagent
 from distutils.version import LooseVersion
 from time import sleep
 from urllib2 import quote
+import urllib
+import shlex
 
 configured_agent_exists = False
 agent_configuration_required = True
@@ -299,7 +301,7 @@ def validate_inputs(config):
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['ValidatingInputs']['operationName'], getattr(e,'Code'))
 
-def get_configutation_from_settings():
+def get_configuration_from_settings():
   try:
     public_settings = handler_utility.get_public_settings()
     if(public_settings == None):
@@ -310,6 +312,41 @@ def get_configutation_from_settings():
     if(protected_settings == None):
       protected_settings = {}
 
+    # If this is a pipelines agent, read the settings and return quickly
+    # Note that the pipelines settings come over as camelCase
+    if(public_settings.has_key('isPipelinesAgent')):
+      handler_utility.log("Is Pipelines Agent")
+
+      # read pipelines agent settings
+      agentDownloadUrl = public_settings['agentDownloadUrl']
+      handler_utility.verify_input_not_null('agentDownloadUrl', agentDownloadUrl)
+
+      agentFolder = public_settings['agentFolder']
+      handler_utility.verify_input_not_null('agentFolder', agentFolder)
+
+      enableScriptDownloadUrl = public_settings['enableScriptDownloadUrl']
+      handler_utility.verify_input_not_null('enableScriptDownloadUrl', enableScriptDownloadUrl)
+
+      # for testing, first try to get the script parameters from the public settings
+      # in production they will be in the protected settings
+      if(public_settings.has_key('enableScriptParameters')):
+        handler_utility.log("using public enableScriptParameters")
+        enableScriptParameters = public_settings['enableScriptParameters']
+      elif(protected_settings.has_key('enableScriptParameters')):
+        handler_utility.log("using protected enableScriptParameters")
+        enableScriptParameters = protected_settings['enableScriptParameters']
+      handler_utility.verify_input_not_null('enableScriptParameters', enableScriptParameters)
+
+      return {
+              'IsPipelinesAgent': 'true',
+              'AgentDownloadUrl':agentDownloadUrl,
+              'AgentFolder':agentFolder,
+              'EnableScriptDownloadUrl':enableScriptDownloadUrl,
+              'EnableScriptParameters':enableScriptParameters
+            }
+
+    # continue with deployment agent settings
+    handler_utility.log("Is Deployment Agent")
     pat_token = ''
     if((protected_settings.__class__.__name__ == 'dict') and protected_settings.has_key('PATToken')):
       pat_token = protected_settings['PATToken']
@@ -509,10 +546,76 @@ def test_extension_settings_are_same_as_disabled_version():
     handler_utility.log('Disabled settings check failed. Error: {0}'.format(getattr(e,'message')))
     return False
 
+def enable_pipelines_agent(config):
+  try:
+    handler_utility.log('Enable Pipelines Agent')
+
+    handler_utility.add_handler_sub_status(Util.HandlerSubStatus('DownloadPipelinesAgent'))
+    agentFolder = config["AgentFolder"]
+    handler_utility.log(agentFolder)
+
+    if(not os.path.isdir(agentFolder)):
+      handler_utility.log('Agent folder does not exist. Creating it.')
+      os.makedirs(agentFolder, 0o777)
+
+    # download the agent tar file
+    handler_utility.add_handler_sub_status(Util.HandlerSubStatus('DownloadPipelinesZip'))
+    handler_utility.log('Download Pipelines Zip')
+    downloadUrl = config["AgentDownloadUrl"]
+    handler_utility.log(downloadUrl)
+    filename = os.path.basename(downloadUrl)
+    agentFile = os.path.join(agentFolder, filename)
+    urllib.urlretrieve(downloadUrl, agentFile)
+
+    # download the enable script
+    handler_utility.add_handler_sub_status(Util.HandlerSubStatus('DownloadPipelinesScript'))
+    handler_utility.log('Download Pipelines Script')
+    downloadUrl = config["EnableScriptDownloadUrl"]
+    handler_utility.log(downloadUrl)
+    filename = os.path.basename(downloadUrl)
+    enableFile = os.path.join(agentFolder, filename)
+    urllib.urlretrieve(downloadUrl, enableFile)
+
+  except Exception as e:
+    handler_utility.log(getattr(e,'message'))
+    handler_utility.log(e)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DownloadPipelinesAgentError']['operationName'], getattr(e,'message'))
+    return
+
+  try:
+    # grant executable access to the script    
+    os.chmod(enableFile, 0o777)
+
+    # run the enable script
+    handler_utility.add_handler_sub_status(Util.HandlerSubStatus('EnablePipelinesAgent'))
+    handler_utility.log('Run Pipelines Script')
+    handler_utility.log(enableFile)
+    enableParameters = config["EnableScriptParameters"]
+
+    # run the script and wait for it to complete
+    handler_utility.log("running script");
+    argList =  ['/bin/bash', enableFile] + shlex.split(enableParameters)
+    enableProcess = subprocess.Popen(argList)
+    enableProcess.communicate()
+
+  except Exception as e:
+    handler_utility.log(getattr(e,'message'))
+    handler_utility.log(e)
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['EnablePipelinesAgentError']['operationName'], getattr(e,'message'))
+    return
+
+  handler_utility.add_handler_sub_status(Util.HandlerSubStatus('EnablePipelinesAgentSuccess'))
+  handler_utility.set_handler_status(Util.HandlerStatus('Enabled', 'success'))
+  handler_utility.log('Pipelines Agent is enabled.')
+
 def enable():
   handler_utility.set_handler_status(Util.HandlerStatus('Installing'))
   pre_validation_checks()
-  config = get_configutation_from_settings()
+  config = get_configuration_from_settings()
+  if(config.get('IsPipelinesAgent') != None):
+    enable_pipelines_agent(config)
+    return
+
   compare_sequence_number()
   settings_are_same = test_extension_settings_are_same_as_disabled_version()
   if(settings_are_same):
@@ -538,6 +641,11 @@ def enable():
 
 def disable():
   ConfigureDeploymentAgent.set_logger(handler_utility.log)
+  config = get_configuration_from_settings()
+
+  if(config.get('IsPipelinesAgent') != None):
+    return
+
   handler_utility.log('Disable command is no-op for agent')
   handler_utility.log('Disabling extension handler. Creating a markup file..')
   set_extension_disabled_markup()
@@ -547,6 +655,11 @@ def disable():
   handler_utility.set_handler_status(Util.HandlerStatus('Disabled', 'success'))
 
 def uninstall():
+  config = get_configuration_from_settings()
+
+  if(config.get('IsPipelinesAgent') != None):
+    return
+
   global configured_agent_exists
   configured_agent_exists = ConfigureDeploymentAgent.is_agent_configured(Constants.agent_working_folder)
   extension_update_file = '{0}/{1}'.format(Constants.agent_working_folder, Constants.update_file_name)
@@ -564,6 +677,11 @@ def uninstall():
   handler_utility.set_handler_status(Util.HandlerStatus('Uninstalling', 'success'))
 
 def update():
+  config = get_configuration_from_settings()
+
+  if(config.get('IsPipelinesAgent') != None):
+    return
+
   create_extension_update_file()
 
 def main():

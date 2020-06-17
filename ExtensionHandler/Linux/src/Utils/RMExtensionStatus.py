@@ -139,12 +139,12 @@ rm_extension_status = {
   },
   'PreValidationCheck': {
     'Code': 31,
-    'Message': 'Validating dependecies',
+    'Message': 'Validating dependencies',
     'operationName': 'Pre-Validation Checks'
   },
   'PreValidationCheckSuccess': {
     'Code': 32,
-    'Message': 'Successfully validated dependecies',
+    'Message': 'Successfully validated dependencies',
     'operationName': 'Pre-Validation Checks'
   },
   'ComparingWithPreviousSettings': {
@@ -156,6 +156,45 @@ rm_extension_status = {
     'Code': 34,
     'Message': 'Installed the required dependencies',
     'operationName': 'InstallDependencies'
+  },
+
+#
+# Pipelines Agent codes
+#
+  'DownloadPipelinesAgent': {
+    'Code': 70,
+    'Message': 'Download Pipelines Agent',
+    'operationName': 'Download Pipelines Agent'
+  },
+  'DownloadPipelinesZip': {
+    'Code': 71,
+    'Message': 'Download Pipelines Zip',
+    'operationName': 'Download Pipelines Zip'
+  },
+  'DownloadPipelinesScript': {
+    'Code': 72,
+    'Message': 'Download Pipelines Script',
+    'operationName': 'Download Pipelines Script'
+  },
+  'DownloadPipelinesAgentError': {
+    'Code': 73,
+    'Message': 'Download Pipelines Agent Error',
+    'operationName': 'Download Pipelines Agent Error'
+  },
+  'EnablePipelinesAgent': {
+    'Code': 74,
+    'Message': 'Enable Pipelines Agent',
+    'operationName': 'Enable Pipelines Agent'
+  },
+  'EnablePipelinesAgentError': {
+    'Code': 75,
+    'Message': 'Enable Pipelines Agent Error',
+    'operationName': 'Enable Pipelines Agent Error'
+  },
+  'EnablePipelinesAgentSuccess': {
+    'Code': 76,
+    'Message': 'Enable Pipelines Agent Success',
+    'operationName': 'Enable Pipelines Agent Success'
   },
 
   #

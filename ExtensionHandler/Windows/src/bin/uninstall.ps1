@@ -19,6 +19,12 @@ Import-Module $PSScriptRoot\Log.psm1
 
 Initialize-ExtensionLogFile
 
+$config = Get-ConfigurationFromSettings
+if($config.ContainsKey('IsPipelinesAgent'))
+{
+    return
+}
+
 #Assuming PAT to be null since it would be removed during enable
 
 $agentWorkingFolder = Get-AgentWorkingFolder

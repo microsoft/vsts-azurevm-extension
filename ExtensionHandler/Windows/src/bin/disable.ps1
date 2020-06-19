@@ -20,6 +20,12 @@ Import-Module $PSScriptRoot\Log.psm1
 
 Initialize-ExtensionLogFile
 
+$config = Get-ConfigurationFromSettings
+if($config.ContainsKey('IsPipelinesAgent'))
+{
+    return
+}
+
 $agentWorkingFolder = Get-AgentWorkingFolder
 
 Write-Log "Disable command is no-op for the extension"

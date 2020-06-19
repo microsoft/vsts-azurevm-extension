@@ -34,6 +34,50 @@ function Get-ConfigurationFromSettings {
             $protectedSettings = @{}
         }
 
+        # Check if this extension is for Pipelines agent
+        # Note that the settings come over as camelCase
+        if($publicSettings.Contains('isPipelinesAgent'))
+        {
+            Write-Log "Is Pipelines Agent"
+
+            $agentDownloadUrl = $publicSettings['agentDownloadUrl']
+            Verify-InputNotNull "agentDownloadUrl" $agentDownloadUrl
+
+            $agentFolder = $publicSettings['agentFolder']
+            Verify-InputNotNull "agentFolder" $agentFolder
+
+            $enableScriptDownloadUrl = $publicSettings['enableScriptDownloadUrl']
+            Verify-InputNotNull "enableScriptDownloadUrl" $enableScriptDownloadUrl
+
+            # For testing look for the script parameters in the public settings first
+            # In production it will be in the protected settings
+            $enableScriptParameters = ""
+            if ($publicSettings.Contains('enableScriptParameters'))
+            {
+                Write-Log ("Using Public EnableScriptParameters")
+                $enableScriptParameters = $publicSettings['enableScriptParameters']  
+            }
+            elseif ($protectedSettings.Contains('enableScriptParameters'))
+            {
+                Write-Log ("Using Protected EnableScriptParameters")
+                $enableScriptParameters = $protectedSettings['enableScriptParameters']  
+            }
+
+            Write-Log "Done reading pipelines agents settings."
+            Add-HandlerSubStatus $RM_Extension_Status.SuccessfullyReadSettings.Code $RM_Extension_Status.SuccessfullyReadSettings.Message -operationName $RM_Extension_Status.SuccessfullyReadSettings.operationName
+
+            return @{
+                IsPipelinesAgent = $true
+                AgentDownloadUrl = $agentDownloadUrl
+                AgentFolder = $agentFolder
+                EnableScriptDownloadUrl = $enableScriptDownloadUrl
+                EnableScriptParameters = $enableScriptParameters
+            }
+        }
+
+        #continue with the RM Deployment settings
+        Write-Log "Is Deployment Agent"
+
         #Extract protected settings
         $patToken = ""
         if($protectedSettings.Contains('PATToken'))

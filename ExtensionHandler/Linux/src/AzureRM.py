@@ -580,7 +580,6 @@ def enable_pipelines_agent(config):
 
   except Exception as e:
     handler_utility.log(getattr(e,'message'))
-    handler_utility.log(e)
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DownloadPipelinesAgentError']['operationName'], getattr(e,'message'))
     return
 
@@ -602,7 +601,6 @@ def enable_pipelines_agent(config):
 
   except Exception as e:
     handler_utility.log(getattr(e,'message'))
-    handler_utility.log(e)
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['EnablePipelinesAgentError']['operationName'], getattr(e,'message'))
     return
 

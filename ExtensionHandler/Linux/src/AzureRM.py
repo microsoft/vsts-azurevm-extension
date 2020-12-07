@@ -177,8 +177,6 @@ def compare_sequence_number():
     if((sequence_number == last_sequence_number) and not(test_extension_disabled_markup())):
       handler_utility.log(RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'])
       handler_utility.log('Skipping enable since seq numbers match. Seq number: {0}.'.format(sequence_number))
-      handler_utility.add_handler_sub_status(Util.HandlerSubStatus('SkippedInstallation'))
-      handler_utility.set_handler_status(Util.HandlerStatus('Enabled', 'success'))
       exit_with_code(0)
 
   except Exception as e:

@@ -210,8 +210,6 @@ function Compare-SequenceNumber{
         {
             Write-Log $RM_Extension_Status.SkippedInstallation.Message
             Write-Log "Skipping enable since seq numbers match. Seq number: $sequenceNumber." $true
-            Add-HandlerSubStatus $RM_Extension_Status.SkippedInstallation.Code $RM_Extension_Status.SkippedInstallation.Message -operationName $RM_Extension_Status.SkippedInstallation.operationName
-            Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
             Exit-WithCode 0
         }
         Write-Log "Sequence Number: $sequenceNumber" $true

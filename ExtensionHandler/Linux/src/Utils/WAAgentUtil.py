@@ -17,7 +17,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import imp
+try:
+    import imp as imp
+except ImportError:
+    import importlib as imp
 import os
 import os.path
 
@@ -26,6 +29,17 @@ import os.path
 # it as a submodule of current module
 #
 def searchWAAgent():
+    agentPath = os.path.join(os.getcwd(), "./WaagentLib.py")
+    if(os.path.isfile(agentPath)):
+        return agentPath
+    user_paths = os.environ['PYTHONPATH'].split(os.pathsep)
+    for user_path in user_paths:
+        agentPath = os.path.join(user_path, 'waagent')
+        if(os.path.isfile(agentPath)):
+            return agentPath
+    return None
+
+def searchWAAgentOld():
     agentPath = '/usr/sbin/waagent'
     if(os.path.isfile(agentPath)):
         return agentPath
@@ -36,12 +50,20 @@ def searchWAAgent():
             return agentPath
     return None
 
-waagent = None
-agentPath = searchWAAgent()
-if agentPath:
-    waagent = imp.load_source('waagent', agentPath)
-else:
-    raise Exception("Can't load waagent.")
+pathUsed = 1 
+try:
+    agentPath = searchWAAgent()
+    if(agentPath):
+        waagent = imp.load_source('waagent', agentPath)
+    else:
+        raise Exception("Can't load new waagent.")
+except Exception as e:
+    pathUsed = 0 
+    agentPath = searchWAAgentOld()
+    if(agentPath):
+        waagent = imp.load_source('waagent', agentPath)
+    else:
+        raise Exception("Can't load old waagent.")
 
 if not hasattr(waagent, "AddExtensionEvent"):
     """
@@ -53,7 +75,7 @@ if not hasattr(waagent, "AddExtensionEvent"):
 
 if not hasattr(waagent, "WALAEventOperation"):
     class _WALAEventOperation:
-        HeartBeat="HeartBeat"
+        HeartBeat = "HeartBeat"
         Provision = "Provision"
         Install = "Install"
         UnIsntall = "UnInstall"
@@ -64,47 +86,9 @@ if not hasattr(waagent, "WALAEventOperation"):
         Update = "Update"           
     waagent.WALAEventOperation = _WALAEventOperation
 
-
-def GetWaagentHttpProxyConfigString():
-    """
-    Get http_proxy and https_proxy from waagent config.
-    Username and password is not supported now.
-    This code is adopted from /usr/sbin/waagent
-    """
-    host = None
-    port = None
-    try:
-        waagent.Config = waagent.ConfigurationProvider(None)  # Use default waagent conf file (most likely /etc/waagent.conf)
-
-        host = waagent.Config.get("HttpProxy.Host")
-        port = waagent.Config.get("HttpProxy.Port")
-    except Exception as e:
-        # waagent.ConfigurationProvider(None) will throw an exception on an old waagent
-        # Has to silently swallow because logging is not yet available here
-        # and we don't want to bring that in here. Also if the call fails, then there's
-        # no proxy config in waagent.conf anyway, so it's safe to silently swallow.
-        pass
-
-    result = ''
-    if host is not None:
-        result = "http://" + host
-        if port is not None:
-            result += ":" + port
-
-    return result
-
-
-waagent.HttpProxyConfigString = GetWaagentHttpProxyConfigString()
-
-# end: waagent http proxy config stuff
-
 __ExtensionName__ = None
-
-
 def InitExtensionEventLog(name):
-    global __ExtensionName__
     __ExtensionName__ = name
-
 
 def AddExtensionEvent(name=__ExtensionName__,
                       op=waagent.WALAEventOperation.Enable, 
@@ -116,4 +100,6 @@ def AddExtensionEvent(name=__ExtensionName__,
                                   isSuccess=isSuccess,
                                   message=message)
 
+def GetPathUsed():
+    return pathUsed
 

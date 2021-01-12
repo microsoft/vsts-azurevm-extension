@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 #todo
 #1. agent rename
 #2. retries
@@ -19,8 +19,8 @@ import shutil
 from Utils.WAAgentUtil import waagent
 from distutils.version import LooseVersion
 from time import sleep
-from urllib2 import quote
-import urllib
+from urllib.parse import quote
+import urllib.request, urllib.parse, urllib.error
 import shlex
 
 configured_agent_exists = False
@@ -193,7 +193,7 @@ def parse_account_name(account_name, pat_token):
   if (deployment_type != 'hosted'):
     Constants.is_on_prem = True
     vsts_url_without_prefix = vsts_url[len(account_name_prefix):]
-    parts = filter(lambda x: x!='', vsts_url_without_prefix.split('/'))
+    parts = [x for x in vsts_url_without_prefix.split('/') if x!='']
     if(len(parts) <= 1):
       raise Exception("Invalid value for the input 'Azure DevOps Organization url'. It should be in the format http(s)://<server>/<application>/<collection> for on-premise deployment.")
 
@@ -204,7 +204,7 @@ def get_deployment_type(vsts_url, pat_token):
   response = Util.make_http_call(rest_call_url, 'GET', None, None, pat_token)
   if(response.status == Constants.HTTP_OK):
     connection_data = json.loads(response.read())
-    if(connection_data.has_key('deploymentType')):
+    if('deploymentType' in connection_data):
       return connection_data['deploymentType']
     else:
       return 'onPremises'
@@ -217,16 +217,16 @@ def format_tags_input(tags_input):
   if(tags_input.__class__.__name__ == 'list'):
     tags = tags_input
   elif(tags_input.__class__.__name__ == 'dict'):
-    tags = tags_input.values()
+    tags = list(tags_input.values())
   elif(tags_input.__class__.__name__ == 'str' or tags_input.__class__.__name__ == 'unicode'):
     tags = tags_input.split(',')
   else:
     message = 'Tags input should be either a list or a dictionary'
     raise RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['InputConfigurationError'], message)
   ret_val = []
-  temp = list(set(map(lambda x : x.strip(), tags)))
+  temp = list(set([x.strip() for x in tags]))
   for x in  temp:
-    if(x!='' and x.lower() not in map(lambda y:y.lower(), ret_val)):
+    if(x!='' and x.lower() not in [y.lower() for y in ret_val]):
       ret_val.append(x)
   return ret_val
 
@@ -245,7 +245,6 @@ def validate_inputs(config):
     get_deployment_group_url = "{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}".format(config['VSTSUrl'], quote(config['TeamProject']), quote(config['DeploymentGroup']), Constants.projectAPIVersion)
     
     handler_utility.log("Get deployment group url - {0}".format(get_deployment_group_url))
-
     response = Util.make_http_call(get_deployment_group_url, 'GET', None, None, config['PATToken'])
 
     if(response.status != Constants.HTTP_OK):
@@ -312,7 +311,7 @@ def get_configuration_from_settings():
 
     # If this is a pipelines agent, read the settings and return quickly
     # Note that the pipelines settings come over as camelCase
-    if(public_settings.has_key('isPipelinesAgent')):
+    if('isPipelinesAgent' in public_settings):
       handler_utility.log("Is Pipelines Agent")
 
       # read pipelines agent settings
@@ -327,10 +326,10 @@ def get_configuration_from_settings():
 
       # for testing, first try to get the script parameters from the public settings
       # in production they will be in the protected settings
-      if(public_settings.has_key('enableScriptParameters')):
+      if('enableScriptParameters' in public_settings):
         handler_utility.log("using public enableScriptParameters")
         enableScriptParameters = public_settings['enableScriptParameters']
-      elif(protected_settings.has_key('enableScriptParameters')):
+      elif('enableScriptParameters' in protected_settings):
         handler_utility.log("using protected enableScriptParameters")
         enableScriptParameters = protected_settings['enableScriptParameters']
 
@@ -345,17 +344,17 @@ def get_configuration_from_settings():
     # continue with deployment agent settings
     handler_utility.log("Is Deployment Agent")
     pat_token = ''
-    if((protected_settings.__class__.__name__ == 'dict') and protected_settings.has_key('PATToken')):
+    if((protected_settings.__class__.__name__ == 'dict') and 'PATToken' in protected_settings):
       pat_token = protected_settings['PATToken']
-    if((pat_token == '') and (public_settings.has_key('PATToken'))):
+    if((pat_token == '') and ('PATToken' in public_settings)):
       pat_token = public_settings['PATToken']
 
     vsts_account_url = ''
-    if(public_settings.has_key('AzureDevOpsOrganizationUrl')):
+    if('AzureDevOpsOrganizationUrl' in public_settings):
       vsts_account_url = public_settings['AzureDevOpsOrganizationUrl'].strip('/')
-    elif(public_settings.has_key('VSTSAccountUrl')):
+    elif('VSTSAccountUrl' in public_settings):
       vsts_account_url = public_settings['VSTSAccountUrl'].strip('/')
-    elif(public_settings.has_key('VSTSAccountName')):
+    elif('VSTSAccountName' in public_settings):
       vsts_account_url = public_settings['VSTSAccountName'].strip('/')
     handler_utility.verify_input_not_null('AzureDevOpsOrganizationUrl', vsts_account_url)
     vsts_url = vsts_account_url
@@ -364,32 +363,32 @@ def get_configuration_from_settings():
     handler_utility.log('Azure DevOps Organization Url : {0}'.format(vsts_url))
 
     team_project_name = ''
-    if(public_settings.has_key('TeamProject')):
+    if('TeamProject' in public_settings):
       team_project_name = public_settings['TeamProject']
     handler_utility.verify_input_not_null('TeamProject', team_project_name)
     handler_utility.log('Team Project : {0}'.format(team_project_name))
 
     deployment_group_name = ''
-    if(public_settings.has_key('DeploymentGroup')):
+    if('DeploymentGroup' in public_settings):
       deployment_group_name = public_settings['DeploymentGroup']
-    elif(public_settings.has_key('MachineGroup')):
+    elif('MachineGroup' in public_settings):
       deployment_group_name = public_settings['MachineGroup']
     handler_utility.verify_input_not_null('DeploymentGroup', deployment_group_name)
     handler_utility.log('Deployment Group : {0}'.format(deployment_group_name))
 
     agent_name = ''
-    if(public_settings.has_key('AgentName')):
+    if('AgentName' in public_settings):
       agent_name = public_settings['AgentName']
     handler_utility.log('Agent Name : {0}'.format(agent_name))
 
     tags_input = [] 
-    if(public_settings.has_key('Tags')):
+    if('Tags' in public_settings):
       tags_input = public_settings['Tags']
     handler_utility.log('Tags : {0}'.format(tags_input))
     tags = format_tags_input(tags_input)
 
     configure_agent_as_username = ''
-    if(public_settings.has_key('UserName')):
+    if('UserName' in public_settings):
       configure_agent_as_username = public_settings['UserName']
 
     handler_utility.log('Done reading config settings from file...')
@@ -565,7 +564,7 @@ def enable_pipelines_agent(config):
     handler_utility.log(downloadUrl)
     filename = os.path.basename(downloadUrl)
     agentFile = os.path.join(agentFolder, filename)
-    urllib.urlretrieve(downloadUrl, agentFile)
+    urllib.request.urlretrieve(downloadUrl, agentFile)
 
     # download the enable script
     handler_utility.add_handler_sub_status(Util.HandlerSubStatus('DownloadPipelinesScript'))
@@ -574,10 +573,11 @@ def enable_pipelines_agent(config):
     handler_utility.log(downloadUrl)
     filename = os.path.basename(downloadUrl)
     enableFile = os.path.join(agentFolder, filename)
-    urllib.urlretrieve(downloadUrl, enableFile)
+    urllib.request.urlretrieve(downloadUrl, enableFile)
 
   except Exception as e:
     handler_utility.log(getattr(e,'message'))
+    handler_utility.log(e)
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DownloadPipelinesAgentError']['operationName'], getattr(e,'message'))
     return
 
@@ -599,6 +599,7 @@ def enable_pipelines_agent(config):
 
   except Exception as e:
     handler_utility.log(getattr(e,'message'))
+    handler_utility.log(e)
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['EnablePipelinesAgentError']['operationName'], getattr(e,'message'))
     return
 

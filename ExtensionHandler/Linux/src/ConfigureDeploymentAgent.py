@@ -6,7 +6,7 @@ import Utils.Constants as Constants
 import codecs
 import Utils.HandlerUtil as Util
 from pwd import getpwnam
-from urllib2 import quote
+from urllib.parse import quote
 
 agent_listener_path = ''
 agent_service_path = ''
@@ -18,7 +18,7 @@ def get_agent_setting(working_folder, key):
   agent_setting_file_path = os.path.join(working_folder, Constants.agent_setting)
   if(setting_params == {}):
     setting_params = json.load(codecs.open(agent_setting_file_path, 'r', 'utf-8-sig'))
-  return setting_params[key] if(setting_params.has_key(key)) else ''
+  return setting_params[key] if(key in setting_params) else ''
 
 def set_logger(log_func):
   global log_function
@@ -226,7 +226,7 @@ def _add_tags_to_agent_internal(vsts_url, pat_token, project_id, deployment_grou
     existing_tags = val['tags']
     tags = json.loads(tags_string)
     for x in tags:
-      if(x.lower() not in map(lambda y:y.lower(), existing_tags)):
+      if(x.lower() not in [y.lower() for y in existing_tags]):
         existing_tags.append(x)
     tags = existing_tags
   else:

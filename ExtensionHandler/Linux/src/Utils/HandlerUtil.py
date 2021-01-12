@@ -59,14 +59,14 @@ import imp
 import base64
 import json
 import time
-import RMExtensionStatus
+from . import RMExtensionStatus
 import platform
-import httplib
+import http.client
 import base64
 
 from xml.etree import ElementTree
 from os.path import join
-from WAAgentUtil import waagent
+from .WAAgentUtil import waagent
 from waagent import LoggerInit
 
 DateTimeFormat = "%Y-%m-%dT%H:%M:%SZ"
@@ -207,8 +207,8 @@ class HandlerUtility:
             self.error("JSON error processing settings file:" + ctxt)
         else:
             handlerSettings = config['runtimeSettings'][0]['handlerSettings']
-            if handlerSettings.has_key('protectedSettings') and \
-                    handlerSettings.has_key("protectedSettingsCertThumbprint") and \
+            if 'protectedSettings' in handlerSettings and \
+                    "protectedSettingsCertThumbprint" in handlerSettings and \
                     handlerSettings['protectedSettings'] is not None and \
                     handlerSettings['protectedSettings'] != '' and \
                     handlerSettings["protectedSettingsCertThumbprint"] is not None:
@@ -289,7 +289,7 @@ class HandlerUtility:
             return None
         self._context._config = self._parse_config(ctxt, operation)
         self.log("JSON config read successfully")
-        self.remove_protected_settings_from_config_file()
+        #self.remove_protected_settings_from_config_file()
         return self._context
 
     def _set_log_file_to_command_execution_log(self):
@@ -537,13 +537,17 @@ def make_http_call(url, http_method, body, headers, pat_token):
 
   if (pat_token):
     basic_auth = '{0}:{1}'.format('', pat_token)
-    basic_auth = base64.b64encode(basic_auth)
-    headers['Authorization'] = 'Basic {0}'.format(basic_auth)
+    basic_auth = base64.b64encode(basic_auth.encode("utf-8"))
+    headers['Authorization'] = 'Basic {0}'.format(str(basic_auth, 'utf-8'))
 
-  connection_type = httplib.HTTPSConnection
+  connection_type = http.client.HTTPSConnection
   if(prefix.startswith('http://')):
-    connection_type = httplib.HTTPConnection
+    connection_type = http.client.HTTPConnection
 
+  print("connection_type is {0}".format(connection_type))
+  print("server_url is {0}".format(server_url))
+  print("path is {0}".format(path))
+  print("headers are {0}".format(headers))
   connection = connection_type(server_url)
   connection.request(http_method, path, body, headers)
   return connection.getresponse()
@@ -557,7 +561,7 @@ def empty_dir(dir_name):
 
 def ordered_json_object(obj):
   if isinstance(obj, dict):
-    return sorted((k, ordered_json_object(v)) for k, v in obj.items())
+    return sorted((k, ordered_json_object(v)) for k, v in list(obj.items()))
   if isinstance(obj, list):
     return sorted(ordered_json_object(x) for x in obj)
   else:

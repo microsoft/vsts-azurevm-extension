@@ -607,6 +607,7 @@ def enable_pipelines_agent(config):
   handler_utility.log('Pipelines Agent is enabled.')
 
 def enable():
+  compare_sequence_number()
   handler_utility.set_handler_status(Util.HandlerStatus('Installing'))
   pre_validation_checks()
   config = get_configuration_from_settings()
@@ -614,7 +615,6 @@ def enable():
     enable_pipelines_agent(config)
     return
 
-  compare_sequence_number()
   settings_are_same = test_extension_settings_are_same_as_disabled_version()
   if(settings_are_same):
     handler_utility.log("Skipping extension enable.")

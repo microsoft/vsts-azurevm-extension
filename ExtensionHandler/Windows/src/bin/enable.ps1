@@ -195,7 +195,7 @@ function Invoke-PreValidationChecks {
 function Compare-SequenceNumber{
     [CmdletBinding()]
     param(
-        [hashtable] $config
+        [string] $agentWorkingFolder
     )
         
     try
@@ -206,7 +206,7 @@ function Compare-SequenceNumber{
         #
         $sequenceNumber = Get-HandlerExecutionSequenceNumber
         $lastSequenceNumber = Get-LastSequenceNumber
-        if(($sequenceNumber -eq $lastSequenceNumber) -and (!(Test-ExtensionDisabledMarkup $config.AgentWorkingFolder)))
+        if(($sequenceNumber -eq $lastSequenceNumber) -and (!(Test-ExtensionDisabledMarkup $agentWorkingFolder)))
         {
             Write-Log $RM_Extension_Status.SkippedInstallation.Message
             Write-Log "Skipping enable since seq numbers match. Seq number: $sequenceNumber." $true
@@ -433,6 +433,8 @@ function ConfigureAgentIfRequired
 function Enable
 {
     Initialize-ExtensionLogFile
+    $agentWorkingFolder = Get-AgentWorkingFolder
+    Compare-SequenceNumber $agentWorkingFolder
     Set-HandlerStatus $RM_Extension_Status.Installing.Code $RM_Extension_Status.Installing.Message
     Invoke-PreValidationChecks
     $config = Get-ConfigurationFromSettings
@@ -441,8 +443,7 @@ function Enable
         EnablePipelinesAgent $config
         return
     }
-    $config.AgentWorkingFolder = Get-AgentWorkingFolder
-    Compare-SequenceNumber $config
+    $config.AgentWorkingFolder = $agentWorkingFolder
     $settingsAreSame = Test-ExtensionSettingsAreSameAsDisabledVersion $config
     if($settingsAreSame)
     {

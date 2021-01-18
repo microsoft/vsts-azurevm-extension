@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 from . import Constants
 
 rm_terminating_error_id = 'RMHandlerTerminatingError'

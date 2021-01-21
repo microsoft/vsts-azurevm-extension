@@ -544,10 +544,6 @@ def make_http_call(url, http_method, body, headers, pat_token):
   if(prefix.startswith('http://')):
     connection_type = http.client.HTTPConnection
 
-  print("connection_type is {0}".format(connection_type))
-  print("server_url is {0}".format(server_url))
-  print("path is {0}".format(path))
-  print("headers are {0}".format(headers))
   connection = connection_type(server_url)
   connection.request(http_method, path, body, headers)
   return connection.getresponse()

@@ -179,7 +179,7 @@ def _get_deployment_group_data_from_setting(vsts_url, pat_token):
 
     response = Util.make_http_call(deployment_group_data_url, 'GET', None, None, pat_token)
     if(response.status == Constants.HTTP_OK):
-      val = json.loads(response.read())
+      val = json.loads(str(response.read(), 'utf-8'))
       _write_log('\t\t Deployment group details fetched successfully')
       return val
   return {}
@@ -221,7 +221,7 @@ def _add_tags_to_agent_internal(vsts_url, pat_token, project_id, deployment_grou
   response = Util.make_http_call(target_url, 'GET', None, None, pat_token)
   if(response.status == Constants.HTTP_OK):
     val = {}
-    response_string = response.read()
+    response_string = str(response.read(), 'utf-8')
     val = json.loads(response_string)
     existing_tags = val['tags']
     tags = json.loads(tags_string)

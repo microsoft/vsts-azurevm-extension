@@ -220,7 +220,7 @@ rm_extension_status = {
 
 
 def new_handler_terminating_error(code, message):
-  e = Exception(message)
+  e = Exception()
   setattr(e, 'Code', code)
   setattr(e, 'Message', message)
   setattr(e, 'ErrorId', rm_terminating_error_id)

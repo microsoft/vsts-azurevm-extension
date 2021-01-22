@@ -57,7 +57,7 @@ def _get_agent_package_data(package_data_url, pat_token):
   _write_download_log('\t\tFetching Agent PackageData using {0}'.format(package_data_url))
   response = Util.make_http_call(package_data_url, 'GET', None, None, pat_token)
   if(response.status == 200):
-    val = json.loads(response.read())
+    val = json.loads(str(response.read(), 'utf-8'))
     return val['value'][0]
   raise Exception('An error occured while downloading AzureDevOps agent.')
 

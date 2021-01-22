@@ -289,7 +289,7 @@ class HandlerUtility:
             return None
         self._context._config = self._parse_config(ctxt, operation)
         self.log("JSON config read successfully")
-        #self.remove_protected_settings_from_config_file()
+        self.remove_protected_settings_from_config_file()
         return self._context
 
     def _set_log_file_to_command_execution_log(self):
@@ -469,10 +469,10 @@ class HandlerUtility:
         waagent.SetFileContents(status_file, new_contents)
 
     def set_handler_error_status(self, e, operation_name):
-        error_message = getattr(e,'message')
+        error_message = e.__getattribute__('Message')
         self.error(error_message)
-        if('ErrorId' in dir(e) and getattr(e,'ErrorId') == RMExtensionStatus.rm_terminating_error_id):
-            error_code = getattr(e,'Code')
+        if('ErrorId' in dir(e) and e.__getattribute__('ErrorId') == RMExtensionStatus.rm_terminating_error_id):
+            error_code = e.__getattribute__('Code')
         else:
             error_code = RMExtensionStatus.rm_extension_status['GenericError']
         

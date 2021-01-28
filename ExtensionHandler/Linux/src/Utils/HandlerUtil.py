@@ -194,7 +194,7 @@ class HandlerUtility:
         try:
             waagent.SetFileContents(self._context._settings_file, content_to_write)
         except Exception as e:
-            self._log('[Warning]: could not delete the PAT from the settings file. More details : {0}'.format(e.message))
+            self._log('[Warning]: could not delete the PAT from the settings file. More details : {0}'.format(str(e)))
 
     def _parse_config(self, ctxt, operation):
         config = None
@@ -469,7 +469,7 @@ class HandlerUtility:
         waagent.SetFileContents(status_file, new_contents)
 
     def set_handler_error_status(self, e, operation_name):
-        error_message = e.__getattribute__('Message')
+        error_message = str(e)
         self.error(error_message)
         if('ErrorId' in dir(e) and e.__getattribute__('ErrorId') == RMExtensionStatus.rm_terminating_error_id):
             error_code = e.__getattribute__('Code')
@@ -478,13 +478,13 @@ class HandlerUtility:
         
         if(error_code == RMExtensionStatus.rm_extension_status['InstallError']):
             error_status_message = 'The Extension failed to install: {0}'.format(error_message)
-            error_sub_status_message = 'The Extension failed to install: {0} More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.'.format(e.message, self._context._log_dir)
+            error_sub_status_message = 'The Extension failed to install: {0} More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.'.format(str(e), self._context._log_dir)
         elif(error_code == RMExtensionStatus.rm_extension_status['InputConfigurationError']):
             error_status_message = 'Incorrect VSTS account credentials'
-            error_sub_status_message = e.message
+            error_sub_status_message = str(e)
         else:
-            error_status_message = 'The Extension failed to execute: {0}'.format(e.message)
-            error_sub_status_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(e.message, self._context._log_dir)
+            error_status_message = 'The Extension failed to execute: {0}'.format(str(e))
+            error_sub_status_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(str(e), self._context._log_dir)
         
         #setting substatus
         handler_sub_status = HandlerSubStatus('', 'error')

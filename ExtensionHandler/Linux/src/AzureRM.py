@@ -98,7 +98,7 @@ def set_error_status_and_error_exit(e, operation_name, code = -1):
   handler_utility.set_handler_error_status(e, operation_name)
   # Log to command execution log file.
   handler_utility._set_log_file_to_command_execution_log()
-  error_message = e.__getattribute__('Message')
+  error_message = str(e)
   # For unhandled exceptions that we might have missed to catch and specify error message.
   if(len(error_message) > Constants.ERROR_MESSAGE_LENGTH):
     error_message = error_message[:Constants.ERROR_MESSAGE_LENGTH]
@@ -180,7 +180,7 @@ def compare_sequence_number():
       exit_with_code(0)
 
   except Exception as e:
-    handler_utility.log('Sequence number check failed: {0}.'.format(e.__getattribute__('Message')))
+    handler_utility.log('Sequence number check failed: {0}.'.format(e))
 
 def parse_account_name(account_name, pat_token): 
   vsts_url = account_name.strip('/')
@@ -472,7 +472,7 @@ def remove_existing_agent(config):
         raise Exception('Cannot cleanup the agent working folder. Access not granted')
     
     except Exception as e:
-      handler_utility.log('An unexpected error occured: {0}'.format(e.__getattribute__('Message')))
+      handler_utility.log('An unexpected error occured: {0}'.format(str(e)))
       raise e
     ConfigureDeploymentAgent.setting_params = {}
   except Exception as e:
@@ -539,7 +539,7 @@ def test_extension_settings_are_same_as_disabled_version():
       handler_utility.log('Disabled version settings file does not exist in the agent directory. Will continue with enable.')
     return False
   except Exception as e:
-    handler_utility.log('Disabled settings check failed. Error: {0}'.format(e.__getattribute__('Message')))
+    handler_utility.log('Disabled settings check failed. Error: {0}'.format(str(e)))
     return False
 
 def enable_pipelines_agent(config):
@@ -576,9 +576,9 @@ def enable_pipelines_agent(config):
     urllib.request.urlretrieve(downloadUrl, enableFile)
 
   except Exception as e:
-    handler_utility.log(e.__getattribute__('Message'))
+    handler_utility.log(str(e))
     handler_utility.log(e)
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DownloadPipelinesAgentError']['operationName'], e.__getattribute__('Message'))
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DownloadPipelinesAgentError']['operationName'], str(e))
     return
 
   try:
@@ -598,9 +598,9 @@ def enable_pipelines_agent(config):
     enableProcess.communicate()
 
   except Exception as e:
-    handler_utility.log(e.__getattribute__('Message'))
+    handler_utility.log(str(e))
     handler_utility.log(e)
-    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['EnablePipelinesAgentError']['operationName'], e.__getattribute__('Message'))
+    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['EnablePipelinesAgentError']['operationName'], str(e))
     return
 
   handler_utility.add_handler_sub_status(Util.HandlerSubStatus('EnablePipelinesAgentSuccess'))

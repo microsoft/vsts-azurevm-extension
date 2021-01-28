@@ -289,7 +289,7 @@ class HandlerUtility:
             return None
         self._context._config = self._parse_config(ctxt, operation)
         self.log("JSON config read successfully")
-        self.remove_protected_settings_from_config_file()
+        #self.remove_protected_settings_from_config_file()
         return self._context
 
     def _set_log_file_to_command_execution_log(self):

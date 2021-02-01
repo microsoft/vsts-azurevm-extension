@@ -1,5 +1,5 @@
-#!/usr/bin/python
-import Constants
+#!/usr/bin/python3
+from . import Constants
 
 rm_terminating_error_id = 'RMHandlerTerminatingError'
 
@@ -222,7 +222,6 @@ rm_extension_status = {
 def new_handler_terminating_error(code, message):
   e = Exception(message)
   setattr(e, 'Code', code)
-  setattr(e, 'Message', message)
   setattr(e, 'ErrorId', rm_terminating_error_id)
   return e
 

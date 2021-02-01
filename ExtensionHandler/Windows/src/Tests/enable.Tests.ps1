@@ -214,7 +214,7 @@ Describe "Start RM extension tests" {
         }
 
         It "should set handler status as Initilized" {
-            Assert-MockCalled Add-HandlerSubStatus -Times 1 -ParameterFilter { $Code -eq $RM_Extension_Status.SkippedInstallation.Code}
+            Assert-MockCalled Add-HandlerSubStatus -Times 0 -ParameterFilter { $Code -eq $RM_Extension_Status.SkippedInstallation.Code}
         }
     }
 

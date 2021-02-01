@@ -1,4 +1,4 @@
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import tarfile
 import json
 import Utils.Constants as Constants
@@ -57,7 +57,7 @@ def _get_agent_package_data(package_data_url, pat_token):
   _write_download_log('\t\tFetching Agent PackageData using {0}'.format(package_data_url))
   response = Util.make_http_call(package_data_url, 'GET', None, None, pat_token)
   if(response.status == 200):
-    val = json.loads(response.read())
+    val = json.loads(str(response.read(), 'utf-8'))
     return val['value'][0]
   raise Exception('An error occured while downloading AzureDevOps agent.')
 
@@ -72,7 +72,7 @@ def _download_deployment_agent_internal(agent_download_url, target):
     _write_download_log('\t\t {0} already exists, deleting it'.format(target))
     os.remove(target)
   _write_download_log('\t\t Starting Deployment Agent download')
-  urllib.urlretrieve(agent_download_url, target)
+  urllib.request.urlretrieve(agent_download_url, target)
   _write_download_log('\t\t Deployment Agent download done')
 
 def _extract_target(target_file, target):

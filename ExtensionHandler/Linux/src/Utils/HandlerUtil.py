@@ -59,14 +59,14 @@ import imp
 import base64
 import json
 import time
-import RMExtensionStatus
+from . import RMExtensionStatus
 import platform
-import httplib
+import http.client
 import base64
 
 from xml.etree import ElementTree
 from os.path import join
-from WAAgentUtil import waagent
+from .WAAgentUtil import waagent
 from waagent import LoggerInit
 
 DateTimeFormat = "%Y-%m-%dT%H:%M:%SZ"
@@ -194,7 +194,7 @@ class HandlerUtility:
         try:
             waagent.SetFileContents(self._context._settings_file, content_to_write)
         except Exception as e:
-            self._log('[Warning]: could not delete the PAT from the settings file. More details : {0}'.format(e.message))
+            self._log('[Warning]: could not delete the PAT from the settings file. More details : {0}'.format(str(e)))
 
     def _parse_config(self, ctxt, operation):
         config = None
@@ -207,8 +207,8 @@ class HandlerUtility:
             self.error("JSON error processing settings file:" + ctxt)
         else:
             handlerSettings = config['runtimeSettings'][0]['handlerSettings']
-            if handlerSettings.has_key('protectedSettings') and \
-                    handlerSettings.has_key("protectedSettingsCertThumbprint") and \
+            if 'protectedSettings' in handlerSettings and \
+                    "protectedSettingsCertThumbprint" in handlerSettings and \
                     handlerSettings['protectedSettings'] is not None and \
                     handlerSettings['protectedSettings'] != '' and \
                     handlerSettings["protectedSettingsCertThumbprint"] is not None:
@@ -469,22 +469,22 @@ class HandlerUtility:
         waagent.SetFileContents(status_file, new_contents)
 
     def set_handler_error_status(self, e, operation_name):
-        error_message = getattr(e,'message')
+        error_message = str(e)
         self.error(error_message)
-        if('ErrorId' in dir(e) and getattr(e,'ErrorId') == RMExtensionStatus.rm_terminating_error_id):
-            error_code = getattr(e,'Code')
+        if('ErrorId' in dir(e) and e.__getattribute__('ErrorId') == RMExtensionStatus.rm_terminating_error_id):
+            error_code = e.__getattribute__('Code')
         else:
             error_code = RMExtensionStatus.rm_extension_status['GenericError']
         
         if(error_code == RMExtensionStatus.rm_extension_status['InstallError']):
             error_status_message = 'The Extension failed to install: {0}'.format(error_message)
-            error_sub_status_message = 'The Extension failed to install: {0} More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.'.format(e.message, self._context._log_dir)
+            error_sub_status_message = 'The Extension failed to install: {0} More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.'.format(str(e), self._context._log_dir)
         elif(error_code == RMExtensionStatus.rm_extension_status['InputConfigurationError']):
             error_status_message = 'Incorrect VSTS account credentials'
-            error_sub_status_message = e.message
+            error_sub_status_message = str(e)
         else:
-            error_status_message = 'The Extension failed to execute: {0}'.format(e.message)
-            error_sub_status_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(e.message, self._context._log_dir)
+            error_status_message = 'The Extension failed to execute: {0}'.format(str(e))
+            error_sub_status_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(str(e), self._context._log_dir)
         
         #setting substatus
         handler_sub_status = HandlerSubStatus('', 'error')
@@ -537,12 +537,12 @@ def make_http_call(url, http_method, body, headers, pat_token):
 
   if (pat_token):
     basic_auth = '{0}:{1}'.format('', pat_token)
-    basic_auth = base64.b64encode(basic_auth)
-    headers['Authorization'] = 'Basic {0}'.format(basic_auth)
+    basic_auth = base64.b64encode(basic_auth.encode("utf-8"))
+    headers['Authorization'] = 'Basic {0}'.format(str(basic_auth, 'utf-8'))
 
-  connection_type = httplib.HTTPSConnection
+  connection_type = http.client.HTTPSConnection
   if(prefix.startswith('http://')):
-    connection_type = httplib.HTTPConnection
+    connection_type = http.client.HTTPConnection
 
   connection = connection_type(server_url)
   connection.request(http_method, path, body, headers)
@@ -557,7 +557,7 @@ def empty_dir(dir_name):
 
 def ordered_json_object(obj):
   if isinstance(obj, dict):
-    return sorted((k, ordered_json_object(v)) for k, v in obj.items())
+    return sorted((k, ordered_json_object(v)) for k, v in list(obj.items()))
   if isinstance(obj, list):
     return sorted(ordered_json_object(x) for x in obj)
   else:

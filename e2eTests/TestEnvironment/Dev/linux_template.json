@@ -173,12 +173,8 @@
                                     "keyData": "[parameters('adminPassword')]"
                                 }
                             ]
-                        },
-                        "provisionVMAgent": true
-                    },
-                    "secrets": [],
-                    "allowExtensionOperations": true,
-                    "requireGuestProvisionSignal": true
+                        }
+                    }
                 },
                 "hardwareProfile": {
                     "vmSize": "[parameters('virtualMachineSize')]"
@@ -187,7 +183,7 @@
                     "imageReference": {
                         "publisher": "Canonical",
                         "offer": "UbuntuServer",
-                        "sku": "20.04.0-LTS",
+                        "sku": "18.04-LTS",
                         "version": "latest"
                     },
                     "osDisk": {

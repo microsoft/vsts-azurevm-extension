@@ -169,7 +169,7 @@
                         "ssh": {
                             "publicKeys": [
                                 {
-                                    "path": "/home/tejasd/.ssh/authorized_keys",
+                                    "path": "/home/tfs/.ssh/authorized_keys",
                                     "keyData": "[parameters('adminPassword')]"
                                 }
                             ]

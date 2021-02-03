@@ -85,7 +85,7 @@ function Create-VM
     # Create VM using template
     $vmPasswordSecureString = $vmPasswordString | ConvertTo-SecureString -AsPlainText -Force
     $deploymentName = Get-Date -Format yyyyMMddhhmmss
-    New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templateFile -TemplateParameterFile $templateParameterFile -adminPassword "$vmPasswordSecureString" -DeploymentName $deploymentName
+    New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templateFile -TemplateParameterFile $templateParameterFile -adminPassword $vmPasswordSecureString -DeploymentName $deploymentName
 }
 
 function Get-Config

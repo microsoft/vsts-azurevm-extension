@@ -1,11 +1,11 @@
 import urllib
 import tarfile
 import json
-import Utils.Constants as Constants
+import Utils_python2.Constants as Constants
 import os
 import platform
 import shutil
-import Utils.HandlerUtil as Util
+import Utils_python2.HandlerUtil as Util
 
 log_function = None
 

@@ -6,17 +6,17 @@
 #4. api versions merge and everywhere
 
 import sys
-import Utils.HandlerUtil as Util
-import Utils.RMExtensionStatus as RMExtensionStatus
+import Utils_python2.HandlerUtil as Util
+import Utils_python2.RMExtensionStatus as RMExtensionStatus
 import os
 import subprocess
-import Utils.Constants as Constants
-import DownloadDeploymentAgent
-import ConfigureDeploymentAgent
+import Utils_python2.Constants as Constants
+import DownloadDeploymentAgent_python2 as DownloadDeploymentAgent
+import ConfigureDeploymentAgent_python2 as ConfigureDeploymentAgent
 import json
 import time
 import shutil
-from Utils.WAAgentUtil import waagent
+from Utils_python2.WAAgentUtil import waagent
 from distutils.version import LooseVersion
 from time import sleep
 from urllib2 import quote

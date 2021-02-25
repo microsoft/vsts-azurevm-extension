@@ -2,9 +2,9 @@ import os
 import subprocess
 import json
 import platform
-import Utils.Constants as Constants
+import Utils_python2.Constants as Constants
 import codecs
-import Utils.HandlerUtil as Util
+import Utils_python2.HandlerUtil as Util
 from pwd import getpwnam
 from urllib2 import quote
 

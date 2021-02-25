@@ -1,1 +1,2 @@
 *.py eol=lf
+*.sh eol=lf

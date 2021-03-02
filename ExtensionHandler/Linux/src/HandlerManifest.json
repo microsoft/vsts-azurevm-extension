@@ -2,11 +2,11 @@
   "name" : "AzureRM",
   "version": "1.0",
   "handlerManifest": {
-    "installCommand": "AzureRM.sh",
-    "enableCommand": "AzureRM.sh -enable",
-    "uninstallCommand": "AzureRM.sh -uninstall",
-    "updateCommand": "AzureRM.sh -update",
-    "disableCommand": "AzureRM.sh -disable",
+    "installCommand": "Handler.sh",
+    "enableCommand": "Handler.sh -enable",
+    "uninstallCommand": "Handler.sh -uninstall",
+    "updateCommand": "Handler.sh -update",
+    "disableCommand": "Handler.sh -disable",
     "rebootAfterInstall": false,
     "reportHeartbeat":    false
   }

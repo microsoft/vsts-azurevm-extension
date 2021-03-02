@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /bin/bash
 
 arg="$@"
 logfile="/var/log/waagent.log"

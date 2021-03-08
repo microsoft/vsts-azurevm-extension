@@ -55,7 +55,7 @@ gulp.task('createTempWindowsHandlerPackage', ['test', 'cleanExistingBuild', 'cle
 
 gulp.task('createTempLinuxHandlerPackage', ['test', 'cleanExistingBuild', 'cleanTempFolder'], function () {
 	gutil.log("Copying linux extension handler files selectively to temp location: " + tempLinuxHandlerFilesPath);
-	return gulp.src(['ExtensionHandler/Linux/src/**.**', 'ExtensionHandler/Linux/src/Utils/**.**'],  {base: 'ExtensionHandler/Linux/src/'})
+	return gulp.src(['ExtensionHandler/Linux/src/**.**', 'ExtensionHandler/Linux/src/Utils/**.**', 'ExtensionHandler/Linux/src/Utils_python2/**.**'],  {base: 'ExtensionHandler/Linux/src/'})
 	.pipe(gulp.dest(tempLinuxHandlerFilesPath));
 });
 

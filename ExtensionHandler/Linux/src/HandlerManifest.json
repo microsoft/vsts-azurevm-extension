@@ -2,11 +2,11 @@
   "name" : "AzureRM",
   "version": "1.0",
   "handlerManifest": {
-    "installCommand": "AzureRM.py",
-    "enableCommand": "AzureRM.py -enable",
-    "uninstallCommand": "AzureRM.py -uninstall",
-    "updateCommand": "AzureRM.py -update",
-    "disableCommand": "AzureRM.py -disable",
+    "installCommand": "Handler.sh",
+    "enableCommand": "Handler.sh -enable",
+    "uninstallCommand": "Handler.sh -uninstall",
+    "updateCommand": "Handler.sh -update",
+    "disableCommand": "Handler.sh -disable",
     "rebootAfterInstall": false,
     "reportHeartbeat":    false
   }

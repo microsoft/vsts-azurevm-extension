@@ -544,6 +544,12 @@ def test_extension_settings_are_same_as_disabled_version():
 
 def enable_pipelines_agent(config):
   try:
+    # create the log file if it does not exist
+    logFileName = "script.log"
+    if not os.path.exists(logFileName):
+      with open(logFileName, "w+") as f:
+        f.write("EnablePipelinesAgent")
+
     handler_utility.log('Enable Pipelines Agent')
 
     # verify we have the enable script parameters here.
@@ -604,6 +610,9 @@ def enable_pipelines_agent(config):
   handler_utility.add_handler_sub_status(Util.HandlerSubStatus('EnablePipelinesAgentSuccess'))
   handler_utility.set_handler_status(Util.HandlerStatus('Enabled', 'success'))
   handler_utility.log('Pipelines Agent is enabled.')
+
+  with open(logFileName) as f:
+    handler_utility.log(logFileName.read())
 
 def enable():
   compare_sequence_number()

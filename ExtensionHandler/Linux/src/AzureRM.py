@@ -604,6 +604,8 @@ def enable_pipelines_agent(config):
 
   except Exception as e:
     handler_utility.log(str(e))
+    with open(logFileName) as f:
+      handler_utility.log(logFileName.read())
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['EnablePipelinesAgentError']['operationName'], str(e))
     return
 

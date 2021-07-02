@@ -544,11 +544,6 @@ def test_extension_settings_are_same_as_disabled_version():
 
 def enable_pipelines_agent(config):
   try:
-    # create the log file if it does not exist
-    logFileName = "script.log"
-    if not os.path.exists(logFileName):
-      with open(logFileName, "w+") as f:
-        f.write("EnablePipelinesAgent")
 
     handler_utility.log('Enable Pipelines Agent')
 
@@ -599,22 +594,20 @@ def enable_pipelines_agent(config):
     # run the script and wait for it to complete
     handler_utility.log("running script")
     argList =  ['/bin/bash', enableFile] + shlex.split(enableParameters)
-    enableProcess = subprocess.Popen(argList)
-    enableProcess.communicate()
+    enableProcess = subprocess.Popen(argList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (output, error) = enableProcess.communicate()
+    handler_utility.log(output)
+    handler_utility.log(error)
+
 
   except Exception as e:
     handler_utility.log(str(e))
-    with open(logFileName) as f:
-      handler_utility.log(f.read())
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['EnablePipelinesAgentError']['operationName'], str(e))
     return
 
   handler_utility.add_handler_sub_status(Util.HandlerSubStatus('EnablePipelinesAgentSuccess'))
   handler_utility.set_handler_status(Util.HandlerStatus('Enabled', 'success'))
   handler_utility.log('Pipelines Agent is enabled.')
-
-  with open(logFileName) as f:
-    handler_utility.log(f.read())
 
 def enable():
   compare_sequence_number()

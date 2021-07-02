@@ -596,8 +596,8 @@ def enable_pipelines_agent(config):
     argList =  ['/bin/bash', enableFile] + shlex.split(enableParameters)
     enableProcess = subprocess.Popen(argList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (output, error) = enableProcess.communicate()
-    handler_utility.log(output)
-    handler_utility.log(error)
+    handler_utility.log(output.decode("utf-8"))
+    handler_utility.log(error.decode("utf-8"))
 
 
   except Exception as e:

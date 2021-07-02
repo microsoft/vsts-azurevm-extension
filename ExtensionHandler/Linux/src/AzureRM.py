@@ -598,7 +598,8 @@ def enable_pipelines_agent(config):
     (output, error) = enableProcess.communicate()
     handler_utility.log(output.decode("utf-8"))
     handler_utility.log(error.decode("utf-8"))
-
+    if enableProcess.returncode != 0:
+      raise Exception("Pipeline script execution failed with exit code {0}".format(enableProcess.returncode))
 
   except Exception as e:
     handler_utility.log(str(e))

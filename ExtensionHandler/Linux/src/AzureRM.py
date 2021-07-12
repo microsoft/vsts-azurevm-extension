@@ -23,6 +23,8 @@ from urllib.parse import quote
 import urllib.request, urllib.parse, urllib.error
 import shlex
 
+MAX_RETRIES = 3
+
 configured_agent_exists = False
 agent_configuration_required = True
 root_dir = ''
@@ -564,7 +566,17 @@ def enable_pipelines_agent(config):
     handler_utility.log(downloadUrl)
     filename = os.path.basename(downloadUrl)
     agentFile = os.path.join(agentFolder, filename)
-    urllib.request.urlretrieve(downloadUrl, agentFile)
+    for attempt in range(1,MAX_RETRIES+1):
+      # retry up to 3 times
+      try:
+        urllib.request.urlretrieve(downloadUrl, agentFile)
+        break
+      except Exception as e:
+        handler_utility.log("Attempt {0} to download the agent failed".format(attempt))
+        handler_utility.log(str(e))
+        if attempt == MAX_RETRIES:
+          handler_utility.log("Max retries attempt reached")
+          set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DownloadPipelinesAgentError']['operationName'], str(e))
 
     # download the enable script
     handler_utility.add_handler_sub_status(Util.HandlerSubStatus('DownloadPipelinesScript'))
@@ -573,7 +585,18 @@ def enable_pipelines_agent(config):
     handler_utility.log(downloadUrl)
     filename = os.path.basename(downloadUrl)
     enableFile = os.path.join(agentFolder, filename)
-    urllib.request.urlretrieve(downloadUrl, enableFile)
+    for attempt in range(1,MAX_RETRIES+1):
+      # retry up to 3 times
+      try: 
+        urllib.request.urlretrieve(downloadUrl, enableFile)
+        break
+      except Exception as e:
+        handler_utility.log("Attempt {0} to download the pipeline script".format(attempt))
+        handler_utility.log(str(e))
+        if attempt == MAX_RETRIES:
+          handler_utility.log("Max retries attempt reached")
+          set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DownloadPipelinesAgentError']['operationName'], str(e))
+
 
   except Exception as e:
     handler_utility.log(str(e))

@@ -591,7 +591,7 @@ def enable_pipelines_agent(config):
         urllib.request.urlretrieve(downloadUrl, enableFile)
         break
       except Exception as e:
-        handler_utility.log("Attempt {0} to download the pipeline script".format(attempt))
+        handler_utility.log("Attempt {0} to download the pipeline script failed".format(attempt))
         handler_utility.log(str(e))
         if attempt == MAX_RETRIES:
           handler_utility.log("Max retries attempt reached")

@@ -546,6 +546,7 @@ def test_extension_settings_are_same_as_disabled_version():
 
 def enable_pipelines_agent(config):
   try:
+
     handler_utility.log('Enable Pipelines Agent')
 
     # verify we have the enable script parameters here.
@@ -616,8 +617,12 @@ def enable_pipelines_agent(config):
     # run the script and wait for it to complete
     handler_utility.log("running script")
     argList =  ['/bin/bash', enableFile] + shlex.split(enableParameters)
-    enableProcess = subprocess.Popen(argList)
-    enableProcess.communicate()
+    enableProcess = subprocess.Popen(argList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (output, error) = enableProcess.communicate()
+    handler_utility.log(output.decode("utf-8"))
+    handler_utility.log(error.decode("utf-8"))
+    if enableProcess.returncode != 0:
+      raise Exception("Pipeline script execution failed with exit code {0}".format(enableProcess.returncode))
 
   except Exception as e:
     handler_utility.log(str(e))

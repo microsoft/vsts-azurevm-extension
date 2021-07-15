@@ -5,6 +5,7 @@
 #>
 
 $ErrorActionPreference = 'stop'
+$MAX_RETRIES = 3
 Set-StrictMode -Version latest
 
 Import-Module $PSScriptRoot\Log.psm1
@@ -67,14 +68,40 @@ function EnablePipelinesAgent
         Add-HandlerSubStatus $RM_Extension_Status.DownloadPipelinesZip.Code $RM_Extension_Status.DownloadPipelinesZip.Message -operationName $config.AgentDownloadUrl
         $fileName = [System.IO.Path]::GetFileName($config.AgentDownloadUrl)
         $agentZipFile = Join-Path -Path $config.AgentFolder -ChildPath $fileName
-        $webclient.DownloadFile($config.AgentDownloadUrl, $agentZipFile)
+        For ($attempt=1; $attempt -lt $MAX_RETRIES+1; $attempt++){
+            try{
+                $webclient.DownloadFile($config.AgentDownloadUrl, $agentZipFile)
+            }
+            catch{
+                $exception = $Error[0]
+                Write-Log "Attempt $attempt to download the agent failed"
+                Write-Log $exception
+                if ($attempt -eq $MAX_RETRIES){
+                    Write-Log "Max retries attempt reached"
+                    Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.DownloadPipelinesAgentError.operationName
+                }
+            }
+        }
 
         # Download the enable script
         Write-Log ("Downloading enable script from " + $config.EnableScriptDownloadUrl)
         Add-HandlerSubStatus $RM_Extension_Status.DownloadPipelinesScript.Code $RM_Extension_Status.DownloadPipelinesScript.Message -operationName $config.EnableScriptDownloadUrl
         $fileName = [System.IO.Path]::GetFileName($config.EnableScriptDownloadUrl)
         $enableFileName = Join-Path -Path $config.AgentFolder -ChildPath $fileName
-        $webclient.DownloadFile($config.EnableScriptDownloadUrl, $enableFileName)
+        For ($attempt=1; $attempt -lt $MAX_RETRIES+1; $attempt++){
+            try{
+                $webclient.DownloadFile($config.EnableScriptDownloadUrl, $enableFileName)
+            }
+            catch{
+                $exception = $Error[0]
+                Write-Log "Attempt $attempt to download the pipeline script failed"
+                Write-Log $exception
+                if ($attempt -eq $MAX_RETRIES){
+                    Write-Log "Max retries attempt reached"
+                    Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.DownloadPipelinesAgentError.operationName
+                }
+            }
+        }
     }
     catch 
     {

@@ -459,7 +459,7 @@ class HandlerUtility:
                 sub_status_list = status_object['status']['substatus']
                 sub_status_list.append(new_sub_status)
             else:
-                sub_status_list = new_sub_status
+                status_object['status']['substatus'] = [new_sub_status]
         else:
             status_list = [{
                 'status' : {

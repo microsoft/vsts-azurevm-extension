@@ -455,8 +455,11 @@ class HandlerUtility:
             status_file_contents = waagent.GetFileContents(status_file)
             status_list = json.loads(status_file_contents)
             status_object = status_list[0]
-            sub_status_list = status_object['status']['substatus']
-            sub_status_list.append(new_sub_status)
+            if('substatus' in status_object['status']):
+                sub_status_list = status_object['status']['substatus']
+                sub_status_list.append(new_sub_status)
+            else:
+                status_object['status']['substatus'] = [new_sub_status]
         else:
             status_list = [{
                 'status' : {

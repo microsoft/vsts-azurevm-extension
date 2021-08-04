@@ -23,6 +23,8 @@ from urllib2 import quote
 import urllib
 import shlex
 
+MAX_RETRIES = 3
+
 configured_agent_exists = False
 agent_configuration_required = True
 root_dir = ''
@@ -565,7 +567,17 @@ def enable_pipelines_agent(config):
     handler_utility.log(downloadUrl)
     filename = os.path.basename(downloadUrl)
     agentFile = os.path.join(agentFolder, filename)
-    urllib.urlretrieve(downloadUrl, agentFile)
+    for attempt in range(1,MAX_RETRIES+1):
+      # retry up to 3 times
+      try:
+        urllib.urlretrieve(downloadUrl, agentFile)
+        break
+      except Exception as e:
+        handler_utility.log("Attempt {0} to download the agent failed".format(attempt))
+        handler_utility.log(str(e))
+        if attempt == MAX_RETRIES:
+          handler_utility.log("Max retries attempt reached")
+          set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DownloadPipelinesAgentError']['operationName'], getattr(e,'message'))
 
     # download the enable script
     handler_utility.add_handler_sub_status(Util.HandlerSubStatus('DownloadPipelinesScript'))
@@ -574,7 +586,18 @@ def enable_pipelines_agent(config):
     handler_utility.log(downloadUrl)
     filename = os.path.basename(downloadUrl)
     enableFile = os.path.join(agentFolder, filename)
-    urllib.urlretrieve(downloadUrl, enableFile)
+    for attempt in range(1,MAX_RETRIES+1):
+      # retry up to 3 times
+      try: 
+        urllib.urlretrieve(downloadUrl, enableFile)
+        break
+      except Exception as e:
+        handler_utility.log("Attempt {0} to download the pipeline script failed".format(attempt))
+        handler_utility.log(str(e))
+        if attempt == MAX_RETRIES:
+          handler_utility.log("Max retries attempt reached")
+          set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['DownloadPipelinesAgentError']['operationName'], getattr(e,'message'))
+
 
   except Exception as e:
     handler_utility.log(getattr(e,'message'))
@@ -594,8 +617,12 @@ def enable_pipelines_agent(config):
     # run the script and wait for it to complete
     handler_utility.log("running script")
     argList =  ['/bin/bash', enableFile] + shlex.split(enableParameters)
-    enableProcess = subprocess.Popen(argList)
-    enableProcess.communicate()
+    enableProcess = subprocess.Popen(argList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (output, error) = enableProcess.communicate()
+    handler_utility.log(output.decode("utf-8"))
+    handler_utility.log(error.decode("utf-8"))
+    if enableProcess.returncode != 0:
+      raise Exception("Pipeline script execution failed with exit code {0}".format(enableProcess.returncode))
 
   except Exception as e:
     handler_utility.log(getattr(e,'message'))

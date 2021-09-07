@@ -320,14 +320,12 @@ def get_configuration_from_settings():
       proxy_config['ProxyUrl'] = proxy_url
       handler_utility.log('ProxyUrl: {0}'.format(proxy_url))
       
-      proxy_username = ''
       if(('ProxyUserName' in public_settings) and (public_settings['ProxyUserName'])):
         proxy_config['ProxyAuthenticated'] = True
         proxy_username = public_settings['ProxyUserName']
         proxy_config['ProxyUserName'] = proxy_username
         handler_utility.log('ProxyUserName: {0}'.format(proxy_username))
 
-      proxy_password = ''
       if((protected_settings.__class__.__name__ == 'dict') and ('ProxyPassword' in protected_settings) and (protected_settings['ProxyPassword'])):
         proxy_config['ProxyAuthenticated'] = True
         proxy_password = protected_settings['ProxyPassword']

@@ -148,5 +148,14 @@ function CreateConfigCmdArgs
     if($windowsLogonAccountName){
         $configCmdArgs += " --windowsLogonAccount `"$windowsLogonAccountName`" --windowsLogonPassword `"$windowsLogonPassword`""
     }
+    if($proxyConfig -and ($proxyConfig.Contains("ProxyUrl")))
+    {
+        $configCmdArgs += " --proxyurl $($proxyConfig["ProxyUrl"])"
+        if($proxyConfig.Contains("ProxyAuthenticated") -and ($proxyConfig["ProxyAuthenticated"]))
+        {
+            $configCmdArgs += " --proxyusername $($proxyConfig["ProxyUserName"]) --proxypassword $($proxyConfig["ProxyPassword"])"
+            
+        }
+    }
     return $configCmdArgs
 }

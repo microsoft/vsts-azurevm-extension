@@ -34,6 +34,39 @@ function Get-ConfigurationFromSettings {
             $protectedSettings = @{}
         }
 
+        $global:proxyConfig = @{}
+        if($publicSettings.Contains("ProxyUrl") -and ![string]::IsNullOrEmpty($publicSettings["ProxyUrl"]))
+        {
+            $proxyConfig["ProxyUrl"] = $publicSettings["ProxyUrl"]
+            Write-Log "ProxyUrl: $($proxyConfig["ProxyUrl"])"
+            if($publicSettings.Contains("ProxyUserName") -and ![string]::IsNullOrEmpty($publicSettings["ProxyUserName"]))
+            {
+                $proxyConfig["ProxyAuthenticated"] = $true
+                $proxyUsername = $publicSettings["ProxyUserName"]
+                $proxyConfig["ProxyUserName"] = $proxyUsername
+                Write-Log "ProxyUserName: $($proxyConfig["ProxyUserName"])"
+            }
+
+            if($protectedSettings.Contains('ProxyPassword'))
+            {
+                $proxyConfig["ProxyAuthenticated"] = $true
+                $proxyPassword = $protectedSettings["ProxyPassword"]
+                $proxyConfig["ProxyPassword"] = $proxyPassword
+            }
+
+            if($proxyConfig.Contains("ProxyAuthenticated") -and ($proxyConfig["ProxyAuthenticated"]))
+            {
+                if(!$proxyConfig.Contains("ProxyUserName") -or [string]::IsNullOrEmpty($proxyConfig["ProxyUserName"]))
+                {
+                    $proxyConfig["ProxyUserName"] = ""
+                }
+                if(!$proxyConfig.Contains("ProxyPassword") -or [string]::IsNullOrEmpty($proxyConfig["ProxyPassword"]))
+                {
+                    $proxyConfig["ProxyPassword"] = ""
+                }
+            }
+        }
+
         # Check if this extension is for Pipelines agent
         # Note that the settings come over as camelCase
         if($publicSettings.Contains('isPipelinesAgent'))
@@ -243,7 +276,8 @@ function Confirm-InputsAreValid {
 
             return $inputsValidationErrorCode, $errorMessage
         }
-        $ret = Invoke-WithRetry -retryBlock {Invoke-WebRequest -Uri $getDeploymentGroupUrl -headers $headers -Method "Get" -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing} `
+        $webRequestBlock = Construct-WebRequestBlock -uri $getDeploymentGroupUrl -method "Get" -body $null -headers $headers
+        $ret = Invoke-WithRetry -retryBlock $webRequestBlock `
                                 -retryCatchBlock {$null, $null = (& $getDeploymentGroupDataErrorBlock)} -actionName "Get deploymentgroup" `
                                 -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $getDeploymentGroupDataErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
 
@@ -309,7 +343,8 @@ function Confirm-InputsAreValid {
             return $inputsValidationErrorCode, $errorMessage
         }
 
-        $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $patchDeploymentGroupUrl -Method "Patch" -Body $requestBody -Headers $headers} `
+        $restMethodBlock = Construct-RestMethodBlock -uri $patchDeploymentGroupUrl -method "Patch" -body $requestBody -headers $headers
+        $ret = Invoke-WithRetry -retryBlock $restMethodBlock `
                                 -retryCatchBlock {$null, $null = (& $patchDeploymentGroupErrorBlock)} -actionName "Patch deploymentgroup" `
                                 -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $patchDeploymentGroupErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
 
@@ -380,7 +415,8 @@ function Validate-AgentName
         return $errorMessage
     }
 
-    $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $listTargetsUrl -Method "Get" -Headers $headers} `
+    $restMethodBlock = Construct-RestMethodBlock -uri $listTargetsUrl -method "Get" -body $null -headers $headers
+    $ret = Invoke-WithRetry -retryBlock $restMethodBlock `
                             -retryCatchBlock {$null = (& $listTargetsErrorBlock)} -actionName "List targets" `
                             -finalCatchBlock {Write-Log (& $listTargetsErrorBlock) $true}
     if($ret)
@@ -466,7 +502,8 @@ function Parse-VSTSUrl
     $response.deploymentType = 'hosted'
     try
     {
-        $resp = Invoke-WebRequest -Uri $restCallUrl -headers $headers -Method Get -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing
+        $webRequestBlock = Construct-WebRequestBlock -uri $restCallUrl -method "Get" -body $null -headers $headers
+        $resp = & $webRequestBlock
     }
     catch
     {

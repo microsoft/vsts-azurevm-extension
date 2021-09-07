@@ -1,3 +1,59 @@
+function Construct-RestMethodBlock {
+    param (
+        [string] $uri,
+        [string] $method,
+        [object] $body,
+        [IDictionary] $headers
+    )
+
+    if($proxyConfig -and ($proxyConfig.Contains("ProxyUrl")))
+    {
+        if($proxyConfig.Contains("ProxyAuthenticated") -and ($proxyConfig["ProxyAuthenticated"]))
+        {
+            $username = $proxyConfig["ProxyUserName"]
+            $password = ConvertTo-SecureString -String $proxyConfig["ProxyPassword"] -AsPlainText -Force
+            $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $password
+            return {Invoke-RestMethod -Uri $uri -Method $method -Body $body -Headers $headers -Proxy $proxyConfig["ProxyUrl"] -ProxyCredential $credential}
+        }
+        else
+        {
+            return {Invoke-RestMethod -Uri $uri -Method $method -Body $body -Headers $headers -Proxy $proxyConfig["ProxyUrl"]}
+        }
+    }
+    else
+    {
+        return {Invoke-RestMethod -Uri $uri -Method $method -Body $body -Headers $headers}
+    }
+}
+
+function Construct-WebRequestBlock {
+    param (
+        [string] $uri,
+        [string] $method,
+        [object] $body,
+        [IDictionary] $headers
+    )
+
+    if($proxyConfig -and ($proxyConfig.Contains("ProxyUrl")))
+    {
+        if($proxyConfig.Contains("ProxyAuthenticated") -and ($proxyConfig["ProxyAuthenticated"]))
+        {
+            $username = $proxyConfig["ProxyUserName"]
+            $password = ConvertTo-SecureString -String $proxyConfig["ProxyPassword"] -AsPlainText -Force
+            $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $password
+            return {Invoke-WebRequest -Uri $uri -Method $method -Body $body -Headers $headers -Proxy $proxyConfig["ProxyUrl"] -ProxyCredential $credential -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing}
+        }
+        else
+        {
+            return {Invoke-WebRequest -Uri $uri -Method $method -Body $body -Headers $headers -Proxy $proxyConfig["ProxyUrl"] -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing}
+        }
+    }
+    else
+    {
+        return {Invoke-WebRequest -Uri $uri -Method $method -Body $body -Headers $headers -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing}
+    }
+}
+
 function Invoke-WithRetry {
     param (
         [ScriptBlock] $retryCommand,

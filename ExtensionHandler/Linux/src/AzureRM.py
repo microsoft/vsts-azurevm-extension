@@ -187,7 +187,7 @@ def compare_sequence_number():
 def parse_account_name(account_name, pat_token): 
   vsts_url = account_name.strip('/')
 
-  account_name_prefix = Util.get_account_name_prefix(account_name)
+  account_name_prefix = Util.get_url_prefix(account_name)
   if(account_name_prefix == ''):
     vsts_url = 'https://{0}.visualstudio.com'.format(account_name)
 
@@ -203,7 +203,7 @@ def parse_account_name(account_name, pat_token):
 
 def get_deployment_type(vsts_url, pat_token):
   rest_call_url = vsts_url + '/_apis/connectiondata'
-  response = Util.make_http_call(rest_call_url, 'GET', None, None, pat_token)
+  response = Util.make_http_request(rest_call_url, 'GET', None, None, pat_token)
   if(response.status == Constants.HTTP_OK):
     connection_data = json.loads(str(response.read(), 'utf-8'))
     if('deploymentType' in connection_data):
@@ -247,7 +247,7 @@ def validate_inputs(config):
     get_deployment_group_url = "{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}".format(config['VSTSUrl'], quote(config['TeamProject']), quote(config['DeploymentGroup']), Constants.projectAPIVersion)
     
     handler_utility.log("Get deployment group url - {0}".format(get_deployment_group_url))
-    response = Util.make_http_call(get_deployment_group_url, 'GET', None, None, config['PATToken'])
+    response = Util.make_http_request(get_deployment_group_url, 'GET', None, None, config['PATToken'])
 
     if(response.status != Constants.HTTP_OK):
       if(response.status == Constants.HTTP_FOUND):
@@ -281,7 +281,7 @@ def validate_inputs(config):
     patch_deployment_group_url = "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}".format(config['VSTSUrl'], quote(config['TeamProject']), deployment_group_id, Constants.projectAPIVersion) 
     
     handler_utility.log("Patch deployment group url - {0}".format(patch_deployment_group_url))
-    response = Util.make_http_call(patch_deployment_group_url, 'PATCH', body, headers, config['PATToken'])
+    response = Util.make_http_request(patch_deployment_group_url, 'PATCH', body, headers, config['PATToken'])
 
     if(response.status != Constants.HTTP_OK):
       if(response.status == Constants.HTTP_FORBIDDEN):
@@ -310,6 +310,34 @@ def get_configuration_from_settings():
     protected_settings = handler_utility.get_protected_settings()
     if(protected_settings == None):
       protected_settings = {}
+
+    #fetching proxy settings, which are common for both deploymentgroup and byos
+    global proxy_config = {}
+
+    proxy_url = ''
+    if(('ProxyUrl' in public_settings) and (proxy_url public_settings['ProxyUrl']):
+      proxy_url = public_settings['ProxyUrl']
+      proxy_config['ProxyUrl'] = proxy_url
+      handler_utility.log('ProxyUrl: {0}'.format(proxy_url))
+      
+      proxy_username = ''
+      if(('ProxyUserName' in public_settings) and (public_settings['ProxyUserName'])):
+        proxy_config['ProxyAuthenticated'] = True
+        proxy_username = public_settings['ProxyUserName']
+        proxy_config['ProxyUserName'] = proxy_username
+        handler_utility.log('ProxyUserName: {0}'.format(proxy_username))
+
+      proxy_password = ''
+      if((protected_settings.__class__.__name__ == 'dict') and ('ProxyPassword' in protected_settings) and (protected_settings['ProxyPassword'])):
+        proxy_config['ProxyAuthenticated'] = True
+        proxy_password = protected_settings['ProxyPassword']
+        proxy_config['ProxyPassword'] = proxy_password
+      
+      if(('ProxyAuthenticated' in proxy_config) and (proxy_config['ProxyAuthenticated'])):
+        if(not(('ProxyUserName' in proxy_config) and proxy_config['ProxyUserName'])):
+          proxy_config['ProxyUserName'] = ""
+        if(not(('ProxyPassword' in proxy_config) and proxy_config['ProxyPassword'])):
+          proxy_config['ProxyPassword'] = ""
 
     # If this is a pipelines agent, read the settings and return quickly
     # Note that the pipelines settings come over as camelCase

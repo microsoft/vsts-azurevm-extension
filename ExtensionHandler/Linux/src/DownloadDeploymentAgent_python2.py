@@ -55,7 +55,7 @@ def _write_download_log(log_message):
 
 def _get_agent_package_data(package_data_url, pat_token):
   _write_download_log('\t\tFetching Agent PackageData using {0}'.format(package_data_url))
-  response = Util.make_http_call(package_data_url, 'GET', None, None, pat_token)
+  response = Util.make_http_request(package_data_url, 'GET', None, None, pat_token)
   if(response.status == 200):
     val = json.loads(response.read())
     return val['value'][0]

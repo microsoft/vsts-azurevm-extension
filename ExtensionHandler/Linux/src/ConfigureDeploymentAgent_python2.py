@@ -177,7 +177,7 @@ def _get_deployment_group_data_from_setting(vsts_url, pat_token):
     deployment_group_data_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}?api-version={2}'.format(project_id, deployment_group_id, Constants.targets_api_version)
     deployment_group_data_url = vsts_url + deployment_group_data_address
 
-    response = Util.make_http_call(deployment_group_data_url, 'GET', None, None, pat_token)
+    response = Util.make_http_request(deployment_group_data_url, 'GET', None, None, pat_token)
     if(response.status == Constants.HTTP_OK):
       val = json.loads(response.read())
       _write_log('\t\t Deployment group details fetched successfully')
@@ -209,7 +209,7 @@ def _apply_tags_to_agent(vsts_url, pat_token, project_id, deployment_group_id, a
             }
   request_body = json.dumps([{'id' : json.loads(agent_id), 'tags' : json.loads(tags_string), 'agent' : {'id' : json.loads(agent_id)}}])
   _write_add_tags_log('Add tags request body : {0}'.format(request_body))
-  response = Util.make_http_call(tags_url, 'PATCH', request_body, headers, pat_token)
+  response = Util.make_http_request(tags_url, 'PATCH', request_body, headers, pat_token)
   if(response.status == Constants.HTTP_OK):
     _write_add_tags_log('Patch call for tags succeeded')
   else:
@@ -218,7 +218,7 @@ def _apply_tags_to_agent(vsts_url, pat_token, project_id, deployment_group_id, a
 def _add_tags_to_agent_internal(vsts_url, pat_token, project_id, deployment_group_id, agent_id, tags_string):
   target_address = '/{0}/_apis/distributedtask/deploymentgroups/{1}/Targets/{2}?api-version={3}'.format(project_id, deployment_group_id, agent_id, Constants.targets_api_version)
   target_url = vsts_url + target_address
-  response = Util.make_http_call(target_url, 'GET', None, None, pat_token)
+  response = Util.make_http_request(target_url, 'GET', None, None, pat_token)
   if(response.status == Constants.HTTP_OK):
     val = {}
     response_string = response.read()
@@ -243,7 +243,7 @@ def _set_folder_owner(folder, username):
       os.chown(os.path.join(dirpath, filename), u_id, g_id)
 
 def _configure_agent_internal(vsts_url, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder):
-  global agent_listener_path, agent_service_path
+  global agent_listener_path, agent_service_path, proxy_config
   _set_agent_listener_path(working_folder)
   _set_agent_service_path(working_folder)
 
@@ -262,6 +262,13 @@ def _configure_agent_internal(vsts_url, pat_token, project_name, deployment_grou
                             '--deploymentgroupname', deployment_group_name]
   if(Constants.is_on_prem):
     configure_command_args += ['--collectionname', collection]
+  
+  if('ProxyUrl' in proxy_config):
+    configure_command_args += ['--proxyurl', proxy_config['ProxyUrl']]
+
+  if(('ProxyAuthenticated' in proxy_config) and proxy_config['ProxyAuthenticated']):
+    configure_command_args += ['--proxyusername', proxy_config['ProxyUserName'],
+                               '--proxypassword', proxy_config['ProxyPassword']]
 
   config_agent_proc = subprocess.Popen('{0} configure --unattended --acceptteeeula --deploymentgroup --replace'.format(agent_listener_path).split(' ') + configure_command_args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   std_out, std_err = config_agent_proc.communicate()

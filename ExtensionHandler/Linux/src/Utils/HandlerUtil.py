@@ -521,7 +521,7 @@ class HandlerUtility:
             excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['InputConfigurationError'], message)
             raise excep
 
-def get_account_name_prefix(account_name):
+def get_url_prefix(account_name):
   account_name_lower = account_name.lower()
   if(account_name_lower.startswith('http://')):
     return 'http://'
@@ -529,10 +529,10 @@ def get_account_name_prefix(account_name):
     return 'https://'
   return '' 
 
-def make_http_call(url, http_method, body, headers, pat_token):
-  prefix = get_account_name_prefix(url)
+def make_http_request(url, http_method, body, headers, pat_token):
+  prefix = get_url_prefix(url)
   url_without_prefix = url[len(prefix):]
-  server_url, path = url_without_prefix.split('/', 1)
+  host, path = url_without_prefix.split('/', 1)
   path = '/' + path
 
   if (not headers):
@@ -547,7 +547,19 @@ def make_http_call(url, http_method, body, headers, pat_token):
   if(prefix.startswith('http://')):
     connection_type = http.client.HTTPConnection
 
-  connection = connection_type(server_url)
+  global proxy_config
+  if ('ProxyUrl' in proxy_config):
+    proxy_prefix = get_url_prefix(proxy_config['ProxyUrl'])
+    proxy_url_without_prefix = proxy_url[len(proxy_prefix):]
+    proxy_headers={}
+    if ('ProxyUserName' in proxy_config or proxy_config['ProxyPassword']):
+      proxy_auth = base64.b64encode(f"{proxy_config.proxy_username}:{proxy_config.proxy_password}".encode("utf-8")).decode("utf-8")
+      proxy_headers['Proxy-Authorization'] = f"Basic {proxy_auth}"}
+    connection = connection_type(proxy_url_without_prefix)
+    connection.set_tunnel(host, proxy_headers)
+  else:
+    connection = connection_type(host)
+    
   connection.request(http_method, path, body, headers)
   return connection.getresponse()
 

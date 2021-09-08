@@ -72,7 +72,7 @@ def _download_deployment_agent_internal(agent_download_url, target):
     _write_download_log('\t\t {0} already exists, deleting it'.format(target))
     os.remove(target)
   _write_download_log('\t\t Starting Deployment Agent download')
-  urllib.urlretrieve(agent_download_url, target)
+  handler_utility.url_retrieve(agent_download_url, target)
   _write_download_log('\t\t Deployment Agent download done')
 
 def _extract_target(target_file, target):

@@ -97,10 +97,33 @@ function Get-TimeSinceEpoch {
     return $timeSinceEpoch
 }
 
+function Download-File{
+    param (
+        [string] $downloadUrl,
+        [string] $target
+    )
+
+    $WebClient = New-Object System.Net.WebClient
+    if($proxyConfig -and ($proxyConfig.Contains("ProxyUrl")))
+    {
+        $WebProxy = New-Object System.Net.WebProxy($proxyConfig["ProxyUrl"], $true)
+        if($proxyConfig.Contains("ProxyAuthenticated") -and ($proxyConfig["ProxyAuthenticated"]))
+        {
+            $WebProxy.Credentials = New-Object System.Net.NetworkCredential($proxyConfig["ProxyUserName"], $proxyConfig["ProxyPassword"])
+            $WebClient.Proxy = $WebProxy
+        }
+    }
+    $WebClient.DownloadFile($downloadUrl, $target)
+
+}
+
 #
 # Exports
 #
 Export-ModuleMember `
     -Function `
         Invoke-WithRetry, `
-        Get-TimeSinceEpoch
+        Get-TimeSinceEpoch, `
+        Construct-RestMethodBlock, `
+        Construct-WebRequestBlock, `
+        Download-File

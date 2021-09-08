@@ -592,7 +592,7 @@ def enable_pipelines_agent(config):
     handler_utility.log(downloadUrl)
     filename = os.path.basename(downloadUrl)
     agentFile = os.path.join(agentFolder, filename)
-    urllib.urlretrieve(downloadUrl, agentFile)
+    handler_utility.url_retrieve(downloadUrl, agentFile)
 
     # download the enable script
     handler_utility.add_handler_sub_status(Util.HandlerSubStatus('DownloadPipelinesScript'))
@@ -601,7 +601,7 @@ def enable_pipelines_agent(config):
     handler_utility.log(downloadUrl)
     filename = os.path.basename(downloadUrl)
     enableFile = os.path.join(agentFolder, filename)
-    urllib.urlretrieve(downloadUrl, enableFile)
+    handler_utility.url_retrieve(downloadUrl, enableFile)
 
   except Exception as e:
     handler_utility.log(getattr(e,'message'))

@@ -94,7 +94,7 @@ function WriteDownloadLog
     
     WriteDownloadLog "`t`t Start DeploymentAgent download"
     $agentDownloadUri = [System.Uri]$agentDownloadUrl
-    Invoke-WithRetry -retryBlock {(New-Object Net.WebClient).DownloadFile($agentDownloadUri,$target)} `
+    Invoke-WithRetry -retryBlock {Download-File -downloadUrl $agentDownloadUri -target $target} `
                      -retryCatchBlock {WriteDownloadLog $_} `
                      -finalCatchBlock {
                          $message = "An error occured while downloading the agent package. More details: $_.`n Please ensure `

@@ -61,7 +61,6 @@ function EnablePipelinesAgent
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
         Write-Log "Downloading files"
-        $webclient = New-Object System.Net.WebClient
 
         # Download the agent zip file
         Write-Log ("Downloading agent zip file from " + $config.AgentDownloadUrl)
@@ -70,7 +69,7 @@ function EnablePipelinesAgent
         $agentZipFile = Join-Path -Path $config.AgentFolder -ChildPath $fileName
         For ($attempt=1; $attempt -lt $MAX_RETRIES+1; $attempt++){
             try{
-                $webclient.DownloadFile($config.AgentDownloadUrl, $agentZipFile)
+                Download-File -downloadUrl $config.AgentDownloadUrl -target $agentZipFile
             }
             catch{
                 $exception = $Error[0]
@@ -90,7 +89,7 @@ function EnablePipelinesAgent
         $enableFileName = Join-Path -Path $config.AgentFolder -ChildPath $fileName
         For ($attempt=1; $attempt -lt $MAX_RETRIES+1; $attempt++){
             try{
-                $webclient.DownloadFile($config.EnableScriptDownloadUrl, $enableFileName)
+                Download-File -downloadUrl $config.EnableScriptDownloadUrl -target $enableFileName
             }
             catch{
                 $exception = $Error[0]

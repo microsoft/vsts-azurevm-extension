@@ -596,7 +596,7 @@ def enable_pipelines_agent(config):
     for attempt in range(1,MAX_RETRIES+1):
       # retry up to 3 times
       try:
-        urllib.request.urlretrieve(downloadUrl, agentFile)
+        handler_utility.url_retrieve(downloadUrl, agentFile)
         break
       except Exception as e:
         handler_utility.log("Attempt {0} to download the agent failed".format(attempt))
@@ -615,7 +615,7 @@ def enable_pipelines_agent(config):
     for attempt in range(1,MAX_RETRIES+1):
       # retry up to 3 times
       try: 
-        urllib.request.urlretrieve(downloadUrl, enableFile)
+        handler_utility.url_retrieve(downloadUrl, enableFile)
         break
       except Exception as e:
         handler_utility.log("Attempt {0} to download the pipeline script failed".format(attempt))

@@ -7,6 +7,7 @@ import codecs
 import Utils.HandlerUtil as Util
 from pwd import getpwnam
 from urllib.parse import quote
+from Utils.GlobalSettings import proxy_config
 
 agent_listener_path = ''
 agent_service_path = ''

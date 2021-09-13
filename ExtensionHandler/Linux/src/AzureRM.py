@@ -17,6 +17,7 @@ import json
 import time
 import shutil
 from Utils.WAAgentUtil import waagent
+from Utils.GlobalSettings import proxy_config
 from distutils.version import LooseVersion
 from time import sleep
 from urllib.parse import quote
@@ -154,7 +155,19 @@ def install_dependencies(config):
   working_folder = config['AgentWorkingFolder']
   install_dependencies_path = os.path.join(working_folder, Constants.install_dependencies_script)
   for i in range(num_of_retries):
-    install_dependencies_proc = subprocess.Popen(install_dependencies_path, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    env = {
+        **os.environ
+    }
+    if ('ProxyUrl' in proxy_config):
+      proxy_url = proxy_config['ProxyUrl']
+      if(('ProxyAuthenticated' in proxy_config) and proxy_config['ProxyAuthenticated']):
+        if("://" in proxy_url):
+          proxy_url = f"{proxy_url[0:proxy_url.index('://')]}://{proxy_config['ProxyUserName']}:{proxy_config['ProxyPassword']}@{proxy_url[(proxy_url.index('://')+3):]}"
+        else:
+          proxy_url = f"{proxy_config['ProxyUserName']}:{proxy_config['ProxyPassword']}@{proxy_url}"
+      env["http_proxy"] = proxy_url
+      env["https_proxy"] = proxy_url
+    install_dependencies_proc = subprocess.Popen(install_dependencies_path, stdout = subprocess.PIPE, stderr = subprocess.PIPE, env=env)
     install_out, install_err = install_dependencies_proc.communicate()
     return_code = install_dependencies_proc.returncode
     handler_utility.log('Install dependencies process exit code : {0}'.format(return_code))
@@ -312,10 +325,9 @@ def get_configuration_from_settings():
       protected_settings = {}
 
     #fetching proxy settings, which are common for both deploymentgroup and byos
-    global proxy_config = {}
 
     proxy_url = ''
-    if(('ProxyUrl' in public_settings) and (proxy_url public_settings['ProxyUrl']):
+    if(('ProxyUrl' in public_settings) and (public_settings['ProxyUrl'])):
       proxy_url = public_settings['ProxyUrl']
       proxy_config['ProxyUrl'] = proxy_url
       handler_utility.log('ProxyUrl: {0}'.format(proxy_url))
@@ -642,6 +654,18 @@ def enable_pipelines_agent(config):
 
     # run the script and wait for it to complete
     handler_utility.log("running script")
+    env = {
+        **os.environ
+    }
+    if ('ProxyUrl' in proxy_config):
+      proxy_url = proxy_config['ProxyUrl']
+      if(('ProxyAuthenticated' in proxy_config) and proxy_config['ProxyAuthenticated']):
+        if("://" in proxy_url):
+          proxy_url = f"{proxy_url[0:proxy_url.index('://')]}://{proxy_config['ProxyUserName']}:{proxy_config['ProxyPassword']}@{proxy_url[(proxy_url.index('://')+3):]}"
+        else:
+          proxy_url = f"{proxy_config['ProxyUserName']}:{proxy_config['ProxyPassword']}@{proxy_url}"
+      env["http_proxy"] = proxy_url
+      env["https_proxy"] = proxy_url
     argList =  ['/bin/bash', enableFile] + shlex.split(enableParameters)
     enableProcess = subprocess.Popen(argList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (output, error) = enableProcess.communicate()

@@ -7,6 +7,7 @@ import codecs
 import Utils_python2.HandlerUtil as Util
 from pwd import getpwnam
 from urllib2 import quote
+from Utils.GlobalSettings import proxy_config
 
 agent_listener_path = ''
 agent_service_path = ''
@@ -243,7 +244,7 @@ def _set_folder_owner(folder, username):
       os.chown(os.path.join(dirpath, filename), u_id, g_id)
 
 def _configure_agent_internal(vsts_url, pat_token, project_name, deployment_group_name, configure_agent_as_username, agent_name, working_folder):
-  global agent_listener_path, agent_service_path, proxy_config
+  global agent_listener_path, agent_service_path
   _set_agent_listener_path(working_folder)
   _set_agent_service_path(working_folder)
 

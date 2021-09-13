@@ -276,8 +276,8 @@ function Confirm-InputsAreValid {
 
             return $inputsValidationErrorCode, $errorMessage
         }
-        $webRequestBlock = Construct-WebRequestBlock -uri $getDeploymentGroupUrl -method "Get" -body $null -headers $headers
-        $ret = Invoke-WithRetry -retryBlock $webRequestBlock `
+        $proxyObject = Construct-ProxyObjectForHttpRequests
+        $ret = Invoke-WithRetry -retryBlock {Invoke-WebRequest -Uri $getDeploymentGroupUrl -headers $headers -Method "Get" -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing @proxyObject} `
                                 -retryCatchBlock {$null, $null = (& $getDeploymentGroupDataErrorBlock)} -actionName "Get deploymentgroup" `
                                 -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $getDeploymentGroupDataErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
 
@@ -343,8 +343,8 @@ function Confirm-InputsAreValid {
             return $inputsValidationErrorCode, $errorMessage
         }
 
-        $restMethodBlock = Construct-RestMethodBlock -uri $patchDeploymentGroupUrl -method "Patch" -body $requestBody -headers $headers
-        $ret = Invoke-WithRetry -retryBlock $restMethodBlock `
+        $proxyObject = Construct-ProxyObjectForHttpRequests
+        $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $patchDeploymentGroupUrl -Method "Patch" -Body $requestBody -Headers $headers @proxyObject} `
                                 -retryCatchBlock {$null, $null = (& $patchDeploymentGroupErrorBlock)} -actionName "Patch deploymentgroup" `
                                 -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $patchDeploymentGroupErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
 
@@ -415,8 +415,8 @@ function Validate-AgentName
         return $errorMessage
     }
 
-    $restMethodBlock = Construct-RestMethodBlock -uri $listTargetsUrl -method "Get" -body $null -headers $headers
-    $ret = Invoke-WithRetry -retryBlock $restMethodBlock `
+    $proxyObject = Construct-ProxyObjectForHttpRequests
+    $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $listTargetsUrl -Method "Get" -Headers $headers @proxyObject} `
                             -retryCatchBlock {$null = (& $listTargetsErrorBlock)} -actionName "List targets" `
                             -finalCatchBlock {Write-Log (& $listTargetsErrorBlock) $true}
     if($ret)
@@ -502,8 +502,8 @@ function Parse-VSTSUrl
     $response.deploymentType = 'hosted'
     try
     {
-        $webRequestBlock = Construct-WebRequestBlock -uri $restCallUrl -method "Get" -body $null -headers $headers
-        $resp = & $webRequestBlock
+        $proxyObject = Construct-ProxyObjectForHttpRequests
+        $resp = Invoke-WebRequest -Uri $restCallUrl -headers $headers -Method Get -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing @proxyObject
     }
     catch
     {

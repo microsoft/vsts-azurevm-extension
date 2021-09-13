@@ -71,8 +71,8 @@ function ApplyTagsToAgent
         return $message
     }
 
-    $restMethodBlock = Construct-RestMethodBlock -uri $restCallUrl -method "Patch" -body $requestBody -headers $headers
-    $response = Invoke-WithRetry -retryBlock $restMethodBlock -actionName "Patch target" `
+    $proxyObject = Construct-ProxyObjectForHttpRequests
+    $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Patch" -Body $requestBody -Headers $headers @proxyObject} -actionName "Patch target" `
                                  -retryCatchBlock {$null = (& $applyTagsErrorMessageBlock)} -finalCatchBlock {throw (& $applyTagsErrorMessageBlock)}
     
     if($response.PSObject.Properties.name -notcontains "value")
@@ -117,8 +117,8 @@ function AddTagsToAgent
         return $message
     }
     
-    $restMethodBlock = Construct-RestMethodBlock -uri $restCallUrlToGetExistingTags -method "Get" -body $null -headers $headers
-    $target = Invoke-WithRetry -retryBlock $restMethodBlock -actionName "Get target" `
+    $proxyObject = Construct-ProxyObjectForHttpRequests
+    $target = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrlToGetExistingTags -Method "Get" -Headers $headers @proxyObject} -actionName "Get target" `
                                -retryCatchBlock {$null = (& $addTagsErrorMessageBlock)} -finalCatchBlock {throw (& $addTagsErrorMessageBlock)}
 
     try

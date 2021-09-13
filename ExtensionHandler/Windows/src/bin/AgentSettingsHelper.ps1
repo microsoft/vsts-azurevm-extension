@@ -166,8 +166,8 @@ function GetDeploymentGroupDataFromAgentSetting
         return $message
     }
     
-    $restMethodBlock = Construct-RestMethodBlock -uri $restCallUrl -method "Get" -body $null -headers $headers
-    $response = Invoke-WithRetry -retryBlock $restMethodBlock -actionName "Get deploymentgroup" `
+    $proxyObject = Construct-ProxyObjectForHttpRequests
+    $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Get" -Headers $headers @proxyObject} -actionName "Get deploymentgroup" `
                                  -retryCatchBlock {$null = (& $detDeploymentGroupDataErrorMessageBlock)} -finalCatchBlock {throw (& $detDeploymentGroupDataErrorMessageBlock)}
 
 

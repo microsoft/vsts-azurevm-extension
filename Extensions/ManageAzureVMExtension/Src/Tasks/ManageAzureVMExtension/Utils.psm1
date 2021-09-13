@@ -1,59 +1,3 @@
-function Construct-RestMethodBlock {
-    param (
-        [string] $uri,
-        [string] $method,
-        [object] $body,
-        [IDictionary] $headers
-    )
-
-    if($proxyConfig -and ($proxyConfig.Contains("ProxyUrl")))
-    {
-        if($proxyConfig.Contains("ProxyAuthenticated") -and ($proxyConfig["ProxyAuthenticated"]))
-        {
-            $username = $proxyConfig["ProxyUserName"]
-            $password = ConvertTo-SecureString -String $proxyConfig["ProxyPassword"] -AsPlainText -Force
-            $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $password
-            return {Invoke-RestMethod -Uri $uri -Method $method -Body $body -Headers $headers -Proxy $proxyConfig["ProxyUrl"] -ProxyCredential $credential}
-        }
-        else
-        {
-            return {Invoke-RestMethod -Uri $uri -Method $method -Body $body -Headers $headers -Proxy $proxyConfig["ProxyUrl"]}
-        }
-    }
-    else
-    {
-        return {Invoke-RestMethod -Uri $uri -Method $method -Body $body -Headers $headers}
-    }
-}
-
-function Construct-WebRequestBlock {
-    param (
-        [string] $uri,
-        [string] $method,
-        [object] $body,
-        [IDictionary] $headers
-    )
-
-    if($proxyConfig -and ($proxyConfig.Contains("ProxyUrl")))
-    {
-        if($proxyConfig.Contains("ProxyAuthenticated") -and ($proxyConfig["ProxyAuthenticated"]))
-        {
-            $username = $proxyConfig["ProxyUserName"]
-            $password = ConvertTo-SecureString -String $proxyConfig["ProxyPassword"] -AsPlainText -Force
-            $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $password
-            return {Invoke-WebRequest -Uri $uri -Method $method -Body $body -Headers $headers -Proxy $proxyConfig["ProxyUrl"] -ProxyCredential $credential -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing}
-        }
-        else
-        {
-            return {Invoke-WebRequest -Uri $uri -Method $method -Body $body -Headers $headers -Proxy $proxyConfig["ProxyUrl"] -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing}
-        }
-    }
-    else
-    {
-        return {Invoke-WebRequest -Uri $uri -Method $method -Body $body -Headers $headers -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing}
-    }
-}
-
 function Invoke-WithRetry {
     param (
         [ScriptBlock] $retryCommand,
@@ -97,33 +41,10 @@ function Get-TimeSinceEpoch {
     return $timeSinceEpoch
 }
 
-function Download-File{
-    param (
-        [string] $downloadUrl,
-        [string] $target
-    )
-
-    $WebClient = New-Object System.Net.WebClient
-    if($proxyConfig -and ($proxyConfig.Contains("ProxyUrl")))
-    {
-        $WebProxy = New-Object System.Net.WebProxy($proxyConfig["ProxyUrl"], $true)
-        if($proxyConfig.Contains("ProxyAuthenticated") -and ($proxyConfig["ProxyAuthenticated"]))
-        {
-            $WebProxy.Credentials = New-Object System.Net.NetworkCredential($proxyConfig["ProxyUserName"], $proxyConfig["ProxyPassword"])
-            $WebClient.Proxy = $WebProxy
-        }
-    }
-    $WebClient.DownloadFile($downloadUrl, $target)
-
-}
-
 #
 # Exports
 #
 Export-ModuleMember `
     -Function `
         Invoke-WithRetry, `
-        Get-TimeSinceEpoch, `
-        Construct-RestMethodBlock, `
-        Construct-WebRequestBlock, `
-        Download-File
+        Get-TimeSinceEpoch

@@ -274,7 +274,7 @@ function Get-HandlerSettings
         #
         if ($settings.protectedSettings)
         {
-            #Remove-ProtectedSettingsFromConfigFile
+            Remove-ProtectedSettingsFromConfigFile
             $protectedSettings = $settings.protectedSettings
 
             Write-Log "Found protected settings on Azure VM. Decrypting with certificate."

@@ -158,11 +158,6 @@ def install_dependencies(config):
     }
     if ('ProxyUrl' in proxy_config):
       proxy_url = proxy_config['ProxyUrl']
-      if(('ProxyAuthenticated' in proxy_config) and proxy_config['ProxyAuthenticated']):
-        if("://" in proxy_url):
-          proxy_url = f"{proxy_url[0:proxy_url.index("://")]}://{proxy_config['ProxyUserName']}:{proxy_config['ProxyPassword']}@{proxy_url[(proxy_url.index("://")+3):]}
-        else:
-          proxy_url = f"{proxy_config['ProxyUserName']}:{proxy_config['ProxyPassword']}@{proxy_url}"
       env["http_proxy"] = proxy_url
       env["https_proxy"] = proxy_url
     install_dependencies_proc = subprocess.Popen(install_dependencies_path, stdout = subprocess.PIPE, stderr = subprocess.PIPE, env=env)
@@ -331,24 +326,6 @@ def get_configuration_from_settings():
       proxy_url = public_settings['ProxyUrl']
       proxy_config['ProxyUrl'] = proxy_url
       handler_utility.log('ProxyUrl: {0}'.format(proxy_url))
-      
-      if(('ProxyUserName' in public_settings) and (public_settings['ProxyUserName'])):
-        proxy_config['ProxyAuthenticated'] = True
-        proxy_username = public_settings['ProxyUserName']
-        proxy_config['ProxyUserName'] = proxy_username
-        handler_utility.log('ProxyUserName: {0}'.format(proxy_username))
-
-      if((protected_settings.__class__.__name__ == 'dict') and ('ProxyPassword' in protected_settings) and (protected_settings['ProxyPassword'])):
-        proxy_config['ProxyAuthenticated'] = True
-        proxy_password = protected_settings['ProxyPassword']
-        proxy_config['ProxyPassword'] = proxy_password
-      
-      if(('ProxyAuthenticated' in proxy_config) and (proxy_config['ProxyAuthenticated'])):
-        if(not(('ProxyUserName' in proxy_config) and proxy_config['ProxyUserName'])):
-          proxy_config['ProxyUserName'] = ""
-        if(not(('ProxyPassword' in proxy_config) and proxy_config['ProxyPassword'])):
-          proxy_config['ProxyPassword'] = ""
-
 
     # If this is a pipelines agent, read the settings and return quickly
     # Note that the pipelines settings come over as camelCase
@@ -638,11 +615,6 @@ def enable_pipelines_agent(config):
     }
     if ('ProxyUrl' in proxy_config):
       proxy_url = proxy_config['ProxyUrl']
-      if(('ProxyAuthenticated' in proxy_config) and proxy_config['ProxyAuthenticated']):
-        if("://" in proxy_url):
-          proxy_url = f"{proxy_url[0:proxy_url.index("://")]}://{proxy_config['ProxyUserName']}:{proxy_config['ProxyPassword']}@{proxy_url[(proxy_url.index("://")+3):]}
-        else:
-          proxy_url = f"{proxy_config['ProxyUserName']}:{proxy_config['ProxyPassword']}@{proxy_url}"
       env["http_proxy"] = proxy_url
       env["https_proxy"] = proxy_url
     argList =  ['/bin/bash', enableFile] + shlex.split(enableParameters)

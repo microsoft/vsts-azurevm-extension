@@ -35,36 +35,23 @@ function Get-ConfigurationFromSettings {
         }
 
         $global:proxyConfig = @{}
-        if($publicSettings.Contains("ProxyUrl") -and ![string]::IsNullOrEmpty($publicSettings["ProxyUrl"]))
+        $proxyUrl = ""
+        if($proxyUrl = $env:HTTPS_PROXY)
         {
-            $proxyConfig["ProxyUrl"] = $publicSettings["ProxyUrl"]
-            Write-Log "ProxyUrl: $($proxyConfig["ProxyUrl"])"
-            if($publicSettings.Contains("ProxyUserName") -and ![string]::IsNullOrEmpty($publicSettings["ProxyUserName"]))
-            {
-                $proxyConfig["ProxyAuthenticated"] = $true
-                $proxyUsername = $publicSettings["ProxyUserName"]
-                $proxyConfig["ProxyUserName"] = $proxyUsername
-                Write-Log "ProxyUserName: $($proxyConfig["ProxyUserName"])"
-            }
-
-            if($protectedSettings.Contains('ProxyPassword'))
-            {
-                $proxyConfig["ProxyAuthenticated"] = $true
-                $proxyPassword = $protectedSettings["ProxyPassword"]
-                $proxyConfig["ProxyPassword"] = $proxyPassword
-            }
-
-            if($proxyConfig.Contains("ProxyAuthenticated") -and ($proxyConfig["ProxyAuthenticated"]))
-            {
-                if(!$proxyConfig.Contains("ProxyUserName") -or [string]::IsNullOrEmpty($proxyConfig["ProxyUserName"]))
-                {
-                    $proxyConfig["ProxyUserName"] = ""
-                }
-                if(!$proxyConfig.Contains("ProxyPassword") -or [string]::IsNullOrEmpty($proxyConfig["ProxyPassword"]))
-                {
-                    $proxyConfig["ProxyPassword"] = ""
-                }
-            }
+        }
+        elseif($proxyUrl = $env:https_proxy)
+        {
+        }
+        elseif($proxyUrl = $env:HTTP_PROXY)
+        {
+        }
+        elseif($proxyUrl = $env:http_proxy)
+        {
+        }
+        if([string]::IsNullOrEmpty($proxyUrl))
+        {
+            $proxyConfig["ProxyUrl"] = $proxyUrl
+            Write-Log "ProxyUrl is present"
         }
 
         # Check if this extension is for Pipelines agent

@@ -552,9 +552,6 @@ def make_http_request(url, http_method, body, headers, pat_token):
     proxy_prefix = get_url_prefix(proxy_config['ProxyUrl'])
     proxy_url_without_prefix = proxy_url[len(proxy_prefix):]
     proxy_headers={}
-    if(('ProxyAuthenticated' in proxy_config) and proxy_config['ProxyAuthenticated']):
-      proxy_auth = base64.b64encode(f"{proxy_config['ProxyUserName']}:{proxy_config['ProxyPassword']}".encode("utf-8")).decode("utf-8")
-      proxy_headers['Proxy-Authorization'] = f"Basic {proxy_auth}"
     connection = connection_type(proxy_url_without_prefix)
     connection.set_tunnel(host, headers=proxy_headers)
   else:
@@ -581,11 +578,6 @@ def ordered_json_object(obj):
 def url_retrieve(download_url, target):
   if ('ProxyUrl' in proxy_config):
     proxy_url = proxy_config['ProxyUrl']
-    if(('ProxyAuthenticated' in proxy_config) and proxy_config['ProxyAuthenticated']):
-      if("://" in proxy_url):
-        proxy_url = f"{proxy_url[0:proxy_url.index('://')]}://{proxy_config['ProxyUserName']}:{proxy_config['ProxyPassword']}@{proxy_url[(proxy_url.index('://')+3):]}"
-      else:
-        proxy_url = f"{proxy_config['ProxyUserName']}:{proxy_config['ProxyPassword']}@{proxy_url}"
     proxy_handler = urllib.ProxyHandler({'https': proxy_url})
     opener = urllib.build_opener(proxy_handler)
     urllib.install_opener(opener)

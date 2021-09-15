@@ -151,11 +151,6 @@ function CreateConfigCmdArgs
     if($proxyConfig -and ($proxyConfig.Contains("ProxyUrl")))
     {
         $configCmdArgs += " --proxyurl $($proxyConfig["ProxyUrl"])"
-        if($proxyConfig.Contains("ProxyAuthenticated") -and ($proxyConfig["ProxyAuthenticated"]))
-        {
-            $configCmdArgs += " --proxyusername $($proxyConfig["ProxyUserName"]) --proxypassword $($proxyConfig["ProxyPassword"])"
-            
-        }
     }
     return $configCmdArgs
 }

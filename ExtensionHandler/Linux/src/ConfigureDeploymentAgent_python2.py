@@ -267,10 +267,6 @@ def _configure_agent_internal(vsts_url, pat_token, project_name, deployment_grou
   if('ProxyUrl' in proxy_config):
     configure_command_args += ['--proxyurl', proxy_config['ProxyUrl']]
 
-  if(('ProxyAuthenticated' in proxy_config) and proxy_config['ProxyAuthenticated']):
-    configure_command_args += ['--proxyusername', proxy_config['ProxyUserName'],
-                               '--proxypassword', proxy_config['ProxyPassword']]
-
   config_agent_proc = subprocess.Popen('{0} configure --unattended --acceptteeeula --deploymentgroup --replace'.format(agent_listener_path).split(' ') + configure_command_args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   std_out, std_err = config_agent_proc.communicate()
   return_code = config_agent_proc.returncode

@@ -169,12 +169,6 @@ function Construct-ProxyObjectForHttpRequests {
     if($proxyConfig -and ($proxyConfig.Contains("ProxyUrl")))
     {
         $proxyObject["Proxy"] = $proxyConfig["ProxyUrl"]
-        if($proxyConfig.Contains("ProxyAuthenticated") -and ($proxyConfig["ProxyAuthenticated"]))
-        {
-            $username = $proxyConfig["ProxyUserName"]
-            $password = ConvertTo-SecureString -String $proxyConfig["ProxyPassword"] -AsPlainText -Force
-            $proxyObject["ProxyCredential"] = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $password
-        }
     }
     return $proxyObject
 }
@@ -189,11 +183,6 @@ function Download-File{
     if($proxyConfig -and ($proxyConfig.Contains("ProxyUrl")))
     {
         $WebProxy = New-Object System.Net.WebProxy($proxyConfig["ProxyUrl"], $true)
-        if($proxyConfig.Contains("ProxyAuthenticated") -and ($proxyConfig["ProxyAuthenticated"]))
-        {
-            $WebProxy.Credentials = New-Object System.Net.NetworkCredential($proxyConfig["ProxyUserName"], $proxyConfig["ProxyPassword"])
-            $WebClient.Proxy = $WebProxy
-        }
     }
     $WebClient.DownloadFile($downloadUrl, $target)
 

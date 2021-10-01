@@ -647,7 +647,7 @@ def enable_pipelines_agent(config):
       env["http_proxy"] = proxy_url
       env["https_proxy"] = proxy_url
     argList =  ['/bin/bash', enableFile] + shlex.split(enableParameters)
-    enableProcess = subprocess.Popen(argList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    enableProcess = subprocess.Popen(argList, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     (output, error) = enableProcess.communicate()
     handler_utility.log(output.decode("utf-8"))
     handler_utility.log(error.decode("utf-8"))

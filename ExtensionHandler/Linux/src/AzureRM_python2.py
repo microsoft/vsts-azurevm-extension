@@ -17,7 +17,7 @@ import json
 import time
 import shutil
 from Utils_python2.WAAgentUtil import waagent
-from Utils.GlobalSettings import proxy_config
+from Utils_python2.GlobalSettings import proxy_config
 from distutils.version import LooseVersion
 from time import sleep
 from urllib2 import quote
@@ -319,13 +319,19 @@ def get_configuration_from_settings():
       protected_settings = {}
     
     #fetching proxy settings, which are common for both deploymentgroup and byos
-    proxy_config = {}
 
     proxy_url = ''
-    if(('ProxyUrl' in public_settings) and (public_settings['ProxyUrl'])):
-      proxy_url = public_settings['ProxyUrl']
+    if('https_proxy' in  os.environ):
+      proxy_url = os.environ['https_proxy']
+    elif('HTTPS_PROXY' in  os.environ):
+      proxy_url = os.environ['HTTPS_PROXY']
+    elif('http_proxy' in  os.environ):
+      proxy_url = os.environ['http_proxy']
+    elif('HTTP_PROXY' in  os.environ):
+      proxy_url = os.environ['HTTP_PROXY']
+    if(proxy_url):
+      handler_utility.log('ProxyUrl is present')
       proxy_config['ProxyUrl'] = proxy_url
-      handler_utility.log('ProxyUrl: {0}'.format(proxy_url))
 
     # If this is a pipelines agent, read the settings and return quickly
     # Note that the pipelines settings come over as camelCase
@@ -618,7 +624,7 @@ def enable_pipelines_agent(config):
       env["http_proxy"] = proxy_url
       env["https_proxy"] = proxy_url
     argList =  ['/bin/bash', enableFile] + shlex.split(enableParameters)
-    enableProcess = subprocess.Popen(argList,  env=env)
+    enableProcess = subprocess.Popen(argList, env=env)
     enableProcess.communicate()
 
   except Exception as e:

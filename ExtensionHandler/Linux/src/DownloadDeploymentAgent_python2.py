@@ -55,7 +55,7 @@ def _write_download_log(log_message):
 
 def _get_agent_package_data(package_data_url, pat_token):
   _write_download_log('\t\tFetching Agent PackageData using {0}'.format(package_data_url))
-  response = Util.make_http_call(package_data_url, 'GET', None, None, pat_token)
+  response = Util.make_http_request(package_data_url, 'GET', None, None, pat_token)
   if(response.status == 200):
     val = json.loads(response.read())
     return val['value'][0]
@@ -72,7 +72,7 @@ def _download_deployment_agent_internal(agent_download_url, target):
     _write_download_log('\t\t {0} already exists, deleting it'.format(target))
     os.remove(target)
   _write_download_log('\t\t Starting Deployment Agent download')
-  urllib.urlretrieve(agent_download_url, target)
+  Util.url_retrieve(agent_download_url, target)
   _write_download_log('\t\t Deployment Agent download done')
 
 def _extract_target(target_file, target):

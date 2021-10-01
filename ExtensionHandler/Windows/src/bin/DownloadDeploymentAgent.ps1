@@ -50,7 +50,8 @@ function WriteDownloadLog
         WriteDownloadLog $message
         return $message
     }
-    $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Get" -Headers $headers} -actionName "Get packagedata" `
+    $proxyObject = Construct-ProxyObjectForHttpRequests
+    $response = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $restCallUrl -Method "Get" -Headers $headers @proxyObject} -actionName "Get packagedata" `
                                  -retryCatchBlock {$null = (& $getAgentPackageDataErrorMessageBlock)} -finalCatchBlock {throw (& $getAgentPackageDataErrorMessageBlock)}
 
     return $response.Value[0]
@@ -93,7 +94,7 @@ function WriteDownloadLog
     
     WriteDownloadLog "`t`t Start DeploymentAgent download"
     $agentDownloadUri = [System.Uri]$agentDownloadUrl
-    Invoke-WithRetry -retryBlock {(New-Object Net.WebClient).DownloadFile($agentDownloadUri,$target)} `
+    Invoke-WithRetry -retryBlock {Download-File -downloadUrl $agentDownloadUri -target $target} `
                      -retryCatchBlock {WriteDownloadLog $_} `
                      -finalCatchBlock {
                          $message = "An error occured while downloading the agent package. More details: $_.`n Please ensure `

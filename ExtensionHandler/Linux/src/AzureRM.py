@@ -17,6 +17,7 @@ import json
 import time
 import shutil
 from Utils.WAAgentUtil import waagent
+from Utils.GlobalSettings import proxy_config
 from distutils.version import LooseVersion
 from time import sleep
 from urllib.parse import quote
@@ -154,7 +155,14 @@ def install_dependencies(config):
   working_folder = config['AgentWorkingFolder']
   install_dependencies_path = os.path.join(working_folder, Constants.install_dependencies_script)
   for i in range(num_of_retries):
-    install_dependencies_proc = subprocess.Popen(install_dependencies_path, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    env = {
+        **os.environ
+    }
+    if ('ProxyUrl' in proxy_config):
+      proxy_url = proxy_config['ProxyUrl']
+      env["http_proxy"] = proxy_url
+      env["https_proxy"] = proxy_url
+    install_dependencies_proc = subprocess.Popen(install_dependencies_path, stdout = subprocess.PIPE, stderr = subprocess.PIPE, env=env)
     install_out, install_err = install_dependencies_proc.communicate()
     return_code = install_dependencies_proc.returncode
     handler_utility.log('Install dependencies process exit code : {0}'.format(return_code))
@@ -187,7 +195,7 @@ def compare_sequence_number():
 def parse_account_name(account_name, pat_token): 
   vsts_url = account_name.strip('/')
 
-  account_name_prefix = Util.get_account_name_prefix(account_name)
+  account_name_prefix = Util.get_url_prefix(account_name)
   if(account_name_prefix == ''):
     vsts_url = 'https://{0}.visualstudio.com'.format(account_name)
 
@@ -203,7 +211,7 @@ def parse_account_name(account_name, pat_token):
 
 def get_deployment_type(vsts_url, pat_token):
   rest_call_url = vsts_url + '/_apis/connectiondata'
-  response = Util.make_http_call(rest_call_url, 'GET', None, None, pat_token)
+  response = Util.make_http_request(rest_call_url, 'GET', None, None, pat_token)
   if(response.status == Constants.HTTP_OK):
     connection_data = json.loads(str(response.read(), 'utf-8'))
     if('deploymentType' in connection_data):
@@ -247,7 +255,7 @@ def validate_inputs(config):
     get_deployment_group_url = "{0}/{1}/_apis/distributedtask/deploymentgroups?name={2}&api-version={3}".format(config['VSTSUrl'], quote(config['TeamProject']), quote(config['DeploymentGroup']), Constants.projectAPIVersion)
     
     handler_utility.log("Get deployment group url - {0}".format(get_deployment_group_url))
-    response = Util.make_http_call(get_deployment_group_url, 'GET', None, None, config['PATToken'])
+    response = Util.make_http_request(get_deployment_group_url, 'GET', None, None, config['PATToken'])
 
     if(response.status != Constants.HTTP_OK):
       if(response.status == Constants.HTTP_FOUND):
@@ -281,7 +289,7 @@ def validate_inputs(config):
     patch_deployment_group_url = "{0}/{1}/_apis/distributedtask/deploymentgroups/{2}?api-version={3}".format(config['VSTSUrl'], quote(config['TeamProject']), deployment_group_id, Constants.projectAPIVersion) 
     
     handler_utility.log("Patch deployment group url - {0}".format(patch_deployment_group_url))
-    response = Util.make_http_call(patch_deployment_group_url, 'PATCH', body, headers, config['PATToken'])
+    response = Util.make_http_request(patch_deployment_group_url, 'PATCH', body, headers, config['PATToken'])
 
     if(response.status != Constants.HTTP_OK):
       if(response.status == Constants.HTTP_FORBIDDEN):
@@ -311,6 +319,21 @@ def get_configuration_from_settings():
     if(protected_settings == None):
       protected_settings = {}
 
+    #fetching proxy settings, which are common for both deploymentgroup and byos
+
+    proxy_url = ''
+    if('https_proxy' in  os.environ):
+      proxy_url = os.environ['https_proxy']
+    elif('HTTPS_PROXY' in  os.environ):
+      proxy_url = os.environ['HTTPS_PROXY']
+    elif('http_proxy' in  os.environ):
+      proxy_url = os.environ['http_proxy']
+    elif('HTTP_PROXY' in  os.environ):
+      proxy_url = os.environ['HTTP_PROXY']
+    if(proxy_url):
+      handler_utility.log('ProxyUrl is present')
+      proxy_config['ProxyUrl'] = proxy_url
+      
     # If this is a pipelines agent, read the settings and return quickly
     # Note that the pipelines settings come over as camelCase
     if('isPipelinesAgent' in public_settings):
@@ -570,7 +593,7 @@ def enable_pipelines_agent(config):
     for attempt in range(1,MAX_RETRIES+1):
       # retry up to 3 times
       try:
-        urllib.request.urlretrieve(downloadUrl, agentFile)
+        handler_utility.url_retrieve(downloadUrl, agentFile)
         break
       except Exception as e:
         handler_utility.log("Attempt {0} to download the agent failed".format(attempt))
@@ -589,7 +612,7 @@ def enable_pipelines_agent(config):
     for attempt in range(1,MAX_RETRIES+1):
       # retry up to 3 times
       try: 
-        urllib.request.urlretrieve(downloadUrl, enableFile)
+        handler_utility.url_retrieve(downloadUrl, enableFile)
         break
       except Exception as e:
         handler_utility.log("Attempt {0} to download the pipeline script failed".format(attempt))
@@ -616,8 +639,15 @@ def enable_pipelines_agent(config):
 
     # run the script and wait for it to complete
     handler_utility.log("running script")
+    env = {
+        **os.environ
+    }
+    if ('ProxyUrl' in proxy_config):
+      proxy_url = proxy_config['ProxyUrl']
+      env["http_proxy"] = proxy_url
+      env["https_proxy"] = proxy_url
     argList =  ['/bin/bash', enableFile] + shlex.split(enableParameters)
-    enableProcess = subprocess.Popen(argList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    enableProcess = subprocess.Popen(argList, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     (output, error) = enableProcess.communicate()
     handler_utility.log(output.decode("utf-8"))
     handler_utility.log(error.decode("utf-8"))

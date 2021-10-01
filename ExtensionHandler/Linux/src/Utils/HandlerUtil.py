@@ -60,9 +60,11 @@ import base64
 import json
 import time
 from . import RMExtensionStatus
+from .GlobalSettings import proxy_config
 import platform
 import http.client
 import base64
+import urllib.request
 
 from xml.etree import ElementTree
 from os.path import join
@@ -521,7 +523,7 @@ class HandlerUtility:
             excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['InputConfigurationError'], message)
             raise excep
 
-def get_account_name_prefix(account_name):
+def get_url_prefix(account_name):
   account_name_lower = account_name.lower()
   if(account_name_lower.startswith('http://')):
     return 'http://'
@@ -529,10 +531,10 @@ def get_account_name_prefix(account_name):
     return 'https://'
   return '' 
 
-def make_http_call(url, http_method, body, headers, pat_token):
-  prefix = get_account_name_prefix(url)
+def make_http_request(url, http_method, body, headers, pat_token):
+  prefix = get_url_prefix(url)
   url_without_prefix = url[len(prefix):]
-  server_url, path = url_without_prefix.split('/', 1)
+  host, path = url_without_prefix.split('/', 1)
   path = '/' + path
 
   if (not headers):
@@ -547,7 +549,16 @@ def make_http_call(url, http_method, body, headers, pat_token):
   if(prefix.startswith('http://')):
     connection_type = http.client.HTTPConnection
 
-  connection = connection_type(server_url)
+  if ('ProxyUrl' in proxy_config):
+    proxy_url = proxy_config['ProxyUrl']
+    proxy_prefix = get_url_prefix(proxy_url)
+    proxy_url_without_prefix = proxy_url[len(proxy_prefix):]
+    proxy_headers={}
+    connection = connection_type(proxy_url_without_prefix)
+    connection.set_tunnel(host, headers=proxy_headers)
+  else:
+    connection = connection_type(host)
+    
   connection.request(http_method, path, body, headers)
   return connection.getresponse()
 
@@ -566,3 +577,10 @@ def ordered_json_object(obj):
   else:
     return obj
 
+def url_retrieve(download_url, target):
+  if ('ProxyUrl' in proxy_config):
+    proxy_url = proxy_config['ProxyUrl']
+    proxy_handler = urllib.request.ProxyHandler({'https': proxy_url})
+    opener = urllib.request.build_opener(proxy_handler)
+    urllib.request.install_opener(opener)
+  urllib.request.urlretrieve(download_url, target)

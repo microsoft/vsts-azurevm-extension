@@ -34,6 +34,26 @@ function Get-ConfigurationFromSettings {
             $protectedSettings = @{}
         }
 
+        $global:proxyConfig = @{}
+        $proxyUrl = ""
+        if($proxyUrl = $env:HTTPS_PROXY)
+        {
+        }
+        elseif($proxyUrl = $env:https_proxy)
+        {
+        }
+        elseif($proxyUrl = $env:HTTP_PROXY)
+        {
+        }
+        elseif($proxyUrl = $env:http_proxy)
+        {
+        }
+        if([string]::IsNullOrEmpty($proxyUrl))
+        {
+            $proxyConfig["ProxyUrl"] = $proxyUrl
+            Write-Log "ProxyUrl is present"
+        }
+
         # Check if this extension is for Pipelines agent
         # Note that the settings come over as camelCase
         if($publicSettings.Contains('isPipelinesAgent'))
@@ -243,7 +263,8 @@ function Confirm-InputsAreValid {
 
             return $inputsValidationErrorCode, $errorMessage
         }
-        $ret = Invoke-WithRetry -retryBlock {Invoke-WebRequest -Uri $getDeploymentGroupUrl -headers $headers -Method "Get" -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing} `
+        $proxyObject = Construct-ProxyObjectForHttpRequests
+        $ret = Invoke-WithRetry -retryBlock {Invoke-WebRequest -Uri $getDeploymentGroupUrl -headers $headers -Method "Get" -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing @proxyObject} `
                                 -retryCatchBlock {$null, $null = (& $getDeploymentGroupDataErrorBlock)} -actionName "Get deploymentgroup" `
                                 -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $getDeploymentGroupDataErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
 
@@ -309,7 +330,8 @@ function Confirm-InputsAreValid {
             return $inputsValidationErrorCode, $errorMessage
         }
 
-        $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $patchDeploymentGroupUrl -Method "Patch" -Body $requestBody -Headers $headers} `
+        $proxyObject = Construct-ProxyObjectForHttpRequests
+        $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $patchDeploymentGroupUrl -Method "Patch" -Body $requestBody -Headers $headers @proxyObject} `
                                 -retryCatchBlock {$null, $null = (& $patchDeploymentGroupErrorBlock)} -actionName "Patch deploymentgroup" `
                                 -finalCatchBlock {$inputsValidationErrorCode, $errorMessage = (& $patchDeploymentGroupErrorBlock); throw New-HandlerTerminatingError $inputsValidationErrorCode -Message $errorMessage}
 
@@ -380,7 +402,8 @@ function Validate-AgentName
         return $errorMessage
     }
 
-    $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $listTargetsUrl -Method "Get" -Headers $headers} `
+    $proxyObject = Construct-ProxyObjectForHttpRequests
+    $ret = Invoke-WithRetry -retryBlock {Invoke-RestMethod -Uri $listTargetsUrl -Method "Get" -Headers $headers @proxyObject} `
                             -retryCatchBlock {$null = (& $listTargetsErrorBlock)} -actionName "List targets" `
                             -finalCatchBlock {Write-Log (& $listTargetsErrorBlock) $true}
     if($ret)
@@ -466,7 +489,8 @@ function Parse-VSTSUrl
     $response.deploymentType = 'hosted'
     try
     {
-        $resp = Invoke-WebRequest -Uri $restCallUrl -headers $headers -Method Get -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing
+        $proxyObject = Construct-ProxyObjectForHttpRequests
+        $resp = Invoke-WebRequest -Uri $restCallUrl -headers $headers -Method Get -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing @proxyObject
     }
     catch
     {

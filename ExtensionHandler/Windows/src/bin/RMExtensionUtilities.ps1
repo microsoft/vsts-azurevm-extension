@@ -161,3 +161,29 @@ function Exit-WithCode
     )
     exit $exitCode
 }
+
+function Construct-ProxyObjectForHttpRequests {
+    param ()
+
+    $proxyObject = @{}
+    if($proxyConfig -and ($proxyConfig.Contains("ProxyUrl")))
+    {
+        $proxyObject["Proxy"] = $proxyConfig["ProxyUrl"]
+    }
+    return $proxyObject
+}
+
+function Download-File{
+    param (
+        [string] $downloadUrl,
+        [string] $target
+    )
+
+    $WebClient = New-Object System.Net.WebClient
+    if($proxyConfig -and ($proxyConfig.Contains("ProxyUrl")))
+    {
+        $WebProxy = New-Object System.Net.WebProxy($proxyConfig["ProxyUrl"], $true)
+    }
+    $WebClient.DownloadFile($downloadUrl, $target)
+
+}

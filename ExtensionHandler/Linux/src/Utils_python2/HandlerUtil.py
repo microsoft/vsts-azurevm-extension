@@ -60,10 +60,11 @@ import base64
 import json
 import time
 import RMExtensionStatus
+from .GlobalSettings import proxy_config
 import platform
 import httplib
 import base64
-import urllib
+import urllib2
 
 from xml.etree import ElementTree
 from os.path import join
@@ -290,7 +291,7 @@ class HandlerUtility:
             return None
         self._context._config = self._parse_config(ctxt, operation)
         self.log("JSON config read successfully")
-        self.remove_protected_settings_from_config_file()
+        #self.remove_protected_settings_from_config_file()
         return self._context
 
     def _set_log_file_to_command_execution_log(self):
@@ -548,8 +549,9 @@ def make_http_request(url, http_method, body, headers, pat_token):
   if(prefix.startswith('http://')):
     connection_type = httplib.HTTPConnection
 
-  if (proxy_config.proxy_url):
-    proxy_prefix = get_url_prefix(proxy_config['ProxyUrl'])
+  if ('ProxyUrl' in proxy_config):
+    proxy_url = proxy_config['ProxyUrl']
+    proxy_prefix = get_url_prefix(proxy_url)
     proxy_url_without_prefix = proxy_url[len(proxy_prefix):]
     proxy_headers={}
     connection = connection_type(proxy_url_without_prefix)
@@ -578,7 +580,11 @@ def ordered_json_object(obj):
 def url_retrieve(download_url, target):
   if ('ProxyUrl' in proxy_config):
     proxy_url = proxy_config['ProxyUrl']
-    proxy_handler = urllib.ProxyHandler({'https': proxy_url})
-    opener = urllib.build_opener(proxy_handler)
-    urllib.install_opener(opener)
-  urllib.urlretrieve(download_url, target)
+    proxy_handler = urllib2.ProxyHandler({'https': proxy_url})
+    opener = urllib2.build_opener(proxy_handler)
+    urllib2.install_opener(opener)
+  response = urllib2.urlopen(download_url)
+  package_content = response.read()
+  with open(target, 'wb') as f:
+    f.write(package_content)
+    f.close()

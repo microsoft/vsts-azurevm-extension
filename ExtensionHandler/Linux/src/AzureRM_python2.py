@@ -153,9 +153,7 @@ def install_dependencies(config):
   working_folder = config['AgentWorkingFolder']
   install_dependencies_path = os.path.join(working_folder, Constants.install_dependencies_script)
   for i in range(num_of_retries):
-    env = {
-        **os.environ
-    }
+    env = os.environ
     if ('ProxyUrl' in proxy_config):
       proxy_url = proxy_config['ProxyUrl']
       env["http_proxy"] = proxy_url
@@ -588,7 +586,7 @@ def enable_pipelines_agent(config):
     handler_utility.log(downloadUrl)
     filename = os.path.basename(downloadUrl)
     agentFile = os.path.join(agentFolder, filename)
-    handler_utility.url_retrieve(downloadUrl, agentFile)
+    Util.url_retrieve(downloadUrl, agentFile)
 
     # download the enable script
     handler_utility.add_handler_sub_status(Util.HandlerSubStatus('DownloadPipelinesScript'))
@@ -597,7 +595,7 @@ def enable_pipelines_agent(config):
     handler_utility.log(downloadUrl)
     filename = os.path.basename(downloadUrl)
     enableFile = os.path.join(agentFolder, filename)
-    handler_utility.url_retrieve(downloadUrl, enableFile)
+    Util.url_retrieve(downloadUrl, enableFile)
 
   except Exception as e:
     handler_utility.log(getattr(e,'message'))
@@ -616,9 +614,7 @@ def enable_pipelines_agent(config):
 
     # run the script and wait for it to complete
     handler_utility.log("running script")
-    env = {
-        **os.environ
-    }
+    env = os.environ
     if ('ProxyUrl' in proxy_config):
       proxy_url = proxy_config['ProxyUrl']
       env["http_proxy"] = proxy_url

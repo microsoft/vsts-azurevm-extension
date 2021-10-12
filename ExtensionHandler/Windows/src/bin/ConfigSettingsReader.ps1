@@ -36,19 +36,15 @@ function Get-ConfigurationFromSettings {
 
         $global:proxyConfig = @{}
         $proxyUrl = ""
-        if($proxyUrl = $env:HTTPS_PROXY)
+        if(![string]::IsNullOrEmpty($env:http_proxy))
         {
+            $proxyUrl = $env:http_proxy
         }
-        elseif($proxyUrl = $env:https_proxy)
+        elseif(![string]::IsNullOrEmpty($env:https_proxy))
         {
+            $proxyUrl = $env:https_proxy
         }
-        elseif($proxyUrl = $env:HTTP_PROXY)
-        {
-        }
-        elseif($proxyUrl = $env:http_proxy)
-        {
-        }
-        if([string]::IsNullOrEmpty($proxyUrl))
+        if(![string]::IsNullOrEmpty($proxyUrl))
         {
             $proxyConfig["ProxyUrl"] = $proxyUrl
             Write-Log "ProxyUrl is present"

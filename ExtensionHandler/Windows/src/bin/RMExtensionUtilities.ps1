@@ -183,6 +183,7 @@ function Download-File{
     if($proxyConfig -and ($proxyConfig.Contains("ProxyUrl")))
     {
         $WebProxy = New-Object System.Net.WebProxy($proxyConfig["ProxyUrl"], $true)
+        $WebClient.Proxy = $WebProxy
     }
     $WebClient.DownloadFile($downloadUrl, $target)
 

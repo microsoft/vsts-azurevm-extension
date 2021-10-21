@@ -70,6 +70,7 @@ function EnablePipelinesAgent
         For ($attempt=1; $attempt -lt $MAX_RETRIES+1; $attempt++){
             try{
                 Download-File -downloadUrl $config.AgentDownloadUrl -target $agentZipFile
+                $attempt = $MAX_RETRIES
             }
             catch{
                 $exception = $Error[0]
@@ -90,6 +91,7 @@ function EnablePipelinesAgent
         For ($attempt=1; $attempt -lt $MAX_RETRIES+1; $attempt++){
             try{
                 Download-File -downloadUrl $config.EnableScriptDownloadUrl -target $enableFileName
+                $attempt = $MAX_RETRIES
             }
             catch{
                 $exception = $Error[0]

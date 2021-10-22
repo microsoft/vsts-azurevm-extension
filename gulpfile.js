@@ -133,8 +133,6 @@ gulp.task('createLinuxUIPackage', function () {
 	.pipe(gulp.dest(classicUIPackageLocation));
 });
 
-//gulp.task('default', ['build']);
-
 gulp.task('build', gulp.series(gulp.parallel('cleanExistingBuild', 'cleanTempFolder'), gulp.parallel(gulp.series('copyLinuxHandlerDefinitionFile', 'createTempLinuxHandlerPackage', 'createLinuxHandlerPackage'), gulp.series('copyWindowsHandlerDefinitionFile', 'createTempWindowsHandlerPackage', 'test', 'createWindowsHandlerPackage'), 'createWindowsUIPackage', 'createLinuxUIPackage'), function() {
     return new Promise(function(resolve, reject) {
 		gutil.log("VM extension packages created at " + outputPath);
@@ -142,3 +140,4 @@ gulp.task('build', gulp.series(gulp.parallel('cleanExistingBuild', 'cleanTempFol
     	resolve();
 	})
 }));
+

@@ -1,10 +1,12 @@
-﻿# Usage: .\Test.ps1 -testEnvironmentFile TestEnvironment.json -publisher Test.Microsoft.VisualStudio.Services -extension TeamServicesAgent -extensionVersion 1.30 [-personalAccessToken ***] -vmPassword ***
+# Usage: .\Test.ps1 -testEnvironmentFile TestEnvironment.json -publisher Test.Microsoft.VisualStudio.Services -extension TeamServicesAgent -extensionVersion 1.30 [-personalAccessToken ***] -vmPassword ***
 
 param(
     [Parameter(Mandatory=$true)]
     [string]$testEnvironmentFile,
     [Parameter(Mandatory=$true)]
     [string]$vmPassword,
+    [Parameter(Mandatory=$true)]
+    [string]$vmSize,
     [Parameter(Mandatory=$true)]
     [string]$publisher,
     [Parameter(Mandatory=$true)]
@@ -85,7 +87,7 @@ function Create-VM
     # Create VM using template
     $vmPasswordSecureString = $vmPasswordString | ConvertTo-SecureString -AsPlainText -Force
     $deploymentName = Get-Date -Format yyyyMMddhhmmss
-    New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templateFile -TemplateParameterFile $templateParameterFile -adminPassword $vmPasswordSecureString -DeploymentName $deploymentName
+    New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templateFile -TemplateParameterFile $templateParameterFile -adminPassword $vmPasswordSecureString -virtualMachineSize $vmSize -DeploymentName $deploymentName
 }
 
 function Get-Config

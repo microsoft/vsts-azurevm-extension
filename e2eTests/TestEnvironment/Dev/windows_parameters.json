@@ -9,7 +9,7 @@
             "value": "vm-ext-e2e-clsc"
         },
         "virtualMachineSize": {
-            "value": "Standard_DS3_v2"
+            "value": null
         },
         "adminUsername": {
             "value": "tfs"

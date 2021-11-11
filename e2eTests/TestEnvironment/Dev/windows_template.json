@@ -5,6 +5,9 @@
         "location": {
             "type": "string"
         },
+        "zone": {
+            "type": "string"
+        },
         "virtualMachineName": {
             "type": "string"
         },
@@ -160,6 +163,9 @@
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2015-06-15",
             "location": "[parameters('location')]",
+            "zones": [
+                "[parameters('zone')]"
+            ],
             "properties": {
                 "osProfile": {
                     "computerName": "[parameters('virtualMachineName')]",

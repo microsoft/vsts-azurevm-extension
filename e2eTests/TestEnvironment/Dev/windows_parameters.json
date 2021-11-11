@@ -5,6 +5,9 @@
         "location": {
             "value": "southcentralus"
         },
+        "zone": {
+            "value": "1"
+        },
         "virtualMachineName": {
             "value": "vm-ext-e2e-clsc"
         },

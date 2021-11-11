@@ -161,7 +161,7 @@
             ],
             "name": "[parameters('virtualMachineName')]",
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2021-03-01",
             "location": "[parameters('location')]",
             "zones": [
                 "[parameters('zone')]"

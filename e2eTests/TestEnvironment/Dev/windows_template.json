@@ -94,6 +94,9 @@
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[parameters('publicIPAddressName')]",
             "location": "[parameters('location')]",
+            "zones": [
+                "[parameters('zone')]"
+            ],
             "properties": {
                 "publicIPAllocationMethod": "[parameters('publicIpAddressType')]"
             }

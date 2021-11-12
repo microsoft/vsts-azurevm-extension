@@ -57,7 +57,7 @@
             "value": "vm-ext-e2e-clsc-ip"
         },
         "publicIpAddressType": {
-            "value": "Dynamic"
+            "value": "Static"
         },
         "publicIpAddressSku": {
             "value": "Standard"

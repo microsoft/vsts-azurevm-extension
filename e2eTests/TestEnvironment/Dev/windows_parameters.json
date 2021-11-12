@@ -59,6 +59,9 @@
         "publicIpAddressType": {
             "value": "Dynamic"
         },
+        "publicIpAddressSku": {
+            "value": "Standard"
+        },
         "privateIpAddressType": {
             "value": "Dynamic"
         }

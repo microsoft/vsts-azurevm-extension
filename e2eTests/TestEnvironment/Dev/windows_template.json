@@ -32,6 +32,9 @@
         "adminPassword": {
             "type": "securestring"
         },
+        "osDiskType": {
+            "type": "String"
+        },
         "storageAccountType": {
             "type": "string"
         },
@@ -186,11 +189,10 @@
                         "version": "latest"
                     },
                     "osDisk": {
-                        "name": "[parameters('virtualMachineName')]",
-                        "vhd": {
-                            "uri": "[concat(concat(reference(resourceId('vm-ext-rg-clsc', 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('virtualMachineName'), '16366565680980190.vhd')]"
-                        },
-                        "createOption": "fromImage"
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('osDiskType')]"
+                        }
                     },
                     "dataDisks": []
                 },

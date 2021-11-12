@@ -17,6 +17,9 @@
         "adminUsername": {
             "value": "tfs"
         },
+        "osDiskType": {
+            "value": "Standard_LRS"
+        },
         "storageAccountName": {
             "value": "vmextrgclscdisks643"
         },

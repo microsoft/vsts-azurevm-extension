@@ -5,6 +5,9 @@
         "location": {
             "type": "string"
         },
+        "zone": {
+            "type": "string"
+        },
         "virtualMachineName": {
             "type": "string"
         },
@@ -28,6 +31,9 @@
         },
         "adminPassword": {
             "type": "securestring"
+        },
+        "osDiskType": {
+            "type": "String"
         },
         "storageAccountType": {
             "type": "string"
@@ -53,11 +59,15 @@
         "publicIpAddressType": {
             "type": "string"
         },
+        "publicIpAddressSku": {
+            "type": "String"
+        },
         "privateIpAddressType": {
             "type": "string"
         }
     },
     "variables": {
+        "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
         "vnetId": "[resourceId('vm-ext-rg-clsc','Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
         "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
         "ipconfig": "ipconfig"
@@ -84,10 +94,16 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2019-02-01",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[parameters('publicIPAddressName')]",
             "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('publicIpAddressSku')]"
+            },
+            "zones": [
+                "[parameters('zone')]"
+            ],
             "properties": {
                 "publicIPAllocationMethod": "[parameters('publicIpAddressType')]"
             }
@@ -147,7 +163,10 @@
                             }
                         }
                     }
-                ]
+                ],
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
             }
         },
         {
@@ -158,8 +177,11 @@
             ],
             "name": "[parameters('virtualMachineName')]",
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2021-03-01",
             "location": "[parameters('location')]",
+            "zones": [
+                "[parameters('zone')]"
+            ],
             "properties": {
                 "osProfile": {
                     "computerName": "[parameters('virtualMachineName')]",
@@ -187,11 +209,10 @@
                         "version": "latest"
                     },
                     "osDisk": {
-                        "name": "[parameters('virtualMachineName')]",
-                        "vhd": {
-                            "uri": "[concat(concat(reference(resourceId('vm-ext-rg-clsc', 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('virtualMachineName'), '20161220105632.vhd')]"
-                        },
-                        "createOption": "fromImage"
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('osDiskType')]"
+                        }
                     },
                     "dataDisks": []
                 },

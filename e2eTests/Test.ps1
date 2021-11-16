@@ -16,48 +16,31 @@ param(
     [string]$personalAccessToken
 )
 
-function Remove-ExistingVM
+function Remove-ExistingRG
 {
     param(
-    [string]$resourceGroupName,
-    [string]$vmName,
-    [string]$storageAccountName
+    [string]$resourceGroupName
     )
-    
-    try
+try
     {
         #If the resource group exists
         Get-AzureRmResourceGroup -Name $resourceGroupName -ErrorAction Stop
-        # Delete existing VM if any. Remove-AzureRmVM does not throw if VM does not exist, hence no need to handle exception
-        Remove-AzureRmVM -ResourceGroupName $resourceGroupName -Name $vmName -Force
-
-        #If the storage account exists
-        Get-AzureRmStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName -ErrorAction Stop
-        # Delete VM's vhd blob as creating VM again will require blob to be removed first
-        $storageKey = Get-AzureRmStorageAccountKey -ResourceGroupName $resourceGroupName -Name $storageAccountName
-        $storageCtx = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageKey[0].Value
-        Get-AzureStorageBlob -Container vhds -Context $storageCtx | Remove-AzureStorageBlob
+        # Delete the  resource group
+        Remove-AzureRmResourceGroup -Name $resourceGroupName -Force -ErrorAction Stop
     }
     catch
     {
-        #If the error message is neither of (1)resource group does not exist, (2)storage account does not exist, delete the resource group
+        Write-Host "Deleting resource group failed: $_"
+        #If the error message is not of resource group does not exist, throw exception
         $exceptionMessage = $_.Exception.Message
-        if(-not($exceptionMessage.Contains("Provided resource group does not exist") -or 
-        $exceptionMessage.Contains("The Resource 'Microsoft.Storage/storageAccounts/$storageAccountName' under resource group '$resourceGroupName' was not found.")))
+        if(-not($exceptionMessage.Contains("Provided resource group does not exist")))
         {
-            try 
-            {
-                Write-Host "Some unexpected error occured, deleting resource group: $_"
-                Remove-AzureRmResourceGroup -Name $resourceGroupName -Force -ErrorAction Stop
-            }
-            catch {
-                Write-Host "Deleting resource group failed: $_"
-            }
+            throw $_
         }
     }
 }
 
-function Create-VM
+function Deploy-ArmTemplate
 {
     param(
     [string]$resourceGroupName,
@@ -65,24 +48,6 @@ function Create-VM
     [string]$templateParameterFile,
     [string]$vmPasswordString
     )
-    
-    #Ensure Resource Group exists
-    try
-    {
-        Get-AzureRmResourceGroup -Name $resourceGroupName -ErrorAction Stop
-    }
-    catch
-    {
-        if($_.Exception.Message.Contains("Provided resource group does not exist"))
-        {
-            Write-Host "Rsource group does not exist. Creating it."
-            New-AzureRmResourceGroup -Name $resourceGroupName -Location southcentralus -Tag @{DaysToDelete = "Never"}
-        }
-        else
-        {
-            throw "An error occured while fetching the resource group: $_"
-        }
-    }
 
     # Create VM using template
     $vmPasswordSecureString = $vmPasswordString | ConvertTo-SecureString -AsPlainText -Force
@@ -165,13 +130,14 @@ $extensionVersion = "{0}.{1}" -f $parts[0], $parts[1]
 #####
 # Pre-cleanup
 #####
-Write-Host "Removing VM $vmName to ensure clean state for test"
-Remove-ExistingVM -resourceGroupName $resourceGroupName -vmName $vmName -storageAccountName $storageAccountName
+Write-Host "Removing and creating resource group $resourceGroupName to ensure clean state for test"
+Remove-ExistingRG -resourceGroupName $resourceGroupName
+New-AzureRmResourceGroup -Name $resourceGroupName -Location southcentralus -Tag @{DaysToDelete = "Never"}
 
 ####
-# Create VM
-Write-Host "Creating VM $vmName"
-Create-VM -resourceGroupName $resourceGroupName -templateFile $templateFile -templateParameterFile $templateParameterFile -vmPasswordString $vmPassword
+# Deploy ArmTemplate
+Write-Host "Deploying the arm template"
+Deploy-ArmTemplate -resourceGroupName $resourceGroupName -templateFile $templateFile -templateParameterFile $templateParameterFile -vmPasswordString $vmPassword
 ####
 
 # Run twice. First configure and then reconfigure 
@@ -223,8 +189,8 @@ Write-Host "Cleaning up..."
 # Remove extension
 Remove-AzureRmVMExtension -ResourceGroupName $resourceGroupName -VMName $vmName -Name $extension -Force
 
-# Delete VM and vhd
-Remove-ExistingVM -resourceGroupName $resourceGroupName -vmName $vmName -storageAccountName $storageAccountName
+# Delete RG
+Remove-ExistingRG -resourceGroupName $resourceGroupName
 
 # Cleanup both agents if required pool if needed
 @($extensionPublicSettingsFile, $extensionReconfigurationPublicSettingsFile) | foreach {

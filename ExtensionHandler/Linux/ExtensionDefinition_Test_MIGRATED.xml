@@ -5,18 +5,6 @@
     <Version>1.148.0.0</Version>
     <Label>TeamServicesAgentLinux</Label>
     <HostingResources>VmRole</HostingResources>
-    <MediaLink>https://vstsvmextensiontest.blob.core.windows.net/agentextension/TeamServicesAgentLinux.zip</MediaLink>
-    <CloudTypes>
-      <Public>
-          <SubscriptionId>c00d16c7-6c1f-4c03-9be1-6934a4c49682</SubscriptionId>
-          <AzureLocation>South Central US</AzureLocation>
-          <AzureResourceGroupName>TeamServiceAgentLinux</AzureResourceGroupName>
-          <SDPRegions>
-              <Stage1>Central US EUAP</Stage1>
-              <Stage2>Central US EUAP;East US 2 EUAP</Stage2>
-          </SDPRegions>
-      </Public>
-    </CloudTypes>
     <Description>VSTS agent for machine groups</Description>
     <IsInternalExtension>true</IsInternalExtension>
     <Eula>https://www.visualstudio.com/products/visual-studio-team-services-vs</Eula>
@@ -26,4 +14,15 @@
     <CompanyName>Microsoft</CompanyName>
     <SupportedOS>Linux</SupportedOS>
   </ExtensionImage>
+  <CloudTypes>
+    <Public>
+        <SubscriptionId>c00d16c7-6c1f-4c03-9be1-6934a4c49682</SubscriptionId>
+        <AzureLocation>South Central US</AzureLocation>
+        <AzureResourceGroupName>TeamServiceAgentLinux</AzureResourceGroupName>
+        <SDPRegions>
+            <Stage1>Central US EUAP</Stage1>
+            <Stage2>Central US EUAP;East US 2 EUAP</Stage2>
+        </SDPRegions>
+    </Public>
+  </CloudTypes>
 </ExtensionInfo>

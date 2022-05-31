@@ -1,0 +1,29 @@
+<ExtensionInfo>
+  <ExtensionImage xmlns="http://schemas.microsoft.com/windowsazure" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">   
+    <ProviderNameSpace>Test3.Microsoft.VisualStudio.Services</ProviderNameSpace>
+    <Type>TeamServicesAgent</Type>
+    <Version>1.78.0.0</Version>
+    <Label>Team Services Agent</Label>
+    <HostingResources>VmRole</HostingResources>
+    <MediaLink>https://vstsvmextensiontest.blob.core.windows.net/agentextension/vstsagentextension.zip</MediaLink>
+    <CloudTypes>
+      <Public>
+          <SubscriptionId>c00d16c7-6c1f-4c03-9be1-6934a4c49682</SubscriptionId>
+          <AzureLocation>South Central US</AzureLocation>
+          <AzureResourceGroupName>TeamServiceAgent</AzureResourceGroupName>
+          <SDPRegions>
+              <Stage1>Central US EUAP</Stage1>
+              <Stage2>Central US EUAP;East US 2 EUAP</Stage2>
+          </SDPRegions>
+      </Public>
+    </CloudTypes>
+    <Description>Team Services agent for machine groups</Description>
+    <IsInternalExtension>true</IsInternalExtension>
+    <Eula>https://www.visualstudio.com/products/visual-studio-team-services-vs</Eula> 
+    <PrivacyUri>https://www.visualstudio.com/products/visual-studio-team-services-vs</PrivacyUri> 
+    <HomepageUri>https://www.visualstudio.com/products/visual-studio-team-services-vs</HomepageUri>
+    <IsJsonExtension>true</IsJsonExtension>
+    <CompanyName>Microsoft</CompanyName>
+    <SupportedOS>Windows</SupportedOS>
+  </ExtensionImage>
+</ExtensionInfo>

@@ -61,13 +61,13 @@ gulp.task('createTempLinuxHandlerPackage', function () {
 
 gulp.task('copyWindowsHandlerDefinitionFile', function () {
 	// copying definition xml file to output location
-	return gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test.xml', 'ExtensionHandler/Windows/ExtensionDefinition_Prod.xml'])
+	return gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test_MIGRATED.xml', 'ExtensionHandler/Windows/ExtensionDefinition_Prod_MIGRATED.xml'])
 	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
 });
 
 gulp.task('copyLinuxHandlerDefinitionFile', function () {
 	// copying definition xml file to output location
-	return gulp.src(['ExtensionHandler/Linux/ExtensionDefinition_Test.xml', 'ExtensionHandler/Linux/ExtensionDefinition_Prod.xml'])
+	return gulp.src(['ExtensionHandler/Linux/ExtensionDefinition_Test_MIGRATED.xml', 'ExtensionHandler/Linux/ExtensionDefinition_Prod_MIGRATED.xml'])
 	.pipe(gulp.dest(linuxHandlerArchievePackageLocation));
 });
 

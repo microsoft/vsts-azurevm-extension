@@ -2,7 +2,7 @@
     "ExtensionDrop": "VM extension\\ExtensionHandler\\Linux",
     "ExtensionPackageName": "RMExtension.zip",
     "ExtensionPackageStorageBlob": "vstsagentextensionlinux.zip",
-    "ExtensionDefinitionFile": "ExtensionDefinition_Prod.xml",
+    "ExtensionDefinitionFile": "ExtensionDefinition_Prod_MIGRATED.xml",
     "StorageResourceGroup": "rmextprodncus",
     "StorageAccountName": "pubrmextprodncus",
     "StorageContainerName": "agentextension",

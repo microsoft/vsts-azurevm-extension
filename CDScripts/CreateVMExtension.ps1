@@ -4,7 +4,7 @@
     Uses extension's definition xml file to obtain current version.
 
 .Usage
-    CreateVMExtension.ps1 -relativeExtensionDefinitionPath "VM extension\ExtensionDefinition_Test.xml"
+    CreateVMExtension.ps1 -relativeExtensionDefinitionPath "VM extension\ExtensionDefinition_Test_MIGRATED.xml"
 #>
 
 [CmdletBinding()]

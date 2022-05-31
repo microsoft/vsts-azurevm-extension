@@ -2,7 +2,7 @@
     "ExtensionDrop": "VM extension\\ExtensionHandler\\Windows",
     "ExtensionPackageName": "RMExtension.zip",
     "ExtensionPackageStorageBlob": "vstsagentextension.zip",
-    "ExtensionDefinitionFile": "ExtensionDefinition_Test.xml",
+    "ExtensionDefinitionFile": "ExtensionDefinition_Test_MIGRATED.xml",
     "StorageResourceGroup": "vstsvmextensiontest",
     "StorageAccountName": "vstsvmextensiontest",
     "StorageContainerName": "agentextension",

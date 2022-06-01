@@ -28,7 +28,7 @@ function artifactsGenerator (zipOutputDirectory, artifactSubDirectory, extension
 		gutil.log("Running Ev2ArtifactsGenerator with extension info file in " + extensionInfoFile)
 		gutil.log("Running Ev2ArtifactsGenerator with package file " + packageFile)
 		var generator = spawn('powershell.exe', ['CDScripts/Ev2ArtifactsGenerator.ps1',
-		'-outputDir ' + outputDir + ' ' + 
+		'-outputDir ' + artifactsOutputDirectory + ' ' + 
 		'-ExtensionInfoFile ' + extensionInfoFile + ' ' +
 		'-PackageFile ' + packageFile]
 		, { stdio: 'inherit' });

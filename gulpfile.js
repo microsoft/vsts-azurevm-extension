@@ -134,7 +134,7 @@ gulp.task('createLinuxUIPackage', function () {
 });
 
 function artifactsGenerator(isWindows, IsTest, done){
-	var generator = spawn('powershell.exe', ['./Ev2ArtifactsGenerator.ps1', 
+	var generator = spawn('powershell.exe', ['CDScripts/Ev2ArtifactsGenerator.ps1', 
 	'-outputDir ' + path.join((isWindows ? windowsHandlerArchievePackageLocation : linuxHandlerArchievePackageLocation),(IsTest ? 'Test' : 'Prod')) + ' ' + 
 	'-ExtensionInfoFile ' + path.join('ExtensionHandler/',(isWindows ? 'Windows' : 'Linux'), (IsTest ? 'ExtensionDefinition_Test_MIGRATED.xml' : 'ExtensionDefinition_Prod_MIGRATED.xml'))+ ' ' +
 	'-PackageFile ' + path.join(windowsHandlerArchievePackageLocation, 'RMExtension.zip')]

@@ -133,10 +133,10 @@ gulp.task('createLinuxUIPackage', function () {
 	.pipe(gulp.dest(classicUIPackageLocation));
 });
 
-function artifactsGenerator(isWindows, IsTest, done){
+function artifactsGenerator(isWindows, isTest, done){
 	var generator = spawn('powershell.exe', ['CDScripts/Ev2ArtifactsGenerator.ps1', 
-	'-outputDir ' + path.join((isWindows ? windowsHandlerArchievePackageLocation : linuxHandlerArchievePackageLocation),(IsTest ? 'Test' : 'Prod')) + ' ' + 
-	'-ExtensionInfoFile ' + path.join('ExtensionHandler/',(isWindows ? 'Windows' : 'Linux'), (IsTest ? 'ExtensionDefinition_Test_MIGRATED.xml' : 'ExtensionDefinition_Prod_MIGRATED.xml'))+ ' ' +
+	'-outputDir ' + path.join((isWindows ? windowsHandlerArchievePackageLocation : linuxHandlerArchievePackageLocation),(isTest ? 'Test' : 'Prod')) + ' ' + 
+	'-ExtensionInfoFile ' + path.join('ExtensionHandler/',(isWindows ? 'Windows' : 'Linux'), (isTest ? 'ExtensionDefinition_Test_MIGRATED.xml' : 'ExtensionDefinition_Prod_MIGRATED.xml'))+ ' ' +
 	'-PackageFile ' + path.join(windowsHandlerArchievePackageLocation, 'RMExtension.zip')]
 	, { stdio: 'inherit' });
 	generator.on('exit', function(code, signal) {

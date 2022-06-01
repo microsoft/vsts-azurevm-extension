@@ -19,36 +19,38 @@ var windowsHandlerArchievePackageLocation = path.join(outputPath, 'ExtensionHand
 var tempLinuxHandlerFilesPath = path.join(tempPackagePath, 'ExtensionHandler/Linux');
 var linuxHandlerArchievePackageLocation = path.join(outputPath, 'ExtensionHandler/Linux');
 
-function artifactsGenerator(isWindows, isTest, done){
-	var outputDirectory = path.join((isWindows ? windowsHandlerArchievePackageLocation : linuxHandlerArchievePackageLocation),(isTest ? 'Test' : 'Prod'));
-	var extensionInfoFile = path.join('ExtensionHandler/',(isWindows ? 'Windows' : 'Linux'), (isTest ? 'ExtensionDefinition_Test_MIGRATED.xml' : 'ExtensionDefinition_Prod_MIGRATED.xml'));
-	var packageFile = path.join(windowsHandlerArchievePackageLocation, 'RMExtension.zip');
-	gutil.log("Running Ev2ArtifactsGenerator with output directory " + outputDirectory)
-	gutil.log("Running Ev2ArtifactsGenerator with extension info file in " + extensionInfoFile)
-	gutil.log("Running Ev2ArtifactsGenerator with package file " + packageFile)
-	var generator = spawn('powershell.exe', ['CDScripts/Ev2ArtifactsGenerator.ps1', 
-	'-outputDir ' + outputDirectory + ' ' + 
-	'-ExtensionInfoFile ' + extensionInfoFile + ' ' +
-	'-PackageFile ' + packageFile]
-	, { stdio: 'inherit' });
-	generator.on('exit', function(code, signal) {
-		if (code != 0) {
-			throw new gutil.PluginError({
-			plugin: 'ARM generator',
-			message: 'ARM generator failed!!!'
-			});
-		}
-		else{
-			done();
-		}
-	});
-	generator.on('error', function(err) {
-		gutil.log('We may be in a non-windows machine or powershell.exe is not in path.');
-		throw new gulpUtil.PluginError({
-			plugin: 'ARM generator',
-			message: 'ARM generator failed!!!'
+function artifactsGenerator (zipOutputDirectory, artifactSubDirectory, extensionFile){
+	return function (done) {
+		const artifactsOutputDirectory = path.join(zipOutputDirectory, artifactSubDirectory);
+		const extensionInfoFile = path.join(zipOutputDirectory, extensionFile);
+		const packageFile = path.join(zipOutputDirectory, 'RMExtension.zip')
+		gutil.log("Running Ev2ArtifactsGenerator with output directory " + artifactsOutputDirectory);
+		gutil.log("Running Ev2ArtifactsGenerator with extension info file in " + extensionInfoFile)
+		gutil.log("Running Ev2ArtifactsGenerator with package file " + packageFile)
+		var generator = spawn('powershell.exe', ['CDScripts/Ev2ArtifactsGenerator.ps1',
+		'-outputDir ' + outputDir + ' ' + 
+		'-ExtensionInfoFile ' + extensionInfoFile + ' ' +
+		'-PackageFile ' + packageFile]
+		, { stdio: 'inherit' });
+		generator.on('exit', function(code, signal) {
+			if (code != 0) {
+				throw new gutil.PluginError({
+					plugin: 'ARM files generator',
+					message: 'ARM files generator failed!!!'
+				});
+			}
+			else{
+				done();
+			}
 		});
-	}); 
+		generator.on('error', function(err) {
+			gutil.log('We may be in a non-windows machine or powershell.exe is not in path.');
+			throw new gulpUtil.PluginError({
+				plugin: 'ARM files generator',
+				message: 'ARM files generator failed!!!'
+			});
+		});
+	}
 }
 
 gulp.task("test", function(done){
@@ -165,30 +167,20 @@ gulp.task('createLinuxUIPackage', function () {
 	.pipe(gulp.dest(classicUIPackageLocation));
 });
 
-gulp.task('windowsTestArtifactsGenerator', ['createWindowsHandlerPackage'], function(done){
-	artifactsGenerator(true,true, done); // generate windows test files
-});
-
-gulp.task('windowsProdArtifactsGenerator', ['createWindowsHandlerPackage'], function(done){
-	artifactsGenerator(true,false, done); // generate windows prod files
-});
-
-gulp.task('linuxTestArtifactsGenerator', ['createLinuxHandlerPackage'], function(done){
-	artifactsGenerator(false,true, done); // generate linux test files
-});
-
-gulp.task('linuxProdArtifactsGenerator', ['createLinuxHandlerPackage'], function(done){
-	artifactsGenerator(false,false, done); // generate linux prod files
-});
+gulp.task('generateWindowsTestArtifacts', artifactsGenerator(windowsHandlerArchievePackageLocation,"Test","ExtensionDefinition_Test_MIGRATED.xml"));
+gulp.task('generateWindowsProdArtifacts', artifactsGenerator(windowsHandlerArchievePackageLocation,"Prod","ExtensionDefinition_Prod_MIGRATED.xml"));
+gulp.task('generateLinuxTestArtifacts', artifactsGenerator(linuxHandlerArchievePackageLocation,"Test","ExtensionDefinition_Test_MIGRATED.xml"));
+gulp.task('generateLinuxProdArtifacts', artifactsGenerator(linuxHandlerArchievePackageLocation,"Prod","ExtensionDefinition_Prod_MIGRATED.xml"));
 
 gulp.task('build', gulp.series(gulp.parallel('cleanExistingBuild', 'cleanTempFolder'), 
-	gulp.parallel(gulp.series('copyLinuxHandlerDefinitionFile', 'createTempLinuxHandlerPackage', 'createLinuxHandlerPackage', 'linuxTestArtifactsGenerator', 'linuxProdArtifactsGenerator'), 
-	gulp.series('copyWindowsHandlerDefinitionFile', 'createTempWindowsHandlerPackage', 'test', 'createWindowsHandlerPackage', 'windowsTestArtifactsGenerator', 'windowsProdArtifactsGenerator'), 'createWindowsUIPackage', 'createLinuxUIPackage'), function() {
-    
-	return new Promise(function(resolve, reject) {
+	gulp.parallel(gulp.series('copyLinuxHandlerDefinitionFile', 'createTempLinuxHandlerPackage', 'createLinuxHandlerPackage'), 
+	gulp.series('copyWindowsHandlerDefinitionFile', 'createTempWindowsHandlerPackage', 'test', 'createWindowsHandlerPackage')),
+	gulp.parallel('generateWindowsTestArtifacts', 'generateWindowsProdArtifacts','generateLinuxTestArtifacts','generateLinuxProdArtifacts'), 'createWindowsUIPackage', 'createLinuxUIPackage'), function() {
+    return new Promise(function(resolve, reject) {
 		gutil.log("VM extension packages created at " + outputPath);
 		console.log("HTTP Server Started");
     	resolve();
 	})
-}));
+});
+
 

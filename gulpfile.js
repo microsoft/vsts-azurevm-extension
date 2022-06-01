@@ -111,9 +111,6 @@ gulp.task('createWindowsHandlerPackage', function (done) {
 	return gulp.src([tempWindowsHandlerFilesSource])
 	.pipe(zip('RMExtension.zip'))
 	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
-	gutil.log("Generating other needed files");
-	artifactsGenerator(true,true, done); // generate windows test files
-	artifactsGenerator(true,false, done); // generate windows prod files
 });
 
 gulp.task('createLinuxHandlerPackage', function (done) {
@@ -124,9 +121,6 @@ gulp.task('createLinuxHandlerPackage', function (done) {
 	return gulp.src([tempLinuxHandlerFilesSource])
 	.pipe(zip('RMExtension.zip'))
 	.pipe(gulp.dest(linuxHandlerArchievePackageLocation));
-	gutil.log("Generating other needed files");
-	artifactsGenerator(false,true, done); // generate linux test files
-	artifactsGenerator(false,false, done); // generate linux prod files
 });
 
 gulp.task('createWindowsUIPackage', function () {
@@ -171,8 +165,27 @@ gulp.task('createLinuxUIPackage', function () {
 	.pipe(gulp.dest(classicUIPackageLocation));
 });
 
-gulp.task('build', gulp.series(gulp.parallel('cleanExistingBuild', 'cleanTempFolder'), gulp.parallel(gulp.series('copyLinuxHandlerDefinitionFile', 'createTempLinuxHandlerPackage', 'createLinuxHandlerPackage'), gulp.series('copyWindowsHandlerDefinitionFile', 'createTempWindowsHandlerPackage', 'test', 'createWindowsHandlerPackage'), 'createWindowsUIPackage', 'createLinuxUIPackage'), function() {
-    return new Promise(function(resolve, reject) {
+gulp.task('windowsTestArtifactsGenerator', ['createWindowsHandlerPackage'], function(done){
+	artifactsGenerator(true,true, done); // generate windows test files
+});
+
+gulp.task('windowsProdArtifactsGenerator', ['createWindowsHandlerPackage'], function(done){
+	artifactsGenerator(true,false, done); // generate windows prod files
+});
+
+gulp.task('linuxTestArtifactsGenerator', ['createLinuxHandlerPackage'], function(done){
+	artifactsGenerator(false,true, done); // generate linux test files
+});
+
+gulp.task('linuxProdArtifactsGenerator', ['createLinuxHandlerPackage'], function(done){
+	artifactsGenerator(false,false, done); // generate linux prod files
+});
+
+gulp.task('build', gulp.series(gulp.parallel('cleanExistingBuild', 'cleanTempFolder'), 
+	gulp.parallel(gulp.series('copyLinuxHandlerDefinitionFile', 'createTempLinuxHandlerPackage', 'createLinuxHandlerPackage', 'linuxTestArtifactsGenerator', 'linuxProdArtifactsGenerator'), 
+	gulp.series('copyWindowsHandlerDefinitionFile', 'createTempWindowsHandlerPackage', 'test', 'createWindowsHandlerPackage', 'windowsTestArtifactsGenerator', 'windowsProdArtifactsGenerator'), 'createWindowsUIPackage', 'createLinuxUIPackage'), function() {
+    
+	return new Promise(function(resolve, reject) {
 		gutil.log("VM extension packages created at " + outputPath);
 		console.log("HTTP Server Started");
     	resolve();

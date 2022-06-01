@@ -24,7 +24,7 @@ gulp.task("test", function(done){
 	var pester = spawn('powershell.exe', ['CDScripts/InvokePester.ps1'], { stdio: 'inherit' });
 	pester.on('exit', function(code, signal) {
 	if (code != 0) {
-		throw new gulpUtil.PluginError({
+		throw new gutil.PluginError({
 		plugin: 'test',
 		message: 'Pester Tests Failed!!!'
 		});
@@ -133,7 +133,40 @@ gulp.task('createLinuxUIPackage', function () {
 	.pipe(gulp.dest(classicUIPackageLocation));
 });
 
-gulp.task('build', gulp.series(gulp.parallel('cleanExistingBuild', 'cleanTempFolder'), gulp.parallel(gulp.series('copyLinuxHandlerDefinitionFile', 'createTempLinuxHandlerPackage', 'createLinuxHandlerPackage'), gulp.series('copyWindowsHandlerDefinitionFile', 'createTempWindowsHandlerPackage', 'test', 'createWindowsHandlerPackage'), 'createWindowsUIPackage', 'createLinuxUIPackage'), function() {
+function artifactsGenerator(isWindows, IsTest, done){
+	var generator = spawn('powershell.exe', ['./Ev2ArtifactsGenerator.ps1', 
+	'-outputDir ' + path.join((isWindows ? windowsHandlerArchievePackageLocation : linuxHandlerArchievePackageLocation),(IsTest ? 'Test' : 'Prod')) + ' ' + 
+	'-ExtensionInfoFile ' + path.join('ExtensionHandler/',(isWindows ? 'Windows' : 'Linux'), (IsTest ? 'ExtensionDefinition_Test_MIGRATED.xml' : 'ExtensionDefinition_Prod_MIGRATED.xml'))+ ' ' +
+	'-PackageFile ' + path.join(windowsHandlerArchievePackageLocation, 'RMExtension.zip')]
+	, { stdio: 'inherit' });
+	generator.on('exit', function(code, signal) {
+		if (code != 0) {
+			throw new gutil.PluginError({
+			plugin: 'test',
+			message: 'Pester Tests Failed!!!'
+			});
+		}
+		else{
+			done();
+		}
+	});
+	generator.on('error', function(err) {
+		gutil.log('We may be in a non-windows machine or powershell.exe is not in path.');
+		throw new gulpUtil.PluginError({
+			plugin: 'ARM generator',
+			message: 'ARM generator failed!!!'
+		});
+	}); 
+}
+
+gulp.task('generateArtifacts', function (done) {
+	artifactsGenerator(true,true, done) // generate windows test files
+	artifactsGenerator(true,false, done) // generate windows prod files
+	artifactsGenerator(false,true, done) // generate linux test files
+	artifactsGenerator(false,false, done) // generate linux prod files
+});
+
+gulp.task('build', gulp.series(gulp.parallel('cleanExistingBuild', 'cleanTempFolder'), gulp.parallel(gulp.series('copyLinuxHandlerDefinitionFile', 'createTempLinuxHandlerPackage', 'createLinuxHandlerPackage'), gulp.series('copyWindowsHandlerDefinitionFile', 'createTempWindowsHandlerPackage', 'test', 'createWindowsHandlerPackage'), 'createWindowsUIPackage', 'createLinuxUIPackage', 'generateArtifacts'), function() {
     return new Promise(function(resolve, reject) {
 		gutil.log("VM extension packages created at " + outputPath);
 		console.log("HTTP Server Started");

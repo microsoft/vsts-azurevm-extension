@@ -105,7 +105,7 @@ gulp.task('copyLinuxHandlerDefinitionFile', function () {
 	.pipe(gulp.dest(linuxHandlerArchievePackageLocation));
 });
 
-gulp.task('createWindowsHandlerPackage', function (done) {
+gulp.task('createWindowsHandlerPackage', function () {
 	gutil.log("Archieving the windows extension handler package from location: " + tempWindowsHandlerFilesPath);
 	gutil.log("Archieve output location: " + windowsHandlerArchievePackageLocation);
 	var tempWindowsHandlerFilesSource = `${tempWindowsHandlerFilesPath}/**`;
@@ -115,7 +115,7 @@ gulp.task('createWindowsHandlerPackage', function (done) {
 	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
 });
 
-gulp.task('createLinuxHandlerPackage', function (done) {
+gulp.task('createLinuxHandlerPackage', function () {
 	gutil.log("Archieving the linux extension handler package from location: " + tempLinuxHandlerFilesPath);
 	gutil.log("Archieve output location: " + linuxHandlerArchievePackageLocation);
 	var tempLinuxHandlerFilesSource = `{tempLinuxHandlerFilesPath}/**`;
@@ -182,5 +182,4 @@ gulp.task('build', gulp.series(gulp.parallel('cleanExistingBuild', 'cleanTempFol
     	resolve();
 	})
 });
-
 

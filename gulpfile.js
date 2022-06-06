@@ -118,7 +118,7 @@ gulp.task('createWindowsHandlerPackage', function () {
 gulp.task('createLinuxHandlerPackage', function () {
 	gutil.log("Archieving the linux extension handler package from location: " + tempLinuxHandlerFilesPath);
 	gutil.log("Archieve output location: " + linuxHandlerArchievePackageLocation);
-	var tempLinuxHandlerFilesSource = `{tempLinuxHandlerFilesPath}/**`;
+	var tempLinuxHandlerFilesSource = `${tempLinuxHandlerFilesPath}/**`;
 	// archieving handler files to output location
 	return gulp.src([tempLinuxHandlerFilesSource])
 	.pipe(zip('RMExtension.zip'))

@@ -19,12 +19,46 @@ var windowsHandlerArchievePackageLocation = path.join(outputPath, 'ExtensionHand
 var tempLinuxHandlerFilesPath = path.join(tempPackagePath, 'ExtensionHandler/Linux');
 var linuxHandlerArchievePackageLocation = path.join(outputPath, 'ExtensionHandler/Linux');
 
+function artifactsGenerator (zipOutputDirectory, artifactSubDirectory, extensionFile){
+	return function (done) {
+		const artifactsOutputDirectory = path.join(zipOutputDirectory, artifactSubDirectory);
+		const extensionInfoFile = path.join(zipOutputDirectory, extensionFile);
+		const packageFile = path.join(zipOutputDirectory, 'RMExtension.zip')
+		gutil.log("Running Ev2ArtifactsGenerator with output directory " + artifactsOutputDirectory);
+		gutil.log("Running Ev2ArtifactsGenerator with extension info file in " + extensionInfoFile)
+		gutil.log("Running Ev2ArtifactsGenerator with package file " + packageFile)
+		var generator = spawn('powershell.exe', ['CDScripts/Ev2ArtifactsGenerator.ps1',
+		'-outputDir ' + artifactsOutputDirectory + ' ' + 
+		'-ExtensionInfoFile ' + extensionInfoFile + ' ' +
+		'-PackageFile ' + packageFile]
+		, { stdio: 'inherit' });
+		generator.on('exit', function(code, signal) {
+			if (code != 0) {
+				throw new gutil.PluginError({
+					plugin: 'ARM files generator',
+					message: 'ARM files generator failed!!!'
+				});
+			}
+			else{
+				done();
+			}
+		});
+		generator.on('error', function(err) {
+			gutil.log('We may be in a non-windows machine or powershell.exe is not in path.');
+			throw new gulpUtil.PluginError({
+				plugin: 'ARM files generator',
+				message: 'ARM files generator failed!!!'
+			});
+		});
+	}
+}
+
 gulp.task("test", function(done){
 	// Runs powershell pester tests ( Unit Test)
 	var pester = spawn('powershell.exe', ['CDScripts/InvokePester.ps1'], { stdio: 'inherit' });
 	pester.on('exit', function(code, signal) {
 	if (code != 0) {
-		throw new gulpUtil.PluginError({
+		throw new gutil.PluginError({
 		plugin: 'test',
 		message: 'Pester Tests Failed!!!'
 		});
@@ -61,13 +95,13 @@ gulp.task('createTempLinuxHandlerPackage', function () {
 
 gulp.task('copyWindowsHandlerDefinitionFile', function () {
 	// copying definition xml file to output location
-	return gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test.xml', 'ExtensionHandler/Windows/ExtensionDefinition_Prod.xml'])
+	return gulp.src(['ExtensionHandler/Windows/ExtensionDefinition_Test_MIGRATED.xml', 'ExtensionHandler/Windows/ExtensionDefinition_Prod_MIGRATED.xml'])
 	.pipe(gulp.dest(windowsHandlerArchievePackageLocation));
 });
 
 gulp.task('copyLinuxHandlerDefinitionFile', function () {
 	// copying definition xml file to output location
-	return gulp.src(['ExtensionHandler/Linux/ExtensionDefinition_Test.xml', 'ExtensionHandler/Linux/ExtensionDefinition_Prod.xml'])
+	return gulp.src(['ExtensionHandler/Linux/ExtensionDefinition_Test_MIGRATED.xml', 'ExtensionHandler/Linux/ExtensionDefinition_Prod_MIGRATED.xml'])
 	.pipe(gulp.dest(linuxHandlerArchievePackageLocation));
 });
 
@@ -84,7 +118,7 @@ gulp.task('createWindowsHandlerPackage', function () {
 gulp.task('createLinuxHandlerPackage', function () {
 	gutil.log("Archieving the linux extension handler package from location: " + tempLinuxHandlerFilesPath);
 	gutil.log("Archieve output location: " + linuxHandlerArchievePackageLocation);
-	var tempLinuxHandlerFilesSource = `{tempLinuxHandlerFilesPath}/**`;
+	var tempLinuxHandlerFilesSource = `${tempLinuxHandlerFilesPath}/**`;
 	// archieving handler files to output location
 	return gulp.src([tempLinuxHandlerFilesSource])
 	.pipe(zip('RMExtension.zip'))
@@ -133,11 +167,19 @@ gulp.task('createLinuxUIPackage', function () {
 	.pipe(gulp.dest(classicUIPackageLocation));
 });
 
-gulp.task('build', gulp.series(gulp.parallel('cleanExistingBuild', 'cleanTempFolder'), gulp.parallel(gulp.series('copyLinuxHandlerDefinitionFile', 'createTempLinuxHandlerPackage', 'createLinuxHandlerPackage'), gulp.series('copyWindowsHandlerDefinitionFile', 'createTempWindowsHandlerPackage', 'test', 'createWindowsHandlerPackage'), 'createWindowsUIPackage', 'createLinuxUIPackage'), function() {
+gulp.task('generateWindowsTestArtifacts', artifactsGenerator(windowsHandlerArchievePackageLocation,"Test","ExtensionDefinition_Test_MIGRATED.xml"));
+gulp.task('generateWindowsProdArtifacts', artifactsGenerator(windowsHandlerArchievePackageLocation,"Prod","ExtensionDefinition_Prod_MIGRATED.xml"));
+gulp.task('generateLinuxTestArtifacts', artifactsGenerator(linuxHandlerArchievePackageLocation,"Test","ExtensionDefinition_Test_MIGRATED.xml"));
+gulp.task('generateLinuxProdArtifacts', artifactsGenerator(linuxHandlerArchievePackageLocation,"Prod","ExtensionDefinition_Prod_MIGRATED.xml"));
+
+gulp.task('build', gulp.series(gulp.parallel('cleanExistingBuild', 'cleanTempFolder'), 
+	gulp.parallel(gulp.series('copyLinuxHandlerDefinitionFile', 'createTempLinuxHandlerPackage', 'createLinuxHandlerPackage'), 
+	gulp.series('copyWindowsHandlerDefinitionFile', 'createTempWindowsHandlerPackage', 'test', 'createWindowsHandlerPackage')),
+	gulp.parallel('generateWindowsTestArtifacts', 'generateWindowsProdArtifacts','generateLinuxTestArtifacts','generateLinuxProdArtifacts'), 'createWindowsUIPackage', 'createLinuxUIPackage'), function() {
     return new Promise(function(resolve, reject) {
 		gutil.log("VM extension packages created at " + outputPath);
 		console.log("HTTP Server Started");
     	resolve();
 	})
-}));
+});
 

@@ -5,7 +5,7 @@
     the blob's content will updated to reflect this new version. Also, old version is noted down and used to delete older version of extension from PIR
 
 .Usage
-    UpdateExtensionVersionInformation.ps1 -relativeExtensionDefinitionPath "VM extension\ExtensionDefinition_Test.xml" -storageResourceGroup rmvmextensiontest -storageAccountName rmvmextensiontest -storageContainerName agentextension -storageBlobName LatestVersion
+    UpdateExtensionVersionInformation.ps1 -relativeExtensionDefinitionPath "VM extension\ExtensionDefinition_Test_MIGRATED.xml" -storageResourceGroup rmvmextensiontest -storageAccountName rmvmextensiontest -storageContainerName agentextension -storageBlobName LatestVersion
 #>
 
 [CmdletBinding()]

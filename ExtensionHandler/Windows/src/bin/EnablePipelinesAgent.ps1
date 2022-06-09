@@ -164,9 +164,6 @@ function EnablePipelinesAgent
     {
         Add-HandlerSubStatus $RM_Extension_Status.EnablePipelinesAgentError.Code $log -operationName $RM_Extension_Status.EnablePipelinesAgentError.operationName
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.EnablePipelinesAgentError.operationName
+        return
     }
-
-    Add-HandlerSubStatus $RM_Extension_Status.EnablePipelinesAgentSuccess.Code $log -operationName $RM_Extension_Status.EnablePipelinesAgentSuccess.operationName
-    Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
-    Exit-WithCode 0
 }

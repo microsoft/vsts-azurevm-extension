@@ -148,14 +148,22 @@ function EnablePipelinesAgent
     }
 
     # verify the agent is configured by looking for the .agent file
-    $agentConfigFile = Join-Path -Path $config.AgentFolder -ChildPath ".agent"
-    if (!(Test-Path -Path $agentConfigFile))
+    try 
+    {
+        $agentConfigFile = Join-Path -Path $config.AgentFolder -ChildPath ".agent"
+        if (!(Test-Path -Path $agentConfigFile))
+        {
+            throw ".agent file not found. The agent was not set up correctly."
+        }
+
+        Add-HandlerSubStatus $RM_Extension_Status.EnablePipelinesAgentSuccess.Code $log -operationName $RM_Extension_Status.EnablePipelinesAgentSuccess.operationName
+        Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
+        Exit-WithCode 0
+    }
+    catch
     {
         Add-HandlerSubStatus $RM_Extension_Status.EnablePipelinesAgentError.Code $log -operationName $RM_Extension_Status.EnablePipelinesAgentError.operationName
         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.EnablePipelinesAgentError.operationName
+        return
     }
-
-    Add-HandlerSubStatus $RM_Extension_Status.EnablePipelinesAgentSuccess.Code $log -operationName $RM_Extension_Status.EnablePipelinesAgentSuccess.operationName
-    Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
-    Exit-WithCode 0
 }

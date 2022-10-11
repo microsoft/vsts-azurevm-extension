@@ -569,7 +569,7 @@ def test_extension_settings_are_same_as_disabled_version():
 
 def enable_pipelines_agent(config):
   try:
-
+    sleep(360) ## Keeping it here just for the testing
     handler_utility.log('Enable Pipelines Agent')
 
     # verify we have the enable script parameters here.
@@ -669,8 +669,14 @@ def enable():
   pre_validation_checks()
   config = get_configuration_from_settings()
   if(config.get('IsPipelinesAgent') != None):
-    enable_pipelines_agent(config)
-    return
+    pid = os.fork()
+    if(pid > 0):
+      handler_utility.log('Exiting parent process with PID: ' + str(pid))
+      return
+    else:
+      handler_utility.log('Spawned child process with PID: ' + str(os.getpid()))
+      enable_pipelines_agent(config)
+      return
 
   settings_are_same = test_extension_settings_are_same_as_disabled_version()
   if(settings_are_same):

@@ -640,7 +640,7 @@ def enable():
   if(config.get('IsPipelinesAgent') != None):
     pid = os.fork()
     if(pid > 0):
-      handler_utility.log('Exiting parent process with PID: ' + str(pid))
+      handler_utility.log('Exiting parent process with PID: ' + str(os.getpid()))
       return
     else:
       handler_utility.log('Spawned child process with PID: ' + str(os.getpid()))

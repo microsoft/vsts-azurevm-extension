@@ -188,3 +188,31 @@ function Download-File{
     $WebClient.DownloadFile($downloadUrl, $target)
 
 }
+
+function Convert-CommandLineToken {
+    param (
+	    # Command line that contains the token
+		[Parameter(Mandatory=$true, Position=0)]
+		$commandLine,
+			
+		# Name of the parameter that is used to store token
+		[Parameter(Mandatory=$true, Position=1)]
+		$paramName,
+			
+		# Name of the environment variable that will be created
+		[Parameter(Mandatory=$true, Position=2)]
+		$envName
+    )
+		
+    $parameters = $commandLine.split()
+        foreach ($param in $parameters ) {
+        if ($param -eq $paramName )
+        {
+            $index = $parameters.IndexOf($param)
+            [System.Environment]::SetEnvironmentVariable($envName, $parameters[$index+1], [System.EnvironmentVariableTarget]::User)
+            $parameters[$index+1] = $envName
+        }
+    }
+    
+    return ([system.String]::Join(" ", $parameters))
+}

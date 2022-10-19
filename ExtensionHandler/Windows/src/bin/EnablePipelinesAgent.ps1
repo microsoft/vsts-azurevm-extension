@@ -121,6 +121,14 @@ function EnablePipelinesAgent
         Write-Log "Running enable script"
         $argList = $enableFileName + " " + $config.EnableScriptParameters
 
+        # This is the name of parameter that will be removed from argList and added to env variable
+        $paramName = "-token"
+
+        # Environment should started with the ! so script knows it is not PAT token
+        $envName = "ENABLE_AGENT_PAT_TOKEN"
+
+        $argList = Convert-CommandLineToken $argList $paramName $envName
+
         # We can't use -Wait here and instead need to poll for the powershell process to exit.
         # We want to wait for the powershell script to exit, but we don't want to wait for the process that it spawns to exit.
         # So poll ourselves for 30 minutes.

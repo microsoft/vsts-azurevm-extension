@@ -196,6 +196,11 @@ rm_extension_status = {
     'Message': 'Enable Pipelines Agent Success',
     'operationName': 'Enable Pipelines Agent Success'
   },
+  'AgentAlreadyEnabled': {
+    'Code': 77,
+    'Message': 'Agent already enabled. Skipping.',
+    'operationName': 'Agent already enabled. Skipping.'
+  },
 
   #
   # Warnings

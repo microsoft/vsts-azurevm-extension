@@ -574,8 +574,16 @@ def enable_pipelines_agent(config):
     # verify we have the enable script parameters here.
     handler_utility.verify_input_not_null('enableScriptParameters', config["EnableScriptParameters"])
 
-    handler_utility.add_handler_sub_status(Util.HandlerSubStatus('DownloadPipelinesAgent'))
     agentFolder = config["AgentFolder"]
+
+    # verify it wasn't already enabled
+    if (os.path.exists(os.path.join(agentFolder, '.agent'))):
+      handler_utility.log('Agent already enabled. Skipping.')
+      handler_utility.add_handler_sub_status('AgentAlreadyEnabled')
+      handler_utility.set_handler_status(Util.HandlerStatus('Enabled', 'success'))
+      return
+
+    handler_utility.add_handler_sub_status(Util.HandlerSubStatus('DownloadPipelinesAgent'))
     handler_utility.log(agentFolder)
 
     if(not os.path.isdir(agentFolder)):

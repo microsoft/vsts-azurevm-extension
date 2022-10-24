@@ -659,14 +659,16 @@ def enable_pipelines_agent(config):
     handler_utility.log(output.decode("utf-8"))
     handler_utility.log(error.decode("utf-8"))
     if enableProcess.returncode != 0:
-      raise Exception("Pipeline script execution failed with exit code {0}".format(enableProcess.returncode))
+      raise Exception("Pipeline script execution failed with exit code {0}.\n{1}".format(enableProcess.returncode, output.decode('ascii')))
 
   except Exception as e:
     handler_utility.log(str(e))
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['EnablePipelinesAgentError']['operationName'], str(e))
     return
 
-  handler_utility.add_handler_sub_status(Util.HandlerSubStatus('EnablePipelinesAgentSuccess'))
+  enable_pipeline_success_substatus = Util.HandlerSubStatus('EnablePipelinesAgentSuccess')
+  enable_pipeline_success_substatus.sub_status_message = output
+  handler_utility.add_handler_sub_status(enable_pipeline_success_substatus)
   handler_utility.set_handler_status(Util.HandlerStatus('Enabled', 'success'))
   handler_utility.log('Pipelines Agent is enabled.')
 

@@ -579,7 +579,7 @@ def enable_pipelines_agent(config):
     # verify it wasn't already enabled
     if (os.path.exists(os.path.join(agentFolder, '.agent'))):
       handler_utility.log('Agent already enabled. Skipping.')
-      handler_utility.add_handler_sub_status('AgentAlreadyEnabled')
+      handler_utility.add_handler_sub_status(Util.HandlerSubStatus('AgentAlreadyEnabled'))
       handler_utility.set_handler_status(Util.HandlerStatus('Enabled', 'success'))
       return
 
@@ -667,7 +667,7 @@ def enable_pipelines_agent(config):
     return
 
   enable_pipeline_success_substatus = Util.HandlerSubStatus('EnablePipelinesAgentSuccess')
-  enable_pipeline_success_substatus.sub_status_message = output
+  enable_pipeline_success_substatus.sub_status_message = output.decode('ascii')
   handler_utility.add_handler_sub_status(enable_pipeline_success_substatus)
   handler_utility.set_handler_status(Util.HandlerStatus('Enabled', 'success'))
   handler_utility.log('Pipelines Agent is enabled.')

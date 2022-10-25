@@ -198,8 +198,8 @@ rm_extension_status = {
   },
   'AgentAlreadyEnabled': {
     'Code': 77,
-    'Message': 'Agent already enabled. Skipping.',
-    'operationName': 'Agent already enabled. Skipping.'
+    'Message': 'Agent Already Enabled Skipping',
+    'operationName': 'Agent Already Enabled Skipping'
   },
 
   #

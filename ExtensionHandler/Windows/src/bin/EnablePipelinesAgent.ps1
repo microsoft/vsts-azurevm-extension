@@ -32,7 +32,7 @@ function EnablePipelinesAgent
         if (Test-Path -Path $agentConfigFile)
         {
             Write-Log "Already configured.  Marking extension as successful."
-            Add-HandlerSubStatus $RM_Extension_Status.RebootedPipelinesAgent.Code $RM_Extension_Status.RebootedPipelinesAgent.Message -operationName $RM_Extension_Status.RebootedPipelinesAgent.operationName
+            Add-HandlerSubStatus $RM_Extension_Status.PipelinesAgentAlreadyConfigured.Code $RM_Extension_Status.PipelinesAgentAlreadyConfigured.Message -operationName $RM_Extension_Status.PipelinesAgentAlreadyConfigured.operationName
             Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
             Exit-WithCode 0
             return

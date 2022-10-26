@@ -216,6 +216,11 @@ $global:RM_Extension_Status = @{
         Message = 'Rebooted Pipelines Agent'
         operationName = 'Rebooted Pipelines Agent'
     }
+    PipelinesAgentAlreadyConfigured = @{
+        Code = 79
+        Message = 'Pipelines Agent configuration already exists. Skipping configuration.'
+        operationName = 'Skip Pipeline Agent Configuration'
+    }
 
     #
     # Warnings

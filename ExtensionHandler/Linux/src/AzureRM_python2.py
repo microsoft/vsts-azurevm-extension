@@ -638,7 +638,13 @@ def enable():
   pre_validation_checks()
   config = get_configuration_from_settings()
   if(config.get('IsPipelinesAgent') != None):
-    enable_pipelines_agent(config)
+    pid = os.fork()
+    if(pid > 0):
+      handler_utility.log('Exiting parent process with PID: ' + str(os.getpid()))
+      return
+    else:
+      handler_utility.log('Spawned child process with PID: ' + str(os.getpid()))
+      enable_pipelines_agent(config)
     return
 
   settings_are_same = test_extension_settings_are_same_as_disabled_version()

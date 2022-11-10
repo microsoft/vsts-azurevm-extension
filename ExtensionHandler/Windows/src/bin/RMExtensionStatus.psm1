@@ -216,6 +216,11 @@ $global:RM_Extension_Status = @{
         Message = 'Rebooted Pipelines Agent'
         operationName = 'Rebooted Pipelines Agent'
     }
+    AgentAlreadyEnabled = @{
+        Code = 79
+        Message = 'Agent Already Enabled Skipping'
+        operationName = 'Agent Already Enabled Skipping'
+    }
 
     #
     # Warnings

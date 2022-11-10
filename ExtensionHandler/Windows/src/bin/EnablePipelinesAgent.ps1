@@ -28,12 +28,11 @@ function EnablePipelinesAgent
         }
 
         # First check if we've already executed and configured the agent
-        $autologonFile = Join-Path -Path $config.AgentFolder -ChildPath ".autologon"
-        $contents = Get-Content $autologonFile -ErrorAction Ignore
-        if ($contents -like '*AzDevOps*')
+        $agentConfigFile = Join-Path -Path $config.AgentFolder -ChildPath ".agent"
+        if (Test-Path -Path $agentConfigFile)
         {
-            Write-Log "Already configured.  Marking extension as successful."
-            Add-HandlerSubStatus $RM_Extension_Status.RebootedPipelinesAgent.Code $RM_Extension_Status.RebootedPipelinesAgent.Message -operationName $RM_Extension_Status.RebootedPipelinesAgent.operationName
+            Write-Log "Agent already enabled. Skipping."
+            Add-HandlerSubStatus $RM_Extension_Status.AgentAlreadyEnabled.Code $RM_Extension_Status.AgentAlreadyEnabled.Message -operationName $RM_Extension_Status.AgentAlreadyEnabled.operationName
             Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
             Exit-WithCode 0
             return
@@ -166,6 +165,7 @@ function EnablePipelinesAgent
 
         Add-HandlerSubStatus $RM_Extension_Status.EnablePipelinesAgentSuccess.Code $log -operationName $RM_Extension_Status.EnablePipelinesAgentSuccess.operationName
         Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
+        Set-LastSequenceNumber
         Exit-WithCode 0
     }
     catch

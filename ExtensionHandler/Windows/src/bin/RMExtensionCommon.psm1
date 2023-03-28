@@ -218,6 +218,18 @@ function compareOSVersion
         return $true
     }
 
+    if ($supportedVersion[-1] -eq '+')
+    {
+        $sVersion = [double]($supportedVersion -replace ".$")
+        $wVerson = [double]$WindowsVersion
+        if ($wVerson -ge $sVersion)
+        {
+            return $true
+        }
+    }
+
+    return $false
+}
 #
 # Exports
 #

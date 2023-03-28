@@ -239,5 +239,5 @@ Export-ModuleMember `
         Remove-Agent, `
         Set-ErrorStatusAndErrorExit, `
         Clean-AgentWorkingFolder, `
-        Create-AgentWorkingFolder `
+        Create-AgentWorkingFolder, `
         DoesSystemPersistsInNet6Whitelist

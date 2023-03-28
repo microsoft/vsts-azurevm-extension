@@ -235,13 +235,30 @@ function DoesSystemPersistsInNet6Whitelist {
     {
         if($supportedOS.id -eq $WindowsId)
         {
-            $supportedVersions = $supportedOS.Versions
+            $supportedVersions = $supportedOS.versions
 
             foreach ($supportedVersion in $supportedVersions)
             {
-                if (compareOSVersion $supportedVersion.name $WindowsName -and compareOSVersion $supportedVersion.version $WindowsVersion)
+                if ($supportedVersion -contains "name" -and $supportedVersion -contains "version")
                 {
-                    return $true
+                    if (compareOSVersion $supportedVersion.name $WindowsName -and compareOSVersion $supportedVersion.version $WindowsVersion)
+                    {
+                        return $true
+                    }
+                }
+                elseif ($supportedVersion -contains "name") 
+                {
+                    if (compareOSVersion $supportedVersion.name $WindowsName)
+                    {
+                        return $true
+                    }
+                }
+                elseif ($supportedVersion -contains "version")
+                {
+                    if (compareOSVersion $supportedVersion.version $WindowsVersion)
+                    {
+                        return $true
+                    }    
                 }
             }
         }

@@ -182,4 +182,5 @@ Export-ModuleMember `
         Get-AgentWorkingFolder, `
         Remove-Agent, `
         Set-ErrorStatusAndErrorExit, `
-        Clean-AgentWorkingFolder
+        Clean-AgentWorkingFolder, `
+        Create-AgentWorkingFolder

@@ -510,7 +510,8 @@ class HandlerUtility:
         output = {'IsX64':value=='x86_64'}
         return output
 
-    def does_system_persists_in_net6_whitelist(self):
+    @staticmethod
+    def does_system_persists_in_net6_whitelist():
         systemid = None
         systemversion = None
 

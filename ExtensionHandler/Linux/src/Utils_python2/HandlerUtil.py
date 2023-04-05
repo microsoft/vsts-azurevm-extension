@@ -527,7 +527,10 @@ class HandlerUtility:
                     if linuxVersionIdRegexMatch:
                         systemversion = linuxVersionIdRegexMatch.group("vid")
 
-        net6_supported_os = json.loads(urllib2.urlopen("https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json").read())
+        try:
+            net6_supported_os = json.loads(urllib2.urlopen("https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json").read())
+        except:
+            net6_supported_os =json.loads(open("../net6.json").read())
 
         for supported_os in net6_supported_os:
             if supported_os["id"] == systemid:

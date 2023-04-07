@@ -29,6 +29,7 @@ MAX_RETRIES = 3
 configured_agent_exists = False
 agent_configuration_required = True
 root_dir = ''
+handler_utility = None
 
 def get_last_sequence_number_file_path():
   global root_dir

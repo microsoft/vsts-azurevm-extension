@@ -530,7 +530,8 @@ class HandlerUtility:
         try:
             net6_supported_os = json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json").read())
         except:
-            net6_supported_os =json.loads(open("../net6.json").read())
+            with open("../net6.json") as net6_file:
+                net6_supported_os = json.loads(net6_file.read())
 
         for supported_os in net6_supported_os:
             if supported_os["id"] == systemid:

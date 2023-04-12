@@ -121,7 +121,7 @@ class TestNet6DeprecationLocalFileFallback(unittest.TestCase):
             self.assertEqual(open_mock.call_count, 2)
 
 class TestNet6FileConsistency(unittest.TestCase):
-    def test_file_consistency(self, _urllib_mock):
+    def test_file_consistency(self):
         with open("net6.json") as net6_file:
             local = json.loads(net6_file.read())
         remote = json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json").read())

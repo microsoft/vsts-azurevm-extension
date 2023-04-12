@@ -8,6 +8,8 @@ from textwrap import dedent
 from unittest.mock import patch, MagicMock
 from mock import mock_open
 from Utils import HandlerUtil
+import json
+import urllib.request
 
 
 def urlopen_mock_read():
@@ -111,7 +113,7 @@ class TestNet6Deprecation(unittest.TestCase):
 @patch('urllib.request.urlopen', return_value=urlopen_mock_with_exception())
 class TestNet6DeprecationLocalFileFallback(unittest.TestCase):
     def test_file_consistency(self,_urllib_mock):
-        with open("../net6.json") as net6_file:
+        with open("net6.json") as net6_file:
             local = json.loads(net6_file.read())
         remote = json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json").read())
         self.assertEqual(local, remote)

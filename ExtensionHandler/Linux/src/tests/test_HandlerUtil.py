@@ -112,12 +112,6 @@ class TestNet6Deprecation(unittest.TestCase):
 
 @patch('urllib.request.urlopen', return_value=urlopen_mock_with_exception())
 class TestNet6DeprecationLocalFileFallback(unittest.TestCase):
-    def test_file_consistency(self,_urllib_mock):
-        with open("net6.json") as net6_file:
-            local = json.loads(net6_file.read())
-        remote = json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json").read())
-        self.assertEqual(local, remote)
-
     def test_file_fallback(self, _urllib_mock):
         with patch('builtins.open', new_callable=mock_open, read_data='{}') as open_mock:
             self.assertFalse(HandlerUtil.HandlerUtility.does_system_persists_in_net6_whitelist())
@@ -126,6 +120,12 @@ class TestNet6DeprecationLocalFileFallback(unittest.TestCase):
             # while trying to open ../net6.json
             self.assertEqual(open_mock.call_count, 2)
 
+class TestNet6FileConsistency(unittest.TestCase):
+    def test_file_consistency(self, _urllib_mock):
+        with open("net6.json") as net6_file:
+            local = json.loads(net6_file.read())
+        remote = json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json").read())
+        self.assertEqual(local, remote)
 
 if __name__ == '__main__':
     unittest.main()

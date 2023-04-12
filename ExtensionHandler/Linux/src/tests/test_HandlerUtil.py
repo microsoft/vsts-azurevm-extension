@@ -2,6 +2,7 @@
 # pylint: disable=missing-function-docstring
 # pylint: disable=missing-class-docstring
 # pylint: disable=invalid-name
+# pylint: disable=line-too-long
 
 import unittest
 from textwrap import dedent
@@ -124,8 +125,7 @@ class TestNet6FileConsistency(unittest.TestCase):
     def test_file_consistency(self):
         with open("net6.json", encoding="utf-8") as net6_file:
             local = json.loads(net6_file.read())
-        remote_net6_fileurl = dedent('''
-                                    https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json''')
+        remote_net6_fileurl = "https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json"
         with urllib.request.urlopen(remote_net6_fileurl) as remote_net6_file:
             remote = json.loads(remote_net6_file.read())
         self.assertEqual(local, remote)

@@ -125,5 +125,13 @@
         "name": "2012+"
       }
     ]
+  },
+  {
+    "id": "Windows Server Core",
+    "versions": [
+      {
+        "name": "2012+"
+      }
+    ]
   }
 ]

@@ -20,5 +20,5 @@ steps:
     summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
 
 # For now run pylint only for the tests which is new code
-- script: cd ExtensionHandler/Linux/src && pylint tests
+- script: pylint ExtensionHandler/Linux/src/tests
   displayName: 'Run pylint'

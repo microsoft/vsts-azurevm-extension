@@ -2,7 +2,6 @@
 # pylint: disable=missing-function-docstring
 # pylint: disable=missing-class-docstring
 # pylint: disable=invalid-name
-# pylint: disable=line-too-long
 
 import unittest
 from textwrap import dedent

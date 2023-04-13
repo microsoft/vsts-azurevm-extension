@@ -6,6 +6,8 @@
 import unittest
 from textwrap import dedent
 from unittest.mock import patch, MagicMock
+import json
+import urllib.request
 from mock import mock_open
 from Utils import HandlerUtil
 
@@ -118,6 +120,14 @@ class TestNet6DeprecationLocalFileFallback(unittest.TestCase):
             # while trying to open ../net6.json
             self.assertEqual(open_mock.call_count, 2)
 
+class TestNet6FileConsistency(unittest.TestCase):
+    def test_file_consistency(self):
+        with open("net6.json", encoding="utf-8") as net6_file:
+            local = json.loads(net6_file.read())
+        remote_net6_fileurl = "https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json"
+        with urllib.request.urlopen(remote_net6_fileurl) as remote_net6_file:
+            remote = json.loads(remote_net6_file.read())
+        self.assertEqual(local, remote)
 
 if __name__ == '__main__':
     unittest.main()

@@ -20,3 +20,4 @@ e2eTests/publicConfig.json
 e2eTests/template.json
 e2eTests/TestEnvironment.json
 .vscode/launch.json
+.venv

@@ -511,7 +511,7 @@ class HandlerUtility:
         return output
 
     @staticmethod
-    def does_system_persists_in_net6_whitelist(event_properties):
+    def does_system_persists_in_net6_whitelist():
         systemid = None
         systemversion = None
 
@@ -526,9 +526,6 @@ class HandlerUtility:
 
                     if linuxVersionIdRegexMatch:
                         systemversion = linuxVersionIdRegexMatch.group("vid")
-
-        event_properties.set_property("System ID", systemid)
-        event_properties.set_property("System Version", systemversion)
 
         try:
             net6_supported_os = json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json").read())

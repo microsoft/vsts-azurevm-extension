@@ -135,12 +135,11 @@ def set_error_status_and_error_exit(e, operation_name, code = -1):
 def check_python_version():
   version_info = sys.version_info
   version = '{0}.{1}'.format(version_info[0], version_info[1])
-
   if(LooseVersion(version) < LooseVersion('2.6')):
     code = RMExtensionStatus.rm_extension_status['MissingDependency']
     message = 'Installed Python version is {0}. Minimum required version is 2.6.'.format(version)
     event_properties = EventProperties("fail_python_version_not_supported")
-    event_properties.set_property("Error Message", message)
+    event_properties.set_property("ErrorMessage", message)
     event_logger.log_new_event(event_properties)
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
@@ -174,7 +173,7 @@ def validate_os():
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
 def os_compatible_with_dotnet6():
-  is_os_compatible = handler_utility.does_system_persists_in_net6_whitelist(event_properties)
+  is_os_compatible = handler_utility.does_system_persists_in_net6_whitelist()
 
   if(is_os_compatible != True):
     code = RMExtensionStatus.rm_extension_status['Net6UnSupportedOS']
@@ -226,7 +225,7 @@ def install_dependencies(config):
     sleep(sleep_interval_in_sec)
   handler_utility.add_handler_sub_status(Util.HandlerSubStatus('InstalledDependencies'))
   
-def compare_sequence_number(event_logger, event_properties):
+def compare_sequence_number():
   try:
     sequence_number = int(handler_utility._context._seq_no)
     last_sequence_number = get_last_sequence_number()

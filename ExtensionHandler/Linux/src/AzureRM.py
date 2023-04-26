@@ -48,7 +48,9 @@ class EventLogger:
     LogManager.initialize(self.tenant_token, configuration)
     self._event_logger = LogManager.get_logger("", self.tenant_token)
 
-  def log_new_event(self, event_properties):
+  def log_error(self, errmsg):
+    event_properties = EventProperties("fail_extension")
+    event_properties.set_property("ErrorMessage", errmsg)
     event_id = self.logger.log_event(event_properties)
     while event_id < 0:
       time.sleep(0.00001)
@@ -138,9 +140,10 @@ def check_python_version():
   if(LooseVersion(version) < LooseVersion('2.6')):
     code = RMExtensionStatus.rm_extension_status['MissingDependency']
     message = 'Installed Python version is {0}. Minimum required version is 2.6.'.format(version)
-    event_properties = EventProperties("fail_python_version_not_supported")
-    event_properties.set_property("ErrorMessage", message)
-    event_logger.log_new_event(event_properties)
+    try:
+      event_logger.log_error(message)
+    except Exception as e:
+      pass
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
 def check_systemd_exists():
@@ -156,9 +159,10 @@ def check_systemd_exists():
   else:
     code = RMExtensionStatus.rm_extension_status['MissingDependency']
     message = 'Could not find systemd on the machine. Error message: {0}'.format(check_systemd_err)
-    event_properties = EventProperties("fail_systemd_not_exists")
-    event_properties.set_property("ErrorMessage", message)
-    event_logger.log_new_event(event_properties)
+    try:
+      event_logger.log_error(message)
+    except Exception as e:
+      pass
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
 def validate_os():
@@ -167,9 +171,10 @@ def validate_os():
   if(os_version['IsX64'] != True):
     code = RMExtensionStatus.rm_extension_status['UnSupportedOS']
     message = 'The current CPU architecture is not supported. Deployment agent requires x64 architecture.'
-    event_properties = EventProperties("fail_os_not_x64")
-    event_properties.set_property("ErrorMessage", message)
-    event_logger.log_new_event(event_properties)
+    try:
+      event_logger.log_error(message)
+    except Exception as e:
+      pass
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
 def os_compatible_with_dotnet6():
@@ -178,9 +183,10 @@ def os_compatible_with_dotnet6():
   if(is_os_compatible != True):
     code = RMExtensionStatus.rm_extension_status['Net6UnSupportedOS']
     message = 'The current OS version will not be supported by the .NET 6 based v3 agent. See https://aka.ms/azdo-pipeline-agent-version'
-    event_properties = EventProperties("fail_os_not_compatible_with_dotnet6")
-    event_properties.set_property("ErrorMessage", message)
-    event_logger.log_new_event(event_properties)
+    try:
+      event_logger.log_error(message)
+    except Exception as e:
+      pass
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
 def pre_validation_checks():

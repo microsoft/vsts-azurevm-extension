@@ -5,6 +5,9 @@
 #3. get command execution log summary
 #4. api versions merge and everywhere
 
+from __future__ import absolute_import
+from __future__ import print_function
+
 import sys
 import Utils.HandlerUtil as Util
 import Utils.RMExtensionStatus as RMExtensionStatus
@@ -15,6 +18,8 @@ import DownloadDeploymentAgent
 import ConfigureDeploymentAgent
 import json
 import time
+import random
+import logging
 import shutil
 from Utils.WAAgentUtil import waagent
 from Utils.GlobalSettings import proxy_config
@@ -23,6 +28,8 @@ from time import sleep
 from urllib.parse import quote
 import urllib.request, urllib.parse, urllib.error
 import shlex
+
+from aria import LogManager, EventProperties, PiiKind, LogConfiguration, LogManagerConfiguration
 
 MAX_RETRIES = 3
 
@@ -109,15 +116,23 @@ def set_error_status_and_error_exit(e, operation_name, code = -1):
   handler_utility.error('Error occured during {0}. {1}'.format(operation_name, error_message))
   exit_with_code(code)
 
-def check_python_version():
+def check_python_version(event_logger, event_properties):
   version_info = sys.version_info
   version = '{0}.{1}'.format(version_info[0], version_info[1])
+  event_properties.set_property("Python Version", version)
+
   if(LooseVersion(version) < LooseVersion('2.6')):
     code = RMExtensionStatus.rm_extension_status['MissingDependency']
     message = 'Installed Python version is {0}. Minimum required version is 2.6.'.format(version)
+
+    event_properties.set_property("Error Message", message)
+    event_id = event_logger.log_event(event_properties)
+    while event_id < 0:
+      time.sleep(0.00001)
+      event_id = event_logger.log_event(event_properties)
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
-def check_systemd_exists():
+def check_systemd_exists(event_logger, event_properties):
   check_systemd_command = 'command -v systemctl'
   check_systemd_proc = subprocess.Popen(['/bin/bash', '-c', check_systemd_command], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   check_systemd_out, check_systemd_err = check_systemd_proc.communicate()
@@ -130,30 +145,48 @@ def check_systemd_exists():
   else:
     code = RMExtensionStatus.rm_extension_status['MissingDependency']
     message = 'Could not find systemd on the machine. Error message: {0}'.format(check_systemd_err)
+
+    event_properties.set_property("Error Message", message)
+    event_id = event_logger.log_event(event_properties)
+    while event_id < 0:
+      time.sleep(0.00001)
+      event_id = event_logger.log_event(event_properties)
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
-def validate_os():
+def validate_os(event_logger, event_properties):
   os_version = handler_utility.get_os_version()
 
   if(os_version['IsX64'] != True):
     code = RMExtensionStatus.rm_extension_status['UnSupportedOS']
     message = 'The current CPU architecture is not supported. Deployment agent requires x64 architecture.'
+
+    event_properties.set_property("Error Message", message)
+    event_id = event_logger.log_event(event_properties)
+    while event_id < 0:
+      time.sleep(0.00001)
+      event_id = event_logger.log_event(event_properties)
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
-def os_compatible_with_dotnet6():
-  is_os_compatible = handler_utility.does_system_persists_in_net6_whitelist()
+def os_compatible_with_dotnet6(event_logger, event_properties):
+  is_os_compatible = handler_utility.does_system_persists_in_net6_whitelist(event_properties)
 
   if(is_os_compatible != True):
     code = RMExtensionStatus.rm_extension_status['Net6UnSupportedOS']
     message = 'The current OS version will not be supported by the .NET 6 based v3 agent. See https://aka.ms/azdo-pipeline-agent-version'
+
+    event_properties.set_property("Error Message", message)
+    event_id = event_logger.log_event(event_properties)
+    while event_id < 0:
+      time.sleep(0.00001)
+      event_id = event_logger.log_event(event_properties)
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
-def pre_validation_checks():
+def pre_validation_checks(event_logger, event_properties):
   try:
-    validate_os()
-    os_compatible_with_dotnet6()
-    check_python_version()
-    check_systemd_exists()
+    validate_os(event_logger, event_properties)
+    os_compatible_with_dotnet6(event_logger, event_properties)
+    check_python_version(event_logger, event_properties)
+    check_systemd_exists(event_logger, event_properties)
   except Exception as e:
     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status['PreValidationCheck']['operationName'], e.__getattribute__('Code'))
 
@@ -190,13 +223,18 @@ def install_dependencies(config):
     sleep(sleep_interval_in_sec)
   handler_utility.add_handler_sub_status(Util.HandlerSubStatus('InstalledDependencies'))
   
-def compare_sequence_number():
+def compare_sequence_number(event_logger, event_properties):
   try:
     sequence_number = int(handler_utility._context._seq_no)
     last_sequence_number = get_last_sequence_number()
     if((sequence_number == last_sequence_number) and not(test_extension_disabled_markup())):
       handler_utility.log(RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'])
       handler_utility.log('Skipping enable since seq numbers match. Seq number: {0}.'.format(sequence_number))
+      event_properties.set_property("Skipped Installation message", RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'])
+      event_id = event_logger.log_event(event_properties)
+      while event_id < 0:
+        time.sleep(0.00001)
+        event_id = event_logger.log_event(event_properties)
       exit_with_code(0)
 
   except Exception as e:
@@ -682,10 +720,40 @@ def enable_pipelines_agent(config):
   handler_utility.set_handler_status(Util.HandlerStatus('Enabled', 'success'))
   handler_utility.log('Pipelines Agent is enabled.')
 
-def enable():
-  compare_sequence_number()
+def init_logger():
+  log_config = LogConfiguration(log_level=logging.DEBUG)
+  configuration = LogManagerConfiguration(log_configuration = log_config)
+
+  LogManager.initialize(Auth_token.tenant_token, configuration)
+  logger = LogManager.get_logger("", Auth_token.tenant_token)
+
+  return logger
+
+def update_events(tenant, sequence_list, result):
+  resultStr = str(result)
+
+  if result not in AriaResults.result_map:
+    AriaResults.result_map[result] = 0
+
+  AriaResults.result_map[result] += len(sequence_list)
+  AriaResults.events_received_callback += len(sequence_list)
+
+  for i in sequence_list:
+    AriaResults.events_send.remove(i)
+
+class Auth_token(object):
+  tenant_token = "******"
+
+class AriaResults(object):
+  events_send = []
+  events_received_callback = 0
+  result_map = {}
+
+def enable(event_logger):
+  event_properties = EventProperties("Enable_Agent")
+  compare_sequence_number(event_logger, event_properties)
   handler_utility.set_handler_status(Util.HandlerStatus('Installing'))
-  pre_validation_checks()
+  pre_validation_checks(event_logger, event_properties)
   config = get_configuration_from_settings()
   if(config.get('IsPipelinesAgent') != None):
     pid = os.fork()
@@ -766,6 +834,8 @@ def update():
 
 def main():
   waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
+  event_logger = init_logger()
+  LogManager.add_subscriber(update_events)
   if(len(sys.argv) == 2):
     global handler_utility
     handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
@@ -782,7 +852,7 @@ def main():
       input_operation = Constants.input_arguments_dict[sys.argv[1]]
 
       if(input_operation == Constants.ENABLE):
-        enable()
+        enable(event_logger)
       elif(input_operation == Constants.DISABLE):
         disable()
       elif(input_operation == Constants.UNINSTALL):

@@ -48,9 +48,11 @@ class EventLogger:
     LogManager.initialize(self.tenant_token, configuration)
     self._event_logger = LogManager.get_logger("", self.tenant_token)
 
-  def log_error(self, errmsg):
-    event_properties = EventProperties("fail_extension")
-    event_properties.set_property("ErrorMessage", errmsg)
+  def log_new_event(self, event_type, message):
+    event_properties = EventProperties(event_type)
+    event_properties.set_property("SystemID", handler_utility._systemid)
+    event_properties.set_property("SystemVersion", handler_utility._systemversion)
+    event_properties.set_property("Message", message)
     event_id = self._event_logger.log_event(event_properties)
     while event_id < 0:
       time.sleep(0.00001)
@@ -132,6 +134,11 @@ def set_error_status_and_error_exit(e, operation_name, code = -1):
   if(len(error_message) > Constants.ERROR_MESSAGE_LENGTH):
     error_message = error_message[:Constants.ERROR_MESSAGE_LENGTH]
   handler_utility.error('Error occured during {0}. {1}'.format(operation_name, error_message))
+  try:
+    event_logger.log_new_event("fail_extension", 'Error occured during {0}. {1}'.format(operation_name, error_message))
+  except Exception as e:
+    pass
+  LogManager.flush(timeout=0)
   exit_with_code(code)
 
 def check_python_version():
@@ -141,7 +148,7 @@ def check_python_version():
     code = RMExtensionStatus.rm_extension_status['MissingDependency']
     message = 'Installed Python version is {0}. Minimum required version is 2.6.'.format(version)
     try:
-      event_logger.log_error(message)
+      event_logger.log_new_event("fail_extension", message)
     except Exception as e:
       pass
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
@@ -160,7 +167,7 @@ def check_systemd_exists():
     code = RMExtensionStatus.rm_extension_status['MissingDependency']
     message = 'Could not find systemd on the machine. Error message: {0}'.format(check_systemd_err)
     try:
-      event_logger.log_error(message)
+      event_logger.log_new_event("fail_extension", message)
     except Exception as e:
       pass
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
@@ -172,7 +179,7 @@ def validate_os():
     code = RMExtensionStatus.rm_extension_status['UnSupportedOS']
     message = 'The current CPU architecture is not supported. Deployment agent requires x64 architecture.'
     try:
-      event_logger.log_error(message)
+      event_logger.log_new_event("fail_extension", message)
     except Exception as e:
       pass
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
@@ -184,7 +191,7 @@ def os_compatible_with_dotnet6():
     code = RMExtensionStatus.rm_extension_status['Net6UnSupportedOS']
     message = 'The current OS version will not be supported by the .NET 6 based v3 agent. See https://aka.ms/azdo-pipeline-agent-version'
     try:
-      event_logger.log_error(message)
+      event_logger.log_new_event("fail_extension", message)
     except Exception as e:
       pass
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
@@ -238,6 +245,7 @@ def compare_sequence_number():
     if((sequence_number == last_sequence_number) and not(test_extension_disabled_markup())):
       handler_utility.log(RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'])
       handler_utility.log('Skipping enable since seq numbers match. Seq number: {0}.'.format(sequence_number))
+      LogManager.flush(timeout=0)
       exit_with_code(0)
 
   except Exception as e:
@@ -833,6 +841,10 @@ def main():
       elif(input_operation == Constants.UPDATE):
         update()
 
+      try:
+        event_logger.log_new_event("success_extension", "Extension successfully installed")
+      except Exception as e:
+        pass
       LogManager.flush(timeout=0)
       exit_with_code(0)
     except Exception as e:

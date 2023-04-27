@@ -51,7 +51,7 @@ class EventLogger:
   def log_error(self, errmsg):
     event_properties = EventProperties("fail_extension")
     event_properties.set_property("ErrorMessage", errmsg)
-    event_id = self.logger.log_event(event_properties)
+    event_id = self._event_logger.log_event(event_properties)
     while event_id < 0:
       time.sleep(0.00001)
       event_id = self._event_logger.log_event(event_properties)
@@ -833,6 +833,7 @@ def main():
       elif(input_operation == Constants.UPDATE):
         update()
 
+      LogManager.flush(timeout=0)
       exit_with_code(0)
     except Exception as e:
       set_error_status_and_error_exit(e, 'main', 9)

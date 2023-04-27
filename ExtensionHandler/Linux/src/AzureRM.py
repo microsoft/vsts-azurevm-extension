@@ -144,10 +144,6 @@ def check_python_version():
   if(LooseVersion(version) < LooseVersion('2.6')):
     code = RMExtensionStatus.rm_extension_status['MissingDependency']
     message = 'Installed Python version is {0}. Minimum required version is 2.6.'.format(version)
-    try:
-      event_logger.log_new_event("fail_extension", message)
-    except Exception as e:
-      pass
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
 def check_systemd_exists():
@@ -163,10 +159,6 @@ def check_systemd_exists():
   else:
     code = RMExtensionStatus.rm_extension_status['MissingDependency']
     message = 'Could not find systemd on the machine. Error message: {0}'.format(check_systemd_err)
-    try:
-      event_logger.log_new_event("fail_extension", message)
-    except Exception as e:
-      pass
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
 def validate_os():
@@ -175,10 +167,6 @@ def validate_os():
   if(os_version['IsX64'] != True):
     code = RMExtensionStatus.rm_extension_status['UnSupportedOS']
     message = 'The current CPU architecture is not supported. Deployment agent requires x64 architecture.'
-    try:
-      event_logger.log_new_event("fail_extension", message)
-    except Exception as e:
-      pass
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
 def os_compatible_with_dotnet6():
@@ -187,10 +175,6 @@ def os_compatible_with_dotnet6():
   if(is_os_compatible != True):
     code = RMExtensionStatus.rm_extension_status['Net6UnSupportedOS']
     message = 'The current OS version will not be supported by the .NET 6 based v3 agent. See https://aka.ms/azdo-pipeline-agent-version'
-    try:
-      event_logger.log_new_event("fail_extension", message)
-    except Exception as e:
-      pass
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
 def pre_validation_checks():

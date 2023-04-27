@@ -23,7 +23,6 @@ def urlopen_mock_with_exception():
     mock.read.side_effect = Exception('urlopen error')
     return mock
 
-
 @patch('urllib.request.urlopen', return_value=urlopen_mock_read())
 class TestNet6Deprecation(unittest.TestCase):
     def test_ubuntu_1604(self, _urllib_mock):
@@ -40,7 +39,8 @@ class TestNet6Deprecation(unittest.TestCase):
                              VERSION_CODENAME=xenial
                              UBUNTU_CODENAME=xenial''')
         with patch('builtins.open', mock_open(read_data=os_release)):
-            self.assertTrue(HandlerUtil.HandlerUtility.does_system_persists_in_net6_whitelist())
+            handler_util = HandlerUtil.HandlerUtility("-","-","-","-","-")
+            self.assertTrue(handler_util.does_system_persists_in_net6_whitelist())
 
     def test_ubuntu_2004(self, _urllib_mock):
         os_release = dedent('''

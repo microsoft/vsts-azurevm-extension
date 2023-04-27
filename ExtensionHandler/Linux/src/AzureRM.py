@@ -53,10 +53,7 @@ class EventLogger:
     event_properties.set_property("SystemID", handler_utility._systemid)
     event_properties.set_property("SystemVersion", handler_utility._systemversion)
     event_properties.set_property("Message", message)
-    event_id = self._event_logger.log_event(event_properties)
-    while event_id < 0:
-      time.sleep(0.00001)
-      event_id = self._event_logger.log_event(event_properties)
+    self._event_logger.log_event(event_properties)
 
 def get_last_sequence_number_file_path():
   global root_dir

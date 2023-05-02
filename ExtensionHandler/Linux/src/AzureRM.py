@@ -132,7 +132,7 @@ def set_error_status_and_error_exit(e, operation_name, code = -1):
     error_message = error_message[:Constants.ERROR_MESSAGE_LENGTH]
   handler_utility.error('Error occured during {0}. {1}'.format(operation_name, error_message))
   try:
-    event_logger.log_new_event("fail_extension", 'Error occured during {0}. {1}'.format(operation_name, error_message))
+    event_logger.log_new_event("extension_failed", 'Error occured during {0}. {1}'.format(operation_name, error_message))
   except Exception as e:
     pass
   LogManager.flush(timeout=0)
@@ -823,7 +823,7 @@ def main():
         update()
 
       try:
-        event_logger.log_new_event("success_extension", "Extension successfully installed")
+        event_logger.log_new_event("extension_succeeded", "Extension successfully installed")
       except Exception as e:
         pass
       LogManager.flush(timeout=0)

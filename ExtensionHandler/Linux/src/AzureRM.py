@@ -5,9 +5,6 @@
 #3. get command execution log summary
 #4. api versions merge and everywhere
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import sys
 import Utils.HandlerUtil as Util
 import Utils.RMExtensionStatus as RMExtensionStatus
@@ -42,7 +39,7 @@ class EventLogger:
   tenant_token = "5413d41fa2bc4f969c283b8b79f23488-c3090565-2202-41ce-bb2c-76f26d7575ee-7318"
 
   def __init__(self):
-    log_config = LogConfiguration(log_level=logging.DEBUG)
+    log_config = LogConfiguration(log_level = logging.DEBUG)
     configuration = LogManagerConfiguration(log_configuration = log_config)
 
     LogManager.initialize(self.tenant_token, configuration)
@@ -133,7 +130,7 @@ def set_error_status_and_error_exit(e, operation_name, code = -1):
   handler_utility.error('Error occured during {0}. {1}'.format(operation_name, error_message))
   try:
     event_logger.log_new_event("extension_failed", 'Error occured during {0}. {1}'.format(operation_name, error_message))
-  except Exception as e:
+  except Exception:
     pass
   LogManager.flush(timeout=0)
   exit_with_code(code)
@@ -824,7 +821,7 @@ def main():
 
       try:
         event_logger.log_new_event("extension_succeeded", "Extension successfully installed")
-      except Exception as e:
+      except Exception:
         pass
       LogManager.flush(timeout=0)
       exit_with_code(0)

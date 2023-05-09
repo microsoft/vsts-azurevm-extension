@@ -812,6 +812,10 @@ def main():
 
       if(input_operation == Constants.ENABLE):
         enable()
+        try:
+          event_logger.log_new_event("extension_succeeded", "Extension successfully enabled")
+        except Exception:
+          pass
       elif(input_operation == Constants.DISABLE):
         disable()
       elif(input_operation == Constants.UNINSTALL):
@@ -819,10 +823,6 @@ def main():
       elif(input_operation == Constants.UPDATE):
         update()
 
-      try:
-        event_logger.log_new_event("extension_succeeded", "Extension successfully installed")
-      except Exception:
-        pass
       LogManager.flush(timeout=0)
       exit_with_code(0)
     except Exception as e:

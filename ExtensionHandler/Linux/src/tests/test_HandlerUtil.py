@@ -23,7 +23,6 @@ def urlopen_mock_with_exception():
     mock.read.side_effect = Exception('urlopen error')
     return mock
 
-
 @patch('urllib.request.urlopen', return_value=urlopen_mock_read())
 class TestNet6Deprecation(unittest.TestCase):
     def test_ubuntu_1604(self, _urllib_mock):
@@ -40,7 +39,8 @@ class TestNet6Deprecation(unittest.TestCase):
                              VERSION_CODENAME=xenial
                              UBUNTU_CODENAME=xenial''')
         with patch('builtins.open', mock_open(read_data=os_release)):
-            self.assertTrue(HandlerUtil.HandlerUtility.does_system_persists_in_net6_whitelist())
+            handler_util = HandlerUtil.HandlerUtility("-","-","-","-","-")
+            self.assertTrue(handler_util.does_system_persists_in_net6_whitelist())
 
     def test_ubuntu_2004(self, _urllib_mock):
         os_release = dedent('''
@@ -57,7 +57,8 @@ class TestNet6Deprecation(unittest.TestCase):
                              VERSION_CODENAME=focal
                              UBUNTU_CODENAME=focal''')
         with patch('builtins.open', mock_open(read_data=os_release)):
-            self.assertTrue(HandlerUtil.HandlerUtility.does_system_persists_in_net6_whitelist())
+            handler_util = HandlerUtil.HandlerUtility("-","-","-","-","-")
+            self.assertTrue(handler_util.does_system_persists_in_net6_whitelist())
 
     def test_ubuntu_2204(self, _urllib_mock):
         os_release = dedent('''
@@ -75,7 +76,8 @@ class TestNet6Deprecation(unittest.TestCase):
                             UBUNTU_CODENAME=kinetic
                             LOGO=ubuntu-logo''')
         with patch('builtins.open', mock_open(read_data=os_release)):
-            self.assertTrue(HandlerUtil.HandlerUtility.does_system_persists_in_net6_whitelist())
+            handler_util = HandlerUtil.HandlerUtility("-","-","-","-","-")
+            self.assertTrue(handler_util.does_system_persists_in_net6_whitelist())
 
     def test_rhel_84(self, _urllib_mock):
         os_release = dedent('''
@@ -97,7 +99,8 @@ class TestNet6Deprecation(unittest.TestCase):
                             REDHAT_SUPPORT_PRODUCT="Red Hat Enterprise Linux"
                             REDHAT_SUPPORT_PRODUCT_VERSION="8.4"''')
         with patch('builtins.open', mock_open(read_data=os_release)):
-            self.assertTrue(HandlerUtil.HandlerUtility.does_system_persists_in_net6_whitelist())
+            handler_util = HandlerUtil.HandlerUtility("-","-","-","-","-")
+            self.assertTrue(handler_util.does_system_persists_in_net6_whitelist())
 
     def test_unknown(self, _urllib_mock):
         os_release = dedent('''
@@ -107,14 +110,16 @@ class TestNet6Deprecation(unittest.TestCase):
                             ID_LIKE="debian"
                             VERSION_ID="0.1"''')
         with patch('builtins.open', mock_open(read_data=os_release)):
-            self.assertFalse(HandlerUtil.HandlerUtility.does_system_persists_in_net6_whitelist())
+            handler_util = HandlerUtil.HandlerUtility("-","-","-","-","-")
+            self.assertFalse(handler_util.does_system_persists_in_net6_whitelist())
 
 
 @patch('urllib.request.urlopen', return_value=urlopen_mock_with_exception())
 class TestNet6DeprecationLocalFileFallback(unittest.TestCase):
     def test_file_fallback(self, _urllib_mock):
         with patch('builtins.open', new_callable=mock_open, read_data='{}') as open_mock:
-            self.assertFalse(HandlerUtil.HandlerUtility.does_system_persists_in_net6_whitelist())
+            handler_util = HandlerUtil.HandlerUtility("-","-","-","-","-")
+            self.assertFalse(handler_util.does_system_persists_in_net6_whitelist())
             # first open is for /etc/os-release
             # second open should happen due to urllib.request.urlopen exception
             # while trying to open ../net6.json

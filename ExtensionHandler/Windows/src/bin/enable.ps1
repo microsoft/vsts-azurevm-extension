@@ -176,6 +176,13 @@ function Invoke-PreValidationChecks {
             throw New-HandlerTerminatingError $RM_Extension_Status.UnSupportedOS -Message $message
         }
 
+        #Fail if os version not supported by .NET 6 based v3 agent
+        $isOSsupported = DoesSystemPersistsInNet6Whitelist
+        if (!$isOSsupported){
+            $message = "The current OS version will not be supported by the .NET 6 based v3 agent. See https://aka.ms/azdo-pipeline-agent-version"
+            throw New-HandlerTerminatingError $RM_Extension_Status.Net6UnSupportedOS -Message $message
+        }
+
         #Ensure tls1.2 support is added
         $securityProtocolString = [string][Net.ServicePointManager]::SecurityProtocol
         if ($securityProtocolString -notlike "*Tls12*")

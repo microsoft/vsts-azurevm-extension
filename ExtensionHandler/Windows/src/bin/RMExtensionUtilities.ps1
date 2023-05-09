@@ -216,3 +216,83 @@ function Convert-CommandLineToken {
     
     return ([system.String]::Join(" ", $parameters))
 }
+
+function DoesSystemPersistsInNet6Whitelist {
+    $WindowsId = "Windows " + (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").InstallationType
+
+    $WindowsName = $null
+    $productName = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").ProductName
+    if ($productName -match '^(Windows)(\sServer)?\s(?<versionNumber>[\d.]+).*$')
+    {
+        $WindowsName = $matches['versionNumber']
+    }
+
+    $WindowsVersion = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").CurrentBuildNumber
+
+    $Net6SupportedOS = $null
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $Net6SupportedOS = Invoke-WebRequest "https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json" -UseBasicParsing | ConvertFrom-Json
+    }
+    catch {
+        $Net6SupportedOS = (Get-Content "..\net6.json" -Raw) | ConvertFrom-Json
+    }
+
+    foreach ($supportedOS in $Net6SupportedOS)
+    {
+        if($supportedOS.id -eq $WindowsId)
+        {
+            $supportedVersions = $supportedOS.versions
+
+            foreach ($supportedVersion in $supportedVersions)
+            {
+                try {
+                    if (compareOSVersion $supportedVersion.name $WindowsName -and compareOSVersion $supportedVersion.version $WindowsVersion)
+                    {
+                        return $true
+                    }
+                }
+                catch {
+                    try {
+                        if (compareOSVersion $supportedVersion.name $WindowsName)
+                        {
+                            return $true
+                        }
+                    }
+                    catch {
+                        if (compareOSVersion $supportedVersion.version $WindowsVersion)
+                        {
+                            return $true
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return $false
+}
+
+function compareOSVersion
+{
+    param(
+        [string]$supportedVersion,
+        [string]$WindowsVersion
+    )
+
+    if ($supportedVersion -eq $WindowsVersion) # works only if there is no "+"" in version of supported OS
+    {
+        return $true
+    }
+
+    if ($supportedVersion[-1] -eq '+')
+    {
+        $sVersion = [double]($supportedVersion -replace ".$")
+        $wVerson = [double]$WindowsVersion
+        if ($wVerson -ge $sVersion)
+        {
+            return $true
+        }
+    }
+
+    return $false
+}

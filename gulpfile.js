@@ -89,7 +89,7 @@ gulp.task('createTempWindowsHandlerPackage', function () {
 
 gulp.task('createTempLinuxHandlerPackage', function () {
 	gutil.log("Copying linux extension handler files selectively to temp location: " + tempLinuxHandlerFilesPath);
-	return gulp.src(['ExtensionHandler/Linux/src/**.**', 'ExtensionHandler/Linux/src/Utils/**.**', 'ExtensionHandler/Linux/src/Utils_python2/**.**'],  {base: 'ExtensionHandler/Linux/src/'})
+	return gulp.src(['ExtensionHandler/Linux/src/**.**', 'ExtensionHandler/Linux/src/Utils/**.**', 'ExtensionHandler/Linux/src/Utils_python2/**.**', 'ExtensionHandler/Linux/src/aria/**.**'],  {base: 'ExtensionHandler/Linux/src/'})
 	.pipe(gulp.dest(tempLinuxHandlerFilesPath));
 });
 

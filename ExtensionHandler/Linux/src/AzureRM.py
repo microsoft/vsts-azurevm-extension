@@ -15,6 +15,7 @@ import DownloadDeploymentAgent
 import ConfigureDeploymentAgent
 import json
 import time
+import logging
 import shutil
 from Utils.WAAgentUtil import waagent
 from Utils.GlobalSettings import proxy_config
@@ -24,11 +25,32 @@ from urllib.parse import quote
 import urllib.request, urllib.parse, urllib.error
 import shlex
 
+from aria import LogManager, EventProperties, PiiKind, LogConfiguration, LogManagerConfiguration
+
 MAX_RETRIES = 3
 
 configured_agent_exists = False
 agent_configuration_required = True
 root_dir = ''
+handler_utility = None
+event_logger = None
+
+class EventLogger:
+  tenant_token = "5413d41fa2bc4f969c283b8b79f23488-c3090565-2202-41ce-bb2c-76f26d7575ee-7318"
+
+  def __init__(self):
+    log_config = LogConfiguration(log_level = logging.DEBUG)
+    configuration = LogManagerConfiguration(log_configuration = log_config)
+
+    LogManager.initialize(self.tenant_token, configuration)
+    self._event_logger = LogManager.get_logger("", self.tenant_token)
+
+  def log_new_event(self, event_type, message):
+    event_properties = EventProperties(event_type)
+    event_properties.set_property("SystemID", handler_utility._systemid)
+    event_properties.set_property("SystemVersion", handler_utility._systemversion)
+    event_properties.set_property("Message", message)
+    self._event_logger.log_event(event_properties)
 
 def get_last_sequence_number_file_path():
   global root_dir
@@ -106,6 +128,11 @@ def set_error_status_and_error_exit(e, operation_name, code = -1):
   if(len(error_message) > Constants.ERROR_MESSAGE_LENGTH):
     error_message = error_message[:Constants.ERROR_MESSAGE_LENGTH]
   handler_utility.error('Error occured during {0}. {1}'.format(operation_name, error_message))
+  try:
+    event_logger.log_new_event("extension_failed", 'Error occured during {0}. {1}'.format(operation_name, error_message))
+  except Exception:
+    pass
+  LogManager.flush(timeout=0)
   exit_with_code(code)
 
 def check_python_version():
@@ -139,9 +166,18 @@ def validate_os():
     message = 'The current CPU architecture is not supported. Deployment agent requires x64 architecture.'
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
+def os_compatible_with_dotnet6():
+  is_os_compatible = handler_utility.does_system_persists_in_net6_whitelist()
+
+  if(is_os_compatible != True):
+    code = RMExtensionStatus.rm_extension_status['Net6UnSupportedOS']
+    message = 'The current OS version will not be supported by the .NET 6 based v3 agent. See https://aka.ms/azdo-pipeline-agent-version'
+    raise RMExtensionStatus.new_handler_terminating_error(code, message)
+
 def pre_validation_checks():
   try:
     validate_os()
+    os_compatible_with_dotnet6()
     check_python_version()
     check_systemd_exists()
   except Exception as e:
@@ -187,6 +223,7 @@ def compare_sequence_number():
     if((sequence_number == last_sequence_number) and not(test_extension_disabled_markup())):
       handler_utility.log(RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'])
       handler_utility.log('Skipping enable since seq numbers match. Seq number: {0}.'.format(sequence_number))
+      LogManager.flush(timeout=0)
       exit_with_code(0)
 
   except Exception as e:
@@ -759,6 +796,8 @@ def main():
   if(len(sys.argv) == 2):
     global handler_utility
     handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
+    global event_logger
+    event_logger = EventLogger()
     operation = sys.argv[1]
     #Settings are read from file in do_parse_context, and protected settings are also removed from the file in this function
     handler_utility.do_parse_context(operation)
@@ -780,6 +819,11 @@ def main():
       elif(input_operation == Constants.UPDATE):
         update()
 
+      try:
+        event_logger.log_new_event("extension_succeeded", "Extension successfully installed")
+      except Exception:
+        pass
+      LogManager.flush(timeout=0)
       exit_with_code(0)
     except Exception as e:
       set_error_status_and_error_exit(e, 'main', 9)

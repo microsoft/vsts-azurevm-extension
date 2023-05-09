@@ -214,6 +214,8 @@ rm_extension_status = {
   'MissingDependency': 52,
   # InputConfigurationError: The extension failed due to missing or wrong configuration parameters
   'InputConfigurationError': 53,
+  # Net6UnSupportedOS: The current OS version is not supported by the .NET 6 based v3 agent
+  'Net6UnSupportedOS' : 54,
 
   'AgentUnConfigureFailWarning' : 'There are some warnings in uninstalling the already existing agent. Check \"Detailed Status\" for more details.'
 }

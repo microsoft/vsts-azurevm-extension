@@ -54,6 +54,7 @@ Example Status Report:
 
 import os
 import os.path
+import re
 import sys
 import imp
 import base64
@@ -136,6 +137,11 @@ class HandlerUtility:
         self._extension_version = extension_version
         self._log_prefix = '[%s-%s] ' % (l_name, extension_version)
 
+        systemid, systemversion = self.get_system_id_version()
+        
+        self._systemid = systemid
+        self._systemversion = systemversion
+
     def get_extension_version(self):
         return self._extension_version
     
@@ -181,6 +187,25 @@ class HandlerUtility:
                 except ValueError:
                     continue
         return seq_no
+    
+    @staticmethod
+    def get_system_id_version():
+        systemid = None
+        systemversion = None
+
+        if(os.path.exists("/etc/os-release")):
+            with open("/etc/os-release") as os_file:
+                for line in os_file:
+                    linuxIdRegexMatch = re.search("^ID\\s*=\\s*\"?(?P<id>[0-9a-z._-]+)\"?", line)
+                    linuxVersionIdRegexMatch = re.search("^VERSION_ID\\s*=\\s*\"?(?P<vid>[0-9a-z._-]+)\"?",line)
+
+                    if linuxIdRegexMatch:
+                        systemid = linuxIdRegexMatch.group("id")
+
+                    if linuxVersionIdRegexMatch:
+                        systemversion = linuxVersionIdRegexMatch.group("vid")
+
+        return systemid, systemversion
 
     def log(self, message):
         self._log(self._get_log_prefix() + message)
@@ -509,6 +534,28 @@ class HandlerUtility:
         output = {'IsX64':value=='x86_64'}
         return output
 
+    def does_system_persists_in_net6_whitelist(self):
+        net6_supported_os = None
+        
+        try:
+            net6_supported_os = json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json").read())
+        except:
+            with open("../net6.json") as net6_file:
+                net6_supported_os = json.loads(net6_file.read())
+
+        for supported_os in net6_supported_os:
+            if supported_os["id"] == self._systemid:
+                for version in supported_os["versions"]:
+                    if version["name"] == self._systemversion:
+                        return True
+                    elif version["name"][-1] == '+':
+                        sysVersion = float(self._systemversion)
+                        supVersion = float(version["name"][:-1])
+
+                        if sysVersion >= supVersion :
+                            return True
+
+        return False
     #def new_handler_terminating_error():
 
     def verify_input_not_null(self, input_key, input_value = None):

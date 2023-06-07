@@ -440,6 +440,7 @@ function ConfigureAgentIfRequired
 function Enable
 {
     Initialize-ExtensionLogFile
+    SetSystemDetails
     $agentWorkingFolder = Get-AgentWorkingFolder
     Compare-SequenceNumber $agentWorkingFolder
     Set-HandlerStatus $RM_Extension_Status.Installing.Code $RM_Extension_Status.Installing.Message
@@ -482,6 +483,20 @@ function Enable
         Write-Log "Removing disabled markup file" $true
         Remove-ExtensionDisabledMarkup $config.AgentWorkingFolder
     }
+
+    try {
+        $properties = @{}
+        $properties["Message"] = "Extension successfully enabled"
+
+        LogCustomEvent -Name "windows_extension_succeeded" -Properties $properties
+    }
+    catch {}
+
 }
 
+$global:AriaIsInitialized = $false
+InitializeAria -projectKey "5413d41fa2bc4f969c283b8b79f23488-c3090565-2202-41ce-bb2c-76f26d7575ee-7318"
+
 Enable
+
+TeardownAria

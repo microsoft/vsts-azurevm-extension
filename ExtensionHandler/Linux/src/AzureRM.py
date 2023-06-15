@@ -49,6 +49,7 @@ class EventLogger:
     event_properties = EventProperties(event_type)
     event_properties.set_property("SystemID", handler_utility._systemid)
     event_properties.set_property("SystemVersion", handler_utility._systemversion)
+    event_properties.set_property("Authentication", handler_utility._authentication)
     event_properties.set_property("Message", message)
     self._event_logger.log_event(event_properties)
 
@@ -405,11 +406,57 @@ def get_configuration_from_settings():
 
     # continue with deployment agent settings
     handler_utility.log("Is Deployment Agent")
+    useServicePrincipal = False
+    if('useServicePrincipal' in public_settings):
+      useServicePrincipal = public_settings['useServicePrincipal']
+
     pat_token = ''
-    if((protected_settings.__class__.__name__ == 'dict') and 'PATToken' in protected_settings):
-      pat_token = protected_settings['PATToken']
-    if((pat_token == '') and ('PATToken' in public_settings)):
-      pat_token = public_settings['PATToken']
+    if(useServicePrincipal):
+      handler_utility.set_auth_method("Service Principal")
+      try:
+        client_id = ''
+        if((protected_settings.__class__.__name__ == 'dict') and 'clientId' in protected_settings):
+          client_id = protected_settings['clientId']
+        if((client_id == '') and ('clientId' in public_settings)):
+          client_id = public_settings['clientId']
+        
+        client_secret = ''
+        if((protected_settings.__class__.__name__ == 'dict') and 'clientSecret' in protected_settings):
+          client_secret = protected_settings['clientSecret']
+        if((client_secret == '') and ('clientSecret' in public_settings)):
+          client_secret = public_settings['clientSecret']
+        
+        tenant_id = ''
+        if((protected_settings.__class__.__name__ == 'dict') and 'tenantId' in protected_settings):
+          tenant_id = protected_settings['tenantId']
+        if((tenant_id == '') and ('tenantId' in public_settings)):
+          tenant_id = public_settings['tenantId']
+
+        bearer_token_url = "https://login.microsoftonline.com/{0}/oauth2/v2.0/token".format(tenant_id) 
+        headers = {}
+        headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        body = [
+          "client_id="+client_id,
+          "grant_type=client_credentials",
+          "scope=499b84ac-1321-427f-aa17-267ca6975798/.default",
+          "client_secret="+client_secret
+        ]
+        body = "&".join(body)
+
+        response = Util.make_http_request_for_sp_auth(bearer_token_url, body, headers)
+        result = json.loads(response.read().decode("utf-8"))
+        
+        pat_token = result['access_token']
+      except Exception:
+        error_code =  RMExtensionStatus.rm_extension_status['ServicePrincipalAuthFailed']
+        error_message = "Could not obtain token from AAD. Please check the inputs and try again."
+        raise RMExtensionStatus.new_handler_terminating_error(error_code, error_message)
+    else:
+      handler_utility.set_auth_method("PAT")
+      if((protected_settings.__class__.__name__ == 'dict') and 'PATToken' in protected_settings):
+        pat_token = protected_settings['PATToken']
+      if((pat_token == '') and ('PATToken' in public_settings)):
+        pat_token = public_settings['PATToken']
 
     vsts_account_url = ''
     if('AzureDevOpsOrganizationUrl' in public_settings):

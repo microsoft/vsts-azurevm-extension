@@ -142,6 +142,8 @@ class HandlerUtility:
         self._systemid = systemid
         self._systemversion = systemversion
 
+        self._authentication = ""
+
     def get_extension_version(self):
         return self._extension_version
     
@@ -570,6 +572,9 @@ class HandlerUtility:
             excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['InputConfigurationError'], message)
             raise excep
 
+    def set_auth_method(self, auth_method):
+        self._authentication = auth_method
+
 def get_url_prefix(account_name):
   account_name_lower = account_name.lower()
   if(account_name_lower.startswith('http://')):
@@ -607,6 +612,20 @@ def make_http_request(url, http_method, body, headers, pat_token):
     connection = connection_type(host)
     
   connection.request(http_method, path, body, headers)
+  return connection.getresponse()
+
+def make_http_request_for_sp_auth(url, body, headers):
+  prefix = get_url_prefix(url)
+  url_without_prefix = url[len(prefix):]
+  host, path = url_without_prefix.split('/', 1)
+  path = '/' + path
+
+  connection_type = http.client.HTTPSConnection
+  if(prefix.startswith('http://')):
+    connection_type = http.client.HTTPConnection
+  connection = connection_type(host)
+    
+  connection.request("POST", path, body, headers)
   return connection.getresponse()
 
 def empty_dir(dir_name):

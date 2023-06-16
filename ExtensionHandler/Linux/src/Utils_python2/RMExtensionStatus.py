@@ -216,6 +216,8 @@ rm_extension_status = {
   'InputConfigurationError': 53,
   # Net6UnSupportedOS: The current OS version is not supported by the .NET 6 based v3 agent
   'Net6UnSupportedOS' : 54,
+  # ServicePrincipalAuthFailed : Failed to generate Bearer Token using Service Prinicipal
+  'ServicePrincipalAuthFailed' : 55,
 
   'AgentUnConfigureFailWarning' : 'There are some warnings in uninstalling the already existing agent. Check \"Detailed Status\" for more details.'
 }

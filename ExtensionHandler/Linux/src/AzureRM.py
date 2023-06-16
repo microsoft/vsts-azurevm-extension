@@ -37,6 +37,8 @@ event_logger = None
 
 class EventLogger:
   tenant_token = "5413d41fa2bc4f969c283b8b79f23488-c3090565-2202-41ce-bb2c-76f26d7575ee-7318"
+  version_info = sys.version_info
+  version = '{0}.{1}.{2}'.format(version_info[0], version_info[1], version_info[2])
 
   def __init__(self):
     log_config = LogConfiguration(log_level = logging.DEBUG)
@@ -49,6 +51,7 @@ class EventLogger:
     event_properties = EventProperties(event_type)
     event_properties.set_property("SystemID", handler_utility._systemid)
     event_properties.set_property("SystemVersion", handler_utility._systemversion)
+    event_properties.set_property("Python Version", self.version)
     event_properties.set_property("Authentication", handler_utility._authentication)
     event_properties.set_property("Message", message)
     self._event_logger.log_event(event_properties)

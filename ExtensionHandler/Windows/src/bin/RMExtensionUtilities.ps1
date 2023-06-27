@@ -355,6 +355,7 @@ function LogCustomEvent
         $eventProperties.SetProperty("WindowsId", $global:WindowsId)
         $eventProperties.SetProperty("WindowsName", $global:WindowsName)
         $eventProperties.SetProperty("WindowsVersion", $global:WindowsVersion)
+        $eventProperties.SetProperty("Authentication", $global:Authentication)
         $logger = [Microsoft.Applications.Telemetry.Server.LogManager]::GetLogger();
         $logger.LogEvent($eventProperties);
         Write-Host "Logged event: $Name to aria"

@@ -495,6 +495,7 @@ function Enable
 }
 
 $global:AriaIsInitialized = $false
+$global:Authentication = ""
 InitializeAria -projectKey "5413d41fa2bc4f969c283b8b79f23488-c3090565-2202-41ce-bb2c-76f26d7575ee-7318"
 
 Enable

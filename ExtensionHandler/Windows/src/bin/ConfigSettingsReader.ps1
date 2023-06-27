@@ -95,14 +95,78 @@ function Get-ConfigurationFromSettings {
         Write-Log "Is Deployment Agent"
 
         #Extract protected settings
-        $patToken = ""
-        if($protectedSettings.Contains('PATToken'))
+        $useServicePrincipal = $false
+        if($publicSettings.Contains('useServicePrincipal'))
         {
-            $patToken = $protectedSettings['PATToken']
+            $useServicePrincipal = $publicSettings['useServicePrincipal']
         }
-        if(-not $patToken -and $publicSettings.Contains('PATToken'))
+
+        $patToken = ""
+        if($useServicePrincipal)
         {
-            $patToken = $publicSettings['PATToken']
+            $global:Authentication = "Service Prinicipal"
+            try {
+
+                $clientId = ""
+                if($protectedSettings.Contains('clientId'))
+                {
+                    $clientId = $protectedSettings['clientId']
+                }
+                if(-not $clientId -and $publicSettings.Contains('clientId'))
+                {
+                    $clientId = $publicSettings['clientId']
+                }
+
+                $clientSecret = ""
+                if($protectedSettings.Contains('clientSecret'))
+                {
+                    $clientSecret = $protectedSettings['clientSecret']
+                }
+                if(-not $clientSecret -and $publicSettings.Contains('clientSecret'))
+                {
+                    $clientSecret = $publicSettings['clientSecret']
+                }
+
+                $tenantId = ""
+                if($protectedSettings.Contains('tenantId'))
+                {
+                    $tenantId = $protectedSettings['tenantId']
+                }
+                if(-not $tenantId -and $publicSettings.Contains('tenantId'))
+                {
+                    $tenantId = $publicSettings['tenantId']
+                }
+
+                $requestBearerTokenUrl = ("https://login.microsoftonline.com/{0}/oauth2/v2.0/token" -f $tenantId)
+                $requestHeader = @{"Content-Type" = "application/x-www-form-urlencoded"}
+                $requestBody = @{client_id=$clientId;
+                grant_type="client_credentials";
+                scope="499b84ac-1321-427f-aa17-267ca6975798/.default";
+                client_secret=$clientSecret}
+
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                $response = Invoke-WebRequest -UseBasicParsing -Uri $requestBearerTokenUrl -headers $requestHeader -Body $requestBody -Method "POST"
+
+                $result = $response.Content | Out-String | ConvertFrom-Json
+
+                $patToken = $result.access_token
+            }
+            catch {
+                $errorMessage = "Could not obtain token from AAD. Please check the inputs and try again."
+                throw New-HandlerTerminatingError $RM_Extension_Status.ServicePrinicpalAuthFailed -Message $errorMessage
+            }
+        }
+        else 
+        {
+            $global:Authentication = "PAT"
+            if($protectedSettings.Contains('PATToken'))
+            {
+                $patToken = $protectedSettings['PATToken']
+            }
+            if(-not $patToken -and $publicSettings.Contains('PATToken'))
+            {
+                $patToken = $publicSettings['PATToken']
+            }
         }
 
         $windowsLogonPassword = ""

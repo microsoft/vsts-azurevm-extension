@@ -15,6 +15,7 @@ import DownloadDeploymentAgent_python2 as DownloadDeploymentAgent
 import ConfigureDeploymentAgent_python2 as ConfigureDeploymentAgent
 import json
 import time
+import logging
 import shutil
 from Utils_python2.WAAgentUtil import waagent
 from Utils_python2.GlobalSettings import proxy_config
@@ -24,9 +25,34 @@ from urllib2 import quote
 import urllib
 import shlex
 
+from aria import LogManager, EventProperties, PiiKind, LogConfiguration, LogManagerConfiguration
+
 configured_agent_exists = False
 agent_configuration_required = True
 root_dir = ''
+handler_utility = None
+event_logger = None
+
+class EventLogger:
+  tenant_token = "5413d41fa2bc4f969c283b8b79f23488-c3090565-2202-41ce-bb2c-76f26d7575ee-7318"
+  version_info = sys.version_info
+  version = '{0}.{1}.{2}'.format(version_info[0], version_info[1], version_info[2])
+
+  def __init__(self):
+    log_config = LogConfiguration(log_level = logging.DEBUG)
+    configuration = LogManagerConfiguration(log_configuration = log_config)
+
+    LogManager.initialize(self.tenant_token, configuration)
+    self._event_logger = LogManager.get_logger("", self.tenant_token)
+
+  def log_new_event(self, event_type, message):
+    event_properties = EventProperties(event_type)
+    event_properties.set_property("SystemID", handler_utility._systemid)
+    event_properties.set_property("SystemVersion", handler_utility._systemversion)
+    event_properties.set_property("Python Version", self.version)
+    event_properties.set_property("Authentication", handler_utility._authentication)
+    event_properties.set_property("Message", message)
+    self._event_logger.log_event(event_properties)
 
 def get_last_sequence_number_file_path():
   global root_dir
@@ -104,6 +130,11 @@ def set_error_status_and_error_exit(e, operation_name, code = -1):
   if(len(error_message) > Constants.ERROR_MESSAGE_LENGTH):
     error_message = error_message[:Constants.ERROR_MESSAGE_LENGTH]
   handler_utility.error('Error occured during {0}. {1}'.format(operation_name, error_message))
+  try:
+    event_logger.log_new_event("extension_failed", 'Error occured during {0}. {1}'.format(operation_name, error_message))
+  except Exception:
+    pass
+  LogManager.flush(timeout=0)
   exit_with_code(code)
 
 def check_python_version():
@@ -192,6 +223,7 @@ def compare_sequence_number():
     if((sequence_number == last_sequence_number) and not(test_extension_disabled_markup())):
       handler_utility.log(RMExtensionStatus.rm_extension_status['SkippedInstallation']['Message'])
       handler_utility.log('Skipping enable since seq numbers match. Seq number: {0}.'.format(sequence_number))
+      LogManager.flush(timeout=0)
       exit_with_code(0)
 
   except Exception as e:
@@ -374,11 +406,57 @@ def get_configuration_from_settings():
 
     # continue with deployment agent settings
     handler_utility.log("Is Deployment Agent")
+    useServicePrincipal = False
+    if('useServicePrincipal' in public_settings):
+      useServicePrincipal = public_settings['useServicePrincipal']
+
     pat_token = ''
-    if((protected_settings.__class__.__name__ == 'dict') and protected_settings.has_key('PATToken')):
-      pat_token = protected_settings['PATToken']
-    if((pat_token == '') and (public_settings.has_key('PATToken'))):
-      pat_token = public_settings['PATToken']
+    if(useServicePrincipal):
+      handler_utility.set_auth_method("Service Principal")
+      try:
+        client_id = ''
+        if((protected_settings.__class__.__name__ == 'dict') and 'clientId' in protected_settings):
+          client_id = protected_settings['clientId']
+        if((client_id == '') and ('clientId' in public_settings)):
+          client_id = public_settings['clientId']
+
+        client_secret = ''
+        if((protected_settings.__class__.__name__ == 'dict') and 'clientSecret' in protected_settings):
+          client_secret = protected_settings['clientSecret']
+        if((client_secret == '') and ('clientSecret' in public_settings)):
+          client_secret = public_settings['clientSecret']
+
+        tenant_id = ''
+        if((protected_settings.__class__.__name__ == 'dict') and 'tenantId' in protected_settings):
+          tenant_id = protected_settings['tenantId']
+        if((tenant_id == '') and ('tenantId' in public_settings)):
+          tenant_id = public_settings['tenantId']
+
+        bearer_token_url = "https://login.microsoftonline.com/{0}/oauth2/v2.0/token".format(tenant_id) 
+        headers = {}
+        headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        body = [
+          "client_id="+client_id,
+          "grant_type=client_credentials",
+          "scope=499b84ac-1321-427f-aa17-267ca6975798/.default",
+          "client_secret="+client_secret
+        ]
+        body = "&".join(body)
+
+        response = Util.make_http_request_for_sp_auth(bearer_token_url, body, headers)
+        result = json.loads(response.read().decode("utf-8"))
+
+        pat_token = result['access_token']
+      except Exception:
+        error_code =  RMExtensionStatus.rm_extension_status['ServicePrincipalAuthFailed']
+        error_message = "Could not obtain token from AAD. Please check the inputs and try again."
+        raise RMExtensionStatus.new_handler_terminating_error(error_code, error_message)
+    else:
+      handler_utility.set_auth_method("PAT")
+      if((protected_settings.__class__.__name__ == 'dict') and 'PATToken' in protected_settings):
+        pat_token = protected_settings['PATToken']
+      if((pat_token == '') and ('PATToken' in public_settings)):
+        pat_token = public_settings['PATToken']
 
     vsts_account_url = ''
     if(public_settings.has_key('AzureDevOpsOrganizationUrl')):
@@ -728,6 +806,8 @@ def main():
   if(len(sys.argv) == 2):
     global handler_utility
     handler_utility = Util.HandlerUtility(waagent.Log, waagent.Error)
+    global event_logger
+    event_logger = EventLogger()
     operation = sys.argv[1]
     #Settings are read from file in do_parse_context, and protected settings are also removed from the file in this function
     handler_utility.do_parse_context(operation)
@@ -742,6 +822,10 @@ def main():
 
       if(input_operation == Constants.ENABLE):
         enable()
+        try:
+          event_logger.log_new_event("extension_succeeded", "Extension successfully enabled")
+        except Exception:
+          pass
       elif(input_operation == Constants.DISABLE):
         disable()
       elif(input_operation == Constants.UNINSTALL):
@@ -749,6 +833,7 @@ def main():
       elif(input_operation == Constants.UPDATE):
         update()
 
+      LogManager.flush(timeout=0)
       exit_with_code(0)
     except Exception as e:
       set_error_status_and_error_exit(e, 'main', 9)

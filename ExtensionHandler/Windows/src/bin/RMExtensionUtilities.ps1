@@ -242,7 +242,8 @@ function DoesSystemPersistsInNet6Whitelist {
         $Net6SupportedOS = Invoke-WebRequest "https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json" -UseBasicParsing | ConvertFrom-Json
     }
     catch {
-        $Net6SupportedOS = (Get-Content "..\net6.json" -Raw) | ConvertFrom-Json
+        $net6file = $pwd.Path + "\net6.json"
+    	$Net6SupportedOS = (Get-Content $net6file -Raw) | ConvertFrom-Json
     }
 
     foreach ($supportedOS in $Net6SupportedOS)

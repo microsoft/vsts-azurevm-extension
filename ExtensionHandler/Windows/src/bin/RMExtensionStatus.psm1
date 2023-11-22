@@ -377,14 +377,6 @@ To retry install, please remove the extension from the VM first.
         }
     }
     
-    try {
-        $properties = @{}
-        $properties["Message"] = $errorMessage
-
-        LogCustomEvent -Name "windows_extension_failed" -Properties $properties
-    }
-    catch {}
-
     Add-HandlerSubStatus $errorCode $errorMessage -operationName $operationName -SubStatus error
     Set-HandlerStatus $errorCode $errorMessage -Status error
 }

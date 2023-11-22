@@ -159,7 +159,6 @@ function Exit-WithCode
     [Parameter(Mandatory=$false, Position=0)]
     [int]$exitCode
     )
-    TeardownAria
     exit $exitCode
 }
 
@@ -218,24 +217,18 @@ function Convert-CommandLineToken {
     return ([system.String]::Join(" ", $parameters))
 }
 
-function SetSystemDetails {
-    $WinId = "Windows " + (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").InstallationType
+function DoesSystemPersistsInNet6Whitelist {
+    $WindowsId = "Windows " + (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").InstallationType
 
-    $WinName = $null
+    $WindowsName = $null
     $productName = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").ProductName
     if ($productName -match '^(Windows)(\sServer)?\s(?<versionNumber>[\d.]+).*$')
     {
-        $WinName = $matches['versionNumber']
+        $WindowsName = $matches['versionNumber']
     }
 
-    $WinVersion = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").CurrentBuildNumber
+    $WindowsVersion = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").CurrentBuildNumber
 
-    $global:WindowsId = $WinId
-    $global:WindowsName = $WinName
-    $global:WindowsVersion = $WinVersion
-}
-
-function DoesSystemPersistsInNet6Whitelist {
     $Net6SupportedOS = $null
     try {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -248,27 +241,27 @@ function DoesSystemPersistsInNet6Whitelist {
 
     foreach ($supportedOS in $Net6SupportedOS)
     {
-        if($supportedOS.id -eq $global:WindowsId)
+        if($supportedOS.id -eq $WindowsId)
         {
             $supportedVersions = $supportedOS.versions
 
             foreach ($supportedVersion in $supportedVersions)
             {
                 try {
-                    if (compareOSVersion $supportedVersion.name $global:WindowsName -and compareOSVersion $supportedVersion.version $global:WindowsVersion)
+                    if (compareOSVersion $supportedVersion.name $WindowsName -and compareOSVersion $supportedVersion.version $WindowsVersion)
                     {
                         return $true
                     }
                 }
                 catch {
                     try {
-                        if (compareOSVersion $supportedVersion.name $global:WindowsName)
+                        if (compareOSVersion $supportedVersion.name $WindowsName)
                         {
                             return $true
                         }
                     }
                     catch {
-                        if (compareOSVersion $supportedVersion.version $global:WindowsVersion)
+                        if (compareOSVersion $supportedVersion.version $WindowsVersion)
                         {
                             return $true
                         }
@@ -303,73 +296,4 @@ function compareOSVersion
     }
 
     return $false
-}
-
-function InitializeAria
-{
-    param
-    (
-        [Parameter(Mandatory=$True)]
-        [string] $projectKey
-    )
-
-    if(-not $global:AriaIsInitialized)
-    {
-        try
-        {
-            $ariaTelemetryBinDir = [System.IO.Path]::GetFullPath(".")
-
-            [Reflection.Assembly]::LoadFile([System.IO.Path]::Combine($ariaTelemetryBinDir, "Microsoft.Applications.Telemetry.dll"))
-            [Reflection.Assembly]::LoadFile([System.IO.Path]::Combine($ariaTelemetryBinDir, "Microsoft.Applications.Telemetry.Server.dll"))
-            [Reflection.Assembly]::LoadFile([System.IO.Path]::Combine($ariaTelemetryBinDir, "Microsoft.Bond.Interfaces.dll"))
-            [Reflection.Assembly]::LoadFile([System.IO.Path]::Combine($ariaTelemetryBinDir, "Microsoft.Bond.dll"))
-            [Microsoft.Applications.Telemetry.Server.LogManager]::Initialize($projectKey)
-            $global:AriaIsInitialized = $true
-        }
-        catch
-        {
-        }
-    }
-}
-
-function LogCustomEvent
- {
-    param
-    (
-        [Parameter(Mandatory=$True)]
-            [string] $Name,
-        [hashtable] $Properties
-    )
-
-    if($global:AriaIsInitialized)
-    {
-        $eventProperties = new-object Microsoft.Applications.Telemetry.EventProperties
-        $eventProperties.Name = $Name
-        if($Properties)
-        {
-            foreach($property in $Properties.GetEnumerator())
-            {
-                $eventProperties.SetProperty($property.Name, $property.Value)
-            }
-        }
-
-        $eventProperties.SetProperty("WindowsId", $global:WindowsId)
-        $eventProperties.SetProperty("WindowsName", $global:WindowsName)
-        $eventProperties.SetProperty("WindowsVersion", $global:WindowsVersion)
-        $eventProperties.SetProperty("Authentication", $global:Authentication)
-        $logger = [Microsoft.Applications.Telemetry.Server.LogManager]::GetLogger();
-        $logger.LogEvent($eventProperties);
-        Write-Host "Logged event: $Name to aria"
-    }
-}
-
-function TearDownAria
-{
-    if($global:AriaIsInitialized)
-    {
-        Write-Host "FlushAndTearDown() Aria"
-        [Microsoft.Applications.Telemetry.Server.LogManager]::FlushAndTearDown()
-        $global:AriaIsInitialized = $false
-        Write-Host "finished tearing down Aria"
-    }
 }

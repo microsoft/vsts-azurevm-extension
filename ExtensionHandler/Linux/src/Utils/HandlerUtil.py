@@ -533,7 +533,10 @@ class HandlerUtility:
 
     def get_os_version(self):
         value = platform.uname()[4]
-        output = {'IsX64':value=='x86_64'}
+        output = {
+            'IsX64': value == 'x86_64',
+            'IsAarch64': value == 'aarch64'
+        }
         return output
 
     def does_system_persists_in_net6_whitelist(self):

@@ -56,7 +56,6 @@ import os
 import os.path
 import re
 import sys
-import imp
 import base64
 import json
 import time

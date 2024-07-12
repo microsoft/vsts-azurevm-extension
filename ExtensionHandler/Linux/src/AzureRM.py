@@ -165,9 +165,9 @@ def check_systemd_exists():
 def validate_os():
   os_version = handler_utility.get_os_version()
 
-  if(os_version['IsX64'] != True):
+  if(os_version['IsX64'] is not True and os_version['IsAarch64'] is not True):
     code = RMExtensionStatus.rm_extension_status['UnSupportedOS']
-    message = 'The current CPU architecture is not supported. Deployment agent requires x64 architecture.'
+    message = 'The current CPU architecture is not supported. Deployment agent requires x86_64 or aarch64 architecture.'
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
 def os_compatible_with_dotnet6():

@@ -83,7 +83,7 @@ gulp.task('cleanExistingBuild', function() {
 
 gulp.task('createTempWindowsHandlerPackage', function () {
 	gutil.log("Copying windows extension handler files selectively to temp location: " + tempWindowsHandlerFilesPath);
-	return gulp.src(['ExtensionHandler/Windows/src/bin/**.**', 'ExtensionHandler/Windows/src/enable.cmd', 'ExtensionHandler/Windows/src/disable.cmd', 'ExtensionHandler/Windows/src/install.cmd', 'ExtensionHandler/Windows/src/uninstall.cmd', 'ExtensionHandler/Windows/src/update.cmd', 'ExtensionHandler/Windows/src/HandlerManifest.json', 'ExtensionHandler/Windows/src/net6.json'],  {base: 'ExtensionHandler/Windows/src/'})
+	return gulp.src(['ExtensionHandler/Windows/src/bin/**.**', 'ExtensionHandler/Windows/src/enable.cmd', 'ExtensionHandler/Windows/src/disable.cmd', 'ExtensionHandler/Windows/src/install.cmd', 'ExtensionHandler/Windows/src/uninstall.cmd', 'ExtensionHandler/Windows/src/update.cmd', 'ExtensionHandler/Windows/src/HandlerManifest.json', 'ExtensionHandler/Windows/src/net8.json'],  {base: 'ExtensionHandler/Windows/src/'})
 	.pipe(gulp.dest(tempWindowsHandlerFilesPath));
 });
 

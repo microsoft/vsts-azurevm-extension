@@ -217,7 +217,7 @@ function Convert-CommandLineToken {
     return ([system.String]::Join(" ", $parameters))
 }
 
-function DoesSystemPersistsInNet6Whitelist {
+function DoesSystemPersistsInNetWhitelist {
     $WindowsId = "Windows " + (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").InstallationType
 
     $WindowsName = $null
@@ -229,17 +229,17 @@ function DoesSystemPersistsInNet6Whitelist {
 
     $WindowsVersion = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").CurrentBuildNumber
 
-    $Net6SupportedOS = $null
+    $NetSupportedOS = $null
     try {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        $Net6SupportedOS = Invoke-WebRequest "https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json" -UseBasicParsing | ConvertFrom-Json
+        $NetSupportedOS = Invoke-WebRequest "https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net8.json" -UseBasicParsing | ConvertFrom-Json
     }
     catch {
-        $net6file = $pwd.Path + "\net6.json"
-    	$Net6SupportedOS = (Get-Content $net6file -Raw) | ConvertFrom-Json
+        $netfile = $pwd.Path + "\net8.json"
+        $NetSupportedOS = (Get-Content $netfile -Raw) | ConvertFrom-Json
     }
 
-    foreach ($supportedOS in $Net6SupportedOS)
+    foreach ($supportedOS in $NetSupportedOS)
     {
         if($supportedOS.id -eq $WindowsId)
         {

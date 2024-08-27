@@ -535,17 +535,17 @@ class HandlerUtility:
         output = {'IsX64':value=='x86_64'}
         return output
 
-    def does_system_persists_in_net6_whitelist(self):
-        net6_supported_os = None
+    def does_system_persists_in_net_whitelist(self):
+        net_supported_os = None
         
         try:
-            net6_supported_os = json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json").read())
+            net_supported_os = json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net8.json").read())
         except:
-            net6file = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "net6.json")  # get absolute path of parent directory and join it with net6.json
-            with open(net6file) as net6_file:
-                net6_supported_os = json.loads(net6_file.read())
+            netfile = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "net8.json")  # get absolute path of parent directory and join it with net8.json
+            with open(netfile) as net_file:
+                net_supported_os = json.loads(net_file.read())
 
-        for supported_os in net6_supported_os:
+        for supported_os in net_supported_os:
             if supported_os["id"] == self._systemid:
                 for version in supported_os["versions"]:
                     if version["name"] == self._systemversion:

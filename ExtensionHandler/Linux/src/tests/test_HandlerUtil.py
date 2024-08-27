@@ -14,8 +14,8 @@ from Utils import HandlerUtil
 
 def urlopen_mock_read():
     mock = MagicMock()
-    with open("net6.json", "r", encoding='utf-8') as net6_file:
-        mock.read.return_value = net6_file.read()
+    with open("net8.json", "r", encoding='utf-8') as net_file:
+        mock.read.return_value = net_file.read()
     return mock
 
 def urlopen_mock_with_exception():
@@ -40,7 +40,7 @@ class TestNet6Deprecation(unittest.TestCase):
                              UBUNTU_CODENAME=xenial''')
         with patch('builtins.open', mock_open(read_data=os_release)):
             handler_util = HandlerUtil.HandlerUtility("-","-","-","-","-")
-            self.assertTrue(handler_util.does_system_persists_in_net6_whitelist())
+            self.assertTrue(handler_util.does_system_persists_in_net_whitelist())
 
     def test_ubuntu_2004(self, _urllib_mock):
         os_release = dedent('''
@@ -58,7 +58,7 @@ class TestNet6Deprecation(unittest.TestCase):
                              UBUNTU_CODENAME=focal''')
         with patch('builtins.open', mock_open(read_data=os_release)):
             handler_util = HandlerUtil.HandlerUtility("-","-","-","-","-")
-            self.assertTrue(handler_util.does_system_persists_in_net6_whitelist())
+            self.assertTrue(handler_util.does_system_persists_in_net_whitelist())
 
     def test_ubuntu_2204(self, _urllib_mock):
         os_release = dedent('''
@@ -77,7 +77,7 @@ class TestNet6Deprecation(unittest.TestCase):
                             LOGO=ubuntu-logo''')
         with patch('builtins.open', mock_open(read_data=os_release)):
             handler_util = HandlerUtil.HandlerUtility("-","-","-","-","-")
-            self.assertTrue(handler_util.does_system_persists_in_net6_whitelist())
+            self.assertTrue(handler_util.does_system_persists_in_net_whitelist())
 
     def test_rhel_84(self, _urllib_mock):
         os_release = dedent('''
@@ -100,7 +100,7 @@ class TestNet6Deprecation(unittest.TestCase):
                             REDHAT_SUPPORT_PRODUCT_VERSION="8.4"''')
         with patch('builtins.open', mock_open(read_data=os_release)):
             handler_util = HandlerUtil.HandlerUtility("-","-","-","-","-")
-            self.assertTrue(handler_util.does_system_persists_in_net6_whitelist())
+            self.assertTrue(handler_util.does_system_persists_in_net_whitelist())
 
     def test_unknown(self, _urllib_mock):
         os_release = dedent('''
@@ -111,7 +111,7 @@ class TestNet6Deprecation(unittest.TestCase):
                             VERSION_ID="0.1"''')
         with patch('builtins.open', mock_open(read_data=os_release)):
             handler_util = HandlerUtil.HandlerUtility("-","-","-","-","-")
-            self.assertFalse(handler_util.does_system_persists_in_net6_whitelist())
+            self.assertFalse(handler_util.does_system_persists_in_net_whitelist())
 
 
 @patch('urllib.request.urlopen', return_value=urlopen_mock_with_exception())
@@ -119,19 +119,19 @@ class TestNet6DeprecationLocalFileFallback(unittest.TestCase):
     def test_file_fallback(self, _urllib_mock):
         with patch('builtins.open', new_callable=mock_open, read_data='{}') as open_mock:
             handler_util = HandlerUtil.HandlerUtility("-","-","-","-","-")
-            self.assertFalse(handler_util.does_system_persists_in_net6_whitelist())
+            self.assertFalse(handler_util.does_system_persists_in_net_whitelist())
             # first open is for /etc/os-release
             # second open should happen due to urllib.request.urlopen exception
-            # while trying to open ../net6.json
+            # while trying to open ../net8.json
             self.assertEqual(open_mock.call_count, 2)
 
 class TestNet6FileConsistency(unittest.TestCase):
     def test_file_consistency(self):
-        with open("net6.json", encoding="utf-8") as net6_file:
-            local = json.loads(net6_file.read())
-        remote_net6_fileurl = "https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json"
-        with urllib.request.urlopen(remote_net6_fileurl) as remote_net6_file:
-            remote = json.loads(remote_net6_file.read())
+        with open("net8.json", encoding="utf-8") as net_file:
+            local = json.loads(net_file.read())
+        remote_net_fileurl = "https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net8.json"
+        with urllib.request.urlopen(remote_net_fileurl) as remote_net_file:
+            remote = json.loads(remote_net_file.read())
         self.assertEqual(local, remote)
 
 if __name__ == '__main__':

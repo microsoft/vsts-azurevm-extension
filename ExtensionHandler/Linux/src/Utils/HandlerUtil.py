@@ -539,7 +539,7 @@ class HandlerUtility:
         net6_supported_os = None
         
         try:
-            net6_supported_os = json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json").read())
+            net6_supported_os = json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/releases/m232/src/Agent.Listener/net6.json").read())
         except:
             net6file = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "net6.json")  # get absolute path of parent directory and join it with net6.json
             with open(net6file) as net6_file:

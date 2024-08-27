@@ -232,7 +232,7 @@ function DoesSystemPersistsInNet6Whitelist {
     $Net6SupportedOS = $null
     try {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        $Net6SupportedOS = Invoke-WebRequest "https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json" -UseBasicParsing | ConvertFrom-Json
+        $Net6SupportedOS = Invoke-WebRequest "https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/releases/m232/src/Agent.Listener/net6.json" -UseBasicParsing | ConvertFrom-Json
     }
     catch {
         $net6file = $pwd.Path + "\net6.json"

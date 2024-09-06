@@ -230,14 +230,9 @@ function DoesSystemPersistsInNet6Whitelist {
     $WindowsVersion = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").CurrentBuildNumber
 
     $Net6SupportedOS = $null
-    try {
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        $Net6SupportedOS = Invoke-WebRequest "https://raw.githubusercontent.com/microsoft/azure-pipelines-agent/master/src/Agent.Listener/net6.json" -UseBasicParsing | ConvertFrom-Json
-    }
-    catch {
-        $net6file = $pwd.Path + "\net6.json"
-    	$Net6SupportedOS = (Get-Content $net6file -Raw) | ConvertFrom-Json
-    }
+    $net6file = $pwd.Path + "\net6.json"
+    $Net6SupportedOS = (Get-Content $net6file -Raw) | ConvertFrom-Json
+
 
     foreach ($supportedOS in $Net6SupportedOS)
     {

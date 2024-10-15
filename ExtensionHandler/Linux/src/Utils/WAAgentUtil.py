@@ -17,12 +17,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-try:
-    import imp as imp
-except ImportError:
-    import importlib as imp
+
 import os
 import os.path
+import sys
+
+
+def load_source(module_name, module_path):
+    """Loads a python module from the path of the corresponding file.
+
+    Args:
+        module_name (str): namespace where the python module will be loaded,
+            e.g. ``foo.bar``
+        module_path (str): path of the python file containing the module
+
+    Returns:
+        A valid module object
+
+    Raises:
+        ImportError: when the module can't be loaded
+        FileNotFoundError: when module_path doesn't exist
+    """
+    if sys.version_info[0] == 3 and sys.version_info[1] >= 12:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+    else:
+        import imp
+        module = imp.load_source(module_name, module_path)
+    return module
 
 #
 # The following code will search and load waagent code and expose
@@ -54,14 +79,14 @@ pathUsed = 1
 try:
     agentPath = searchWAAgent()
     if(agentPath):
-        waagent = imp.load_source('waagent', agentPath)
+        waagent = load_source('waagent', agentPath)
     else:
         raise Exception("Can't load new waagent.")
 except Exception as e:
     pathUsed = 0 
     agentPath = searchWAAgentOld()
     if(agentPath):
-        waagent = imp.load_source('waagent', agentPath)
+        waagent = load_source('waagent', agentPath)
     else:
         raise Exception("Can't load old waagent.")
 

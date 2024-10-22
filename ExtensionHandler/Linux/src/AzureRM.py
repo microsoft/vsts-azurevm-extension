@@ -170,18 +170,9 @@ def validate_os():
     message = 'The current CPU architecture is not supported. Deployment agent requires x64 architecture.'
     raise RMExtensionStatus.new_handler_terminating_error(code, message)
 
-def os_compatible_with_dotnet6():
-  is_os_compatible = handler_utility.does_system_persists_in_net6_whitelist()
-
-  if(is_os_compatible != True):
-    code = RMExtensionStatus.rm_extension_status['Net6UnSupportedOS']
-    message = 'The current OS version will not be supported by the .NET 6 based v3 agent. See https://aka.ms/azdo-pipeline-agent-version'
-    raise RMExtensionStatus.new_handler_terminating_error(code, message)
-
 def pre_validation_checks():
   try:
     validate_os()
-    os_compatible_with_dotnet6()
     check_python_version()
     check_systemd_exists()
   except Exception as e:

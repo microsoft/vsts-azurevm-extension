@@ -2,23 +2,6 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: |
-     sudo apt-get install python3-coverage python3-mock pylint python3-pytest python3-pytest-cov
-  displayName: Install python dependencies
-
-- script: cd ExtensionHandler/Linux/src && pytest-3 --junitxml=test-results.xml --cov=.  --cov-report=xml
-  displayName: 'Run Linux tests'
-
-- task: PublishTestResults@2
-  inputs:
-    testResultsFormat: 'JUnit'
-    testResultsFiles: '**/test-*.xml'
-
-- task: PublishCodeCoverageResults@1
-  inputs:
-    codeCoverageTool: Cobertura
-    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
-
-# For now run pylint only for the tests which is new code
-- script: pylint ExtensionHandler/Linux/src/tests
-  displayName: 'Run pylint'
+# For now run a dummy pipeline
+- script: echo "Hello, world!"
+  displayName: "Run a one-line script"

@@ -532,7 +532,10 @@ class HandlerUtility:
 
     def get_os_version(self):
         value = platform.uname()[4]
-        output = {'IsX64':value=='x86_64'}
+        output = {
+            'IsX64': value == 'x86_64',
+            'IsAarch64': value == 'aarch64'
+        }
         return output
 
     def verify_input_not_null(self, input_key, input_value = None):

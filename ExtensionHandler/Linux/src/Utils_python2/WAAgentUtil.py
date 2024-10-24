@@ -1,6 +1,6 @@
 # Wrapper module for waagent
 #
-# waagent is not written as a module. This wrapper module is created 
+# waagent is not written as a module. This wrapper module is created
 # to use the waagent code as a module.
 #
 # Copyright 2014 Microsoft Corporation
@@ -21,25 +21,27 @@ import imp
 import os
 import os.path
 
+
 #
 # The following code will search and load waagent code and expose
 # it as a submodule of current module
 #
 def searchWAAgent():
-    agentPath = '/usr/sbin/waagent'
-    if(os.path.isfile(agentPath)):
+    agentPath = "/usr/sbin/waagent"
+    if os.path.isfile(agentPath):
         return agentPath
-    user_paths = os.environ['PYTHONPATH'].split(os.pathsep)
+    user_paths = os.environ["PYTHONPATH"].split(os.pathsep)
     for user_path in user_paths:
-        agentPath = os.path.join(user_path, 'waagent')
-        if(os.path.isfile(agentPath)):
+        agentPath = os.path.join(user_path, "waagent")
+        if os.path.isfile(agentPath):
             return agentPath
     return None
+
 
 waagent = None
 agentPath = searchWAAgent()
 if agentPath:
-    waagent = imp.load_source('waagent', agentPath)
+    waagent = imp.load_source("waagent", agentPath)
 else:
     raise Exception("Can't load waagent.")
 
@@ -47,13 +49,16 @@ if not hasattr(waagent, "AddExtensionEvent"):
     """
     If AddExtensionEvent is not defined, provide a dummy impl.
     """
+
     def _AddExtensionEvent(*args, **kwargs):
         pass
+
     waagent.AddExtensionEvent = _AddExtensionEvent
 
 if not hasattr(waagent, "WALAEventOperation"):
+
     class _WALAEventOperation:
-        HeartBeat="HeartBeat"
+        HeartBeat = "HeartBeat"
         Provision = "Provision"
         Install = "Install"
         UnIsntall = "UnInstall"
@@ -61,7 +66,8 @@ if not hasattr(waagent, "WALAEventOperation"):
         Enable = "Enable"
         Download = "Download"
         Upgrade = "Upgrade"
-        Update = "Update"           
+        Update = "Update"
+
     waagent.WALAEventOperation = _WALAEventOperation
 
 
@@ -85,7 +91,7 @@ def GetWaagentHttpProxyConfigString():
         # no proxy config in waagent.conf anyway, so it's safe to silently swallow.
         pass
 
-    result = ''
+    result = ""
     if host is not None:
         result = "http://" + host
         if port is not None:
@@ -106,14 +112,6 @@ def InitExtensionEventLog(name):
     __ExtensionName__ = name
 
 
-def AddExtensionEvent(name=__ExtensionName__,
-                      op=waagent.WALAEventOperation.Enable, 
-                      isSuccess=False, 
-                      message=None):
+def AddExtensionEvent(name=__ExtensionName__, op=waagent.WALAEventOperation.Enable, isSuccess=False, message=None):
     if name is not None:
-        waagent.AddExtensionEvent(name=name,
-                                  op=op,
-                                  isSuccess=isSuccess,
-                                  message=message)
-
-
+        waagent.AddExtensionEvent(name=name, op=op, isSuccess=isSuccess, message=message)

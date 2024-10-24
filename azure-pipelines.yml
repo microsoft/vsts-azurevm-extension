@@ -3,5 +3,8 @@ pool:
 
 steps:
 # For now run a dummy pipeline
-- script: echo "Hello, world!"
-  displayName: "Run a one-line script"
+- script: sudo apt-get install black pylint
+  displayName: "Install python dependencies"
+
+- script: black --line-length 160 --check ExtensionHandler/Linux/src/
+  displayName: "Check code formatting"

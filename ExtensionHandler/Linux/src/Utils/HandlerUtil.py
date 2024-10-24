@@ -76,19 +76,21 @@ DateTimeFormat = "%Y-%m-%dT%H:%M:%SZ"
 MANIFEST_XML = "manifest.xml"
 include_warning_status = False
 
+
 class HandlerContext:
-    def __init__(self,name):
+    def __init__(self, name):
         self._name = name
-        self._version = '0.0'
+        self._version = "0.0"
         return
 
-class HandlerSubStatus:
-    operation_name = ''
-    sub_status = ''
-    sub_status_code = ''
-    sub_status_message = ''
 
-    def __init__(self, operation_key, sub_status = 'success'):
+class HandlerSubStatus:
+    operation_name = ""
+    sub_status = ""
+    sub_status_code = ""
+    sub_status_message = ""
+
+    def __init__(self, operation_key, sub_status="success"):
         self.sub_status = sub_status
         if operation_key not in RMExtensionStatus.rm_extension_status:
             return
@@ -96,21 +98,22 @@ class HandlerSubStatus:
         if type(RMExtensionStatus.rm_extension_status[operation_key]) is not dict:
             return
 
-        if 'Code' in RMExtensionStatus.rm_extension_status[operation_key]:
-            self.sub_status_code = RMExtensionStatus.rm_extension_status[operation_key]['Code']
-        
-        if 'Message' in RMExtensionStatus.rm_extension_status[operation_key]:
-            self.sub_status_message = RMExtensionStatus.rm_extension_status[operation_key]['Message']
-        
-        if 'operationName' in RMExtensionStatus.rm_extension_status[operation_key]:
-            self.operation_name = RMExtensionStatus.rm_extension_status[operation_key]['operationName']
+        if "Code" in RMExtensionStatus.rm_extension_status[operation_key]:
+            self.sub_status_code = RMExtensionStatus.rm_extension_status[operation_key]["Code"]
+
+        if "Message" in RMExtensionStatus.rm_extension_status[operation_key]:
+            self.sub_status_message = RMExtensionStatus.rm_extension_status[operation_key]["Message"]
+
+        if "operationName" in RMExtensionStatus.rm_extension_status[operation_key]:
+            self.operation_name = RMExtensionStatus.rm_extension_status[operation_key]["operationName"]
+
 
 class HandlerStatus:
-    status = ''
-    status_code = ''
-    status_message = ''
+    status = ""
+    status_code = ""
+    status_message = ""
 
-    def __init__(self, operation_key, status = 'transitioning'):
+    def __init__(self, operation_key, status="transitioning"):
         self.status = status
         if operation_key not in RMExtensionStatus.rm_extension_status:
             return
@@ -118,11 +121,12 @@ class HandlerStatus:
         if type(RMExtensionStatus.rm_extension_status[operation_key]) is not dict:
             return
 
-        if 'Code' in RMExtensionStatus.rm_extension_status[operation_key]:
-            self.status_code = RMExtensionStatus.rm_extension_status[operation_key]['Code']
-        
-        if 'Message' in RMExtensionStatus.rm_extension_status[operation_key]:
-            self.status_message = RMExtensionStatus.rm_extension_status[operation_key]['Message']
+        if "Code" in RMExtensionStatus.rm_extension_status[operation_key]:
+            self.status_code = RMExtensionStatus.rm_extension_status[operation_key]["Code"]
+
+        if "Message" in RMExtensionStatus.rm_extension_status[operation_key]:
+            self.status_message = RMExtensionStatus.rm_extension_status[operation_key]["Message"]
+
 
 class HandlerUtility:
     def __init__(self, log, error, s_name=None, l_name=None, extension_version=None):
@@ -134,10 +138,10 @@ class HandlerUtility:
 
         self._short_name = s_name
         self._extension_version = extension_version
-        self._log_prefix = '[%s-%s] ' % (l_name, extension_version)
+        self._log_prefix = "[%s-%s] " % (l_name, extension_version)
 
         systemid, systemversion = self.get_system_id_version()
-        
+
         self._systemid = systemid
         self._systemversion = systemversion
 
@@ -145,7 +149,7 @@ class HandlerUtility:
 
     def get_extension_version(self):
         return self._extension_version
-    
+
     def _get_log_prefix(self):
         return self._log_prefix
 
@@ -154,17 +158,17 @@ class HandlerUtility:
             return self._get_extension_info_manifest()
 
         ext_dir = os.path.basename(os.getcwd())
-        (long_name, version) = ext_dir.split('-')
-        short_name = long_name.split('.')[-1]
+        (long_name, version) = ext_dir.split("-")
+        short_name = long_name.split(".")[-1]
 
         return long_name, short_name, version
 
     def _get_extension_info_manifest(self):
         with open(MANIFEST_XML) as fh:
             doc = ElementTree.parse(fh)
-            namespace = doc.find('{http://schemas.microsoft.com/windowsazure}ProviderNameSpace').text
-            short_name = doc.find('{http://schemas.microsoft.com/windowsazure}Type').text
-            version = doc.find('{http://schemas.microsoft.com/windowsazure}Version').text
+            namespace = doc.find("{http://schemas.microsoft.com/windowsazure}ProviderNameSpace").text
+            short_name = doc.find("{http://schemas.microsoft.com/windowsazure}Type").text
+            version = doc.find("{http://schemas.microsoft.com/windowsazure}Version").text
 
             long_name = "%s.%s" % (namespace, short_name)
             return (long_name, short_name, version)
@@ -176,29 +180,29 @@ class HandlerUtility:
         for subdir, dirs, files in os.walk(config_folder):
             for file in files:
                 try:
-                    cur_seq_no = int(os.path.basename(file).split('.')[0])
-                    if(freshest_time == None):
-                        freshest_time = os.path.getmtime(join(config_folder,file))
+                    cur_seq_no = int(os.path.basename(file).split(".")[0])
+                    if freshest_time == None:
+                        freshest_time = os.path.getmtime(join(config_folder, file))
                         seq_no = cur_seq_no
                     else:
-                        current_file_m_time = os.path.getmtime(join(config_folder,file))
-                        if(current_file_m_time > freshest_time):
-                            freshest_time=current_file_m_time
+                        current_file_m_time = os.path.getmtime(join(config_folder, file))
+                        if current_file_m_time > freshest_time:
+                            freshest_time = current_file_m_time
                             seq_no = cur_seq_no
                 except ValueError:
                     continue
         return seq_no
-    
+
     @staticmethod
     def get_system_id_version():
         systemid = None
         systemversion = None
 
-        if(os.path.exists("/etc/os-release")):
+        if os.path.exists("/etc/os-release"):
             with open("/etc/os-release") as os_file:
                 for line in os_file:
-                    linuxIdRegexMatch = re.search("^ID\\s*=\\s*\"?(?P<id>[0-9a-z._-]+)\"?", line)
-                    linuxVersionIdRegexMatch = re.search("^VERSION_ID\\s*=\\s*\"?(?P<vid>[0-9a-z._-]+)\"?",line)
+                    linuxIdRegexMatch = re.search('^ID\\s*=\\s*"?(?P<id>[0-9a-z._-]+)"?', line)
+                    linuxVersionIdRegexMatch = re.search('^VERSION_ID\\s*=\\s*"?(?P<vid>[0-9a-z._-]+)"?', line)
 
                     if linuxIdRegexMatch:
                         systemid = linuxIdRegexMatch.group("id")
@@ -217,102 +221,104 @@ class HandlerUtility:
     def remove_protected_settings_from_config_file(self):
         content = waagent.GetFileContents(self._context._settings_file)
         config_to_write = json.loads(content)
-        config_to_write['runtimeSettings'][0]['handlerSettings']['protectedSettings'] = ''
+        config_to_write["runtimeSettings"][0]["handlerSettings"]["protectedSettings"] = ""
         content_to_write = json.dumps(config_to_write)
         try:
             waagent.SetFileContents(self._context._settings_file, content_to_write)
         except Exception as e:
-            self._log('[Warning]: could not delete the PAT from the settings file. More details : {0}'.format(str(e)))
+            self._log("[Warning]: could not delete the PAT from the settings file. More details : {0}".format(str(e)))
 
     def _parse_config(self, ctxt, operation):
         config = None
         try:
-            config=json.loads(ctxt)
+            config = json.loads(ctxt)
         except:
-            self.error('JSON exception decoding ' + ctxt)
+            self.error("JSON exception decoding " + ctxt)
 
         if config == None:
             self.error("JSON error processing settings file:" + ctxt)
         else:
-            handlerSettings = config['runtimeSettings'][0]['handlerSettings']
-            if 'protectedSettings' in handlerSettings and \
-                    "protectedSettingsCertThumbprint" in handlerSettings and \
-                    handlerSettings['protectedSettings'] is not None and \
-                    handlerSettings['protectedSettings'] != '' and \
-                    handlerSettings["protectedSettingsCertThumbprint"] is not None:
-                protectedSettings = handlerSettings['protectedSettings']
-                thumb=handlerSettings['protectedSettingsCertThumbprint']
-                cert=waagent.LibDir+'/'+thumb+'.crt'
-                pkey=waagent.LibDir+'/'+thumb+'.prv'
-                waagent.SetFileContents('/tmp/kk', protectedSettings)
-                cleartxt=None
-                cleartxt=waagent.RunGetOutput("base64 -d /tmp/kk | openssl smime  -inform DER -decrypt -recip " +  cert + "  -inkey " + pkey )[1]
+            handlerSettings = config["runtimeSettings"][0]["handlerSettings"]
+            if (
+                "protectedSettings" in handlerSettings
+                and "protectedSettingsCertThumbprint" in handlerSettings
+                and handlerSettings["protectedSettings"] is not None
+                and handlerSettings["protectedSettings"] != ""
+                and handlerSettings["protectedSettingsCertThumbprint"] is not None
+            ):
+                protectedSettings = handlerSettings["protectedSettings"]
+                thumb = handlerSettings["protectedSettingsCertThumbprint"]
+                cert = waagent.LibDir + "/" + thumb + ".crt"
+                pkey = waagent.LibDir + "/" + thumb + ".prv"
+                waagent.SetFileContents("/tmp/kk", protectedSettings)
+                cleartxt = None
+                cleartxt = waagent.RunGetOutput("base64 -d /tmp/kk | openssl smime  -inform DER -decrypt -recip " + cert + "  -inkey " + pkey)[1]
                 os.remove("/tmp/kk")
                 if cleartxt == None:
-                    self.error("OpenSSh decode error using  thumbprint " + thumb )
-                    self.do_exit(1,operation,'error','1', operation + ' Failed')
-                jctxt=''
+                    self.error("OpenSSh decode error using  thumbprint " + thumb)
+                    self.do_exit(1, operation, "error", "1", operation + " Failed")
+                jctxt = ""
                 try:
-                    jctxt=json.loads(cleartxt)
+                    jctxt = json.loads(cleartxt)
                 except:
-                    self.error('JSON exception decoding ' + cleartxt)
-                handlerSettings['protectedSettings']=jctxt
-                self.log('Config decoded correctly.')
+                    self.error("JSON exception decoding " + cleartxt)
+                handlerSettings["protectedSettings"] = jctxt
+                self.log("Config decoded correctly.")
         return config
 
-    def do_parse_context(self,operation):
+    def do_parse_context(self, operation):
         _context = self.try_parse_context(operation)
         if not _context:
-            self.do_exit(1,operation,'error','1', operation + ' Failed')
+            self.do_exit(1, operation, "error", "1", operation + " Failed")
         return _context
-            
+
     def try_parse_context(self, operation):
         self._context = HandlerContext(self._short_name)
-        handler_env=None
-        config=None
-        ctxt=None
-        code=0
+        handler_env = None
+        config = None
+        ctxt = None
+        code = 0
         # get the HandlerEnvironment.json. According to the extension handler spec, it is always in the ./ directory
-        self.log('cwd is ' + os.path.realpath(os.path.curdir))
-        handler_env_file='./HandlerEnvironment.json'
+        self.log("cwd is " + os.path.realpath(os.path.curdir))
+        handler_env_file = "./HandlerEnvironment.json"
         if not os.path.isfile(handler_env_file):
             self.error("Unable to locate " + handler_env_file)
             return None
         ctxt = waagent.GetFileContents(handler_env_file)
-        if ctxt == None :
+        if ctxt == None:
             self.error("Unable to read " + handler_env_file)
         try:
-            handler_env=json.loads(ctxt)
+            handler_env = json.loads(ctxt)
         except:
             pass
-        if handler_env == None :
+        if handler_env == None:
             self.log("JSON error processing " + handler_env_file)
             return None
         if type(handler_env) == list:
             handler_env = handler_env[0]
 
-        self._context._name = handler_env['name']
-        self._context._version = str(handler_env['version'])
-        self._context._config_dir=handler_env['handlerEnvironment']['configFolder']
-        self._context._log_dir=handler_env['handlerEnvironment']['logFolder']
-        self._context._log_file= os.path.join(handler_env['handlerEnvironment']['logFolder'],'extension.log')
-        self._context._command_execution_log_file= os.path.join(handler_env['handlerEnvironment']['logFolder'],'CommandExecution.log')
+        self._context._name = handler_env["name"]
+        self._context._version = str(handler_env["version"])
+        self._context._config_dir = handler_env["handlerEnvironment"]["configFolder"]
+        self._context._log_dir = handler_env["handlerEnvironment"]["logFolder"]
+        self._context._log_file = os.path.join(handler_env["handlerEnvironment"]["logFolder"], "extension.log")
+        self._context._command_execution_log_file = os.path.join(handler_env["handlerEnvironment"]["logFolder"], "CommandExecution.log")
         self._change_log_file()
-        self._context._status_dir=handler_env['handlerEnvironment']['statusFolder']
-        self._context._heartbeat_file=handler_env['handlerEnvironment']['heartbeatFile']
+        self._context._status_dir = handler_env["handlerEnvironment"]["statusFolder"]
+        self._context._heartbeat_file = handler_env["handlerEnvironment"]["heartbeatFile"]
         self._context._seq_no = self._get_current_seq_no(self._context._config_dir)
         if self._context._seq_no < 0:
             self.error("Unable to locate a .settings file!")
             return None
         self._context._seq_no = str(self._context._seq_no)
-        self.log('sequence number is ' + self._context._seq_no)
-        self._context._status_file= os.path.join(self._context._status_dir, self._context._seq_no +'.status')
-        self._context._settings_file = os.path.join(self._context._config_dir, self._context._seq_no + '.settings')
+        self.log("sequence number is " + self._context._seq_no)
+        self._context._status_file = os.path.join(self._context._status_dir, self._context._seq_no + ".status")
+        self._context._settings_file = os.path.join(self._context._config_dir, self._context._seq_no + ".settings")
         self.log("setting file path is" + self._context._settings_file)
-        ctxt=None
-        ctxt=waagent.GetFileContents(self._context._settings_file)
-        if ctxt == None :
-            error_msg = 'Unable to read ' + self._context._settings_file + '. '
+        ctxt = None
+        ctxt = waagent.GetFileContents(self._context._settings_file)
+        if ctxt == None:
+            error_msg = "Unable to read " + self._context._settings_file + ". "
             self.error(error_msg)
             return None
         self._context._config = self._parse_config(ctxt, operation)
@@ -326,17 +332,17 @@ class HandlerUtility:
 
     def _change_log_file(self):
         self.log("Change log file to " + self._context._log_file)
-        LoggerInit(self._context._log_file,'/dev/stdout')
+        LoggerInit(self._context._log_file, "/dev/stdout")
         self._log = waagent.Log
         self._error = waagent.Error
 
     def set_verbose_log(self, verbose):
-        if(verbose == "1" or verbose == 1):
+        if verbose == "1" or verbose == 1:
             self.log("Enable verbose log")
-            LoggerInit(self._context._log_file, '/dev/stdout', verbose=True)
+            LoggerInit(self._context._log_file, "/dev/stdout", verbose=True)
         else:
             self.log("Disable verbose log")
-            LoggerInit(self._context._log_file, '/dev/stdout', verbose=False)
+            LoggerInit(self._context._log_file, "/dev/stdout", verbose=False)
 
     def is_seq_smaller(self):
         return int(self._context._seq_no) <= self._get_most_recent_seq()
@@ -349,15 +355,19 @@ class HandlerUtility:
         self.exit_if_seq_smaller()
 
     def exit_if_seq_smaller(self):
-        if(self.is_seq_smaller()):
-            self.log("Current sequence number, " + self._context._seq_no + ", is not greater than the sequnce number of the most recent executed configuration. Exiting...")
+        if self.is_seq_smaller():
+            self.log(
+                "Current sequence number, "
+                + self._context._seq_no
+                + ", is not greater than the sequnce number of the most recent executed configuration. Exiting..."
+            )
             sys.exit(0)
         self.save_seq()
 
     def _get_most_recent_seq(self):
-        if(os.path.isfile('mrseq')):
-            seq = waagent.GetFileContents('mrseq')
-            if(seq):
+        if os.path.isfile("mrseq"):
+            seq = waagent.GetFileContents("mrseq")
+            if seq:
                 return int(seq)
 
         return -1
@@ -368,52 +378,51 @@ class HandlerUtility:
     def get_inused_config_seq(self):
         return self._get_most_recent_seq()
 
-    def set_inused_config_seq(self,seq):
+    def set_inused_config_seq(self, seq):
         self._set_most_recent_seq(seq)
 
-    def _set_most_recent_seq(self,seq):
-        waagent.SetFileContents('mrseq', str(seq))
+    def _set_most_recent_seq(self, seq):
+        waagent.SetFileContents("mrseq", str(seq))
 
     def do_status_report(self, operation, status, status_code, message):
         self.log("{0},{1},{2},{3}".format(operation, status, status_code, message))
-        tstamp=time.strftime(DateTimeFormat, time.gmtime())
-        stat = [{
-            "version" : self._context._version,
-            "timestampUTC" : tstamp,
-            "status" : {
-                "name" : self._context._name,
-                "operation" : operation,
-                "status" : status,
-                "code" : status_code,
-                "formattedMessage" : {
-                    "lang" : "en-US",
-                    "message" : message
-                }
+        tstamp = time.strftime(DateTimeFormat, time.gmtime())
+        stat = [
+            {
+                "version": self._context._version,
+                "timestampUTC": tstamp,
+                "status": {
+                    "name": self._context._name,
+                    "operation": operation,
+                    "status": status,
+                    "code": status_code,
+                    "formattedMessage": {"lang": "en-US", "message": message},
+                },
             }
-        }]
+        ]
         stat_rept = json.dumps(stat)
         if self._context._status_file:
-            tmp = "%s.tmp" %(self._context._status_file)
-            with open(tmp,'w+') as f:
+            tmp = "%s.tmp" % (self._context._status_file)
+            with open(tmp, "w+") as f:
                 f.write(stat_rept)
             os.rename(tmp, self._context._status_file)
 
-    def do_heartbeat_report(self, heartbeat_file,status,code,message):
+    def do_heartbeat_report(self, heartbeat_file, status, code, message):
         # heartbeat
-        health_report='[{"version":"1.0","heartbeat":{"status":"' + status+ '","code":"'+ code + '","Message":"' + message + '"}}]'
-        if waagent.SetFileContents(heartbeat_file,health_report) == None :
-            self.error('Unable to wite heartbeat info to ' + heartbeat_file)
+        health_report = '[{"version":"1.0","heartbeat":{"status":"' + status + '","code":"' + code + '","Message":"' + message + '"}}]'
+        if waagent.SetFileContents(heartbeat_file, health_report) == None:
+            self.error("Unable to wite heartbeat info to " + heartbeat_file)
 
-    def do_exit(self,exit_code,operation,status,code,message):
+    def do_exit(self, exit_code, operation, status, code, message):
         try:
-            self.do_status_report(operation, status,code,message)
+            self.do_status_report(operation, status, code, message)
         except Exception as e:
-            self.log("Can't update status: "+str(e))
+            self.log("Can't update status: " + str(e))
         sys.exit(exit_code)
 
     def get_name(self):
         return self._context._name
-    
+
     def get_seq_no(self):
         return self._context._seq_no
 
@@ -421,207 +430,216 @@ class HandlerUtility:
         return self._context._log_dir
 
     def get_handler_settings(self):
-        return self._context._config['runtimeSettings'][0]['handlerSettings']
+        return self._context._config["runtimeSettings"][0]["handlerSettings"]
 
     def get_protected_settings(self):
-        return self.get_handler_settings().get('protectedSettings')
+        return self.get_handler_settings().get("protectedSettings")
 
     def get_public_settings(self):
-        return self.get_handler_settings().get('publicSettings')
+        return self.get_handler_settings().get("publicSettings")
 
     def clear_status_file(self):
-        status_file = '{0}/{1}.status'.format(self._context._status_dir, self._context._seq_no)
+        status_file = "{0}/{1}.status".format(self._context._status_dir, self._context._seq_no)
         self.log("Clearing status file " + status_file)
-        open(status_file, 'w').close()
+        open(status_file, "w").close()
 
-    #status can be either one of 'transitioning', 'error', 'success' or 'warning'
+    # status can be either one of 'transitioning', 'error', 'success' or 'warning'
     def set_handler_status(self, handler_status):
         global include_warning_status
-        if(include_warning_status):
-            handler_status.status_message = handler_status.status_message + '. ' + RMExtensionStatus.rm_extension_status['AgentUnConfigureFailWarning']
-        status_file = '{0}/{1}.status'.format(self._context._status_dir, self._context._seq_no)
+        if include_warning_status:
+            handler_status.status_message = handler_status.status_message + ". " + RMExtensionStatus.rm_extension_status["AgentUnConfigureFailWarning"]
+        status_file = "{0}/{1}.status".format(self._context._status_dir, self._context._seq_no)
         timestamp_utc = time.strftime(DateTimeFormat, time.gmtime())
-        if(os.path.isfile(status_file) and os.stat(status_file).st_size != 0):
+        if os.path.isfile(status_file) and os.stat(status_file).st_size != 0:
             status_file_contents = waagent.GetFileContents(status_file)
             status_list = json.loads(status_file_contents)
             status_object = status_list[0]
-            self.log("Setting handler status, code and message as '{0}', '{1}' and '{2}' respectively".format(handler_status.status, handler_status.status_code, handler_status.status_message))
-            status_object['status']['formattedMessage']['message'] = handler_status.status_message
-            status_object['status']['status'] = handler_status.status
-            status_object['status']['code'] = handler_status.status_code
-            status_object['timestampUTC'] = timestamp_utc
-            status_object['status']['configurationAppliedTime'] = timestamp_utc
+            self.log(
+                "Setting handler status, code and message as '{0}', '{1}' and '{2}' respectively".format(
+                    handler_status.status, handler_status.status_code, handler_status.status_message
+                )
+            )
+            status_object["status"]["formattedMessage"]["message"] = handler_status.status_message
+            status_object["status"]["status"] = handler_status.status
+            status_object["status"]["code"] = handler_status.status_code
+            status_object["timestampUTC"] = timestamp_utc
+            status_object["status"]["configurationAppliedTime"] = timestamp_utc
         else:
-            status_list = [{
-                'status' : {
-                    'formattedMessage' : {
-                        'message' : handler_status.status_message,
-                        'lang' : 'en-US'
+            status_list = [
+                {
+                    "status": {
+                        "formattedMessage": {"message": handler_status.status_message, "lang": "en-US"},
+                        "status": handler_status.status,
+                        "code": handler_status.status_code,
+                        "substatus": [],
                     },
-                    'status' : handler_status.status,
-                    'code' : handler_status.status_code,
-                    'substatus' : []
-                },
-                'version' : self._context._version,
-                'timestampUTC' : timestamp_utc
-            }]
+                    "version": self._context._version,
+                    "timestampUTC": timestamp_utc,
+                }
+            ]
         new_contents = json.dumps(status_list)
         waagent.SetFileContents(status_file, new_contents)
 
-    #substatus can be either one of 'transitioning', 'error', 'success' or 'warning'
+    # substatus can be either one of 'transitioning', 'error', 'success' or 'warning'
     def add_handler_sub_status(self, handler_sub_status):
-        status_file = '{0}/{1}.status'.format(self._context._status_dir, self._context._seq_no)
+        status_file = "{0}/{1}.status".format(self._context._status_dir, self._context._seq_no)
         timestamp_utc = time.strftime(DateTimeFormat, time.gmtime())
-        new_msg = {'lang' : 'eng-US', 'message' : handler_sub_status.sub_status_message}
+        new_msg = {"lang": "eng-US", "message": handler_sub_status.sub_status_message}
         new_sub_status = {
-                           'name' : handler_sub_status.operation_name, 
-                           'code' : handler_sub_status.sub_status_code, 
-                           'status' : handler_sub_status.sub_status, 
-                           'formattedMessage' : new_msg
-                        }
-        if(os.path.isfile(status_file) and os.stat(status_file).st_size != 0):
+            "name": handler_sub_status.operation_name,
+            "code": handler_sub_status.sub_status_code,
+            "status": handler_sub_status.sub_status,
+            "formattedMessage": new_msg,
+        }
+        if os.path.isfile(status_file) and os.stat(status_file).st_size != 0:
             status_file_contents = waagent.GetFileContents(status_file)
             status_list = json.loads(status_file_contents)
             status_object = status_list[0]
-            if('substatus' in status_object['status']):
-                sub_status_list = status_object['status']['substatus']
+            if "substatus" in status_object["status"]:
+                sub_status_list = status_object["status"]["substatus"]
                 sub_status_list.append(new_sub_status)
             else:
-                status_object['status']['substatus'] = [new_sub_status]
+                status_object["status"]["substatus"] = [new_sub_status]
         else:
-            status_list = [{
-                'status' : {
-                    'substatus' : [new_sub_status]
-                },
-                'version' : self._context._version,
-                'timestampUTC' : timestamp_utc
-            }]
+            status_list = [{"status": {"substatus": [new_sub_status]}, "version": self._context._version, "timestampUTC": timestamp_utc}]
         new_contents = json.dumps(status_list)
         waagent.SetFileContents(status_file, new_contents)
 
     def set_handler_error_status(self, e, operation_name):
         error_message = str(e)
         self.error(error_message)
-        if('ErrorId' in dir(e) and e.__getattribute__('ErrorId') == RMExtensionStatus.rm_terminating_error_id):
-            error_code = e.__getattribute__('Code')
+        if "ErrorId" in dir(e) and e.__getattribute__("ErrorId") == RMExtensionStatus.rm_terminating_error_id:
+            error_code = e.__getattribute__("Code")
         else:
-            error_code = RMExtensionStatus.rm_extension_status['GenericError']
-        
-        if(error_code == RMExtensionStatus.rm_extension_status['InstallError']):
-            error_status_message = 'The Extension failed to install: {0}'.format(error_message)
-            error_sub_status_message = 'The Extension failed to install: {0} More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.'.format(str(e), self._context._log_dir)
-        elif(error_code == RMExtensionStatus.rm_extension_status['InputConfigurationError']):
-            error_status_message = 'Incorrect VSTS account credentials'
+            error_code = RMExtensionStatus.rm_extension_status["GenericError"]
+
+        if error_code == RMExtensionStatus.rm_extension_status["InstallError"]:
+            error_status_message = "The Extension failed to install: {0}".format(error_message)
+            error_sub_status_message = "The Extension failed to install: {0} More information about the failure can be found in the logs located under {1} on the VM.To retry install, please remove the extension from the VM first.".format(
+                str(e), self._context._log_dir
+            )
+        elif error_code == RMExtensionStatus.rm_extension_status["InputConfigurationError"]:
+            error_status_message = "Incorrect VSTS account credentials"
             error_sub_status_message = str(e)
         else:
-            error_status_message = 'The Extension failed to execute: {0}'.format(str(e))
-            error_sub_status_message = 'The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.'.format(str(e), self._context._log_dir)
-        
-        #setting substatus
-        handler_sub_status = HandlerSubStatus('', 'error')
+            error_status_message = "The Extension failed to execute: {0}".format(str(e))
+            error_sub_status_message = (
+                "The Extension failed to execute: {0} More information about the failure can be found in the logs located under {1} on the VM.".format(
+                    str(e), self._context._log_dir
+                )
+            )
+
+        # setting substatus
+        handler_sub_status = HandlerSubStatus("", "error")
         handler_sub_status.operation_name = operation_name
         handler_sub_status.sub_status_code = error_code
         handler_sub_status.sub_status_message = error_sub_status_message
         self.add_handler_sub_status(handler_sub_status)
 
-        #setting status
-        handler_status = HandlerStatus('', 'error')
+        # setting status
+        handler_status = HandlerStatus("", "error")
         handler_status.status_code = error_code
         handler_status.status_message = error_status_message
         self.set_handler_status(handler_status)
 
     def get_os_version(self):
         value = platform.uname()[4]
-        output = {'IsX64':value=='x86_64'}
+        output = {"IsX64": value == "x86_64"}
         return output
 
-    def verify_input_not_null(self, input_key, input_value = None):
-        if((input_value == None) or (input_value == '')):
-            message ='{0} should be specified'.format(input_key) 
-            excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['InputConfigurationError'], message)
+    def verify_input_not_null(self, input_key, input_value=None):
+        if (input_value == None) or (input_value == ""):
+            message = "{0} should be specified".format(input_key)
+            excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status["InputConfigurationError"], message)
             raise excep
 
     def verify_public_settings_is_dict(self, public_settings):
-        if((public_settings == None) or (public_settings.__class__.__name__ != 'dict')):
-            message ='Public settings should be a dictionary.' 
-            excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status['InputConfigurationError'], message)
+        if (public_settings == None) or (public_settings.__class__.__name__ != "dict"):
+            message = "Public settings should be a dictionary."
+            excep = RMExtensionStatus.new_handler_terminating_error(RMExtensionStatus.rm_extension_status["InputConfigurationError"], message)
             raise excep
 
     def set_auth_method(self, auth_method):
         self._authentication = auth_method
 
+
 def get_url_prefix(account_name):
-  account_name_lower = account_name.lower()
-  if(account_name_lower.startswith('http://')):
-    return 'http://'
-  elif(account_name_lower.startswith('https://')):
-    return 'https://'
-  return '' 
+    account_name_lower = account_name.lower()
+    if account_name_lower.startswith("http://"):
+        return "http://"
+    elif account_name_lower.startswith("https://"):
+        return "https://"
+    return ""
+
 
 def make_http_request(url, http_method, body, headers, pat_token):
-  prefix = get_url_prefix(url)
-  url_without_prefix = url[len(prefix):]
-  host, path = url_without_prefix.split('/', 1)
-  path = '/' + path
+    prefix = get_url_prefix(url)
+    url_without_prefix = url[len(prefix) :]
+    host, path = url_without_prefix.split("/", 1)
+    path = "/" + path
 
-  if (not headers):
-    headers = {}
+    if not headers:
+        headers = {}
 
-  if (pat_token):
-    basic_auth = '{0}:{1}'.format('', pat_token)
-    basic_auth = base64.b64encode(basic_auth.encode("utf-8"))
-    headers['Authorization'] = 'Basic {0}'.format(str(basic_auth, 'utf-8'))
+    if pat_token:
+        basic_auth = "{0}:{1}".format("", pat_token)
+        basic_auth = base64.b64encode(basic_auth.encode("utf-8"))
+        headers["Authorization"] = "Basic {0}".format(str(basic_auth, "utf-8"))
 
-  connection_type = http.client.HTTPSConnection
-  if(prefix.startswith('http://')):
-    connection_type = http.client.HTTPConnection
+    connection_type = http.client.HTTPSConnection
+    if prefix.startswith("http://"):
+        connection_type = http.client.HTTPConnection
 
-  if ('ProxyUrl' in proxy_config):
-    proxy_url = proxy_config['ProxyUrl']
-    proxy_prefix = get_url_prefix(proxy_url)
-    proxy_url_without_prefix = proxy_url[len(proxy_prefix):]
-    proxy_headers={}
-    connection = connection_type(proxy_url_without_prefix)
-    connection.set_tunnel(host, headers=proxy_headers)
-  else:
-    connection = connection_type(host)
-    
-  connection.request(http_method, path, body, headers)
-  return connection.getresponse()
+    if "ProxyUrl" in proxy_config:
+        proxy_url = proxy_config["ProxyUrl"]
+        proxy_prefix = get_url_prefix(proxy_url)
+        proxy_url_without_prefix = proxy_url[len(proxy_prefix) :]
+        proxy_headers = {}
+        connection = connection_type(proxy_url_without_prefix)
+        connection.set_tunnel(host, headers=proxy_headers)
+    else:
+        connection = connection_type(host)
+
+    connection.request(http_method, path, body, headers)
+    return connection.getresponse()
+
 
 def make_http_request_for_sp_auth(url, body, headers):
-  prefix = get_url_prefix(url)
-  url_without_prefix = url[len(prefix):]
-  host, path = url_without_prefix.split('/', 1)
-  path = '/' + path
+    prefix = get_url_prefix(url)
+    url_without_prefix = url[len(prefix) :]
+    host, path = url_without_prefix.split("/", 1)
+    path = "/" + path
 
-  connection_type = http.client.HTTPSConnection
-  if(prefix.startswith('http://')):
-    connection_type = http.client.HTTPConnection
-  connection = connection_type(host)
-    
-  connection.request("POST", path, body, headers)
-  return connection.getresponse()
+    connection_type = http.client.HTTPSConnection
+    if prefix.startswith("http://"):
+        connection_type = http.client.HTTPConnection
+    connection = connection_type(host)
+
+    connection.request("POST", path, body, headers)
+    return connection.getresponse()
+
 
 def empty_dir(dir_name):
-  for dirpath, dirnames, filenames in os.walk(dir_name, topdown = False):
-    for filename in filenames:
-      os.remove(os.path.join(dirpath, filename))
-    for dirname in dirnames:
-      os.rmdir(os.path.join(dirpath, dirname))
+    for dirpath, dirnames, filenames in os.walk(dir_name, topdown=False):
+        for filename in filenames:
+            os.remove(os.path.join(dirpath, filename))
+        for dirname in dirnames:
+            os.rmdir(os.path.join(dirpath, dirname))
+
 
 def ordered_json_object(obj):
-  if isinstance(obj, dict):
-    return sorted((k, ordered_json_object(v)) for k, v in list(obj.items()))
-  if isinstance(obj, list):
-    return sorted(ordered_json_object(x) for x in obj)
-  else:
-    return obj
+    if isinstance(obj, dict):
+        return sorted((k, ordered_json_object(v)) for k, v in list(obj.items()))
+    if isinstance(obj, list):
+        return sorted(ordered_json_object(x) for x in obj)
+    else:
+        return obj
+
 
 def url_retrieve(download_url, target):
-  if ('ProxyUrl' in proxy_config):
-    proxy_url = proxy_config['ProxyUrl']
-    proxy_handler = urllib.request.ProxyHandler({'https': proxy_url})
-    opener = urllib.request.build_opener(proxy_handler)
-    urllib.request.install_opener(opener)
-  urllib.request.urlretrieve(download_url, target)
+    if "ProxyUrl" in proxy_config:
+        proxy_url = proxy_config["ProxyUrl"]
+        proxy_handler = urllib.request.ProxyHandler({"https": proxy_url})
+        opener = urllib.request.build_opener(proxy_handler)
+        urllib.request.install_opener(opener)
+    urllib.request.urlretrieve(download_url, target)

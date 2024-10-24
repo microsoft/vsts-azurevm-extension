@@ -1,6 +1,6 @@
 # Wrapper module for waagent
 #
-# waagent is not written as a module. This wrapper module is created 
+# waagent is not written as a module. This wrapper module is created
 # to use the waagent code as a module.
 #
 # Copyright 2014 Microsoft Corporation
@@ -40,14 +40,17 @@ def load_source(module_name, module_path):
     """
     if sys.version_info[0] == 3 and sys.version_info[1] >= 12:
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(module_name, module_path)
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
         spec.loader.exec_module(module)
     else:
         import imp
+
         module = imp.load_source(module_name, module_path)
     return module
+
 
 #
 # The following code will search and load waagent code and expose
@@ -55,38 +58,40 @@ def load_source(module_name, module_path):
 #
 def searchWAAgent():
     agentPath = os.path.join(os.getcwd(), "./WaagentLib.py")
-    if(os.path.isfile(agentPath)):
+    if os.path.isfile(agentPath):
         return agentPath
-    user_paths = os.environ['PYTHONPATH'].split(os.pathsep)
+    user_paths = os.environ["PYTHONPATH"].split(os.pathsep)
     for user_path in user_paths:
-        agentPath = os.path.join(user_path, 'waagent')
-        if(os.path.isfile(agentPath)):
+        agentPath = os.path.join(user_path, "waagent")
+        if os.path.isfile(agentPath):
             return agentPath
     return None
+
 
 def searchWAAgentOld():
-    agentPath = '/usr/sbin/waagent'
-    if(os.path.isfile(agentPath)):
+    agentPath = "/usr/sbin/waagent"
+    if os.path.isfile(agentPath):
         return agentPath
-    user_paths = os.environ['PYTHONPATH'].split(os.pathsep)
+    user_paths = os.environ["PYTHONPATH"].split(os.pathsep)
     for user_path in user_paths:
-        agentPath = os.path.join(user_path, 'waagent')
-        if(os.path.isfile(agentPath)):
+        agentPath = os.path.join(user_path, "waagent")
+        if os.path.isfile(agentPath):
             return agentPath
     return None
 
-pathUsed = 1 
+
+pathUsed = 1
 try:
     agentPath = searchWAAgent()
-    if(agentPath):
-        waagent = load_source('waagent', agentPath)
+    if agentPath:
+        waagent = load_source("waagent", agentPath)
     else:
         raise Exception("Can't load new waagent.")
 except Exception as e:
-    pathUsed = 0 
+    pathUsed = 0
     agentPath = searchWAAgentOld()
-    if(agentPath):
-        waagent = load_source('waagent', agentPath)
+    if agentPath:
+        waagent = load_source("waagent", agentPath)
     else:
         raise Exception("Can't load old waagent.")
 
@@ -94,11 +99,14 @@ if not hasattr(waagent, "AddExtensionEvent"):
     """
     If AddExtensionEvent is not defined, provide a dummy impl.
     """
+
     def _AddExtensionEvent(*args, **kwargs):
         pass
+
     waagent.AddExtensionEvent = _AddExtensionEvent
 
 if not hasattr(waagent, "WALAEventOperation"):
+
     class _WALAEventOperation:
         HeartBeat = "HeartBeat"
         Provision = "Provision"
@@ -108,23 +116,21 @@ if not hasattr(waagent, "WALAEventOperation"):
         Enable = "Enable"
         Download = "Download"
         Upgrade = "Upgrade"
-        Update = "Update"           
+        Update = "Update"
+
     waagent.WALAEventOperation = _WALAEventOperation
 
 __ExtensionName__ = None
+
+
 def InitExtensionEventLog(name):
     __ExtensionName__ = name
 
-def AddExtensionEvent(name=__ExtensionName__,
-                      op=waagent.WALAEventOperation.Enable, 
-                      isSuccess=False, 
-                      message=None):
+
+def AddExtensionEvent(name=__ExtensionName__, op=waagent.WALAEventOperation.Enable, isSuccess=False, message=None):
     if name is not None:
-        waagent.AddExtensionEvent(name=name,
-                                  op=op,
-                                  isSuccess=isSuccess,
-                                  message=message)
+        waagent.AddExtensionEvent(name=name, op=op, isSuccess=isSuccess, message=message)
+
 
 def GetPathUsed():
     return pathUsed
-

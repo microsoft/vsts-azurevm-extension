@@ -241,7 +241,7 @@ $global:RM_Extension_Status = @{
     MissingDependency = 52
     # InputConfigurationError: The extension failed due to missing or wrong configuration parameters
     InputConfigurationError = 53
-    # Net6UnSupportedOS: The current OS version is not supported by the .NET 6 based v3 agent
+    # Net6UnSupportedOS: The current OS version is not supported by the .NET 6 based v3 agent  -- removed, keeping the value for compatability
     Net6UnSupportedOS = 54
     # ServicePrinicpalAuthFailed: Failed to generate Bearer Token using Service Prinicipal
     ServicePrinicpalAuthFailed = 55

@@ -2,9 +2,20 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-# For now run a dummy pipeline
-- script: sudo apt-get install black pylint
-  displayName: "Install python dependencies"
+- script: |
+    sudo apt-get update
+    sudo apt-get install -y black pylint python3-pytest
+  displayName: "Install Python tools and dependencies"
 
 - script: black --line-length 160 --check ExtensionHandler/Linux/src/
   displayName: "Check code formatting"
+
+- script:  cd ExtensionHandler/Linux/src/; python3 -m pytest tests --junitxml=test-unit.xml
+  displayName: "Run unit tests"
+
+- task: PublishTestResults@2
+  displayName: "Publish JUnit Test Results"
+  inputs:
+    testResultsFiles: '**/test-unit.xml'
+    testResultsFormat: 'JUnit'
+    failTaskOnFailedTests: true

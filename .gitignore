@@ -22,3 +22,4 @@ e2eTests/TestEnvironment.json
 .vscode/launch.json
 .venv
 __pycache__/
+**/test-unit.xml

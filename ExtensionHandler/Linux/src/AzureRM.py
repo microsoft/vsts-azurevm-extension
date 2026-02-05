@@ -786,7 +786,9 @@ def enable_pipelines_agent(config):
     enable_pipeline_success_substatus.sub_status_message = output.decode("ascii")
     handler_utility.add_handler_sub_status(enable_pipeline_success_substatus)
     if fallbackUsed:
-        handler_utility.set_handler_status(Util.HandlerStatus("Enabled", "success", "EnableAgent fallback script used"))
+        status = Util.HandlerStatus("Enabled", "success")
+        status.status_message = "EnableAgent fallback script used"
+        handler_utility.set_handler_status(status)
     else:
         handler_utility.set_handler_status(Util.HandlerStatus("Enabled", "success"))
     handler_utility.log("Pipelines Agent is enabled.")

@@ -87,6 +87,7 @@ function EnablePipelinesAgent
         Add-HandlerSubStatus $RM_Extension_Status.DownloadPipelinesScript.Code $RM_Extension_Status.DownloadPipelinesScript.Message -operationName $config.EnableScriptDownloadUrl
         $fileName = [System.IO.Path]::GetFileName($config.EnableScriptDownloadUrl)
         $enableFileName = Join-Path -Path $config.AgentFolder -ChildPath $fileName
+        $fallbackUsed = $false
         For ($attempt=1; $attempt -lt $MAX_RETRIES+1; $attempt++){
             try{
                 Download-File -downloadUrl $config.EnableScriptDownloadUrl -target $enableFileName
@@ -98,7 +99,16 @@ function EnablePipelinesAgent
                 Write-Log $exception
                 if ($attempt -eq $MAX_RETRIES){
                     Write-Log "Max retries attempt reached"
-                    Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.DownloadPipelinesAgentError.operationName
+                    # Check if bundled enableagent script exists
+                    $bundledScript = Join-Path -Path $PSScriptRoot -ChildPath "enableagent.ps1"
+                    if (Test-Path -Path $bundledScript) {
+                        Write-Log "Storage download failed, using bundled enableagent fallback script"
+                        $enableFileName = $bundledScript
+                        $env:VSTS_AGENT_FALLBACK_USED = "true"
+                        $fallbackUsed = $true
+                    } else {
+                        Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.DownloadPipelinesAgentError.operationName
+                    }
                 }
             }
         }
@@ -164,7 +174,11 @@ function EnablePipelinesAgent
         }
 
         Add-HandlerSubStatus $RM_Extension_Status.EnablePipelinesAgentSuccess.Code $log -operationName $RM_Extension_Status.EnablePipelinesAgentSuccess.operationName
-        Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
+        if ($fallbackUsed) {
+            Set-HandlerStatus $RM_Extension_Status.Enabled.Code "EnableAgent fallback script used" -Status success
+        } else {
+            Set-HandlerStatus $RM_Extension_Status.Enabled.Code $RM_Extension_Status.Enabled.Message -Status success
+        }
         Set-LastSequenceNumber
         Exit-WithCode 0
     }

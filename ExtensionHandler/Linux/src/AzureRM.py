@@ -725,6 +725,7 @@ def enable_pipelines_agent(config):
         handler_utility.log(downloadUrl)
         filename = os.path.basename(downloadUrl)
         enableFile = os.path.join(agentFolder, filename)
+        fallbackUsed = False
         for attempt in range(1, MAX_RETRIES + 1):
             # retry up to 3 times
             try:
@@ -735,7 +736,16 @@ def enable_pipelines_agent(config):
                 handler_utility.log(str(e))
                 if attempt == MAX_RETRIES:
                     handler_utility.log("Max retries attempt reached")
-                    set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status["DownloadPipelinesAgentError"]["operationName"], str(e))
+                    # Check if bundled enableagent script exists
+                    script_dir = os.path.dirname(os.path.abspath(__file__))
+                    bundled_script = os.path.join(script_dir, "enableagent.sh")
+                    if os.path.isfile(bundled_script):
+                        handler_utility.log("Storage download failed, using bundled enableagent fallback script")
+                        enableFile = bundled_script
+                        os.environ["VSTS_AGENT_FALLBACK_USED"] = "true"
+                        fallbackUsed = True
+                    else:
+                        set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status["DownloadPipelinesAgentError"]["operationName"], str(e))
 
     except Exception as e:
         handler_utility.log(str(e))
@@ -775,7 +785,10 @@ def enable_pipelines_agent(config):
     enable_pipeline_success_substatus = Util.HandlerSubStatus("EnablePipelinesAgentSuccess")
     enable_pipeline_success_substatus.sub_status_message = output.decode("ascii")
     handler_utility.add_handler_sub_status(enable_pipeline_success_substatus)
-    handler_utility.set_handler_status(Util.HandlerStatus("Enabled", "success"))
+    if fallbackUsed:
+        handler_utility.set_handler_status(Util.HandlerStatus("Enabled", "success", "EnableAgent fallback script used"))
+    else:
+        handler_utility.set_handler_status(Util.HandlerStatus("Enabled", "success"))
     handler_utility.log("Pipelines Agent is enabled.")
 
 

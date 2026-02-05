@@ -104,7 +104,7 @@ function EnablePipelinesAgent
                     if (Test-Path -Path $bundledScript) {
                         Write-Log "Storage download failed, using bundled enableagent fallback script"
                         $enableFileName = $bundledScript
-                        $env:VSTS_AGENT_FALLBACK_USED = "true"
+                        $env:VSTS_AGENT_VMEXT_FALLBACK_USED = "true"
                         $fallbackUsed = $true
                     } else {
                         Set-ErrorStatusAndErrorExit $_ $RM_Extension_Status.DownloadPipelinesAgentError.operationName

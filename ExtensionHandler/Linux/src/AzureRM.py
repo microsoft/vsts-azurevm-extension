@@ -742,7 +742,7 @@ def enable_pipelines_agent(config):
                     if os.path.isfile(bundled_script):
                         handler_utility.log("Storage download failed, using bundled enableagent fallback script")
                         enableFile = bundled_script
-                        os.environ["VSTS_AGENT_FALLBACK_USED"] = "true"
+                        os.environ["VSTS_AGENT_VMEXT_FALLBACK_USED"] = "true"
                         fallbackUsed = True
                     else:
                         set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status["DownloadPipelinesAgentError"]["operationName"], str(e))

@@ -718,7 +718,9 @@ def enable_pipelines_agent(config):
                     handler_utility.log("Max retries attempt reached")
                     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status["DownloadPipelinesAgentError"]["operationName"], str(e))
 
-        # download the enable script
+        # download the enable script from vstsagenttools storage account
+        # Note: Agent binary is on CDN (typically reliable), but enable script is on storage account (can fail during outages)
+        # This is why we need fallback logic - storage outages may occur while CDN remains healthy
         handler_utility.add_handler_sub_status(Util.HandlerSubStatus("DownloadPipelinesScript"))
         handler_utility.log("Download Pipelines Script")
         downloadUrl = config["EnableScriptDownloadUrl"]

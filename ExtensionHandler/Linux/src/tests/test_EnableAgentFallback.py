@@ -5,6 +5,14 @@ import sys
 
 
 class TestEnableAgentFallback(unittest.TestCase):
+    """
+    Tests for enableagent script fallback mechanism in Linux handler.
+    
+    Fallback handles scenarios where vstsagenttools storage account is inaccessible:
+    - Agent binary is on CDN (vstsagenttools CDN) - typically reliable
+    - Enable script is on vstsagenttools storage account - can fail during outages
+    - Fallback uses bundled copy of enableagent.sh when storage is unreachable
+    """
     
     @classmethod
     def setUpClass(cls):
@@ -49,20 +57,20 @@ class TestEnableAgentFallback(unittest.TestCase):
         config = {
             "EnableScriptParameters": "params",
             "AgentFolder": "/test/agent",
-            "AgentDownloadUrl": "http://test.com/agent.tar.gz",
-            "EnableScriptDownloadUrl": "http://test.com/enableagent.sh"
+            "AgentDownloadUrl": "https://agentcdn.invalid/agent.tar.gz",
+            "EnableScriptDownloadUrl": "https://scriptstore.invalid/enableagent.sh"
         }
         
         # Agent folder exists and .agent file doesn't exist
         mock_isdir.return_value = True
         mock_exists.return_value = False
         
-        # First url_retrieve succeeds (agent download), second fails 3 times (script download)
+        # Agent download from CDN succeeds; script download from storage fails 3 times
         mock_url_retrieve.side_effect = [
-            None,  # Agent download succeeds
-            Exception("Download failed 1"),
-            Exception("Download failed 2"),
-            Exception("Download failed 3")
+            None,  # Agent from CDN succeeds
+            Exception("Script download failed 1"),
+            Exception("Script download failed 2"),
+            Exception("Script download failed 3")
         ]
         
         # Bundled script exists
@@ -107,17 +115,18 @@ class TestEnableAgentFallback(unittest.TestCase):
         config = {
             "EnableScriptParameters": "params",
             "AgentFolder": "/test/agent",
-            "AgentDownloadUrl": "http://test.com/agent.tar.gz",
-            "EnableScriptDownloadUrl": "http://test.com/enableagent.sh"
+            "AgentDownloadUrl": "https://agentcdn.invalid/agent.tar.gz",
+            "EnableScriptDownloadUrl": "https://scriptstore.invalid/enableagent.sh"
         }
         
         mock_isdir.return_value = True
         mock_exists.return_value = False
+        # Agent from CDN succeeds; script from storage fails 3 times
         mock_url_retrieve.side_effect = [
-            None,  # Agent download succeeds
-            Exception("Fail 1"),
-            Exception("Fail 2"),
-            Exception("Fail 3")
+            None,  # Agent from CDN succeeds
+            Exception("Script download failed 1"),
+            Exception("Script download failed 2"),
+            Exception("Script download failed 3")
         ]
         
         script_dir = os.path.dirname(os.path.abspath(AzureRM.__file__))
@@ -145,22 +154,29 @@ class TestEnableAgentFallback(unittest.TestCase):
     def test_bundled_script_path_used(self, mock_url_retrieve, mock_isdir, 
                                        mock_exists, mock_isfile, mock_chmod, 
                                        mock_popen, mock_handler_utility):
-        """Verify bundled script path (enableagent.sh in same directory) is used"""
+        """Verify bundled script path (enableagent.sh in same directory) is used when fallback triggers"""
         # Setup
         config = {
             "EnableScriptParameters": "params",
             "AgentFolder": "/test/agent",
-            "AgentDownloadUrl": "http://test.com/agent.tar.gz",
-            "EnableScriptDownloadUrl": "http://test.com/enableagent.sh"
+            "AgentDownloadUrl": "https://agentcdn.invalid/agent.tar.gz",
+            "EnableScriptDownloadUrl": "https://scriptstore.invalid/enableagent.sh"
         }
-        
+
         mock_isdir.return_value = True
         mock_exists.return_value = False
-        mock_url_retrieve.side_effect = [None, Exception("F1"), Exception("F2"), Exception("F3")]
         
         script_dir = os.path.dirname(os.path.abspath(AzureRM.__file__))
         bundled_script_path = os.path.join(script_dir, "enableagent.sh")
         mock_isfile.side_effect = lambda path: path == bundled_script_path
+        
+        # Agent from CDN succeeds; script from storage fails 3 times
+        mock_url_retrieve.side_effect = [
+            None,  # Agent download succeeds
+            Exception("Fail 1"),
+            Exception("Fail 2"),
+            Exception("Fail 3")
+        ]
         
         mock_process = MagicMock()
         mock_process.communicate.return_value = (b"success", b"")
@@ -191,12 +207,13 @@ class TestEnableAgentFallback(unittest.TestCase):
         config = {
             "EnableScriptParameters": "params",
             "AgentFolder": "/test/agent",
-            "AgentDownloadUrl": "http://test.com/agent.tar.gz",
-            "EnableScriptDownloadUrl": "http://test.com/enableagent.sh"
+            "AgentDownloadUrl": "https://agentcdn.invalid/agent.tar.gz",
+            "EnableScriptDownloadUrl": "https://scriptstore.invalid/enableagent.sh"
         }
         
         mock_isdir.return_value = True
         mock_exists.return_value = False
+        # Agent from CDN succeeds; script from storage fails 3 times
         mock_url_retrieve.side_effect = [
             None,  # Agent download succeeds
             Exception("Fail 1"),
@@ -226,18 +243,17 @@ class TestEnableAgentFallback(unittest.TestCase):
     def test_no_fallback_when_download_succeeds(self, mock_url_retrieve, mock_isdir, 
                                                   mock_exists, mock_isfile, mock_chmod, 
                                                   mock_popen, mock_handler_utility):
-        """Verify fallback is not used when download succeeds"""
+        """
+        Verify fallback is not used when vstsagenttools storage account is accessible.
+        Both agent (CDN) and enable script (storage) downloads succeed.
+        """
         # Setup
         config = {
             "EnableScriptParameters": "params",
             "AgentFolder": "/test/agent",
-            "AgentDownloadUrl": "http://test.com/agent.tar.gz",
-            "EnableScriptDownloadUrl": "http://test.com/enableagent.sh"
+            "AgentDownloadUrl": "https://agentcdn.invalid/agent.tar.gz",
+            "EnableScriptDownloadUrl": "https://scriptstore.invalid/enableagent.sh"
         }
-        
-        mock_isdir.return_value = True
-        mock_exists.return_value = False
-        mock_url_retrieve.return_value = None  # Both downloads succeed
         
         mock_process = MagicMock()
         mock_process.communicate.return_value = (b"success", b"")
@@ -265,8 +281,8 @@ class TestEnableAgentFallback(unittest.TestCase):
         config = {
             "EnableScriptParameters": "params",
             "AgentFolder": "/test/agent",
-            "AgentDownloadUrl": "http://test.com/agent.tar.gz",
-            "EnableScriptDownloadUrl": "http://test.com/enableagent.sh"
+            "AgentDownloadUrl": "https://agentcdn.invalid/agent.tar.gz",
+            "EnableScriptDownloadUrl": "https://scriptstore.invalid/enableagent.sh"
         }
         
         mock_isdir.return_value = True
@@ -298,8 +314,8 @@ class TestEnableAgentFallback(unittest.TestCase):
         config = {
             "EnableScriptParameters": "params",
             "AgentFolder": "/test/agent",
-            "AgentDownloadUrl": "http://test.com/agent.tar.gz",
-            "EnableScriptDownloadUrl": "http://test.com/enableagent.sh"
+            "AgentDownloadUrl": "https://agentcdn.invalid/agent.tar.gz",
+            "EnableScriptDownloadUrl": "https://scriptstore.invalid/enableagent.sh"
         }
         
         mock_isdir.return_value = True

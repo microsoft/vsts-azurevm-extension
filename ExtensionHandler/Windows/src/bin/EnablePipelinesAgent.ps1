@@ -82,7 +82,9 @@ function EnablePipelinesAgent
             }
         }
 
-        # Download the enable script
+        # Download the enable script from vstsagenttools storage account
+        # Note: Agent binary is on CDN (typically reliable), but enable script is on storage account (can fail during outages)
+        # This is why we need fallback logic - storage outages may occur while CDN remains healthy
         Write-Log ("Downloading enable script from " + $config.EnableScriptDownloadUrl)
         Add-HandlerSubStatus $RM_Extension_Status.DownloadPipelinesScript.Code $RM_Extension_Status.DownloadPipelinesScript.Message -operationName $config.EnableScriptDownloadUrl
         $fileName = [System.IO.Path]::GetFileName($config.EnableScriptDownloadUrl)

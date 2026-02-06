@@ -18,6 +18,11 @@ AfterAll {
 Describe "EnablePipelinesAgent fallback script tests" {
     Context "Should use bundled fallback script when storage download fails" {
         BeforeAll {
+            # Fallback mechanism for enableagent script retrieval:
+            # - Agent is on a CDN (vstsagenttools CDN) - typically reliable
+            # - Enable script is on vstsagenttools storage account - can be inaccessible during outages
+            # Fallback uses bundled copy of enable script when storage account is unreachable
+            
             Mock Write-Log {}
             Mock Add-HandlerSubStatus {}
             Mock Set-ErrorStatusAndErrorExit { throw "Test failed" }
@@ -32,8 +37,10 @@ Describe "EnablePipelinesAgent fallback script tests" {
             
             Mock Download-File { 
                 param($downloadUrl, $target)
+                # Agent download (CDN) succeeds
                 if ($downloadUrl -like "*agent*.zip*") { return }
-                throw "Download failed - storage account inaccessible" 
+                # Enable script download (vstsagenttools storage) fails - simulating outage
+                throw "Download failed - vstsagenttools storage account inaccessible" 
             }
             
             $script:agentFileCheckCount = 0
@@ -87,6 +94,9 @@ Describe "EnablePipelinesAgent fallback script tests" {
 
     Context "Should NOT use fallback when storage download succeeds" {
         BeforeAll {
+            # When vstsagenttools storage account is accessible, use downloaded enable script normally
+            # No fallback needed
+            
             Mock Write-Log {}
             Mock Add-HandlerSubStatus {}
             Mock Set-ErrorStatusAndErrorExit { throw "Test failed" }

@@ -1,4 +1,5 @@
 """Unit tests for enableagent.sh fallback mechanism in Azure VM Extension."""
+
 # pylint: disable=invalid-name,too-many-arguments,unused-argument
 import unittest
 from unittest.mock import patch, MagicMock, Mock

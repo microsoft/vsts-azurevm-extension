@@ -23,3 +23,5 @@ e2eTests/TestEnvironment.json
 .venv
 __pycache__/
 **/test-unit.xml
+ExtensionHandler/Linux/src/enableagent.sh
+ExtensionHandler/Windows/src/bin/enableagent.ps1

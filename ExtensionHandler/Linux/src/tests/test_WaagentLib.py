@@ -182,5 +182,20 @@ class TestCryptModuleOptional(unittest.TestCase):
                 sys.modules.pop("WaagentLib", None)
 
 
+class TestLooseVersion(unittest.TestCase):
+    def test_numeric_component_ordering(self):
+        # Numeric (not lexical) ordering: "1.10" is newer than "1.2".
+        self.assertTrue(WaagentLib.LooseVersion("1.2") < WaagentLib.LooseVersion("1.10"))
+        self.assertTrue(WaagentLib.LooseVersion("2.0") > WaagentLib.LooseVersion("1.9"))
+        self.assertTrue(WaagentLib.LooseVersion("0.0") < WaagentLib.LooseVersion("3.236.0"))
+
+    def test_equality_and_str(self):
+        self.assertEqual(WaagentLib.LooseVersion("1.0"), WaagentLib.LooseVersion("1.0"))
+        self.assertEqual(str(WaagentLib.LooseVersion("3.236.0")), "3.236.0")
+
+    def test_compare_with_plain_string(self):
+        self.assertTrue(WaagentLib.LooseVersion("20.04") > "2.6")
+
+
 if __name__ == "__main__":
     unittest.main()

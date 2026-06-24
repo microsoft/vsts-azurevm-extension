@@ -19,7 +19,6 @@ import logging
 import shutil
 from Utils.WAAgentUtil import waagent
 from Utils.GlobalSettings import proxy_config
-from distutils.version import LooseVersion
 from time import sleep
 from urllib.parse import quote
 import urllib.request, urllib.parse, urllib.error
@@ -124,7 +123,7 @@ def set_error_status_and_error_exit(e, operation_name, code=-1):
 def check_python_version():
     version_info = sys.version_info
     version = "{0}.{1}".format(version_info[0], version_info[1])
-    if LooseVersion(version) < LooseVersion("2.6"):
+    if (version_info[0], version_info[1]) < (2, 6):
         code = RMExtensionStatus.rm_extension_status["MissingDependency"]
         message = "Installed Python version is {0}. Minimum required version is 2.6.".format(version)
         raise RMExtensionStatus.new_handler_terminating_error(code, message)

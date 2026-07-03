@@ -56,7 +56,59 @@ import zipfile
 import json
 import datetime
 import xml.sax.saxutils
-from distutils.version import LooseVersion
+
+
+class LooseVersion(object):
+    """Minimal, dependency-free replacement for distutils.version.LooseVersion.
+
+    distutils was removed from the standard library in Python 3.12 (PEP 632), so
+    importing it only works while setuptools injects a shim, which is not present
+    on minimal images such as Ubuntu 26.04 (Python 3.14). This parses a version
+    string into numeric/alphabetic components and compares them component-wise,
+    which is sufficient for the dotted version strings used here. It stays
+    Python 2/3 compatible because this file is also loaded under Python 2.
+    """
+
+    _component_re = re.compile(r"(\d+|[a-zA-Z]+)")
+
+    def __init__(self, vstring):
+        self.vstring = str(vstring)
+        parsed = []
+        for token in self._component_re.findall(self.vstring):
+            try:
+                parsed.append((0, int(token)))
+            except ValueError:
+                parsed.append((1, token))
+        self.version = parsed
+
+    def __str__(self):
+        return self.vstring
+
+    def __repr__(self):
+        return "LooseVersion('{0}')".format(self.vstring)
+
+    @classmethod
+    def _coerce(cls, other):
+        return other if isinstance(other, LooseVersion) else cls(other)
+
+    def __eq__(self, other):
+        return self.version == self._coerce(other).version
+
+    def __ne__(self, other):
+        return self.version != self._coerce(other).version
+
+    def __lt__(self, other):
+        return self.version < self._coerce(other).version
+
+    def __le__(self, other):
+        return self.version <= self._coerce(other).version
+
+    def __gt__(self, other):
+        return self.version > self._coerce(other).version
+
+    def __ge__(self, other):
+        return self.version >= self._coerce(other).version
+
 
 if not hasattr(subprocess, "check_output"):
 

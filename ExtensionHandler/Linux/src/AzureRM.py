@@ -399,6 +399,9 @@ def get_configuration_from_settings():
             elif "enableScriptParameters" in protected_settings:
                 handler_utility.log("using protected enableScriptParameters")
                 enableScriptParameters = protected_settings["enableScriptParameters"]
+            else:
+                handler_utility.log("enableScriptParameters not found")
+                enableScriptParameters = ""
 
             return {
                 "IsPipelinesAgent": "true",

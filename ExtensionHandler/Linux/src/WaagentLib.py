@@ -23,7 +23,6 @@
 # http://msdn.microsoft.com/en-us/library/cc227259%28PROT.13%29.aspx
 #
 
-import crypt
 import random
 import base64
 
@@ -371,6 +370,13 @@ class AbstractDistro(object):
             return "Failed to set password for {0}: {1}".format(username, output)
 
     def gen_password_hash(self, password, crypt_id, salt_len):
+        # The stdlib 'crypt' module was removed in Python 3.13 (PEP 594), and
+        # Ubuntu 26.04 ships Python 3.14. It is imported lazily here rather than
+        # at module scope so loading WaagentLib stays safe on those interpreters;
+        # this password path is not exercised by the extension, so the import
+        # only runs if waagent provisioning ever invokes it.
+        import crypt
+
         collection = string.ascii_letters + string.digits
         salt = "".join(random.choice(collection) for _ in range(salt_len))
         salt = "${0}${1}".format(crypt_id, salt)

@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
+import importlib
 import sys
 
 import WaagentLib
@@ -151,6 +152,34 @@ class TestMainMethod(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 WaagentLib.main()
             mock_deprovision.assert_called_with(True, True)
+
+
+class TestCryptModuleOptional(unittest.TestCase):
+    def test_imports_without_crypt_module(self):
+        """WaagentLib must import even when the stdlib 'crypt' module is gone.
+
+        'crypt' was removed in Python 3.13 (PEP 594) and Ubuntu 26.04 ships
+        Python 3.14. Setting sys.modules['crypt'] = None makes 'import crypt'
+        raise ModuleNotFoundError, exactly as on those interpreters. This test
+        fails if WaagentLib imports 'crypt' at module scope instead of lazily.
+        """
+        original_waagentlib = sys.modules.get("WaagentLib")
+        original_crypt = sys.modules.get("crypt")
+        sys.modules["crypt"] = None  # simulate PEP 594 removal
+        sys.modules.pop("WaagentLib", None)
+        try:
+            reloaded = importlib.import_module("WaagentLib")
+            self.assertTrue(hasattr(reloaded, "GetMyDistro"))
+            self.assertTrue(hasattr(reloaded, "LooseVersion"))
+        finally:
+            if original_crypt is not None:
+                sys.modules["crypt"] = original_crypt
+            else:
+                sys.modules.pop("crypt", None)
+            if original_waagentlib is not None:
+                sys.modules["WaagentLib"] = original_waagentlib
+            else:
+                sys.modules.pop("WaagentLib", None)
 
 
 if __name__ == "__main__":

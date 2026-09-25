@@ -13,6 +13,7 @@ import subprocess
 import Utils.Constants as Constants
 import DownloadDeploymentAgent
 import ConfigureDeploymentAgent
+import hashlib
 import json
 import time
 import logging
@@ -26,11 +27,38 @@ import shlex
 
 
 MAX_RETRIES = 3
+INTEGRITY_MODE_LEGACY = "legacy"
+INTEGRITY_MODE_AGENT_ENFORCE = "agentenforce"
+INTEGRITY_MODE_ENFORCE = "enforce"
 
 configured_agent_exists = False
 agent_configuration_required = True
 root_dir = ""
 handler_utility = None
+
+
+def get_integrity_mode(settings, key):
+    if key not in settings:
+        return INTEGRITY_MODE_LEGACY
+
+    mode = settings[key]
+    if not isinstance(mode, str):
+        raise ValueError("{0} must be 'legacy', 'agentEnforce' or 'enforce'.".format(key))
+
+    normalized_mode = mode.strip().lower()
+    if normalized_mode not in (INTEGRITY_MODE_LEGACY, INTEGRITY_MODE_AGENT_ENFORCE, INTEGRITY_MODE_ENFORCE):
+        raise ValueError("{0} must be 'legacy', 'agentEnforce' or 'enforce'.".format(key))
+    return normalized_mode
+
+
+def verify_file_sha256(path, expected_sha256):
+    digest = hashlib.sha256()
+    with open(path, "rb") as downloaded_file:
+        for chunk in iter(lambda: downloaded_file.read(1024 * 1024), b""):
+            digest.update(chunk)
+
+    if not isinstance(expected_sha256, str) or digest.hexdigest() != expected_sha256.lower():
+        raise ValueError("Hash verification failed for '{0}'.".format(path))
 
 
 def get_last_sequence_number_file_path():
@@ -391,6 +419,10 @@ def get_configuration_from_settings():
             enableScriptDownloadUrl = public_settings["enableScriptDownloadUrl"]
             handler_utility.verify_input_not_null("enableScriptDownloadUrl", enableScriptDownloadUrl)
 
+            integrityMode = get_integrity_mode(public_settings, "integrityMode")
+            agentDownloadSha256 = public_settings.get("agentDownloadSha256")
+            enableScriptSha256 = public_settings.get("enableScriptSha256")
+
             # for testing, first try to get the script parameters from the public settings
             # in production they will be in the protected settings
             if "enableScriptParameters" in public_settings:
@@ -403,9 +435,12 @@ def get_configuration_from_settings():
             return {
                 "IsPipelinesAgent": "true",
                 "AgentDownloadUrl": agentDownloadUrl,
+                "AgentDownloadSha256": agentDownloadSha256,
                 "AgentFolder": agentFolder,
                 "EnableScriptDownloadUrl": enableScriptDownloadUrl,
+                "EnableScriptSha256": enableScriptSha256,
                 "EnableScriptParameters": enableScriptParameters,
+                "IntegrityMode": integrityMode,
             }
 
         # continue with deployment agent settings
@@ -679,6 +714,8 @@ def enable_pipelines_agent(config):
     try:
         handler_utility.log("Enable Pipelines Agent")
 
+        integrityMode = config.get("IntegrityMode")
+
         # verify we have the enable script parameters here.
         handler_utility.verify_input_not_null("enableScriptParameters", config["EnableScriptParameters"])
 
@@ -709,6 +746,8 @@ def enable_pipelines_agent(config):
             # retry up to 3 times
             try:
                 Util.url_retrieve(downloadUrl, agentFile)
+                if integrityMode in (INTEGRITY_MODE_AGENT_ENFORCE, INTEGRITY_MODE_ENFORCE):
+                    verify_file_sha256(agentFile, config.get("AgentDownloadSha256"))
                 break
             except Exception as e:
                 handler_utility.log("Attempt {0} to download the agent failed".format(attempt))
@@ -731,6 +770,8 @@ def enable_pipelines_agent(config):
             # retry up to 3 times
             try:
                 Util.url_retrieve(downloadUrl, enableFile)
+                if integrityMode == INTEGRITY_MODE_ENFORCE:
+                    verify_file_sha256(enableFile, config.get("EnableScriptSha256"))
                 break
             except Exception as e:
                 handler_utility.log("Attempt {0} to download the pipeline script failed".format(attempt))
@@ -741,6 +782,8 @@ def enable_pipelines_agent(config):
                     script_dir = os.path.dirname(os.path.abspath(__file__))
                     bundled_script = os.path.join(script_dir, "enableagent.sh")
                     if os.path.isfile(bundled_script):
+                        if integrityMode == INTEGRITY_MODE_ENFORCE:
+                            verify_file_sha256(bundled_script, config.get("EnableScriptSha256"))
                         handler_utility.log("Storage download failed, using bundled enableagent fallback script")
                         enableFile = bundled_script
                         os.environ["VSTS_AGENT_VMEXT_FALLBACK_USED"] = "true"

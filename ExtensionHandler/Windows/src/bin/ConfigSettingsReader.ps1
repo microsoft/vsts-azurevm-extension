@@ -5,6 +5,35 @@ Import-Module $PSScriptRoot\Log.psm1
 . "$PSScriptRoot\RMExtensionUtilities.ps1"
 . "$PSScriptRoot\Constants.ps1"
 
+function Get-PipelinesIntegrityModeFromSettings {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [hashtable] $publicSettings
+    )
+
+    if (-not $publicSettings.Contains('integrityMode'))
+    {
+        return "legacy"
+    }
+
+    $integrityMode = $publicSettings['integrityMode']
+    if (-not ($integrityMode -is [string]))
+    {
+        $message = "integrityMode must be 'legacy', 'agentEnforce' or 'enforce'"
+        throw New-HandlerTerminatingError $RM_Extension_Status.InputConfigurationError -Message $message
+    }
+
+    $normalizedIntegrityMode = $integrityMode.ToLowerInvariant()
+    if (($normalizedIntegrityMode -ne "legacy") -and ($normalizedIntegrityMode -ne "agentenforce") -and ($normalizedIntegrityMode -ne "enforce"))
+    {
+        $message = "integrityMode must be 'legacy', 'agentEnforce' or 'enforce'"
+        throw New-HandlerTerminatingError $RM_Extension_Status.InputConfigurationError -Message $message
+    }
+
+    return $normalizedIntegrityMode
+}
+
 <#
 .Synopsis
    Reads .settings file
@@ -65,6 +94,10 @@ function Get-ConfigurationFromSettings {
             $enableScriptDownloadUrl = $publicSettings['enableScriptDownloadUrl']
             Verify-InputNotNull "enableScriptDownloadUrl" $enableScriptDownloadUrl
 
+            $integrityMode = Get-PipelinesIntegrityModeFromSettings -publicSettings $publicSettings
+            $agentDownloadSha256 = $publicSettings['agentDownloadSha256']
+            $enableScriptSha256 = $publicSettings['enableScriptSha256']
+
             # For testing look for the script parameters in the public settings first
             # In production it will be in the protected settings
             $enableScriptParameters = ""
@@ -85,9 +118,12 @@ function Get-ConfigurationFromSettings {
             return @{
                 IsPipelinesAgent = $true
                 AgentDownloadUrl = $agentDownloadUrl
+                AgentDownloadSha256 = $agentDownloadSha256
                 AgentFolder = $agentFolder
                 EnableScriptDownloadUrl = $enableScriptDownloadUrl
+                EnableScriptSha256 = $enableScriptSha256
                 EnableScriptParameters = $enableScriptParameters
+                IntegrityMode = $integrityMode
             }
         }
 

@@ -10,6 +10,35 @@ Set-StrictMode -Version latest
 
 Import-Module $PSScriptRoot\Log.psm1
 
+function Assert-PipelinesFileHash
+{
+    param([string] $Path, $ExpectedSha256)
+
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try
+    {
+        $stream = [IO.File]::OpenRead($Path)
+        try
+        {
+            $hash = [BitConverter]::ToString($sha256.ComputeHash($stream)).Replace("-", "")
+        }
+        finally
+        {
+            $stream.Dispose()
+        }
+    }
+    finally
+    {
+        $sha256.Dispose()
+    }
+
+    if ($ExpectedSha256 -isnot [string] -or
+        -not [string]::Equals($hash, $ExpectedSha256, [StringComparison]::OrdinalIgnoreCase))
+    {
+        throw "Hash verification failed for '$Path'."
+    }
+}
+
 function EnablePipelinesAgent
 {
     param
@@ -20,6 +49,8 @@ function EnablePipelinesAgent
 
     try 
     {
+        $enforceIntegrity = $config["IntegrityMode"] -eq "enforce"
+
         # create the log file if it does not exist
         $logFileName = "script.log"
         if(!(Test-Path -Path $logFileName))
@@ -69,6 +100,10 @@ function EnablePipelinesAgent
         For ($attempt=1; $attempt -lt $MAX_RETRIES+1; $attempt++){
             try{
                 Download-File -downloadUrl $config.AgentDownloadUrl -target $agentZipFile
+                if ($enforceIntegrity -or $config["IntegrityMode"] -eq "agentenforce")
+                {
+                    Assert-PipelinesFileHash $agentZipFile $config["AgentDownloadSha256"]
+                }
                 $attempt = $MAX_RETRIES
             }
             catch{
@@ -93,6 +128,10 @@ function EnablePipelinesAgent
         For ($attempt=1; $attempt -lt $MAX_RETRIES+1; $attempt++){
             try{
                 Download-File -downloadUrl $config.EnableScriptDownloadUrl -target $enableFileName
+                if ($enforceIntegrity)
+                {
+                    Assert-PipelinesFileHash $enableFileName $config["EnableScriptSha256"]
+                }
                 $attempt = $MAX_RETRIES
             }
             catch{
@@ -104,6 +143,10 @@ function EnablePipelinesAgent
                     # Check if bundled enableagent script exists
                     $bundledScript = Join-Path -Path $PSScriptRoot -ChildPath "enableagent.ps1"
                     if (Test-Path -Path $bundledScript) {
+                        if ($enforceIntegrity)
+                        {
+                            Assert-PipelinesFileHash $bundledScript $config["EnableScriptSha256"]
+                        }
                         Write-Log "Storage download failed, using bundled enableagent fallback script"
                         $enableFileName = $bundledScript
                         $env:VSTS_AGENT_VMEXT_FALLBACK_USED = "true"

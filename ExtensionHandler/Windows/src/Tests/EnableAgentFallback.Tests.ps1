@@ -252,7 +252,7 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         @{ Key = "AgentDownloadSha256"; Value = ("a" * 63); Downloads = 3 }
         @{ Key = "AgentDownloadSha256"; Value = ("g" * 64); Downloads = 3 }
         @{ Key = "AgentDownloadSha256"; Value = ("a" * 64) + "`n"; Downloads = 3 }
-        @{ Key = "AgentDownloadSha256"; Value = ("a" * 64) + [char]0; Downloads = 3 }
+        @{ Key = "AgentDownloadSha256"; Value = { ("a" * 64) + [char]0 }; Downloads = 3 }
         @{ Key = "AgentDownloadSha256"; Value = 123; Downloads = 3 }
         @{ Key = "AgentDownloadSha256"; Value = @("a" * 64); Downloads = 3 }
         @{ Key = "EnableScriptSha256"; Value = $null; Downloads = 4 }
@@ -262,6 +262,7 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         @{ Key = "EnableScriptSha256"; Value = ("b" * 64) + "`n"; Downloads = 4 }
         @{ Key = "EnableScriptSha256"; Value = @("b" * 64); Downloads = 4 }
     ) {
+        if ($Value -is [scriptblock]) { $Value = & $Value }
         $script:config[$Key] = $Value
         { EnablePipelinesAgent $script:config } | Should -Throw "*Hash verification failed*"
         Should -Invoke Download-File -Times $Downloads -Exactly
@@ -454,10 +455,12 @@ Describe "Pipelines file hash verification" {
         @{ Hash = ("a" * 65) }
         @{ Hash = ("g" * 64) }
         @{ Hash = ("a" * 64) + "`n" }
-        @{ Hash = ("a" * 64) + [char]0 }
+        # Construct the NUL during execution to keep NUnit metadata XML-safe.
+        @{ Hash = { ("a" * 64) + [char]0 } }
         @{ Hash = 123 }
         @{ Hash = @("a" * 64) }
     ) {
+        if ($Hash -is [scriptblock]) { $Hash = & $Hash }
         $path = Join-Path $PSScriptRoot "..\bin\EnablePipelinesAgent.ps1"
         { Assert-PipelinesFileHash $path $Hash } | Should -Throw "*Hash verification failed*"
         Should -Invoke Get-FileHash -Times 0

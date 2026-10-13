@@ -34,7 +34,7 @@ Describe "parse pipelines integrity settings tests" {
 
         $settings.IntegrityMode | Should -Be "legacy"
         $settings.AgentDownloadSha256 | Should -BeNullOrEmpty
-        $settings.EnableScriptSha256 | Should -BeNullOrEmpty
+        $settings.ScriptDownloadSha256 | Should -BeNullOrEmpty
         Assert-MockCalled Invoke-WebRequest -Times 0
         Assert-MockCalled Invoke-RestMethod -Times 0
     }
@@ -50,13 +50,13 @@ Describe "parse pipelines integrity settings tests" {
     It "accepts enforce mode case-insensitively with valid hashes" {
         $script:pipelinePublicSettings.integrityMode = "EnFoRcE"
         $script:pipelinePublicSettings.agentDownloadSha256 = "a" * 64
-        $script:pipelinePublicSettings.enableScriptSha256 = "B" * 64
+        $script:pipelinePublicSettings.scriptDownloadSha256 = "B" * 64
 
         $settings = Get-ConfigurationFromSettings
 
         $settings.IntegrityMode | Should -Be "enforce"
         $settings.AgentDownloadSha256 | Should -Be ("a" * 64)
-        $settings.EnableScriptSha256 | Should -Be ("B" * 64)
+        $settings.ScriptDownloadSha256 | Should -Be ("B" * 64)
     }
 
     It "rejects an invalid integrityMode value '<ValueDescription>'" -TestCases @(
@@ -84,7 +84,7 @@ Describe "parse pipelines integrity settings tests" {
 
         $settings.IntegrityMode | Should -Be "agentenforce"
         $settings.AgentDownloadSha256 | Should -Be ("a" * 64)
-        $settings.EnableScriptSha256 | Should -BeNullOrEmpty
+        $settings.ScriptDownloadSha256 | Should -BeNullOrEmpty
     }
 
     It "passes '<HashName>' through without validating its format" -TestCases @(
@@ -94,18 +94,18 @@ Describe "parse pipelines integrity settings tests" {
         @{ HashName = "agentDownloadSha256"; Value = ("g" * 64) }
         @{ HashName = "agentDownloadSha256"; Value = ("a" * 64) + "`n" }
         @{ HashName = "agentDownloadSha256"; Value = 123 }
-        @{ HashName = "enableScriptSha256"; Value = $null }
-        @{ HashName = "enableScriptSha256"; Value = "" }
-        @{ HashName = "enableScriptSha256"; Value = ("b" * 65) }
-        @{ HashName = "enableScriptSha256"; Value = ("z" * 64) }
-        @{ HashName = "enableScriptSha256"; Value = ("b" * 64) + "`n" }
-        @{ HashName = "enableScriptSha256"; Value = @("a" * 64) }
+        @{ HashName = "scriptDownloadSha256"; Value = $null }
+        @{ HashName = "scriptDownloadSha256"; Value = "" }
+        @{ HashName = "scriptDownloadSha256"; Value = ("b" * 65) }
+        @{ HashName = "scriptDownloadSha256"; Value = ("z" * 64) }
+        @{ HashName = "scriptDownloadSha256"; Value = ("b" * 64) + "`n" }
+        @{ HashName = "scriptDownloadSha256"; Value = @("a" * 64) }
     ) {
         param($HashName, $Value)
 
         $script:pipelinePublicSettings.integrityMode = "enforce"
         $script:pipelinePublicSettings.agentDownloadSha256 = "a" * 64
-        $script:pipelinePublicSettings.enableScriptSha256 = "b" * 64
+        $script:pipelinePublicSettings.scriptDownloadSha256 = "b" * 64
         $script:pipelinePublicSettings[$HashName] = $Value
 
         $settings = Get-ConfigurationFromSettings

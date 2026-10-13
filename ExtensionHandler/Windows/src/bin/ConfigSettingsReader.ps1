@@ -96,7 +96,7 @@ function Get-ConfigurationFromSettings {
 
             $integrityMode = Get-PipelinesIntegrityModeFromSettings -publicSettings $publicSettings
             $agentDownloadSha256 = $publicSettings['agentDownloadSha256']
-            $enableScriptSha256 = $publicSettings['enableScriptSha256']
+            $scriptDownloadSha256 = $publicSettings['scriptDownloadSha256']
 
             # For testing look for the script parameters in the public settings first
             # In production it will be in the protected settings
@@ -121,7 +121,7 @@ function Get-ConfigurationFromSettings {
                 AgentDownloadSha256 = $agentDownloadSha256
                 AgentFolder = $agentFolder
                 EnableScriptDownloadUrl = $enableScriptDownloadUrl
-                EnableScriptSha256 = $enableScriptSha256
+                ScriptDownloadSha256 = $scriptDownloadSha256
                 EnableScriptParameters = $enableScriptParameters
                 IntegrityMode = $integrityMode
             }

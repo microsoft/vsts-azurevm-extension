@@ -60,7 +60,7 @@ class IntegrityTests:
             "AgentDownloadUrl": "https://mirror.invalid/vsts-agent-linux-x64-1.2.3.tar.gz",
             "AgentDownloadSha256": hashlib.sha256(b"agent").hexdigest().upper(),
             "EnableScriptDownloadUrl": "https://another-mirror.invalid/bootstrap.sh",
-            "EnableScriptSha256": hashlib.sha256(b"script").hexdigest(),
+            "ScriptDownloadSha256": hashlib.sha256(b"script").hexdigest(),
             "EnableScriptParameters": "-token protected-test-token",
         }
         self.files = {}
@@ -132,7 +132,7 @@ class IntegrityTests:
                 self.config["AgentDownloadUrl"] = "http://legacy.invalid/agent.tar.gz"
                 self.config["EnableScriptDownloadUrl"] = "http://legacy.invalid/enableagent.sh"
                 self.config["AgentDownloadSha256"] = "invalid"
-                self.config["EnableScriptSha256"] = None
+                self.config["ScriptDownloadSha256"] = None
                 with patch.object(self.module, "verify_file_sha256") as verify:
                     self.run_agent()
                     verify.assert_not_called()
@@ -141,7 +141,7 @@ class IntegrityTests:
         self.assertEqual(self.module.subprocess.Popen.call_count, 2)
 
     def test_missing_and_malformed_hashes_fail_comparison_without_execution(self):
-        for key in ("AgentDownloadSha256", "EnableScriptSha256"):
+        for key in ("AgentDownloadSha256", "ScriptDownloadSha256"):
             original = self.config.pop(key)
             self.run_agent(expect_exit=True)
             self.assert_blocked()
@@ -168,12 +168,12 @@ class IntegrityTests:
 
     def test_agent_only_verifies_agent_without_verifying_script(self):
         self.config["IntegrityMode"] = "agentenforce"
-        self.config.pop("EnableScriptSha256")
+        self.config.pop("ScriptDownloadSha256")
         self.downloaded_script = b"unverified script"
         for script_hash in (None, "not-a-hash"):
             with self.subTest(script_hash=script_hash):
                 if script_hash is not None:
-                    self.config["EnableScriptSha256"] = script_hash
+                    self.config["ScriptDownloadSha256"] = script_hash
                 with patch.object(self.module, "verify_file_sha256", wraps=self.module.verify_file_sha256) as verify:
                     self.run_agent()
                     verify.assert_called_once_with(self.agent, self.config["AgentDownloadSha256"])
@@ -231,7 +231,7 @@ class IntegrityTests:
     def test_hash_verifier_checks_content_and_missing_file(self):
         self.files[self.agent] = b"agent"
         self.module.verify_file_sha256(self.agent, self.config["AgentDownloadSha256"])
-        for path, expected in ((self.agent, "0" * 64), (self.script, self.config["EnableScriptSha256"])):
+        for path, expected in ((self.agent, "0" * 64), (self.script, self.config["ScriptDownloadSha256"])):
             with self.assertRaises(ValueError):
                 self.module.verify_file_sha256(path, expected)
 
@@ -252,21 +252,21 @@ class IntegrityTests:
             enableScriptDownloadUrl=self.config["EnableScriptDownloadUrl"],
             integrityMode="EnFoRcE",
             agentDownloadSha256=self.config["AgentDownloadSha256"],
-            enableScriptSha256=self.config["EnableScriptSha256"],
+            scriptDownloadSha256=self.config["ScriptDownloadSha256"],
         )
         self.module.handler_utility.get_public_settings.return_value = settings
         self.module.handler_utility.get_protected_settings.return_value = CompatDict(enableScriptParameters=self.config["EnableScriptParameters"])
         result = self.module.get_configuration_from_settings()
         self.assertEqual(result["IntegrityMode"], "enforce")
-        for key in ("AgentDownloadSha256", "EnableScriptSha256", "EnableScriptParameters"):
+        for key in ("AgentDownloadSha256", "ScriptDownloadSha256", "EnableScriptParameters"):
             self.assertEqual(result[key], self.config[key])
         self.assertNotIn("protected-test-token", str(self.module.handler_utility.log.call_args_list))
         del settings["agentDownloadSha256"]
-        settings["enableScriptSha256"] = "not-a-hash"
+        settings["scriptDownloadSha256"] = "not-a-hash"
         result = self.module.get_configuration_from_settings()
         self.assertEqual(result["IntegrityMode"], "enforce")
         self.assertIsNone(result["AgentDownloadSha256"])
-        self.assertEqual(result["EnableScriptSha256"], "not-a-hash")
+        self.assertEqual(result["ScriptDownloadSha256"], "not-a-hash")
         settings["integrityMode"] = " AgEnTeNfOrCe "
         self.assertEqual(self.module.get_configuration_from_settings()["IntegrityMode"], "agentenforce")
         del settings["integrityMode"]
@@ -297,7 +297,7 @@ class TestPython3Integrity(IntegrityTests, unittest.TestCase):
 
     def test_agent_only_retains_unverified_bundled_fallback(self):
         self.config["IntegrityMode"] = "agentenforce"
-        self.config.pop("EnableScriptSha256")
+        self.config.pop("ScriptDownloadSha256")
         self.downloaded_script = CompatError("Network unavailable")
         self.files[self.bundle] = b"unverified script"
         with patch.object(self.module, "verify_file_sha256", wraps=self.module.verify_file_sha256) as verify:
@@ -314,7 +314,7 @@ class TestPython3Integrity(IntegrityTests, unittest.TestCase):
         with patch.object(self.module, "verify_file_sha256", wraps=self.module.verify_file_sha256) as verify:
             self.run_agent()
         self.assertEqual(verify.call_count, 2)
-        verify.assert_any_call(self.bundle, self.config["EnableScriptSha256"])
+        verify.assert_any_call(self.bundle, self.config["ScriptDownloadSha256"])
         self.module.set_error_status_and_error_exit.assert_not_called()
         self.module.subprocess.Popen.assert_called_once()
         self.module.shutil.copyfile.assert_not_called()

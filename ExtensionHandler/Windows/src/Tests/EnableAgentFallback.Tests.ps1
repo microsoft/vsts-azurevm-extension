@@ -163,7 +163,7 @@ Describe "EnablePipelinesAgent opt-in integrity" {
             AgentDownloadUrl = "https://mirror.invalid/packages/vsts-agent-win-x64-1.2.3.zip"
             AgentDownloadSha256 = "a" * 64
             EnableScriptDownloadUrl = "https://other-mirror.invalid/bootstrap.ps1"
-            EnableScriptSha256 = "B" * 64
+            ScriptDownloadSha256 = "B" * 64
             EnableScriptParameters = "-pool test"
         }
         $script:started = $false
@@ -240,7 +240,7 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         $script:config.AgentDownloadUrl = "http://legacy.invalid/agent.zip"
         $script:config.EnableScriptDownloadUrl = "http://legacy.invalid/enableagent.ps1"
         $script:config.AgentDownloadSha256 = "invalid"
-        $script:config.EnableScriptSha256 = $null
+        $script:config.ScriptDownloadSha256 = $null
         EnablePipelinesAgent $script:config
         Should -Invoke Assert-PipelinesFileHash -Times 0
         Should -Invoke Start-Process -Times 1 -Exactly
@@ -255,12 +255,12 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         @{ Key = "AgentDownloadSha256"; Value = { ("a" * 64) + [char]0 }; Downloads = 3 }
         @{ Key = "AgentDownloadSha256"; Value = 123; Downloads = 3 }
         @{ Key = "AgentDownloadSha256"; Value = @("a" * 64); Downloads = 3 }
-        @{ Key = "EnableScriptSha256"; Value = $null; Downloads = 4 }
-        @{ Key = "EnableScriptSha256"; Value = ""; Downloads = 4 }
-        @{ Key = "EnableScriptSha256"; Value = ("b" * 65); Downloads = 4 }
-        @{ Key = "EnableScriptSha256"; Value = ("z" * 64); Downloads = 4 }
-        @{ Key = "EnableScriptSha256"; Value = ("b" * 64) + "`n"; Downloads = 4 }
-        @{ Key = "EnableScriptSha256"; Value = @("b" * 64); Downloads = 4 }
+        @{ Key = "ScriptDownloadSha256"; Value = $null; Downloads = 4 }
+        @{ Key = "ScriptDownloadSha256"; Value = ""; Downloads = 4 }
+        @{ Key = "ScriptDownloadSha256"; Value = ("b" * 65); Downloads = 4 }
+        @{ Key = "ScriptDownloadSha256"; Value = ("z" * 64); Downloads = 4 }
+        @{ Key = "ScriptDownloadSha256"; Value = ("b" * 64) + "`n"; Downloads = 4 }
+        @{ Key = "ScriptDownloadSha256"; Value = @("b" * 64); Downloads = 4 }
     ) {
         if ($Value -is [scriptblock]) { $Value = & $Value }
         $script:config[$Key] = $Value
@@ -275,7 +275,7 @@ Describe "EnablePipelinesAgent opt-in integrity" {
 
     It "fails hash comparison when <Key> is absent" -ForEach @(
         @{ Key = "AgentDownloadSha256"; Downloads = 3 }
-        @{ Key = "EnableScriptSha256"; Downloads = 4 }
+        @{ Key = "ScriptDownloadSha256"; Downloads = 4 }
     ) {
         $script:config.Remove($Key)
         { EnablePipelinesAgent $script:config } | Should -Throw "*Hash verification failed*"
@@ -303,7 +303,7 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         @{ ScriptHash = "not-a-hash" }
     ) {
         $script:config.IntegrityMode = "agentenforce"
-        $script:config.EnableScriptSha256 = $ScriptHash
+        $script:config.ScriptDownloadSha256 = $ScriptHash
         $script:scriptHash = "c" * 64
         EnablePipelinesAgent $script:config
         Should -Invoke Download-File -Times 2 -Exactly
@@ -341,7 +341,7 @@ Describe "EnablePipelinesAgent opt-in integrity" {
 
     It "retains the unverified bundled fallback in agent-only mode" {
         $script:config.IntegrityMode = "agentenforce"
-        $script:config.Remove("EnableScriptSha256")
+        $script:config.Remove("ScriptDownloadSha256")
         $script:bundleHash = "c" * 64
         Mock Download-File { throw "Network unavailable" } -ParameterFilter { $downloadUrl -eq $script:config.EnableScriptDownloadUrl }
         EnablePipelinesAgent $script:config

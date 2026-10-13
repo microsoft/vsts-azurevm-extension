@@ -421,7 +421,7 @@ def get_configuration_from_settings():
 
             integrityMode = get_integrity_mode(public_settings, "integrityMode")
             agentDownloadSha256 = public_settings.get("agentDownloadSha256")
-            enableScriptSha256 = public_settings.get("enableScriptSha256")
+            scriptDownloadSha256 = public_settings.get("scriptDownloadSha256")
 
             # for testing, first try to get the script parameters from the public settings
             # in production they will be in the protected settings
@@ -438,7 +438,7 @@ def get_configuration_from_settings():
                 "AgentDownloadSha256": agentDownloadSha256,
                 "AgentFolder": agentFolder,
                 "EnableScriptDownloadUrl": enableScriptDownloadUrl,
-                "EnableScriptSha256": enableScriptSha256,
+                "ScriptDownloadSha256": scriptDownloadSha256,
                 "EnableScriptParameters": enableScriptParameters,
                 "IntegrityMode": integrityMode,
             }
@@ -747,7 +747,7 @@ def enable_pipelines_agent(config):
         enableFile = os.path.join(agentFolder, filename)
         Util.url_retrieve(downloadUrl, enableFile)
         if integrityMode == INTEGRITY_MODE_ENFORCE:
-            verify_file_sha256(enableFile, config.get("EnableScriptSha256"))
+            verify_file_sha256(enableFile, config.get("ScriptDownloadSha256"))
 
     except Exception as e:
         handler_utility.log(getattr(e, "message"))

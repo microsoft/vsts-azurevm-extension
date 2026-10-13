@@ -130,7 +130,7 @@ function EnablePipelinesAgent
                 Download-File -downloadUrl $config.EnableScriptDownloadUrl -target $enableFileName
                 if ($enforceIntegrity)
                 {
-                    Assert-PipelinesFileHash $enableFileName $config["EnableScriptSha256"]
+                    Assert-PipelinesFileHash $enableFileName $config["ScriptDownloadSha256"]
                 }
                 $attempt = $MAX_RETRIES
             }
@@ -145,7 +145,7 @@ function EnablePipelinesAgent
                     if (Test-Path -Path $bundledScript) {
                         if ($enforceIntegrity)
                         {
-                            Assert-PipelinesFileHash $bundledScript $config["EnableScriptSha256"]
+                            Assert-PipelinesFileHash $bundledScript $config["ScriptDownloadSha256"]
                         }
                         Write-Log "Storage download failed, using bundled enableagent fallback script"
                         $enableFileName = $bundledScript

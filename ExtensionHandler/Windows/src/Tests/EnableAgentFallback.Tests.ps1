@@ -232,10 +232,24 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         }
         Should -Invoke Assert-PipelinesFileHash -Times 2 -Exactly
         Should -Invoke Set-ErrorStatusAndErrorExit -Times 0
+        Should -Invoke Write-Log -Times 1 -Exactly -ParameterFilter {
+            $Message -eq "Hash verification succeeded for agent archive."
+        }
+        Should -Invoke Write-Log -Times 1 -Exactly -ParameterFilter {
+            $Message -eq "Hash verification succeeded for downloaded bootstrap script."
+        }
+        Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -like "Hash verification skipped*" }
     }
 
-    It "leaves explicit legacy downloads unverified" {
-        $script:config.IntegrityMode = "legacy"
+    It "leaves <Mode> downloads unverified and logs skipped verification" -ForEach @(
+        @{ Mode = "legacy" }
+        @{ Mode = "absent" }
+    ) {
+        if ($Mode -eq "absent") {
+            $script:config.Remove("IntegrityMode")
+        } else {
+            $script:config.IntegrityMode = $Mode
+        }
         $script:extractedAgent = $true
         $script:config.AgentDownloadUrl = "http://legacy.invalid/agent.zip"
         $script:config.EnableScriptDownloadUrl = "http://legacy.invalid/enableagent.ps1"
@@ -244,6 +258,13 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         EnablePipelinesAgent $script:config
         Should -Invoke Assert-PipelinesFileHash -Times 0
         Should -Invoke Start-Process -Times 1 -Exactly
+        Should -Invoke Write-Log -Times 1 -Exactly -ParameterFilter {
+            $Message -eq ("Hash verification skipped for agent archive (integrityMode={0}; agent verification is not enforced)." -f $script:config["IntegrityMode"])
+        }
+        Should -Invoke Write-Log -Times 1 -Exactly -ParameterFilter {
+            $Message -eq ("Hash verification skipped for downloaded bootstrap script (integrityMode={0}; script verification is not enforced)." -f $script:config["IntegrityMode"])
+        }
+        Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -like "Hash verification succeeded*" }
     }
 
     It "rejects a mismatched <Key> through hash comparison" -ForEach @(
@@ -296,6 +317,7 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         Should -Invoke Download-File -Times 3 -Exactly
         Should -Invoke Start-Process -Times 0
         Should -Invoke Set-ErrorStatusAndErrorExit -Times 1
+        Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -like "Hash verification succeeded*" -or $Message -like "Hash verification skipped*" }
     }
 
     It "verifies only the agent in agent-only mode" -ForEach @(
@@ -311,6 +333,13 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         Should -Invoke Assert-PipelinesFileHash -Times 0 -ParameterFilter { $Path -like "*.ps1" }
         Should -Invoke Start-Process -Times 1 -Exactly
         Should -Invoke Set-ErrorStatusAndErrorExit -Times 0
+        Should -Invoke Write-Log -Times 1 -Exactly -ParameterFilter {
+            $Message -eq "Hash verification succeeded for agent archive."
+        }
+        Should -Invoke Write-Log -Times 1 -Exactly -ParameterFilter {
+            $Message -eq "Hash verification skipped for downloaded bootstrap script (integrityMode=agentenforce; script verification is not enforced)."
+        }
+        Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -like "Hash verification succeeded for *bootstrap script." }
     }
 
     It "rejects an invalid agent hash in agent-only mode" -ForEach @(
@@ -350,6 +379,10 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         Should -Invoke Copy-Item -Times 0
         Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter { $ArgumentList -like "*\bin\enableagent.ps1 *" }
         $env:VSTS_AGENT_VMEXT_FALLBACK_USED | Should -Be "true"
+        Should -Invoke Write-Log -Times 1 -Exactly -ParameterFilter {
+            $Message -eq "Hash verification skipped for bundled bootstrap script (integrityMode=agentenforce; script verification is not enforced)."
+        }
+        Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -like "Hash verification succeeded for *bootstrap script." }
     }
 
     It "verifies the fallback hash and runs it from the original bundled path" {
@@ -362,6 +395,10 @@ Describe "EnablePipelinesAgent opt-in integrity" {
             $ArgumentList -like "*\bin\enableagent.ps1 *"
         }
         $env:VSTS_AGENT_VMEXT_FALLBACK_USED | Should -Be "true"
+        Should -Invoke Write-Log -Times 1 -Exactly -ParameterFilter {
+            $Message -eq "Hash verification succeeded for bundled bootstrap script."
+        }
+        Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -eq "Hash verification succeeded for downloaded bootstrap script." }
     }
 
     It "reports a bundled script hash mismatch" {
@@ -371,6 +408,7 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         Should -Invoke Copy-Item -Times 0
         Should -Invoke Start-Process -Times 0
         Should -Invoke Set-ErrorStatusAndErrorExit -Times 1
+        Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -like "Hash verification succeeded for *bootstrap script." }
     }
 
     It "reports an error when the script download and bundle are unavailable" {

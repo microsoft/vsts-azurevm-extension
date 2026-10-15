@@ -737,6 +737,9 @@ def enable_pipelines_agent(config):
         Util.url_retrieve(downloadUrl, agentFile)
         if integrityMode in (INTEGRITY_MODE_AGENT_ENFORCE, INTEGRITY_MODE_ENFORCE):
             verify_file_sha256(agentFile, config.get("AgentDownloadSha256"))
+            handler_utility.log("Hash verification succeeded for agent archive.")
+        else:
+            handler_utility.log("Hash verification skipped for agent archive (integrityMode={0}; agent verification is not enforced).".format(integrityMode))
 
         # download the enable script
         handler_utility.add_handler_sub_status(Util.HandlerSubStatus("DownloadPipelinesScript"))
@@ -748,6 +751,11 @@ def enable_pipelines_agent(config):
         Util.url_retrieve(downloadUrl, enableFile)
         if integrityMode == INTEGRITY_MODE_ENFORCE:
             verify_file_sha256(enableFile, config.get("ScriptDownloadSha256"))
+            handler_utility.log("Hash verification succeeded for downloaded bootstrap script.")
+        else:
+            handler_utility.log(
+                "Hash verification skipped for downloaded bootstrap script (integrityMode={0}; script verification is not enforced).".format(integrityMode)
+            )
 
     except Exception as e:
         handler_utility.log(getattr(e, "message"))

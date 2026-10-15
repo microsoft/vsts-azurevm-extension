@@ -748,6 +748,11 @@ def enable_pipelines_agent(config):
                 Util.url_retrieve(downloadUrl, agentFile)
                 if integrityMode in (INTEGRITY_MODE_AGENT_ENFORCE, INTEGRITY_MODE_ENFORCE):
                     verify_file_sha256(agentFile, config.get("AgentDownloadSha256"))
+                    handler_utility.log("Hash verification succeeded for agent archive.")
+                else:
+                    handler_utility.log(
+                        "Hash verification skipped for agent archive (integrityMode={0}; agent verification is not enforced).".format(integrityMode)
+                    )
                 break
             except Exception as e:
                 handler_utility.log("Attempt {0} to download the agent failed".format(attempt))
@@ -772,6 +777,13 @@ def enable_pipelines_agent(config):
                 Util.url_retrieve(downloadUrl, enableFile)
                 if integrityMode == INTEGRITY_MODE_ENFORCE:
                     verify_file_sha256(enableFile, config.get("ScriptDownloadSha256"))
+                    handler_utility.log("Hash verification succeeded for downloaded bootstrap script.")
+                else:
+                    handler_utility.log(
+                        "Hash verification skipped for downloaded bootstrap script (integrityMode={0}; script verification is not enforced).".format(
+                            integrityMode
+                        )
+                    )
                 break
             except Exception as e:
                 handler_utility.log("Attempt {0} to download the pipeline script failed".format(attempt))
@@ -784,6 +796,13 @@ def enable_pipelines_agent(config):
                     if os.path.isfile(bundled_script):
                         if integrityMode == INTEGRITY_MODE_ENFORCE:
                             verify_file_sha256(bundled_script, config.get("ScriptDownloadSha256"))
+                            handler_utility.log("Hash verification succeeded for bundled bootstrap script.")
+                        else:
+                            handler_utility.log(
+                                "Hash verification skipped for bundled bootstrap script (integrityMode={0}; script verification is not enforced).".format(
+                                    integrityMode
+                                )
+                            )
                         handler_utility.log("Storage download failed, using bundled enableagent fallback script")
                         enableFile = bundled_script
                         os.environ["VSTS_AGENT_VMEXT_FALLBACK_USED"] = "true"

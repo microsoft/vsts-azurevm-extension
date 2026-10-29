@@ -31,12 +31,8 @@ def clean_agent_folder(agent_working_folder):
             os.remove(top_level_agent_file)
         for dirpath, dirnames, filenames in os.walk(agent_working_folder):
             if ".agent" in filenames:
-                raise Exception(
-                    "One or more agents are already configured at {0}.\
-        Unconfigure all the agents from the directory and all its subdirectories and then try again.".format(
-                        agent_working_folder
-                    )
-                )
+                raise Exception("One or more agents are already configured at {0}.\
+        Unconfigure all the agents from the directory and all its subdirectories and then try again.".format(agent_working_folder))
         shutil.rmtree(agent_working_folder)
 
 

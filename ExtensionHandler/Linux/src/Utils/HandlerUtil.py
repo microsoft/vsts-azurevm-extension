@@ -28,7 +28,7 @@ HandlerEnvironment.json
     "configFolder": "<your config folder location>",
     "statusFolder": "<your status folder location>",
     "heartbeatFile": "<your heartbeat file location>",
-    
+
   }
 }]
 
@@ -50,7 +50,6 @@ Example Status Report:
 [{"version":"1.0","timestampUTC":"2014-05-29T04:20:13Z","status":{"name":"Chef Extension Handler","operation":"chef-client-run","status":"success","code":0,"formattedMessage":{"lang":"en-US","message":"Chef-client run success"}}}]
 
 """
-
 
 import os
 import os.path
@@ -134,7 +133,7 @@ class HandlerUtility:
         self._error = error
 
         if s_name is None or l_name is None or extension_version is None:
-            (l_name, s_name, extension_version) = self._get_extension_info()
+            l_name, s_name, extension_version = self._get_extension_info()
 
         self._short_name = s_name
         self._extension_version = extension_version
@@ -158,7 +157,7 @@ class HandlerUtility:
             return self._get_extension_info_manifest()
 
         ext_dir = os.path.basename(os.getcwd())
-        (long_name, version) = ext_dir.split("-")
+        long_name, version = ext_dir.split("-")
         short_name = long_name.split(".")[-1]
 
         return long_name, short_name, version

@@ -25,7 +25,6 @@ from urllib.parse import quote
 import urllib.request, urllib.parse, urllib.error
 import shlex
 
-
 MAX_RETRIES = 3
 INTEGRITY_MODE_LEGACY = "legacy"
 INTEGRITY_MODE_AGENT_ENFORCE = "agentenforce"
@@ -834,7 +833,7 @@ def enable_pipelines_agent(config):
             env["https_proxy"] = proxy_url
         argList = ["/bin/bash", enableFile] + shlex.split(enableParameters)
         enableProcess = subprocess.Popen(argList, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
-        (output, error) = enableProcess.communicate()
+        output, error = enableProcess.communicate()
         handler_utility.log(output.decode("utf-8"))
         handler_utility.log(error.decode("utf-8"))
         if enableProcess.returncode != 0:

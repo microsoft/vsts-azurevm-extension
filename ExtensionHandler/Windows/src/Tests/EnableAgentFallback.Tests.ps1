@@ -236,7 +236,7 @@ Describe "EnablePipelinesAgent opt-in integrity" {
             $Message -eq "Hash verification succeeded for agent archive."
         }
         Should -Invoke Write-Log -Times 1 -Exactly -ParameterFilter {
-            $Message -eq "Hash verification succeeded for downloaded bootstrap script."
+            $Message -eq "Hash verification succeeded for bootstrap script."
         }
         Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -like "Hash verification skipped*" }
     }
@@ -262,26 +262,26 @@ Describe "EnablePipelinesAgent opt-in integrity" {
             $Message -eq ("Hash verification skipped for agent archive (integrityMode={0}; agent verification is not enforced)." -f $script:config["IntegrityMode"])
         }
         Should -Invoke Write-Log -Times 1 -Exactly -ParameterFilter {
-            $Message -eq ("Hash verification skipped for downloaded bootstrap script (integrityMode={0}; script verification is not enforced)." -f $script:config["IntegrityMode"])
+            $Message -eq ("Hash verification skipped for bootstrap script (integrityMode={0}; script verification is not enforced)." -f $script:config["IntegrityMode"])
         }
         Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -like "Hash verification succeeded*" }
     }
 
     It "rejects a mismatched <Key> through hash comparison" -ForEach @(
-        @{ Key = "AgentDownloadSha256"; Value = $null; Downloads = 3 }
-        @{ Key = "AgentDownloadSha256"; Value = ""; Downloads = 3 }
-        @{ Key = "AgentDownloadSha256"; Value = ("a" * 63); Downloads = 3 }
-        @{ Key = "AgentDownloadSha256"; Value = ("g" * 64); Downloads = 3 }
-        @{ Key = "AgentDownloadSha256"; Value = ("a" * 64) + "`n"; Downloads = 3 }
-        @{ Key = "AgentDownloadSha256"; Value = { ("a" * 64) + [char]0 }; Downloads = 3 }
-        @{ Key = "AgentDownloadSha256"; Value = 123; Downloads = 3 }
-        @{ Key = "AgentDownloadSha256"; Value = @("a" * 64); Downloads = 3 }
-        @{ Key = "ScriptDownloadSha256"; Value = $null; Downloads = 4 }
-        @{ Key = "ScriptDownloadSha256"; Value = ""; Downloads = 4 }
-        @{ Key = "ScriptDownloadSha256"; Value = ("b" * 65); Downloads = 4 }
-        @{ Key = "ScriptDownloadSha256"; Value = ("z" * 64); Downloads = 4 }
-        @{ Key = "ScriptDownloadSha256"; Value = ("b" * 64) + "`n"; Downloads = 4 }
-        @{ Key = "ScriptDownloadSha256"; Value = @("b" * 64); Downloads = 4 }
+        @{ Key = "AgentDownloadSha256"; Value = $null; Downloads = 1 }
+        @{ Key = "AgentDownloadSha256"; Value = ""; Downloads = 1 }
+        @{ Key = "AgentDownloadSha256"; Value = ("a" * 63); Downloads = 1 }
+        @{ Key = "AgentDownloadSha256"; Value = ("g" * 64); Downloads = 1 }
+        @{ Key = "AgentDownloadSha256"; Value = ("a" * 64) + "`n"; Downloads = 1 }
+        @{ Key = "AgentDownloadSha256"; Value = { ("a" * 64) + [char]0 }; Downloads = 1 }
+        @{ Key = "AgentDownloadSha256"; Value = 123; Downloads = 1 }
+        @{ Key = "AgentDownloadSha256"; Value = @("a" * 64); Downloads = 1 }
+        @{ Key = "ScriptDownloadSha256"; Value = $null; Downloads = 2 }
+        @{ Key = "ScriptDownloadSha256"; Value = ""; Downloads = 2 }
+        @{ Key = "ScriptDownloadSha256"; Value = ("b" * 65); Downloads = 2 }
+        @{ Key = "ScriptDownloadSha256"; Value = ("z" * 64); Downloads = 2 }
+        @{ Key = "ScriptDownloadSha256"; Value = ("b" * 64) + "`n"; Downloads = 2 }
+        @{ Key = "ScriptDownloadSha256"; Value = @("b" * 64); Downloads = 2 }
     ) {
         if ($Value -is [scriptblock]) { $Value = & $Value }
         $script:config[$Key] = $Value
@@ -289,14 +289,14 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         Should -Invoke Download-File -Times $Downloads -Exactly
         Should -Invoke Start-Process -Times 0
         Should -Invoke Copy-Item -Times 0
-        Should -Invoke Set-ErrorStatusAndErrorExit -Times 1 -ParameterFilter {
+        Should -Invoke Set-ErrorStatusAndErrorExit -Times 1 -Exactly -ParameterFilter {
             "$exception" -like "*Hash verification failed*"
         }
     }
 
     It "fails hash comparison when <Key> is absent" -ForEach @(
-        @{ Key = "AgentDownloadSha256"; Downloads = 3 }
-        @{ Key = "ScriptDownloadSha256"; Downloads = 4 }
+        @{ Key = "AgentDownloadSha256"; Downloads = 1 }
+        @{ Key = "ScriptDownloadSha256"; Downloads = 2 }
     ) {
         $script:config.Remove($Key)
         { EnablePipelinesAgent $script:config } | Should -Throw "*Hash verification failed*"
@@ -307,17 +307,50 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         }
     }
 
-    It "does not execute after a mismatched agent archive exhausts retries in <Mode>" -ForEach @(
+    It "fails immediately after a mismatched agent archive in <Mode>" -ForEach @(
         @{ Mode = "enforce" }
         @{ Mode = "agentenforce" }
     ) {
         $script:config.IntegrityMode = $Mode
         $script:agentHash = "c" * 64
         { EnablePipelinesAgent $script:config } | Should -Throw "*Hash verification failed*"
-        Should -Invoke Download-File -Times 3 -Exactly
+        Should -Invoke Download-File -Times 1 -Exactly
         Should -Invoke Start-Process -Times 0
-        Should -Invoke Set-ErrorStatusAndErrorExit -Times 1
+        Should -Invoke Set-ErrorStatusAndErrorExit -Times 1 -Exactly
         Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -like "Hash verification succeeded*" -or $Message -like "Hash verification skipped*" }
+    }
+
+    It "does not retry or fall back after a downloaded script hash mismatch" {
+        $script:scriptHash = "c" * 64
+        { EnablePipelinesAgent $script:config } | Should -Throw "*Hash verification failed*"
+        Should -Invoke Download-File -Times 2 -Exactly
+        Should -Invoke Assert-PipelinesFileHash -Times 2 -Exactly
+        Should -Invoke Assert-PipelinesFileHash -Times 0 -ParameterFilter { $Path -like "*\bin\enableagent.ps1" }
+        Should -Invoke Start-Process -Times 0
+        Should -Invoke Set-ErrorStatusAndErrorExit -Times 1 -Exactly
+        $env:VSTS_AGENT_VMEXT_FALLBACK_USED | Should -BeNullOrEmpty
+    }
+
+    It "retains three download attempts for transport failures of <Target>" -ForEach @(
+        @{ Target = "AgentDownloadUrl" }
+        @{ Target = "EnableScriptDownloadUrl" }
+    ) {
+        $script:retryUrl = $script:config[$Target]
+        $script:downloadAttempts = 0
+        Mock Download-File {
+            param($downloadUrl, $target)
+            if ($downloadUrl -eq $script:retryUrl) {
+                $script:downloadAttempts++
+                if ($script:downloadAttempts -lt 3) { throw "Network unavailable" }
+            }
+        }
+        EnablePipelinesAgent $script:config
+        Should -Invoke Download-File -Times 3 -Exactly -ParameterFilter { $downloadUrl -eq $script:retryUrl }
+        Should -Invoke Download-File -Times 4 -Exactly
+        Should -Invoke Assert-PipelinesFileHash -Times 2 -Exactly
+        Should -Invoke Start-Process -Times 1 -Exactly
+        Should -Invoke Set-ErrorStatusAndErrorExit -Times 0
+        $env:VSTS_AGENT_VMEXT_FALLBACK_USED | Should -BeNullOrEmpty
     }
 
     It "verifies only the agent in agent-only mode" -ForEach @(
@@ -337,9 +370,9 @@ Describe "EnablePipelinesAgent opt-in integrity" {
             $Message -eq "Hash verification succeeded for agent archive."
         }
         Should -Invoke Write-Log -Times 1 -Exactly -ParameterFilter {
-            $Message -eq "Hash verification skipped for downloaded bootstrap script (integrityMode=agentenforce; script verification is not enforced)."
+            $Message -eq "Hash verification skipped for bootstrap script (integrityMode=agentenforce; script verification is not enforced)."
         }
-        Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -like "Hash verification succeeded for *bootstrap script." }
+        Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -eq "Hash verification succeeded for bootstrap script." }
     }
 
     It "rejects an invalid agent hash in agent-only mode" -ForEach @(
@@ -354,7 +387,7 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         $script:config.IntegrityMode = "agentenforce"
         $script:config.AgentDownloadSha256 = $Hash
         { EnablePipelinesAgent $script:config } | Should -Throw "*Hash verification failed*"
-        Should -Invoke Download-File -Times 3 -Exactly -ParameterFilter { $downloadUrl -eq $script:config.AgentDownloadUrl }
+        Should -Invoke Download-File -Times 1 -Exactly -ParameterFilter { $downloadUrl -eq $script:config.AgentDownloadUrl }
         Should -Invoke Download-File -Times 0 -ParameterFilter { $downloadUrl -eq $script:config.EnableScriptDownloadUrl }
         Should -Invoke Start-Process -Times 0
         Should -Invoke Set-ErrorStatusAndErrorExit -Times 1
@@ -364,7 +397,7 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         $script:config.IntegrityMode = "agentenforce"
         $script:config.Remove("AgentDownloadSha256")
         { EnablePipelinesAgent $script:config } | Should -Throw "*Hash verification failed*"
-        Should -Invoke Download-File -Times 3 -Exactly
+        Should -Invoke Download-File -Times 1 -Exactly
         Should -Invoke Start-Process -Times 0
     }
 
@@ -380,35 +413,36 @@ Describe "EnablePipelinesAgent opt-in integrity" {
         Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter { $ArgumentList -like "*\bin\enableagent.ps1 *" }
         $env:VSTS_AGENT_VMEXT_FALLBACK_USED | Should -Be "true"
         Should -Invoke Write-Log -Times 1 -Exactly -ParameterFilter {
-            $Message -eq "Hash verification skipped for bundled bootstrap script (integrityMode=agentenforce; script verification is not enforced)."
+            $Message -eq "Hash verification skipped for bootstrap script (integrityMode=agentenforce; script verification is not enforced)."
         }
-        Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -like "Hash verification succeeded for *bootstrap script." }
+        Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -eq "Hash verification succeeded for bootstrap script." }
     }
 
     It "verifies the fallback hash and runs it from the original bundled path" {
-        $script:scriptHash = "c" * 64
+        Mock Download-File { throw "Network unavailable" } -ParameterFilter { $downloadUrl -eq $script:config.EnableScriptDownloadUrl }
         EnablePipelinesAgent $script:config
         Should -Invoke Download-File -Times 4 -Exactly
-        Should -Invoke Assert-PipelinesFileHash -Times 5 -Exactly
+        Should -Invoke Assert-PipelinesFileHash -Times 2 -Exactly
         Should -Invoke Copy-Item -Times 0
         Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {
             $ArgumentList -like "*\bin\enableagent.ps1 *"
         }
         $env:VSTS_AGENT_VMEXT_FALLBACK_USED | Should -Be "true"
         Should -Invoke Write-Log -Times 1 -Exactly -ParameterFilter {
-            $Message -eq "Hash verification succeeded for bundled bootstrap script."
+            $Message -eq "Hash verification succeeded for bootstrap script."
         }
-        Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -eq "Hash verification succeeded for downloaded bootstrap script." }
     }
 
     It "reports a bundled script hash mismatch" {
-        $script:scriptHash = "c" * 64
+        Mock Download-File { throw "Network unavailable" } -ParameterFilter { $downloadUrl -eq $script:config.EnableScriptDownloadUrl }
         $script:bundleHash = "d" * 64
         { EnablePipelinesAgent $script:config } | Should -Throw "*Hash verification failed*"
+        Should -Invoke Download-File -Times 4 -Exactly
+        Should -Invoke Assert-PipelinesFileHash -Times 2 -Exactly
         Should -Invoke Copy-Item -Times 0
         Should -Invoke Start-Process -Times 0
         Should -Invoke Set-ErrorStatusAndErrorExit -Times 1
-        Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -like "Hash verification succeeded for *bootstrap script." }
+        Should -Invoke Write-Log -Times 0 -ParameterFilter { $Message -eq "Hash verification succeeded for bootstrap script." }
     }
 
     It "reports an error when the script download and bundle are unavailable" {
@@ -441,7 +475,7 @@ Describe "EnablePipelinesAgent opt-in integrity" {
     It "reports an error if hashing the downloaded archive fails" {
         Mock Assert-PipelinesFileHash { throw "File unavailable" }
         { EnablePipelinesAgent $script:config } | Should -Throw "*File unavailable*"
-        Should -Invoke Download-File -Times 3 -Exactly
+        Should -Invoke Download-File -Times 1 -Exactly
         Should -Invoke Start-Process -Times 0
         Should -Invoke Set-ErrorStatusAndErrorExit -Times 1
     }

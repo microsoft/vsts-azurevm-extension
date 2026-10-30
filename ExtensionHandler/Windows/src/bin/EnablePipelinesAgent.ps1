@@ -100,15 +100,6 @@ function EnablePipelinesAgent
         For ($attempt=1; $attempt -lt $MAX_RETRIES+1; $attempt++){
             try{
                 Download-File -downloadUrl $config.AgentDownloadUrl -target $agentZipFile
-                if ($enforceIntegrity -or $config["IntegrityMode"] -eq "agentenforce")
-                {
-                    Assert-PipelinesFileHash $agentZipFile $config["AgentDownloadSha256"]
-                    Write-Log "Hash verification succeeded for agent archive."
-                }
-                else
-                {
-                    Write-Log "Hash verification skipped for agent archive (integrityMode=$($config["IntegrityMode"]); agent verification is not enforced)."
-                }
                 $attempt = $MAX_RETRIES
             }
             catch{
@@ -122,6 +113,16 @@ function EnablePipelinesAgent
             }
         }
 
+        if ($enforceIntegrity -or $config["IntegrityMode"] -eq "agentenforce")
+        {
+            Assert-PipelinesFileHash $agentZipFile $config["AgentDownloadSha256"]
+            Write-Log "Hash verification succeeded for agent archive."
+        }
+        else
+        {
+            Write-Log "Hash verification skipped for agent archive (integrityMode=$($config["IntegrityMode"]); agent verification is not enforced)."
+        }
+
         # Download the enable script from vstsagenttools storage account
         # Note: Agent binary is on CDN (typically reliable), but enable script is on storage account (can fail during outages)
         # This is why we need fallback logic - storage outages may occur while CDN remains healthy
@@ -133,15 +134,6 @@ function EnablePipelinesAgent
         For ($attempt=1; $attempt -lt $MAX_RETRIES+1; $attempt++){
             try{
                 Download-File -downloadUrl $config.EnableScriptDownloadUrl -target $enableFileName
-                if ($enforceIntegrity)
-                {
-                    Assert-PipelinesFileHash $enableFileName $config["ScriptDownloadSha256"]
-                    Write-Log "Hash verification succeeded for downloaded bootstrap script."
-                }
-                else
-                {
-                    Write-Log "Hash verification skipped for downloaded bootstrap script (integrityMode=$($config["IntegrityMode"]); script verification is not enforced)."
-                }
                 $attempt = $MAX_RETRIES
             }
             catch{
@@ -153,15 +145,6 @@ function EnablePipelinesAgent
                     # Check if bundled enableagent script exists
                     $bundledScript = Join-Path -Path $PSScriptRoot -ChildPath "enableagent.ps1"
                     if (Test-Path -Path $bundledScript) {
-                        if ($enforceIntegrity)
-                        {
-                            Assert-PipelinesFileHash $bundledScript $config["ScriptDownloadSha256"]
-                            Write-Log "Hash verification succeeded for bundled bootstrap script."
-                        }
-                        else
-                        {
-                            Write-Log "Hash verification skipped for bundled bootstrap script (integrityMode=$($config["IntegrityMode"]); script verification is not enforced)."
-                        }
                         Write-Log "Storage download failed, using bundled enableagent fallback script"
                         $enableFileName = $bundledScript
                         $env:VSTS_AGENT_VMEXT_FALLBACK_USED = "true"
@@ -171,6 +154,16 @@ function EnablePipelinesAgent
                     }
                 }
             }
+        }
+
+        if ($enforceIntegrity)
+        {
+            Assert-PipelinesFileHash $enableFileName $config["ScriptDownloadSha256"]
+            Write-Log "Hash verification succeeded for bootstrap script."
+        }
+        else
+        {
+            Write-Log "Hash verification skipped for bootstrap script (integrityMode=$($config["IntegrityMode"]); script verification is not enforced)."
         }
     }
     catch 

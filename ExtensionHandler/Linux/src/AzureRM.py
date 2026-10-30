@@ -51,12 +51,15 @@ def get_integrity_mode(settings, key):
 
 
 def verify_file_sha256(path, expected_sha256):
+    if not isinstance(expected_sha256, str):
+        raise ValueError("Hash verification failed for '{0}'.".format(path))
+
     digest = hashlib.sha256()
     with open(path, "rb") as downloaded_file:
         for chunk in iter(lambda: downloaded_file.read(1024 * 1024), b""):
             digest.update(chunk)
 
-    if not isinstance(expected_sha256, str) or digest.hexdigest() != expected_sha256.lower():
+    if digest.hexdigest() != expected_sha256.lower():
         raise ValueError("Hash verification failed for '{0}'.".format(path))
 
 
@@ -745,13 +748,6 @@ def enable_pipelines_agent(config):
             # retry up to 3 times
             try:
                 Util.url_retrieve(downloadUrl, agentFile)
-                if integrityMode in (INTEGRITY_MODE_AGENT_ENFORCE, INTEGRITY_MODE_ENFORCE):
-                    verify_file_sha256(agentFile, config.get("AgentDownloadSha256"))
-                    handler_utility.log("Hash verification succeeded for agent archive.")
-                else:
-                    handler_utility.log(
-                        "Hash verification skipped for agent archive (integrityMode={0}; agent verification is not enforced).".format(integrityMode)
-                    )
                 break
             except Exception as e:
                 handler_utility.log("Attempt {0} to download the agent failed".format(attempt))
@@ -759,6 +755,12 @@ def enable_pipelines_agent(config):
                 if attempt == MAX_RETRIES:
                     handler_utility.log("Max retries attempt reached")
                     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status["DownloadPipelinesAgentError"]["operationName"], str(e))
+
+        if integrityMode in (INTEGRITY_MODE_AGENT_ENFORCE, INTEGRITY_MODE_ENFORCE):
+            verify_file_sha256(agentFile, config.get("AgentDownloadSha256"))
+            handler_utility.log("Hash verification succeeded for agent archive.")
+        else:
+            handler_utility.log("Hash verification skipped for agent archive (integrityMode={0}; agent verification is not enforced).".format(integrityMode))
 
         # download the enable script from vstsagenttools storage account
         # Note: Agent binary is on CDN (typically reliable), but enable script is on storage account (can fail during outages)
@@ -774,15 +776,6 @@ def enable_pipelines_agent(config):
             # retry up to 3 times
             try:
                 Util.url_retrieve(downloadUrl, enableFile)
-                if integrityMode == INTEGRITY_MODE_ENFORCE:
-                    verify_file_sha256(enableFile, config.get("ScriptDownloadSha256"))
-                    handler_utility.log("Hash verification succeeded for downloaded bootstrap script.")
-                else:
-                    handler_utility.log(
-                        "Hash verification skipped for downloaded bootstrap script (integrityMode={0}; script verification is not enforced).".format(
-                            integrityMode
-                        )
-                    )
                 break
             except Exception as e:
                 handler_utility.log("Attempt {0} to download the pipeline script failed".format(attempt))
@@ -793,21 +786,20 @@ def enable_pipelines_agent(config):
                     script_dir = os.path.dirname(os.path.abspath(__file__))
                     bundled_script = os.path.join(script_dir, "enableagent.sh")
                     if os.path.isfile(bundled_script):
-                        if integrityMode == INTEGRITY_MODE_ENFORCE:
-                            verify_file_sha256(bundled_script, config.get("ScriptDownloadSha256"))
-                            handler_utility.log("Hash verification succeeded for bundled bootstrap script.")
-                        else:
-                            handler_utility.log(
-                                "Hash verification skipped for bundled bootstrap script (integrityMode={0}; script verification is not enforced).".format(
-                                    integrityMode
-                                )
-                            )
                         handler_utility.log("Storage download failed, using bundled enableagent fallback script")
                         enableFile = bundled_script
                         os.environ["VSTS_AGENT_VMEXT_FALLBACK_USED"] = "true"
                         fallbackUsed = True
                     else:
                         set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status["DownloadPipelinesAgentError"]["operationName"], str(e))
+
+        if integrityMode == INTEGRITY_MODE_ENFORCE:
+            verify_file_sha256(enableFile, config.get("ScriptDownloadSha256"))
+            handler_utility.log("Hash verification succeeded for bootstrap script.")
+        else:
+            handler_utility.log(
+                "Hash verification skipped for bootstrap script (integrityMode={0}; script verification is not enforced).".format(integrityMode)
+            )
 
     except Exception as e:
         handler_utility.log(str(e))

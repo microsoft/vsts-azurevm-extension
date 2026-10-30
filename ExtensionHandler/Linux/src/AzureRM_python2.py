@@ -51,12 +51,15 @@ def get_integrity_mode(settings, key):
 
 
 def verify_file_sha256(path, expected_sha256):
+    if not isinstance(expected_sha256, basestring):
+        raise ValueError("Hash verification failed for '{0}'.".format(path))
+
     digest = hashlib.sha256()
     with open(path, "rb") as downloaded_file:
         for chunk in iter(lambda: downloaded_file.read(1024 * 1024), b""):
             digest.update(chunk)
 
-    if not isinstance(expected_sha256, basestring) or digest.hexdigest() != expected_sha256.lower():
+    if digest.hexdigest() != expected_sha256.lower():
         raise ValueError("Hash verification failed for '{0}'.".format(path))
 
 

@@ -49,6 +49,7 @@ def load_handler(name):
 
 class IntegrityTests:
     handler_name = None
+    script_log_label = "bootstrap script"
 
     def setUp(self):
         self.module = load_handler(self.handler_name)
@@ -122,7 +123,7 @@ class IntegrityTests:
         self.assertEqual(self.files[self.agent], b"agent")
         self.assertEqual(self.files[self.script], b"script")
         self.module.handler_utility.log.assert_any_call("Hash verification succeeded for agent archive.")
-        self.module.handler_utility.log.assert_any_call("Hash verification succeeded for downloaded bootstrap script.")
+        self.module.handler_utility.log.assert_any_call("Hash verification succeeded for {0}.".format(self.script_log_label))
         self.assertFalse(any(call.args[0].startswith("Hash verification skipped") for call in self.module.handler_utility.log.call_args_list))
 
     def test_absent_and_explicit_legacy_do_not_verify_hashes(self):
@@ -146,7 +147,7 @@ class IntegrityTests:
                     "Hash verification skipped for agent archive (integrityMode={0}; agent verification is not enforced).".format(mode)
                 )
                 self.module.handler_utility.log.assert_any_call(
-                    "Hash verification skipped for downloaded bootstrap script (integrityMode={0}; script verification is not enforced).".format(mode)
+                    "Hash verification skipped for {0} (integrityMode={1}; script verification is not enforced).".format(self.script_log_label, mode)
                 )
                 self.assertFalse(any(call.args[0].startswith("Hash verification succeeded") for call in self.module.handler_utility.log.call_args_list))
         self.assertEqual(self.module.subprocess.Popen.call_count, 2)
@@ -175,7 +176,7 @@ class IntegrityTests:
                 self.run_agent(expect_exit=True)
                 self.assert_blocked()
                 self.assertNotIn(self.script, self.files)
-                self.assertEqual(self.module.Util.url_retrieve.call_count, 1 if self.handler_name.endswith("python2") else 3)
+                self.assertEqual(self.module.Util.url_retrieve.call_count, 1)
                 self.assertFalse(
                     any(
                         call.args[0].startswith(("Hash verification succeeded", "Hash verification skipped"))
@@ -197,9 +198,9 @@ class IntegrityTests:
                     verify.assert_called_once_with(self.agent, self.config["AgentDownloadSha256"])
                 self.module.handler_utility.log.assert_any_call("Hash verification succeeded for agent archive.")
                 self.module.handler_utility.log.assert_any_call(
-                    "Hash verification skipped for downloaded bootstrap script (integrityMode=agentenforce; script verification is not enforced)."
+                    "Hash verification skipped for {0} (integrityMode=agentenforce; script verification is not enforced).".format(self.script_log_label)
                 )
-                self.assertNotIn("Hash verification succeeded for downloaded bootstrap script.", str(self.module.handler_utility.log.call_args_list))
+                self.assertNotIn("Hash verification succeeded for {0}.".format(self.script_log_label), str(self.module.handler_utility.log.call_args_list))
         self.module.set_error_status_and_error_exit.assert_not_called()
         self.assertEqual(self.module.subprocess.Popen.call_count, 2)
 
@@ -215,13 +216,14 @@ class IntegrityTests:
                 self.run_agent(expect_exit=True)
                 self.assert_blocked()
                 self.assertNotIn(self.script, self.files)
-                self.assertEqual(self.module.Util.url_retrieve.call_count, 1 if self.handler_name.endswith("python2") else 3)
+                self.assertEqual(self.module.Util.url_retrieve.call_count, 1)
 
     def test_script_mismatch_without_bundle_prevents_execution(self):
         self.downloaded_script = b"different script"
         self.run_agent(expect_exit=True)
         self.assert_blocked()
-        self.assertNotIn("Hash verification succeeded for downloaded bootstrap script.", str(self.module.handler_utility.log.call_args_list))
+        self.assertEqual(self.module.Util.url_retrieve.call_count, 2)
+        self.assertNotIn("Hash verification succeeded for {0}.".format(self.script_log_label), str(self.module.handler_utility.log.call_args_list))
 
     def test_download_failure_never_executes_cached_script(self):
         self.files[self.script] = b"cached script"
@@ -258,6 +260,16 @@ class IntegrityTests:
         for path, expected in ((self.agent, "0" * 64), (self.script, self.config["ScriptDownloadSha256"])):
             with self.assertRaises(ValueError):
                 self.module.verify_file_sha256(path, expected)
+
+    def test_hash_verifier_rejects_non_string_hash_before_file_or_digest_access(self):
+        for expected in (None, 1, [self.config["AgentDownloadSha256"]]):
+            with self.subTest(expected=expected):
+                with patch.object(self.module, "open", side_effect=AssertionError("Unexpected file access")) as open_file:
+                    with patch.object(self.module.hashlib, "sha256", side_effect=AssertionError("Unexpected digest calculation")) as sha256:
+                        with self.assertRaisesRegex(ValueError, "Hash verification failed"):
+                            self.module.verify_file_sha256(self.agent, expected)
+                        open_file.assert_not_called()
+                        sha256.assert_not_called()
 
     def test_hash_verifier_reads_past_first_chunk(self):
         content = b"\x00\xff\r\n" * (256 * 1024) + b"tail\n"
@@ -319,6 +331,36 @@ class IntegrityTests:
 class TestPython3Integrity(IntegrityTests, unittest.TestCase):
     handler_name = "AzureRM"
 
+    def test_agent_download_retries_transport_failures_before_verification(self):
+        download = self.module.Util.url_retrieve.side_effect
+        agent_attempts = 0
+
+        def retry_download(url, target):
+            nonlocal agent_attempts
+            if url == self.config["AgentDownloadUrl"]:
+                agent_attempts += 1
+                if agent_attempts < self.module.MAX_RETRIES:
+                    raise CompatError("Network unavailable")
+            download(url, target)
+
+        self.module.Util.url_retrieve.side_effect = retry_download
+        with patch.object(self.module, "verify_file_sha256", wraps=self.module.verify_file_sha256) as verify:
+            self.run_agent()
+        self.assertEqual(agent_attempts, self.module.MAX_RETRIES)
+        self.assertEqual(self.module.Util.url_retrieve.call_count, self.module.MAX_RETRIES + 1)
+        self.assertEqual(verify.call_count, 2)
+        self.module.set_error_status_and_error_exit.assert_not_called()
+        self.module.subprocess.Popen.assert_called_once()
+
+    def test_agent_download_exhaustion_stops_before_verification(self):
+        self.downloaded_agent = CompatError("Network unavailable")
+        with patch.object(self.module, "verify_file_sha256") as verify:
+            self.run_agent(expect_exit=True)
+        self.assertEqual(self.module.Util.url_retrieve.call_count, self.module.MAX_RETRIES)
+        verify.assert_not_called()
+        self.assertNotIn(self.script, self.files)
+        self.assert_blocked()
+
     def test_agent_only_retains_unverified_bundled_fallback(self):
         self.config["IntegrityMode"] = "agentenforce"
         self.config.pop("ScriptDownloadSha256")
@@ -332,9 +374,9 @@ class TestPython3Integrity(IntegrityTests, unittest.TestCase):
         self.assertEqual(self.module.subprocess.Popen.call_args[0][0][1], self.bundle)
         self.module.shutil.copyfile.assert_not_called()
         self.module.handler_utility.log.assert_any_call(
-            "Hash verification skipped for bundled bootstrap script (integrityMode=agentenforce; script verification is not enforced)."
+            "Hash verification skipped for bootstrap script (integrityMode=agentenforce; script verification is not enforced)."
         )
-        self.assertNotIn("Hash verification succeeded for bundled bootstrap script.", str(self.module.handler_utility.log.call_args_list))
+        self.assertNotIn("Hash verification succeeded for bootstrap script.", str(self.module.handler_utility.log.call_args_list))
 
     def test_matching_bundled_fallback_uses_same_hash_and_original_path(self):
         self.downloaded_script = CompatError("Network unavailable")
@@ -348,8 +390,7 @@ class TestPython3Integrity(IntegrityTests, unittest.TestCase):
         self.module.shutil.copyfile.assert_not_called()
         self.assertEqual(self.module.subprocess.Popen.call_args[0][0][1], self.bundle)
         self.assertEqual(os.environ["VSTS_AGENT_VMEXT_FALLBACK_USED"], "true")
-        self.module.handler_utility.log.assert_any_call("Hash verification succeeded for bundled bootstrap script.")
-        self.assertNotIn("Hash verification succeeded for downloaded bootstrap script.", str(self.module.handler_utility.log.call_args_list))
+        self.module.handler_utility.log.assert_any_call("Hash verification succeeded for bootstrap script.")
 
     def test_mismatched_bundle_is_not_copied_or_executed(self):
         self.downloaded_script = CompatError("Network unavailable")
@@ -357,15 +398,19 @@ class TestPython3Integrity(IntegrityTests, unittest.TestCase):
         self.run_agent(expect_exit=True)
         self.assert_blocked()
         self.module.shutil.copyfile.assert_not_called()
-        self.assertNotIn("Hash verification succeeded for bundled bootstrap script.", str(self.module.handler_utility.log.call_args_list))
+        self.assertNotIn("Hash verification succeeded for bootstrap script.", str(self.module.handler_utility.log.call_args_list))
 
-    def test_mismatch_can_fall_back_only_to_matching_bundle(self):
+    def test_script_mismatch_is_not_retried_or_replaced_with_bundle(self):
         self.downloaded_script = b"bad download"
         self.files[self.bundle] = b"script"
-        self.run_agent()
-        self.module.set_error_status_and_error_exit.assert_not_called()
-        self.module.subprocess.Popen.assert_called_once()
-        self.assertEqual(self.module.subprocess.Popen.call_args[0][0][1], self.bundle)
+        with patch.object(self.module, "verify_file_sha256", wraps=self.module.verify_file_sha256) as verify:
+            self.run_agent(expect_exit=True)
+        self.assert_blocked()
+        self.assertEqual(self.module.Util.url_retrieve.call_count, 2)
+        self.assertEqual(verify.call_count, 2)
+        verify.assert_any_call(self.script, self.config["ScriptDownloadSha256"])
+        self.assertNotIn(self.bundle, [call.args[0] for call in verify.call_args_list])
+        self.assertNotIn("VSTS_AGENT_VMEXT_FALLBACK_USED", os.environ)
 
     def test_already_configured_keeps_original_skip(self):
         self.module.os.path.exists.return_value = True
@@ -378,6 +423,7 @@ class TestPython3Integrity(IntegrityTests, unittest.TestCase):
 
 class TestPython2Integrity(IntegrityTests, unittest.TestCase):
     handler_name = "AzureRM_python2"
+    script_log_label = "downloaded bootstrap script"
 
     def test_configured_agent_keeps_original_bootstrap_skip(self):
         self.files[os.path.join(self.config["AgentFolder"], "bin", "Agent.Listener")] = b"configured agent"

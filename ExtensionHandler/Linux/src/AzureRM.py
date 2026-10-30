@@ -13,6 +13,7 @@ import subprocess
 import Utils.Constants as Constants
 import DownloadDeploymentAgent
 import ConfigureDeploymentAgent
+import hashlib
 import json
 import time
 import logging
@@ -24,13 +25,42 @@ from urllib.parse import quote
 import urllib.request, urllib.parse, urllib.error
 import shlex
 
-
 MAX_RETRIES = 3
+INTEGRITY_MODE_LEGACY = "legacy"
+INTEGRITY_MODE_AGENT_ENFORCE = "agentenforce"
+INTEGRITY_MODE_ENFORCE = "enforce"
 
 configured_agent_exists = False
 agent_configuration_required = True
 root_dir = ""
 handler_utility = None
+
+
+def get_integrity_mode(settings, key):
+    if key not in settings:
+        return INTEGRITY_MODE_LEGACY
+
+    mode = settings[key]
+    if not isinstance(mode, str):
+        raise ValueError("{0} must be 'legacy', 'agentEnforce' or 'enforce'.".format(key))
+
+    normalized_mode = mode.strip().lower()
+    if normalized_mode not in (INTEGRITY_MODE_LEGACY, INTEGRITY_MODE_AGENT_ENFORCE, INTEGRITY_MODE_ENFORCE):
+        raise ValueError("{0} must be 'legacy', 'agentEnforce' or 'enforce'.".format(key))
+    return normalized_mode
+
+
+def verify_file_sha256(path, expected_sha256):
+    if not isinstance(expected_sha256, str):
+        raise ValueError("Hash verification failed for '{0}'.".format(path))
+
+    digest = hashlib.sha256()
+    with open(path, "rb") as downloaded_file:
+        for chunk in iter(lambda: downloaded_file.read(1024 * 1024), b""):
+            digest.update(chunk)
+
+    if digest.hexdigest() != expected_sha256.lower():
+        raise ValueError("Hash verification failed for '{0}'.".format(path))
 
 
 def get_last_sequence_number_file_path():
@@ -391,6 +421,10 @@ def get_configuration_from_settings():
             enableScriptDownloadUrl = public_settings["enableScriptDownloadUrl"]
             handler_utility.verify_input_not_null("enableScriptDownloadUrl", enableScriptDownloadUrl)
 
+            integrityMode = get_integrity_mode(public_settings, "integrityMode")
+            agentDownloadSha256 = public_settings.get("agentDownloadSha256")
+            scriptDownloadSha256 = public_settings.get("scriptDownloadSha256")
+
             # for testing, first try to get the script parameters from the public settings
             # in production they will be in the protected settings
             if "enableScriptParameters" in public_settings:
@@ -403,9 +437,12 @@ def get_configuration_from_settings():
             return {
                 "IsPipelinesAgent": "true",
                 "AgentDownloadUrl": agentDownloadUrl,
+                "AgentDownloadSha256": agentDownloadSha256,
                 "AgentFolder": agentFolder,
                 "EnableScriptDownloadUrl": enableScriptDownloadUrl,
+                "ScriptDownloadSha256": scriptDownloadSha256,
                 "EnableScriptParameters": enableScriptParameters,
+                "IntegrityMode": integrityMode,
             }
 
         # continue with deployment agent settings
@@ -679,6 +716,8 @@ def enable_pipelines_agent(config):
     try:
         handler_utility.log("Enable Pipelines Agent")
 
+        integrityMode = config.get("IntegrityMode")
+
         # verify we have the enable script parameters here.
         handler_utility.verify_input_not_null("enableScriptParameters", config["EnableScriptParameters"])
 
@@ -717,6 +756,12 @@ def enable_pipelines_agent(config):
                     handler_utility.log("Max retries attempt reached")
                     set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status["DownloadPipelinesAgentError"]["operationName"], str(e))
 
+        if integrityMode in (INTEGRITY_MODE_AGENT_ENFORCE, INTEGRITY_MODE_ENFORCE):
+            verify_file_sha256(agentFile, config.get("AgentDownloadSha256"))
+            handler_utility.log("Hash verification succeeded for agent archive.")
+        else:
+            handler_utility.log("Hash verification skipped for agent archive (integrityMode={0}; agent verification is not enforced).".format(integrityMode))
+
         # download the enable script from vstsagenttools storage account
         # Note: Agent binary is on CDN (typically reliable), but enable script is on storage account (can fail during outages)
         # This is why we need fallback logic - storage outages may occur while CDN remains healthy
@@ -748,6 +793,14 @@ def enable_pipelines_agent(config):
                     else:
                         set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status["DownloadPipelinesAgentError"]["operationName"], str(e))
 
+        if integrityMode == INTEGRITY_MODE_ENFORCE:
+            verify_file_sha256(enableFile, config.get("ScriptDownloadSha256"))
+            handler_utility.log("Hash verification succeeded for bootstrap script.")
+        else:
+            handler_utility.log(
+                "Hash verification skipped for bootstrap script (integrityMode={0}; script verification is not enforced).".format(integrityMode)
+            )
+
     except Exception as e:
         handler_utility.log(str(e))
         set_error_status_and_error_exit(e, RMExtensionStatus.rm_extension_status["DownloadPipelinesAgentError"]["operationName"], str(e))
@@ -772,7 +825,7 @@ def enable_pipelines_agent(config):
             env["https_proxy"] = proxy_url
         argList = ["/bin/bash", enableFile] + shlex.split(enableParameters)
         enableProcess = subprocess.Popen(argList, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
-        (output, error) = enableProcess.communicate()
+        output, error = enableProcess.communicate()
         handler_utility.log(output.decode("utf-8"))
         handler_utility.log(error.decode("utf-8"))
         if enableProcess.returncode != 0:

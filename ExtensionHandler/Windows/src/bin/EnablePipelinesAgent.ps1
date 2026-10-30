@@ -10,6 +10,35 @@ Set-StrictMode -Version latest
 
 Import-Module $PSScriptRoot\Log.psm1
 
+function Assert-PipelinesFileHash
+{
+    param([string] $Path, $ExpectedSha256)
+
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try
+    {
+        $stream = [IO.File]::OpenRead($Path)
+        try
+        {
+            $hash = [BitConverter]::ToString($sha256.ComputeHash($stream)).Replace("-", "")
+        }
+        finally
+        {
+            $stream.Dispose()
+        }
+    }
+    finally
+    {
+        $sha256.Dispose()
+    }
+
+    if ($ExpectedSha256 -isnot [string] -or
+        -not [string]::Equals($hash, $ExpectedSha256, [StringComparison]::OrdinalIgnoreCase))
+    {
+        throw "Hash verification failed for '$Path'."
+    }
+}
+
 function EnablePipelinesAgent
 {
     param
@@ -20,6 +49,8 @@ function EnablePipelinesAgent
 
     try 
     {
+        $enforceIntegrity = $config["IntegrityMode"] -eq "enforce"
+
         # create the log file if it does not exist
         $logFileName = "script.log"
         if(!(Test-Path -Path $logFileName))
@@ -82,6 +113,16 @@ function EnablePipelinesAgent
             }
         }
 
+        if ($enforceIntegrity -or $config["IntegrityMode"] -eq "agentenforce")
+        {
+            Assert-PipelinesFileHash $agentZipFile $config["AgentDownloadSha256"]
+            Write-Log "Hash verification succeeded for agent archive."
+        }
+        else
+        {
+            Write-Log "Hash verification skipped for agent archive (integrityMode=$($config["IntegrityMode"]); agent verification is not enforced)."
+        }
+
         # Download the enable script from vstsagenttools storage account
         # Note: Agent binary is on CDN (typically reliable), but enable script is on storage account (can fail during outages)
         # This is why we need fallback logic - storage outages may occur while CDN remains healthy
@@ -113,6 +154,16 @@ function EnablePipelinesAgent
                     }
                 }
             }
+        }
+
+        if ($enforceIntegrity)
+        {
+            Assert-PipelinesFileHash $enableFileName $config["ScriptDownloadSha256"]
+            Write-Log "Hash verification succeeded for bootstrap script."
+        }
+        else
+        {
+            Write-Log "Hash verification skipped for bootstrap script (integrityMode=$($config["IntegrityMode"]); script verification is not enforced)."
         }
     }
     catch 
